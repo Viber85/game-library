@@ -99,6 +99,10 @@ export function Dashboard() {
   }, []);
   const tabs = tabInfo.available && tabInfo.tabs.length ? tabInfo.tabs : fallbackTabs;
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
+  const tabCounts = useMemo(() => new Map(tabs.map(t => {
+    const result = gamesForTab(t, games);
+    return [t.id, result.supported ? result.games.length : null] as const;
+  })), [tabs, games]);
   const tabResult = useMemo(() => gamesForTab(tab, games), [tab, games]);
   const shown = useMemo(() => [...tabResult.games].sort(sort === "recent"
     ? (a,b) => b.lastPlayed - a.lastPlayed || a.title.localeCompare(b.title)
@@ -199,7 +203,8 @@ export function Dashboard() {
                 }}
                 onOKActionDescription={item.title}
               >
-                {item.title}
+                {item.title}{games.length && tabCounts.get(item.id) !== null
+                  ? "  " + tabCounts.get(item.id) : ""}
               </Focusable>
             ))}
           </Focusable>
