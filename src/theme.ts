@@ -350,4 +350,74 @@ export const DASHBOARD_CSS = String.raw`
   .gl-full-grid .gl-game {height:166px;}
   .gl-status {gap:8px;margin-bottom:8px;}
 }
+
+/* Full-screen selected-game hero. One image fills the entire Home viewport,
+ * behind filters, carousel and details. The grid view does not render it.
+ * Keep the native Steam system status/footer layers above this scene. */
+.gl-main {
+  isolation:isolate;
+  background:transparent;
+}
+.gl-scene {
+  position:absolute;
+  top:-48px;
+  right:-32px;
+  bottom:-38px;
+  left:-32px;
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
+  background:linear-gradient(120deg,#020b1d,#0a2b4c 70%,#091428);
+}
+.gl-scene .gl-hero {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+  opacity:1;
+  filter:saturate(1.07) contrast(1.05);
+}
+.gl-scene-shade {
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,
+      rgba(2,8,22,.98) 0%,
+      rgba(2,11,27,.94) 21%,
+      rgba(2,13,30,.78) 39%,
+      rgba(3,14,30,.38) 60%,
+      rgba(3,14,30,.08) 82%,
+      transparent 100%),
+    linear-gradient(180deg,
+      rgba(2,8,20,.67) 0%,
+      rgba(2,9,21,.25) 25%,
+      transparent 43%,
+      transparent 73%,
+      rgba(2,8,20,.32) 100%);
+}
+.gl-main > :not(.gl-scene) {
+  position:relative;
+  z-index:1;
+}
+.gl-feature {
+  background:transparent;
+  box-shadow:none;
+}
+.gl-feature-content {
+  position:relative;
+  z-index:1;
+}
+.gl-strip,.gl-filterbar {
+  background:transparent;
+}
+@media (max-height:700px) {
+  .gl-scene {top:-43px;bottom:-32px;}
+}
+@media (max-width:900px) {
+  .gl-scene {left:-20px;right:-20px;}
+}
+/* The left navigation remains above the full-bleed art. */
+.gl-sidebar {z-index:4;}
 `;
