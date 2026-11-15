@@ -117,4 +117,83 @@ export const DASHBOARD_CSS = String.raw`
   .gl-pill { padding:8px 12px; }
   .gl-metric strong { font-size:13px; }
 }
+
+/* v0.2.0-test.3 — keep all dashboard content below Steam's native status bar.
+ * Steam owns this top region; the old duplicate header was obscured by it. */
+.gl-root {
+  padding:48px 0 38px;
+  height:100%;
+  min-height:0;
+  background:
+    radial-gradient(ellipse 58% 42% at 62% 10%,rgba(18,73,136,.50),transparent 75%),
+    linear-gradient(155deg,#030915 0%,#07152b 48%,#020713 100%);
+  --gl-bg:#020815;
+  --gl-surface:#0c1b32;
+  --gl-line:rgba(93,165,231,.18);
+  --gl-blue:#4ac1ff;
+  --gl-text:#f5f8ff;
+  --gl-muted:#9fb7d1;
+}
+.gl-header,.gl-sidebar-brand { display:none; }
+.gl-sidebar { background:linear-gradient(180deg,rgba(5,19,37,.97),rgba(2,9,23,.98));border-right:1px solid rgba(88,161,220,.20); }
+.gl-rail { margin-top:12px; gap:12px; }
+.gl-rail-item { color:#acc9e9; }
+.gl-rail-item.gl-focused,.gl-rail-item:hover {
+  background:linear-gradient(140deg,#185488,#083058);
+  box-shadow:inset 0 0 0 2px #63cfff,0 0 20px rgba(3,157,255,.72);
+}
+.gl-main { padding:0 32px; }
+.gl-filterbar { flex:0 0 70px; }
+.gl-pill,.gl-sort {
+  background:linear-gradient(180deg,rgba(28,56,91,.84),rgba(9,29,53,.95));
+  border:1px solid rgba(108,164,218,.19);box-shadow:0 2px 10px rgba(0,0,0,.20);
+  color:#e7f2ff;
+}
+.gl-pill.gl-active {
+  background:linear-gradient(180deg,#f0fbff,#bfdfff);
+  color:#07182e;border-color:#bdeaff;box-shadow:0 0 16px rgba(40,176,255,.47);
+}
+.gl-pill.gl-focused,.gl-sort.gl-focused { box-shadow:0 0 0 2px #e0faff,0 0 18px #28a9ff; }
+.gl-strip { gap:13px; }
+.gl-poster {border:1px solid rgba(108,181,251,.19);background:linear-gradient(135deg,#14335a,#06101f);}
+.gl-game.gl-selected .gl-poster {border-color:#89d9ff;box-shadow:0 0 0 2px #9adbff,0 0 22px #0099ffb0;}
+.gl-feature {
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  margin:0 -32px -8px -8px;
+  background:linear-gradient(110deg,#061326,#0e2749 66%,#050b19);
+  min-height:160px;
+}
+.gl-hero {
+  position:absolute;inset:0;width:100%;height:100%;
+  display:block;object-fit:cover;object-position:center 45%;
+  opacity:1;filter:saturate(1.10) contrast(1.04);
+}
+.gl-feature-shade {
+  background:
+    linear-gradient(90deg,#030c1d 0%,rgba(3,12,29,.97) 27%,rgba(3,12,29,.73) 49%,rgba(3,12,29,.18) 77%,transparent 100%),
+    linear-gradient(0deg,rgba(3,10,22,.44),transparent 36%),
+    linear-gradient(180deg,rgba(3,10,22,.20),transparent 35%);
+}
+.gl-feature-content {width:min(680px,66%);padding:19px 30px;}
+.gl-feature h1 {color:#fff;text-shadow:0 2px 13px #030b17;line-height:1.14;}
+.gl-desc {color:#cad8e9;}
+.gl-metric {background:rgba(10,27,48,.81);border:1px solid rgba(100,165,224,.23);backdrop-filter:blur(7px);}
+.gl-button {background:linear-gradient(180deg,rgba(32,61,95,.9),rgba(10,30,53,.95));border:1px solid rgba(100,166,229,.26);}
+.gl-button.gl-primary {background:linear-gradient(180deg,#e8f8ff,#a9ddff);color:#051b2f;box-shadow:0 0 14px rgba(18,169,255,.37);}
+.gl-pagination {color:#88a9ce; }
+.gl-footer { display:none; } /* Steam supplies its own Game Mode footer. */
+@media (max-height:700px) {
+  .gl-root { padding-top:43px;padding-bottom:32px; }
+  .gl-filterbar {flex-basis:59px;}
+  .gl-feature-content {padding:12px 24px;}
+  .gl-metrics {margin-bottom:10px;}
+  .gl-feature h1 {font-size:clamp(21px,3vw,29px);}
+}
+@media (max-width:900px) {
+  .gl-main {padding:0 20px;}
+  .gl-feature {margin-right:-20px;}
+  .gl-feature-content {width:min(580px,78%);}
+}
 `;
