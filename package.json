@@ -6,7 +6,8 @@
   "scripts": {
     "build": "rollup -c",
     "typecheck": "tsc --noEmit",
-    "test:navigation": "node --test tests/grid-navigation.mjs"
+    "test:navigation": "node --test tests/grid-navigation.mjs",
+    "test:launch": "node --test tests/launch-game.mjs"
   },
   "dependencies": {
     "@decky/api": "^1.1.3",
