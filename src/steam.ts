@@ -128,12 +128,10 @@ export function openDetails(game: LibraryGame): void {
 
 export function play(game: LibraryGame): void {
   try {
-    const run = client().SteamClient?.Apps?.RunGame;
-    if (typeof run === "function" && (game.installed || game.nonSteam)) {
-      const result = run(game.id, "", 100);
-      if (result && typeof result.catch === "function") {
-        void result.catch(() => openDetails(game));
-      }
+    const apps = client().SteamClient?.Apps;
+    if (typeof apps?.RunGame === "function" && (game.installed || game.nonSteam)) {
+      // Decky SteamClient signature: appId string, launch options, reserved param, source.
+      apps.RunGame(String(game.id), "", 0, 100);
       return;
     }
   } catch (error) {
