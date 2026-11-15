@@ -1,0 +1,40 @@
+name: Publish Game Library preview release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck, build and package
+        run: bash scripts/package.sh
+      - name: Publish GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(node -p 'JSON.parse(require("fs").readFileSync("package.json", "utf8")).version')"
+          TAG="v${VERSION}"
+          ZIP="game-library-v${VERSION}.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            gh release create "$TAG" "$ZIP" \
+              --title "Game Library ${TAG} (development preview)" \
+              --notes "Initial Decky Loader development preview. Controller navigation and SteamOS game metadata still need on-device testing. Install the attached ZIP through Decky Loader Developer Mode." \
+              --target "$GITHUB_SHA" \
+              --prerelease
+          fi
