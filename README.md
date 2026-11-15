@@ -31,6 +31,21 @@ In SteamOS Game Mode: Decky → Settings → Developer → Install plugin from Z
 
 The manual dashboard route remains available. The plugin **replaces Steam Home by default** when Decky loads and Steam visits `/library/home`. Toggle **Use as Steam Home** off in Decky Game Library to restore the original page. It does not change the SteamOS boot process itself; if Decky loads late the original Home may briefly appear first.
 
+## AppImage and Flatpak launch troubleshooting
+
+Steam's library may display Non-Steam shortcuts as installed even when their
+underlying Linux executable cannot launch. The current dashboard delegates
+Play to `SteamClient.Apps.RunGame` with Steam's supported `_2ftLibraryDetails`
+launch source. The plugin **cannot fix** a Proton compatibility setting or
+invalid target path on its own.
+
+For **installed Non-Steam shortcuts** the dashboard now shows **Launch Help**,
+which explains how to reproduce in native Steam, check
+Properties > Compatibility and verify the shortcut command. No global Proton
+changes, executable permission changes, or automatic execution of shell
+commands are performed. Valve's Steam Linux native shortcut issue was
+reported in October 2026 (ValveSoftware/steam-for-linux#13790).
+
 ## Updates
 
 The updater follows the installed package version and only recognizes this repository's validated, versioned release ZIP assets. The Decky installer requires GitHub's SHA-256 release digest. It never executes downloaded code in this plugin's Python backend.
