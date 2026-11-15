@@ -114,7 +114,7 @@ function GameCard({
       onCancelButton={onCancel}
       onOptionsButton={() => openDetails(game)}
       onGamepadFocus={onSelect}
-      onMouseEnter={onSelect}
+      onMouseEnter={captureVertical ? undefined : onSelect}
       onButtonDown={handleDirection}
       onOKActionDescription={activate ? "Game details" : gameActionLabel(game)}
       onOptionsActionDescription="Game details"
