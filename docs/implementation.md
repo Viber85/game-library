@@ -11,7 +11,7 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **src/theme.ts** — scoped CSS, no global Steam stylesheet mutation
 - **src/HltbCard.tsx** — on-demand HowLongToBeat statistics for the selected game
 - **hltb.py** — direct website search, result matching and disk caching
-- **protondb.py** — direct ProtonDB summary tier lookups, cache and validation
+- **protondb.py** — direct ProtonDB summary tier lookups, guarded Steam Store name-to-AppID resolution for Epic/GOG shortcuts, local caches, match validation
 - **src/ProtonDBBadge.tsx** — community compatibility badge above Installed
 - **src/tabmaster.ts** and **src/steam.ts** — ID/name mapping for Unifideck `[Unifideck] Epic/GOG` collections
 - **src/index.tsx** — optional /library/home patch with React error fallback and stored preference
@@ -25,13 +25,14 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - Persistent icon rail at the left; icons stay visible.
 - Label appears only beside an icon with keyboard/gamepad/mouse focus.
 - Horizontal carousel uses portrait art from the user's Steam library.
-- Details and selected-game hero are beneath the carousel. User-selected Steam title logo appears above the name, and HowLongToBeat duration statistics appear beside Steam playtime.
+- Details and selected-game hero are beneath the carousel. The carousel shows 15 games plus a View More tile. View More reveals a full, controller-navigable game grid with progressive rendering (60 at a time). User-selected Steam title logo appears above the name, and HowLongToBeat duration statistics appear beside Steam playtime.
 - The footer summarizes controller actions.
 
 ## Navigation
 
 - When the **first game** receives D-pad Left, focus is transferred to the rail.
 - In the rail, D-pad Up/Down explicitly moves focus between icons; D-pad Right or B returns to the first game.
+- View More: D-pad navigation across a multi-column grid; A opens game details and B returns to the main carousel. L1/R1 switches TabMaster tabs.
 - D-pad Up on a game card enters the TabMaster tab bar; Left/Right navigates tabs and Down returns to games.
 - Press A to activate an icon or play a game.
 - Bumper mappings and QAM must continue using Steam's own shortcuts.
