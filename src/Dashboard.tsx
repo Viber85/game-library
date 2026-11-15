@@ -159,7 +159,7 @@ export function Dashboard() {
                   else if (button === GamepadButton.DIR_DOWN) { consume(e); focusRail(index+1); }
                   else if (button === GamepadButton.DIR_RIGHT) { consume(e); goToGame(); }
                 }}
-                onCancelButton={goToGame}
+                onCancelButton={() => goToGame()}
                 onCancelActionDescription="Return to games"
                 title={action.label}
               >
