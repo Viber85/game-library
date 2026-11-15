@@ -9,6 +9,9 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **src/Dashboard.tsx** — custom layout and controller-focus relationships
 - **src/steam.ts** — guarded Steam client metadata adapter
 - **src/theme.ts** — scoped CSS, no global Steam stylesheet mutation
+- **src/HltbCard.tsx** — on-demand HowLongToBeat statistics for the selected game
+- **hltb.py** — direct website search, result matching and disk caching
+- **src/index.tsx** — optional /library/home patch with React error fallback and stored preference
 - **src/tabmaster.ts** — read-only TabMaster tab definitions and supported filter mapping
 - **src/UpdatesPanel.tsx** — GitHub version checker and Decky-managed installer with confirmation
 - **main.py** — read-only TabMaster settings bridge and release validation endpoints
@@ -19,7 +22,7 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - Persistent icon rail at the left; icons stay visible.
 - Label appears only beside an icon with keyboard/gamepad/mouse focus.
 - Horizontal carousel uses portrait art from the user's Steam library.
-- Details and selected-game hero are beneath the carousel.
+- Details and selected-game hero are beneath the carousel. User-selected Steam title logo appears above the name, and HowLongToBeat duration statistics appear beside Steam playtime.
 - The footer summarizes controller actions.
 
 ## Navigation
@@ -29,7 +32,7 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - D-pad Up on a game card enters the TabMaster tab bar; Left/Right navigates tabs and Down returns to games.
 - Press A to activate an icon or play a game.
 - Bumper mappings and QAM must continue using Steam's own shortcuts.
-- The custom dashboard launches from the Decky panel; original Steam Home is not replaced.
+- The custom dashboard launches manually from Decky and is also the default view for Steam Home after Decky loads. Turn **Use as Steam Home** off to remove the patch and show native Home again.
 
 ## Known limitations before device testing
 
@@ -40,9 +43,9 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
    Steam cloud sync state is **not fabricated**.
 3. Non-Steam artwork uses Steam's custom art where available, otherwise a fallback tile.
 4. The descriptive store text for each game is not available from the base overview API.
-5. Controller event ordering must be tested on a real Decky/SteamOS build;
+5. Controller event ordering, home-route boot interception and HLTB website lookup must be tested on a real Decky/SteamOS build;
    successful TypeScript compilation does not validate focus routing.
-6. No automatic replacement of /library/home until safe navigation has been verified.
+6. The Home route is patched only while Use as Steam Home is enabled. A React error boundary restores Steam's original Home if rendering fails; other plugins patching the same route may still conflict.
 7. TabMaster integration requires access to the active user's saved TabMaster settings. Complex filter types are not silently approximated; the native library remains available.
 8. The GitHub repository is public. Updater module discovery uses an explicit local-file import because Decky does not guarantee the plugin directory is on Python's module search path. Installed versions older than v0.2.0-test.4 may need one manual ZIP update.
 
@@ -60,5 +63,5 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 ## Build / package
 
 Run npm install, npm run typecheck, npm run build.
-For installation, package plugin.json, main.py, updates.py, dist/index.js and any Decky-generated assets
+For installation, package plugin.json, main.py, updates.py, hltb.py, dist/index.js and any Decky-generated assets
 using the conventional Decky Loader plugin folder/ZIP layout.
