@@ -23,6 +23,8 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Test controller grid navigation
+        run: npm run test:navigation
       - name: Typecheck, build and package
         run: bash scripts/package.sh
       - name: Publish GitHub pre-release
