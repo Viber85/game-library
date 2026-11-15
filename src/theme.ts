@@ -290,4 +290,64 @@ export const DASHBOARD_CSS = String.raw`
   .gl-hltb-values strong {font-size:13px;}
   .gl-hltb-icon {display:none;}
 }
+
+/* Unified status row: ProtonDB tier sits level with Installed / Non-Steam. */
+.gl-status {display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:11px;}
+.gl-status > span {display:inline-flex;align-items:center;gap:6px;min-height:26px;}
+.gl-status .gl-proton-row {display:inline-flex;align-items:center;margin:0;min-height:26px;}
+.gl-status .gl-proton-badge {min-height:25px;padding:3px 8px;}
+.gl-status .gl-proton-badge .gl-proton-source {display:inline;font-size:11px;}
+
+/* Fifteen recent game tiles followed by a keyboard/controller-focusable CTA. */
+.gl-view-more {
+  width:clamp(112px,10vw,168px);height:197px;flex:0 0 clamp(112px,10vw,168px);
+  border-radius:12px;border:1px solid rgba(109,190,255,.42);
+  background:linear-gradient(145deg,#173a64,#07172d 85%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;color:#e4f6ff;outline:none;box-shadow:inset 0 0 16px #03274877;
+}
+.gl-view-more svg {color:#6bcfff;}
+.gl-view-more strong {font-size:16px;font-weight:750;white-space:nowrap;}
+.gl-view-more span {font-size:12px;color:#afcfe5;}
+.gl-view-more.gl-focused,.gl-view-more:hover {
+  background:linear-gradient(145deg,#2265a4,#0b2b52);
+  box-shadow:0 0 0 3px #e9faff,0 0 22px #26b9ff;
+}
+
+/* View More page: same art/titles/borders as the carousel, now in a grid. */
+.gl-grid-page {display:flex;flex-direction:column;flex:1;min-height:0;padding:10px 0 4px;}
+.gl-grid-heading {display:flex;justify-content:space-between;align-items:center;
+  gap:24px;flex:0 0 63px;padding:0 8px 12px;}
+.gl-grid-heading h2 {font-size:24px;font-weight:750;margin:0 0 4px;color:#f5faff;}
+.gl-grid-heading span {font-size:12px;color:#a3bfdd;}
+.gl-grid-back {display:flex;align-items:center;gap:8px;padding:10px 14px;
+  border:1px solid #375b80;border-radius:10px;background:#102945;font-size:13px;
+  color:#e2f2ff;white-space:nowrap;}
+.gl-grid-back.gl-focused {box-shadow:0 0 0 2px #dcf7ff,0 0 14px #31acff;}
+.gl-full-grid-scroll {flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  padding:8px 7px 16px;overscroll-behavior:contain;scrollbar-width:thin;
+  scrollbar-color:#35658c #07172c;}
+.gl-full-grid {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:22px 17px;align-content:start;align-items:start;}
+.gl-full-grid .gl-game {display:block;width:100%;height:220px;max-width:none;
+  flex:none;min-width:0;}
+.gl-full-grid .gl-game.gl-focused {transform:translateY(-2px);}
+.gl-full-grid .gl-poster-name {font-size:14px;}
+.gl-grid-hint {flex:0 0 27px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:#a8c5df;border-top:1px solid #153c60;}
+@media (max-width:1100px) {
+  .gl-full-grid {grid-template-columns:repeat(5,minmax(0,1fr));gap:18px 13px;}
+  .gl-full-grid .gl-game {height:195px;}
+}
+@media (max-width:860px) {
+  .gl-full-grid {grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 10px;}
+  .gl-full-grid .gl-game {height:172px;}
+  .gl-grid-heading h2 {font-size:20px;}
+}
+@media (max-height:700px) {
+  .gl-view-more {height:150px;}
+  .gl-grid-heading {flex-basis:52px;}
+  .gl-full-grid .gl-game {height:166px;}
+  .gl-status {gap:8px;margin-bottom:8px;}
+}
 `;
