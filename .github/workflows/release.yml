@@ -40,6 +40,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library v0.2.0-test.8: default sort is A-Z for every tab, including View More. Uninstalled games and Unifideck shortcuts now show Install instead of Play. Pressing Install opens the native Steam/Unifideck game details for installation options; only installed games launch via Play. Controller hints updated. CI checks pass; device verification pending." \
+            --notes "Game Library v0.2.0-test.9 fixes full-grid controller focus. D-pad arrows now stay within the grid, detect the actual responsive column count, and move one visual row at a time. Pressing left on a left-edge card no longer opens the sidebar. Removed nested Steam focus scope and mouse hover interference; pending focus is retained while more games load. Node navigation regression tests added and pass. Verify on handheld." \
             --target "$GITHUB_SHA" \
             --prerelease
