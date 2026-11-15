@@ -68,8 +68,8 @@ def fetch_rating(appid):
 # itself is always fetched from ProtonDB, never the Steam Store.
 STORE_SEARCH = "https://store.steampowered.com/api/storesearch/"
 EDITION_TERMS = re.compile(
-    r"\\b(?:deluxe|definitive|ultimate|gold|complete|standard|edition|remastered|"
-    r"game of the year|goty)\\b", re.I,
+    r"\b(?:deluxe|definitive|ultimate|gold|complete|standard|edition|remastered|"
+    r"game of the year|goty)\b", re.I,
 )
 NAME_CACHE_TTL = 7 * 86400
 
@@ -78,7 +78,7 @@ def normalize_title(text):
     text = unicodedata.normalize("NFKD", str(text))
     text = text.encode("ascii", "ignore").decode("ascii").lower()
     text = re.sub(r"[^a-z0-9]+", " ", text)
-    return re.sub(r"\\s+", " ", text).strip()
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def title_match_score(wanted, candidate):
@@ -152,7 +152,7 @@ class ProtonDBNameResolver:
     def resolve(self, title):
         if not isinstance(title, str) or len(title)>140 or len(title)<2:
             return None
-        if re.search(r"\\.(?:exe|appimage)$",title,re.I):
+        if re.search(r"\.(?:exe|appimage)$",title,re.I):
             return None
         key=normalize_title(title)
         if not key:
