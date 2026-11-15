@@ -32,7 +32,7 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 
 - When the **first game** receives D-pad Left, focus is transferred to the rail.
 - In the rail, D-pad Up/Down explicitly moves focus between icons; D-pad Right or B returns to the first game.
-- View More: D-pad navigation across a multi-column grid; A opens game details and B returns to the main carousel. L1/R1 switches TabMaster tabs.
+- View More: bounded D-pad navigation across a multi-column grid; Left/Right never wraps or escapes to the side rail; Up/Down follow actual rendered column geometry; newly rendered cards retain pending focus. A opens game details and B returns to the main carousel. L1/R1 switches TabMaster tabs.
 - D-pad Up on a game card enters the TabMaster tab bar; Left/Right navigates tabs and Down returns to games.
 - Press A to activate an icon or play a game.
 - Bumper mappings and QAM must continue using Steam's own shortcuts.
