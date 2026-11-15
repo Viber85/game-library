@@ -313,10 +313,10 @@ export function play(game: LibraryGame): void {
     return;
   }
   try {
-    // Steam's default launch option is -1, not 0. Some AppImage/Flatpak
-    // shortcuts use a generated native Linux launch command which the
-    // forced option 0 does not start. Normalize signed shortcut AppIDs.
-    if (requestSteamLaunch(globals().SteamClient, game.id)) return;
+    // Non-Steam shortcuts must be launched using Steam's 64-bit gameID,
+    // not their 32-bit appid. The helper verifies the stored gameID against
+    // the shortcut before using it, or derives the canonical gameID.
+    if (requestSteamLaunch(globals().SteamClient, game.id, globals().appStore)) return;
     console.warn("[game-library] Steam RunGame API unavailable; opening details");
   } catch (e) { console.warn("[game-library] RunGame request failed", e); }
   openDetails(game);
