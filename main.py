@@ -70,6 +70,7 @@ def _tabmaster_path():
 class Plugin:
     _hltb_service = None
     _protondb_service = None
+    _protondb_name_resolver = None
 
     async def _main(self):
         pass
@@ -105,6 +106,38 @@ class Plugin:
             cache = _runtime_cache_path().with_name("protondb_cache.json")
             self._protondb_service = _load_protondb().ProtonDBService(cache)
         return await asyncio.to_thread(self._protondb_service.get, appid)
+
+    async def protondb_for_game(self, appid: int, title: str, non_steam: bool):
+        """Look up community ProtonDB compatibility, resolving Epic/GOG by title.
+
+        ProtonDB is indexed by the matching Steam AppID, NOT the local
+        Unifideck shortcut ID. All Steam name lookups use a strict match
+        threshold before we ask ProtonDB for the published community tier.
+        """
+        if type(non_steam) is not bool or not isinstance(title, str):
+            return {"status": "unavailable", "tier": None, "reason": "Invalid request"}
+        if self._protondb_service is None:
+            cache = _runtime_cache_path().with_name("protondb_cache.json")
+            self._protondb_service = _load_protondb().ProtonDBService(cache)
+        appid_to_query = appid
+        matched_title = None
+        if non_steam:
+            if self._protondb_name_resolver is None:
+                cache = _runtime_cache_path().with_name("protondb_title_cache.json")
+                self._protondb_name_resolver = _load_protondb().ProtonDBNameResolver(cache)
+            try:
+                resolved = await asyncio.to_thread(self._protondb_name_resolver.resolve, title)
+            except Exception as error:
+                return {"status": "error", "tier": None,
+                        "reason": "Title search unavailable: " + type(error).__name__}
+            if not resolved:
+                return {"status": "unavailable", "tier": None,
+                        "reason": "No reliable Steam match for this title"}
+            appid_to_query = resolved["appid"]
+            matched_title = resolved["name"]
+        result = await asyncio.to_thread(self._protondb_service.get, appid_to_query)
+        return {**result, "appid": appid_to_query, "matched_title": matched_title}
+
 
 
     async def _unload(self):
