@@ -31,20 +31,26 @@ In SteamOS Game Mode: Decky → Settings → Developer → Install plugin from Z
 
 The manual dashboard route remains available. The plugin **replaces Steam Home by default** when Decky loads and Steam visits `/library/home`. Toggle **Use as Steam Home** off in Decky Game Library to restore the original page. It does not change the SteamOS boot process itself; if Decky loads late the original Home may briefly appear first.
 
-## AppImage and Flatpak launch troubleshooting
+## Native Linux AppImage / Flatpak launches
 
-Steam's library may display Non-Steam shortcuts as installed even when their
-underlying Linux executable cannot launch. The current dashboard delegates
-Play to `SteamClient.Apps.RunGame` with Steam's supported `_2ftLibraryDetails`
-launch source. The plugin **cannot fix** a Proton compatibility setting or
-invalid target path on its own.
+When the native Steam Play button works but Game Library's button does not,
+the issue is in our launch integration, **not** the user's shortcut or Proton
+settings. This was reproduced by the device owner.
 
-For **installed Non-Steam shortcuts** the dashboard now shows **Launch Help**,
-which explains how to reproduce in native Steam, check
-Properties > Compatibility and verify the shortcut command. No global Proton
-changes, executable permission changes, or automatic execution of shell
-commands are performed. Valve's Steam Linux native shortcut issue was
-reported in October 2026 (ValveSoftware/steam-for-linux#13790).
+In versions through **v0.2.0-test.11**, the dashboard called
+`SteamClient.Apps.RunGame(String(appId), "", 0, 100)`. This selects launch
+option index `0`, which is not guaranteed to be the application's default
+option and can fail for native Linux shortcuts.
+
+Game Library now selects the default launch option `-1` and normalizes
+signed/non-Steam shortcut AppIDs to unsigned 32-bit IDs. The fourth parameter
+is `ELaunchSource._2ftLibraryDetails = 100` (an invocation source, not
+an app type). The Play button uses Steam's native launch API and does not
+alter app permissions, Proton, launch options or existing shortcut targets.
+
+The helper is covered by direct invocation and signed-AppID regression tests.
+Steam's API reports no launch result, so device verification is still
+required. Native Steam remains available as a fallback via Game Details.
 
 ## Updates
 
