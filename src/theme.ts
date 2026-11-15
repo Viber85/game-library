@@ -234,4 +234,60 @@ export const DASHBOARD_CSS = String.raw`
   .gl-hltb-values strong {font-size:13px;}
   .gl-hltb-values em {font-size:9px;}
 }
+
+/* Compact HLTB 3-column typography. Important: .gl-metric div from the
+ * base theme had higher specificity than .gl-hltb-values and forced a
+ * vertical flex column on the metrics, creating a giant card. */
+.gl-metrics {
+  display:flex;align-items:stretch;gap:8px;max-width:100%;
+  margin-bottom:12px;
+}
+.gl-metric { flex:1 1 0; min-width:0; height:80px; min-height:80px; max-height:80px;
+  padding:9px 10px; align-items:center; }
+.gl-metric>svg {font-size:19px;}
+.gl-hltb {flex:1.95 1 0; min-width:0; align-items:center;}
+.gl-metric .gl-hltb-body {display:block;flex:1;min-width:0;}
+.gl-metric .gl-hltb-body small {display:block;font-size:9px;line-height:1.2;
+  margin-bottom:8px;color:#bbd4ef;font-weight:700;}
+.gl-metric .gl-hltb-values {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  column-gap:9px;row-gap:0;min-width:0;}
+.gl-hltb-values span {min-width:0;display:flex;flex-direction:column;gap:3px;}
+.gl-hltb-values em {display:block;font-size:10px;line-height:1.1;
+  font-style:normal;color:#a9c2df;}
+.gl-hltb-values strong {display:block;font-size:16px;line-height:1.1;
+  font-weight:750;overflow:visible;white-space:nowrap;color:#f5faff;}
+.gl-hltb-icon {font-size:19px;align-self:center;}
+.gl-hltb-empty {font-size:13px;white-space:nowrap;}
+/* A community ProtonDB badge on its own row ABOVE Installed, not mixed with
+ * Steam's separate compatibility/verification categories. */
+.gl-proton-row {display:flex;justify-content:flex-start;align-items:center;
+  margin:0 0 7px;}
+.gl-proton-badge {display:inline-flex;align-items:center;gap:7px;
+  min-height:24px;padding:3px 9px;border-radius:6px;
+  background:rgba(10,23,43,.83);border:1px solid rgba(130,157,193,.48);
+  color:#d9e6f7;font-size:12px;white-space:nowrap;line-height:1.2;
+  backdrop-filter:blur(8px);}
+.gl-proton-badge strong {font-size:12px;font-weight:750;letter-spacing:.02em;}
+.gl-proton-source {font-size:11px;color:#bacce0;font-weight:650;}
+.gl-proton-icon {font-size:15px;}
+.gl-proton-badge.platinum {border-color:#b6e3fa;color:#d1f0ff;}
+.gl-proton-badge.gold {border-color:#ebc363;color:#f7d477;}
+.gl-proton-badge.silver {border-color:#c5cedc;color:#e1e9f3;}
+.gl-proton-badge.bronze {border-color:#c99570;color:#e5b08e;}
+.gl-proton-badge.borked {border-color:#f27986;color:#ff9da7;}
+.gl-proton-badge.unknown {border-color:rgba(139,166,200,.35);color:#b3c2d4;}
+@media (max-height:730px) {
+  .gl-metric {height:70px;min-height:70px;max-height:70px;padding:6px 8px;}
+  .gl-proton-row {margin-bottom:5px;}
+  .gl-metrics {margin-bottom:8px;gap:6px;}
+  .gl-metric .gl-hltb-body small {font-size:8px;margin-bottom:6px;}
+  .gl-hltb-values strong {font-size:14px;}
+}
+@media (max-width:1000px) {
+  .gl-metric {padding:7px;gap:5px;}
+  .gl-metric .gl-hltb-values {column-gap:4px;}
+  .gl-hltb-values em {font-size:9px;}
+  .gl-hltb-values strong {font-size:13px;}
+  .gl-hltb-icon {display:none;}
+}
 `;
