@@ -2,44 +2,51 @@ import { callable } from "@decky/api";
 import { useEffect, useState } from "react";
 import { MdShield, MdVerified } from "react-icons/md";
 import type { LibraryGame } from "./steam";
-import { protonDbAppId } from "./steam";
 
+type Tier = "platinum" | "gold" | "silver" | "bronze" | "borked" | null;
 type Rating = {
   status: "ok" | "unavailable" | "error";
-  tier: "platinum" | "gold" | "silver" | "bronze" | "borked" | null;
+  tier: Tier;
+  appid?: number;
+  matched_title?: string | null;
   cached?: boolean;
   reason?: string;
 };
-const fetchRating = callable<[number], Rating>("protondb_tier");
-const label = (tier: Rating["tier"]) =>
+const fetchRating = callable<[number,string,boolean], Rating>("protondb_for_game");
+const label = (tier: Tier) =>
   tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : "Not rated";
 
-/** Community tier shown only when an actual Steam game AppID is known. */
+/**
+ * Steam games query ProtonDB directly by their AppID. Epic/GOG shortcuts
+ * resolve their game title to a verified Steam Store match first, then fetch
+ * that matching game's actual ProtonDB community score.
+ */
 export function ProtonDBBadge({game}:{game:LibraryGame}) {
-  const appid = protonDbAppId(game);
-  const [rating,setRating] = useState<Rating|null>(null);
+  const [rating,setRating] = useState<Rating | null>(null);
   useEffect(() => {
     let active=true;
     setRating(null);
-    if(appid===null)return ()=>{active=false};
     const timer=window.setTimeout(() => {
-      void fetchRating(appid).then(r => {if(active)setRating(r);})
-        .catch(()=>{if(active)setRating({status:"error",tier:null});});
-    },350);
+      void fetchRating(game.id,game.title,game.nonSteam).then(r => {
+        if(active)setRating(r);
+      }).catch(()=>{if(active)setRating({status:"error",tier:null});});
+    },450);
     return ()=>{active=false;window.clearTimeout(timer);};
-  },[appid]);
+  },[game.id,game.title,game.nonSteam]);
 
   const tier = rating?.status==="ok" ? rating.tier : null;
-  const pending = appid !== null && !rating;
-  const message = pending ? "Checking…" : tier ? label(tier) :
-    appid===null ? "No Steam match" :
-    rating?.status==="error" ? "Unavailable" : "Not rated";
+  const message = !rating ? "Checking…" : tier ? label(tier) :
+    rating.status==="error" ? "Unavailable" : "Not rated";
   const Icon = tier==="platinum" ? MdVerified : MdShield;
-  const url = appid !== null ? "https://www.protondb.com/app/"+appid : undefined;
+  const detail = rating?.matched_title
+    ? "Matched Steam title: "+rating.matched_title
+    : rating?.reason || "Community compatibility from ProtonDB";
+  const url = rating?.appid
+    ? "https://www.protondb.com/app/"+rating.appid : undefined;
 
   return <div className="gl-proton-row">
     <div className={"gl-proton-badge "+(tier||"unknown")}
-      title={url ? "Community reports: "+url : "A Steam AppID is required for ProtonDB"}>
+      title={url ? detail+" · "+url : detail}>
       <Icon className="gl-proton-icon"/>
       <span className="gl-proton-source">ProtonDB</span>
       <strong>{message}</strong>
