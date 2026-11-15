@@ -20,6 +20,8 @@ jobs:
         run: npm run test:navigation
       - name: Test native Steam shortcut launching
         run: npm run test:launch
+      - name: Test Steam achievements
+        run: npm run test:achievements
       - name: Build and package ZIP
         run: bash scripts/package.sh
       - name: Publish installable ZIP
