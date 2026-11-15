@@ -45,6 +45,53 @@ class ProtonDBTests(unittest.TestCase):
         self.assertEqual(result["status"],"error")
         self.assertIsNone(result["tier"])
 
+    def test_epic_gog_name_resolution_uses_exact_steam_title(self):
+        names = [
+            {"name":"Shadow Warrior 2","id":324800},
+            {"name":"Shadow Warrior","id":233130},
+            {"name":"Shadow Warrior 3","id":1036890},
+        ]
+        result = protondb.choose_steam_title("Shadow Warrior 2",names)
+        self.assertEqual(result["appid"],324800)
+        self.assertEqual(result["name"],"Shadow Warrior 2")
+
+    def test_title_lookup_does_not_guess_unrelated_or_ambiguous_matches(self):
+        self.assertIsNone(protondb.choose_steam_title("Hades",[
+            {"name":"Hades II","id":1145350},
+            {"name":"Hadean Tactics","id":1260590},
+        ]))
+        self.assertIsNone(protondb.choose_steam_title("Different Game",[
+            {"name":"Shadow Warrior 2","id":324800}
+        ]))
+
+    def test_shortcut_title_cache_and_launcher_exclusion(self):
+        with tempfile.TemporaryDirectory() as temp:
+            service=protondb.ProtonDBNameResolver(pathlib.Path(temp)/"titles.json")
+            with mock.patch.object(protondb,"fetch_steam_title",
+                return_value={"appid":324800,"name":"Shadow Warrior 2"}) as fetch:
+                first=service.resolve("Shadow Warrior 2")
+                second=service.resolve("Shadow Warrior 2")
+                self.assertEqual(first,second)
+                fetch.assert_called_once()
+            self.assertIsNone(service.resolve("rpcs3.exe"))
+
+    def test_backend_resolves_shortcut_before_protondb_rating(self):
+        import asyncio
+        service=main.Plugin()
+        class Resolver:
+            def resolve(self,title):
+                return {"appid":324800,"name":"Shadow Warrior 2"}
+        class Ratings:
+            def get(self,appid):
+                self.appid=appid
+                return {"status":"ok","tier":"gold","cached":False}
+        service._protondb_name_resolver=Resolver()
+        service._protondb_service=Ratings()
+        reply=asyncio.run(service.protondb_for_game(1000000000,"Shadow Warrior 2",True))
+        self.assertEqual(reply["tier"],"gold")
+        self.assertEqual(reply["appid"],324800)
+        self.assertEqual(service._protondb_service.appid,324800)
+
     def test_rejects_invalid_appid(self):
         with tempfile.TemporaryDirectory() as temp:
             with mock.patch.object(protondb,"fetch_rating") as fetch:
