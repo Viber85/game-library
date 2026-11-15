@@ -292,7 +292,7 @@ export function Dashboard() {
                 />
               ))}
             </Focusable>
-            <div className="gl-pagination">{shown.length} games · ↑ Tabs · ← Navigation</div>
+            <div className="gl-pagination">{shown.length} games · L1/R1 Tabs · ↑ Tabs · ← Navigation</div>
 
             {selected && <section className="gl-feature" aria-label="Selected game">
               <HeroBackdrop key={selected.id} game={selected} />
