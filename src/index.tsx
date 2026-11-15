@@ -2,11 +2,13 @@ import { definePlugin, routerHook } from "@decky/api";
 import { ButtonItem, Navigation, PanelSection, PanelSectionRow } from "@decky/ui";
 import { MdLibraryBooks } from "react-icons/md";
 import { Dashboard } from "./Dashboard";
+import { UpdatesPanel } from "./UpdatesPanel";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 
 function ControlPanel() {
   return (
+    <> 
     <PanelSection title="Game Library · Preview">
       <PanelSectionRow>
         <ButtonItem
@@ -26,6 +28,8 @@ function ControlPanel() {
         </div>
       </PanelSectionRow>
     </PanelSection>
+    <UpdatesPanel />
+    </>
   );
 }
 
