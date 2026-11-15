@@ -219,7 +219,6 @@ export function Dashboard() {
           </Focusable>
         </nav>
 
-        {tabInfo.available && <div className="gl-source">TabMaster · {tabs.length} tabs</div>}
         {shown.length > 0 ? (
           <>
             <Focusable className="gl-strip" flow-children="row">
