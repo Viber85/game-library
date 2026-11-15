@@ -115,7 +115,7 @@ function GameCard({
       onGamepadFocus={onSelect}
       onMouseEnter={onSelect}
       onButtonDown={handleDirection}
-      onOKActionDescription={gameActionLabel(game)}
+      onOKActionDescription={activate ? "Game details" : gameActionLabel(game)}
       onOptionsActionDescription="Game details"
     >
       <div className="gl-poster">
