@@ -32,7 +32,7 @@ const asArray = (v: any): any[] => {
 };
 const firstString = (...vs: unknown[]): string => vs.find(x => typeof x === "string" && x.length > 0) as string || "";
 const finite = (v: unknown) => typeof v === "number" && Number.isFinite(v) ? v : 0;
-const pathFromAsset = (v: unknown) => {
+const pathFromAsset = (v: unknown): string | undefined => {
   if (typeof v === "string" && /^(https?:|data:|file:)/.test(v)) return v;
   if (Array.isArray(v)) return v.map(pathFromAsset).find(Boolean);
   return undefined;
@@ -65,7 +65,7 @@ function allRows(): any[] {
 }
 
 function gameFromRow(row: unknown): LibraryGame | null {
-  const appStore = globals().appStore;
+  const appStore = globals().appStore as AnyObject | undefined;
   const candidate = obj(row);
   const rawId = typeof row === "number" ? row
     : candidate?.appid ?? candidate?.app_id ?? candidate?.id;
@@ -132,7 +132,7 @@ export function getCollectionIdSet(collectionId: string): Set<number> | null {
 export function getActiveUserId(): string {
   try {
     const steamId = globals().App?.m_CurrentUser?.strSteamID ||
-      globals().SteamClient?.User?.GetSteamID?.();
+      (window as any).SteamClient?.User?.GetSteamID?.();
     return steamId ? (BigInt(String(steamId)) & BigInt(0xffffffff)).toString() : "";
   } catch { return ""; }
 }
