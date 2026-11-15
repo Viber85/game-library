@@ -32,3 +32,16 @@ export function steamRunGameArgs(appId:number):[string,string,number,number]|nul
   const valid=canonicalSteamAppId(appId);
   return valid===null?null:[String(valid),"",-1,STEAM_2FT_LIBRARY_DETAILS];
 }
+
+/** Request a native Steam launch. Returns false only if no request could be issued.
+ * Steam's void RunGame API does not report success or failure of the process.
+ */
+export function requestSteamLaunch(
+  steamClient: { Apps?: { RunGame?: (...args: [string,string,number,number])=>void } } | null | undefined,
+  appId: number,
+): boolean {
+  const args=steamRunGameArgs(appId);
+  if (!args || typeof steamClient?.Apps?.RunGame!=="function") return false;
+  steamClient.Apps.RunGame(...args);
+  return true;
+}
