@@ -134,8 +134,8 @@ export function UpdatesPanel() {
       onClick={()=>Navigation.NavigateToExternalWeb(RELEASES_URL)}>
       Open GitHub Releases
     </ButtonItem></PanelSectionRow>
-    <PanelSectionRow><Field label="Private GitHub repository"
-      description="Unauthenticated update checks return HTTP 404 for private repos. Automatic updates require a public release source."/>
+    <PanelSectionRow><Field label="Update source"
+      description="Public Viber85/game-library Releases. Updates require the official ZIP asset and published SHA-256 checksum."/>
     </PanelSectionRow>
   </PanelSection>;
 }
