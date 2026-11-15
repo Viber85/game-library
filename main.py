@@ -1,11 +1,30 @@
 """Game Library: read-only TabMaster integration and safe update discovery."""
 import asyncio
+import importlib.util
 import json
 import os
 import pathlib
 import re
 
 BASE = pathlib.Path(__file__).resolve().parent
+
+def _load_updater():
+    """Load our own packaged module by path, not Python's global import path.
+
+    Decky Loader may import main.py with a working directory/sys.path that
+    excludes the plugin directory, causing 'No module named updates' despite
+    updates.py being correctly included in the install ZIP.
+    """
+    module_path = BASE / "updates.py"
+    if not module_path.is_file():
+        raise RuntimeError("Plugin installation is incomplete (updates.py missing). Reinstall the latest ZIP.")
+    spec = importlib.util.spec_from_file_location("game_library_local_updates", str(module_path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Cannot load packaged updater module.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
 
 
 def _tabmaster_path():
@@ -88,14 +107,13 @@ class Plugin:
 
     async def validate_github_releases(self, release_json: str):
         try:
-            from updates import validate_github_feed
-            return {"ok": True, **validate_github_feed(BASE / "package.json", release_json)}
+            return {"ok": True, **_load_updater().validate_github_feed(BASE / "package.json", release_json)}
         except Exception as exc:
             return {"ok": False, "available": False, "latest": None, "error": str(exc)[:220]}
 
     async def check_updates(self):
         try:
-            from updates import check_github_update
-            return {"ok": True, **await asyncio.to_thread(check_github_update, BASE / "package.json")}
+            updater = _load_updater()
+            return {"ok": True, **await asyncio.to_thread(updater.check_github_update, BASE / "package.json")}
         except Exception as exc:
             return {"ok": False, "available": False, "latest": None, "error": str(exc)[:220]}
