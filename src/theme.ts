@@ -420,4 +420,77 @@ export const DASHBOARD_CSS = String.raw`
 }
 /* The left navigation remains above the full-bleed art. */
 .gl-sidebar {z-index:4;}
+
+/* Steam achievement progress card: faithful compact trophy / 28 of 45 /
+ * cyan progress line from the approved Game Library reference. */
+.gl-metric.gl-achievement-card {
+  flex:1.25 1 0;
+  align-items:center;
+  min-width:0;
+}
+.gl-achievement-card .gl-achievement-icon {
+  font-size:19px;
+  color:#d6e6f8;
+  flex:0 0 auto;
+}
+.gl-metric .gl-achievement-content {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  flex:1;
+  gap:7px;
+}
+.gl-metric .gl-achievement-content small {
+  font-size:9px;
+  color:#bed1e4;
+  letter-spacing:.02em;
+  font-weight:750;
+  white-space:nowrap;
+}
+.gl-metric .gl-achievement-stats {
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  min-width:0;
+  gap:8px;
+  width:100%;
+}
+.gl-metric .gl-achievement-stats strong {
+  display:block;
+  flex:none;
+  font-size:15px;
+  font-weight:760;
+  color:#f4fbff;
+  overflow:visible;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.gl-metric .gl-achievement-track {
+  display:block;
+  position:relative;
+  height:6px;
+  min-width:30px;
+  max-width:90px;
+  flex:1 1 auto;
+  overflow:hidden;
+  border-radius:8px;
+  background:rgba(135,166,197,.25);
+}
+.gl-metric .gl-achievement-track > span {
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,#0aa9f1,#5bd4ff);
+  border-radius:inherit;
+  box-shadow:0 0 7px rgba(12,187,255,.5);
+}
+@media (max-width:1000px){
+  .gl-metric .gl-achievement-stats {gap:5px;}
+  .gl-metric .gl-achievement-stats strong {font-size:13px;}
+  .gl-achievement-card .gl-achievement-icon {display:none;}
+  .gl-metric .gl-achievement-track {min-width:23px;}
+}
+@media (max-height:730px){
+  .gl-metric .gl-achievement-content {gap:5px;}
+  .gl-metric .gl-achievement-content small {font-size:8px;}
+}
 `;
