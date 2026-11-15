@@ -8,11 +8,12 @@ import {
 import type { IconType } from "react-icons";
 import {
   getLibraryGames, hasLibraryStore, heroUrl, lastPlayedLabel,
-  LibraryGame, openDetails, play, playtimeLabel, posterCandidates, heroCandidates,
+  LibraryGame, openDetails, play, playtimeLabel, posterCandidates, heroCandidates, logoCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
 import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster";
 import { getActiveUserId } from "./steam";
+import { HowLongToBeatCard } from "./HltbCard";
 
 type Sort = "recent" | "alphabetical";
 
@@ -49,6 +50,27 @@ function HeroBackdrop({game}:{game:LibraryGame}) {
   if (!src) return null;
   return <img className="gl-hero" src={src} alt="" key={src}
     onError={() => setImageIndex(n => n+1)}/>;
+}
+
+/** The user-selected title logo appears above the game's name. */
+function GameLogo({game}:{game:LibraryGame}) {
+  const [sourceIndex,setSourceIndex]=useState(0);
+  const [refresh,setRefresh]=useState(0);
+  useEffect(()=>{
+    let mounted=true;
+    const details=(window as any).appDetailsStore;
+    if(typeof details?.RequestAppDetails === "function"){
+      try { void Promise.resolve(details.RequestAppDetails(game.id)).then(()=>{
+        if(mounted){setSourceIndex(0);setRefresh(n=>n+1);}
+      }).catch(()=>{ /* Use existing cached assets */ }); }
+      catch { /* logo may already be cached */ }
+    }
+    return ()=>{mounted=false;};
+  },[game.id]);
+  const candidates=useMemo(()=>logoCandidates(game),[game.id,game.nonSteam,refresh]);
+  const src=candidates[sourceIndex];
+  return src?<img className="gl-game-logo" src={src} alt="" key={src}
+    onError={()=>setSourceIndex(n=>n+1)}/>:null;
 }
 
 function GameCard({
@@ -298,6 +320,7 @@ export function Dashboard() {
               <HeroBackdrop key={selected.id} game={selected} />
               <div className="gl-feature-shade" />
               <div className="gl-feature-content">
+                <GameLogo key={"logo-"+selected.id} game={selected}/>
                 <h1>{selected.title}</h1>
                 <p className="gl-desc">Selected from your Steam library</p>
                 <div className="gl-status">
@@ -306,6 +329,7 @@ export function Dashboard() {
                 </div>
                 <div className="gl-metrics">
                   <div className="gl-metric"><MdAccessTime /><div><small>PLAYTIME</small><strong>{playtimeLabel(selected.playtimeMinutes)}</strong></div></div>
+                  <HowLongToBeatCard key={"hltb-"+selected.id} game={selected}/>
                   <div className="gl-metric"><MdGridView /><div><small>LAST PLAYED</small><strong>{lastPlayedLabel(selected.lastPlayed)}</strong></div></div>
                   <div className="gl-metric"><MdStar /><div><small>ACHIEVEMENTS</small><strong>{selected.achievementsTotal !== undefined ? String(selected.achievementsUnlocked ?? 0) + " / " + selected.achievementsTotal : "—"}</strong></div></div>
                 </div>
