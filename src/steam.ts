@@ -1,4 +1,5 @@
 import { Navigation } from "@decky/ui";
+import { canonicalSteamAppId, isNonSteamAppId, requestSteamLaunch } from "./launchGame";
 
 export interface LibraryGame {
   id: number;
@@ -92,15 +93,15 @@ function gameFromRow(row: unknown): LibraryGame | null {
   const candidate = obj(row);
   const rawId = typeof row === "number" ? row
     : candidate?.appid ?? candidate?.app_id ?? candidate?.id;
-  const id = Number(rawId);
-  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  const id = canonicalSteamAppId(Number(rawId));
+  if (id === null) return null;
   const overview = obj(appStore?.GetAppOverviewByAppID?.(id)) || candidate;
   if (!overview) return null;
   const title = firstString(overview.display_name, overview.name, candidate?.display_name);
   if (!title) return null;
   const appType = Number(overview.app_type ?? candidate?.app_type ?? 1);
-  const nonSteam = appType === 1073741824 || overview.is_shortcut === true ||
-    overview.is_non_steam_game === true;
+  const nonSteam = isNonSteamAppId(id) || appType === 1073741824 ||
+    overview.is_shortcut === true || overview.is_non_steam_game === true;
   const customPoster = pathFromAsset(appStore?.GetCustomVerticalCapsuleURLs?.(overview));
   const customHero = pathFromAsset(appStore?.GetCustomHeroImageURLs?.(overview));
   return {
@@ -312,12 +313,12 @@ export function play(game: LibraryGame): void {
     return;
   }
   try {
-    const apps = globals().SteamClient?.Apps;
-    if (typeof apps?.RunGame === "function") {
-      apps.RunGame(String(game.id), "", 0, 100);
-      return;
-    }
-  } catch (e) { console.warn("[game-library] unable to launch", e); }
+    // Steam's default launch option is -1, not 0. Some AppImage/Flatpak
+    // shortcuts use a generated native Linux launch command which the
+    // forced option 0 does not start. Normalize signed shortcut AppIDs.
+    if (requestSteamLaunch(globals().SteamClient, game.id)) return;
+    console.warn("[game-library] Steam RunGame API unavailable; opening details");
+  } catch (e) { console.warn("[game-library] RunGame request failed", e); }
   openDetails(game);
 }
 export function lastPlayedLabel(timestamp: number): string {
