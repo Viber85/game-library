@@ -11,8 +11,9 @@ import {
   LibraryGame, openDetails, play, playtimeLabel, posterUrl,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
+import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster";
+import { getActiveUserId } from "./steam";
 
-type Filter = "playable" | "all" | "installed" | "favorites" | "nonsteam";
 type Sort = "recent" | "alphabetical";
 
 interface RailAction {
@@ -22,46 +23,24 @@ interface RailAction {
   go: () => void;
 }
 
-const filters: Array<{ id: Filter; label: string }> = [
-  { id: "playable", label: "Playable" },
-  { id: "all", label: "Your Collection" },
-  { id: "installed", label: "Installed" },
-  { id: "favorites", label: "Favorites" },
-  { id: "nonsteam", label: "Non-Steam" },
-];
-
-function filterGames(games: LibraryGame[], filter: Filter, sort: Sort): LibraryGame[] {
-  const matching = games.filter((g) => {
-    switch (filter) {
-      case "playable": return g.installed || g.nonSteam;
-      case "installed": return g.installed;
-      case "favorites": return g.favorite;
-      case "nonsteam": return g.nonSteam;
-      default: return true;
-    }
-  });
-
-  return matching.sort((a, b) => sort === "alphabetical"
-    ? a.title.localeCompare(b.title)
-    : b.lastPlayed - a.lastPlayed || a.title.localeCompare(b.title));
-}
+const consume = (e: GamepadEvent) => { e.preventDefault(); e.stopPropagation(); };
 
 function GameCard({
-  game, index, selected, onSelect, onLeftEdge, cardRef,
+  game, index, selected, onSelect, onMove, cardRef,
 }: {
   game: LibraryGame;
   index: number;
   selected: boolean;
   onSelect: () => void;
-  onLeftEdge: () => void;
+  onMove: (button: GamepadButton) => void;
   cardRef?: React.Ref<HTMLDivElement>;
 }) {
   const poster = posterUrl(game);
   const handleDirection = (e: GamepadEvent) => {
-    if (index === 0 && e.detail?.button === GamepadButton.DIR_LEFT) {
-      e.preventDefault();
-      e.stopPropagation();
-      onLeftEdge();
+    const b = e.detail?.button;
+    if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT || b === GamepadButton.DIR_UP) {
+      consume(e);
+      onMove(b);
     }
   };
 
@@ -76,7 +55,7 @@ function GameCard({
       onOptionsButton={() => openDetails(game)}
       onGamepadFocus={onSelect}
       onMouseEnter={onSelect}
-      onGamepadDirection={handleDirection}
+      onButtonDown={handleDirection}
       onOKActionDescription="Play"
       onOptionsActionDescription="Game details"
     >
@@ -91,12 +70,16 @@ function GameCard({
 
 export function Dashboard() {
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
-  const [filter, setFilter] = useState<Filter>("playable");
+  const [tabInfo, setTabInfo] = useState<{available: boolean; reason: string; tabs: SteamTab[]}>({available:false,reason:"Loading TabMaster…",tabs:[]});
+  const [activeTab, setActiveTab] = useState("AllGames");
   const [sort, setSort] = useState<Sort>("recent");
   const [selectedId, setSelectedId] = useState<number | undefined>();
   const [time, setTime] = useState(() => new Date());
-  const railFirstRef = useRef<HTMLDivElement>(null);
-  const gameFirstRef = useRef<HTMLDivElement>(null);
+  const railRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const sortRef = useRef<HTMLDivElement>(null);
+  const [railIndex, setRailIndex] = useState(0);
 
   useEffect(() => {
     const refresh = window.setInterval(() => setGames(getLibraryGames()), 15000);
@@ -104,7 +87,22 @@ export function Dashboard() {
     return () => { window.clearInterval(refresh); window.clearInterval(clock); };
   }, []);
 
-  const shown = useMemo(() => filterGames(games, filter, sort), [games, filter, sort]);
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const result = await loadSteamTabs(getActiveUserId());
+      if (active) setTabInfo(result);
+    };
+    void refresh();
+    const timer = window.setInterval(() => { void refresh(); }, 20000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
+  const tabs = tabInfo.available && tabInfo.tabs.length ? tabInfo.tabs : fallbackTabs;
+  const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
+  const tabResult = useMemo(() => gamesForTab(tab, games), [tab, games]);
+  const shown = useMemo(() => [...tabResult.games].sort(sort === "recent"
+    ? (a,b) => b.lastPlayed - a.lastPlayed || a.title.localeCompare(b.title)
+    : (a,b) => a.title.localeCompare(b.title)), [tabResult.games,sort]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
   const hero = selected ? heroUrl(selected) : undefined;
 
@@ -117,9 +115,24 @@ export function Dashboard() {
     { id: "power", label: "Power", icon: MdPowerSettingsNew, go: () => Navigation.OpenPowerMenu() },
   ];
 
-  const goToGame = () => {
-    const target = gameFirstRef.current;
+  const focusRail = (index: number) => {
+    const target = (index + railActions.length) % railActions.length;
+    setRailIndex(target);
+    railRefs.current[target]?.focus();
+  };
+  const goToGame = (index = 0) => {
+    const next = Math.max(0, Math.min(shown.length - 1, index));
+    const target = gameRefs.current[next];
+    if (target) {
+      target.focus();
+      target.scrollIntoView({block:"nearest",inline:"nearest"});
+      setSelectedId(shown[next].id);
+    } else pillRefs.current[0]?.focus();
+  };
+  const focusPill = (index:number) => {
+    const target = pillRefs.current[Math.max(0,Math.min(tabs.length - 1,index))];
     target?.focus();
+    target?.scrollIntoView({block:"nearest",inline:"nearest"});
   };
 
   return (
@@ -133,18 +146,18 @@ export function Dashboard() {
             return (
               <Focusable
                 key={action.id}
-                ref={index === 0 ? railFirstRef : undefined}
+                ref={el => { railRefs.current[index] = el; }}
                 className="gl-rail-item"
                 focusClassName="gl-focused"
                 noFocusRing
+                onGamepadFocus={() => setRailIndex(index)}
                 onActivate={action.go}
                 onOKActionDescription={action.label}
-                onGamepadDirection={(e: GamepadEvent) => {
-                  if (e.detail?.button === GamepadButton.DIR_RIGHT) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    goToGame();
-                  }
+                onButtonDown={(e: GamepadEvent) => {
+                  const button = e.detail?.button;
+                  if (button === GamepadButton.DIR_UP) { consume(e); focusRail(index-1); }
+                  else if (button === GamepadButton.DIR_DOWN) { consume(e); focusRail(index+1); }
+                  else if (button === GamepadButton.DIR_RIGHT) { consume(e); goToGame(); }
                 }}
                 onCancelButton={goToGame}
                 onCancelActionDescription="Return to games"
@@ -172,25 +185,36 @@ export function Dashboard() {
 
         <nav className="gl-filterbar" aria-label="Library filters">
           <Focusable className="gl-filters" flow-children="row">
-            {filters.map((item) => (
+            {tabs.map((item,index) => (
               <Focusable key={item.id}
-                className={"gl-pill" + (filter === item.id ? " gl-active" : "")}
+                ref={el => { pillRefs.current[index] = el; }}
+                className={"gl-pill" + (tab.id === item.id ? " gl-active" : "")}
                 focusClassName="gl-focused" noFocusRing
-                onActivate={() => { setFilter(item.id); setSelectedId(undefined); }}
-                onOKActionDescription={item.label}
+                onActivate={() => { setActiveTab(item.id); setSelectedId(undefined); }}
+                onButtonDown={(e:GamepadEvent) => {
+                  const b=e.detail?.button;
+                  if(b===GamepadButton.DIR_DOWN){consume(e);goToGame();}
+                  else if(b===GamepadButton.DIR_LEFT){consume(e);index===0?focusRail(0):focusPill(index-1);}
+                  else if(b===GamepadButton.DIR_RIGHT){consume(e);index===tabs.length-1?sortRef.current?.focus():focusPill(index+1);}
+                }}
+                onOKActionDescription={item.title}
               >
-                {item.label}
-                {item.id === "all" ? " (" + games.length + ")" : ""}
+                {item.title}
               </Focusable>
             ))}
           </Focusable>
-          <Focusable className="gl-sort" focusClassName="gl-focused" noFocusRing
+          <Focusable ref={sortRef} className="gl-sort" focusClassName="gl-focused" noFocusRing
             onActivate={() => setSort((s) => s === "recent" ? "alphabetical" : "recent")}
+            onButtonDown={(e:GamepadEvent)=>{
+              if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);focusPill(tabs.length-1);}
+              else if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);goToGame();}
+            }}
             onOKActionDescription="Sort games">
             <MdAccessTime /> {sort === "recent" ? "Recent" : "A–Z"}
           </Focusable>
         </nav>
 
+        {tabInfo.available && <div className="gl-source">TabMaster · {tabs.length} tabs</div>}
         {shown.length > 0 ? (
           <>
             <Focusable className="gl-strip" flow-children="row">
@@ -201,12 +225,16 @@ export function Dashboard() {
                   index={index}
                   selected={game.id === selected?.id}
                   onSelect={() => setSelectedId(game.id)}
-                  onLeftEdge={() => railFirstRef.current?.focus()}
-                  cardRef={index === 0 ? gameFirstRef : undefined}
+                  onMove={button=>{
+                    if(button===GamepadButton.DIR_LEFT)index===0?focusRail(railIndex):goToGame(index-1);
+                    else if(button===GamepadButton.DIR_RIGHT)goToGame(index+1);
+                    else if(button===GamepadButton.DIR_UP)focusPill(tabs.indexOf(tab));
+                  }}
+                  cardRef={el=>{gameRefs.current[index]=el;}}
                 />
               ))}
             </Focusable>
-            <div className="gl-pagination">{shown.length} games · D-pad Left from first game opens navigation</div>
+            <div className="gl-pagination">{shown.length} games · ↑ Tabs · ← Navigation</div>
 
             {selected && <section className="gl-feature" aria-label="Selected game">
               {hero && <img className="gl-hero" src={hero} alt="" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
@@ -238,10 +266,11 @@ export function Dashboard() {
           </>
         ) : (
           <div className="gl-empty">
-            <h1>{games.length === 0 ? "Your library is not available yet" : "No games in this filter"}</h1>
-            <p>{games.length === 0
-              ? (hasLibraryStore() ? "Steam has not returned game metadata. Try reopening this page." : "Steam's app store is not ready in this client build.")
-              : "Select another filter to see your games."}</p>
+            <h1>{!tabResult.supported ? "Open this tab in Steam" : games.length === 0 ? "Your library is not available yet" : "No games in this tab"}</h1>
+            <p>{!tabResult.supported ? tabResult.reason
+              : games.length === 0 ? (hasLibraryStore()
+                ? "Steam has not returned app overviews yet." : "Steam collectionStore is not ready.")
+                : "Choose another tab to find games."}</p>
             <Focusable className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing
               onActivate={() => Navigation.Navigate("/library")} onOKActionDescription="Open Steam library">
               Open Steam Library
@@ -249,6 +278,7 @@ export function Dashboard() {
           </div>
         )}
 
+        {!tabInfo.available && <div className="gl-sync-note">TabMaster: {tabInfo.reason}. Using default tabs.</div>}
         <footer className="gl-footer"><span>STEAM · Menu</span><span>A Select</span><span>B Back</span><span>← Navigation</span></footer>
       </div>
     </div>
