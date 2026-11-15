@@ -14,6 +14,7 @@ import { DASHBOARD_CSS } from "./theme";
 import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster";
 import { getActiveUserId } from "./steam";
 import { HowLongToBeatCard } from "./HltbCard";
+import { ProtonDBBadge } from "./ProtonDBBadge";
 
 type Sort = "recent" | "alphabetical";
 
@@ -323,6 +324,7 @@ export function Dashboard() {
                 <GameLogo key={"logo-"+selected.id} game={selected}/>
                 <h1>{selected.title}</h1>
                 <p className="gl-desc">Selected from your Steam library</p>
+                <ProtonDBBadge key={"proton-"+selected.id} game={selected}/>
                 <div className="gl-status">
                   <span><MdCheckCircle /> {selected.installed ? "Installed" : "Not installed"}</span>
                   {selected.nonSteam && <span><MdVideogameAsset /> Non-Steam</span>}
