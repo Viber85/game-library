@@ -196,4 +196,42 @@ export const DASHBOARD_CSS = String.raw`
   .gl-feature {margin-right:-20px;}
   .gl-feature-content {width:min(580px,78%);}
 }
+
+/* Custom Steam title artwork — preserve the transparent logo aspect ratio. */
+.gl-game-logo {
+  display:block; width:auto; max-width:min(390px,96%); max-height:72px;
+  object-fit:contain; object-position:left center; margin:0 0 9px;
+  filter:drop-shadow(0 2px 9px rgba(0,0,0,.62));
+}
+.gl-feature-content { width:min(775px,74%); padding:14px 28px; }
+.gl-feature h1 { font-size:clamp(22px,2.65vw,34px); }
+.gl-metrics { align-items:stretch; gap:8px; }
+.gl-metric { flex:1 1 0; padding:10px; gap:7px; }
+.gl-hltb { flex:1.65 1 0; min-width:190px; }
+.gl-hltb-icon { font-size:22px; align-self:flex-start; }
+.gl-hltb-body { min-width:0; flex:1; display:block; }
+.gl-hltb-body small { display:block; margin-bottom:5px; letter-spacing:.02em; }
+.gl-hltb-values {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+.gl-hltb-values span {display:flex;flex-direction:column;gap:2px;}
+.gl-hltb-values em {font-size:10px;font-style:normal;color:#a7c8e7;white-space:nowrap;}
+.gl-hltb-values strong {font-size:16px;color:#fff;white-space:nowrap;}
+.gl-hltb-empty {font-size:13px;color:#dceafa;display:block;white-space:nowrap;}
+@media (max-height:730px) {
+  .gl-game-logo {max-height:53px;margin-bottom:5px;}
+  .gl-feature-content {padding:8px 22px;}
+  .gl-feature h1 {font-size:24px;}
+  .gl-desc {margin-bottom:6px;}
+  .gl-status {margin-bottom:8px;}
+  .gl-metric {padding:7px 6px;}
+  .gl-hltb {min-width:175px;}
+}
+@media (max-width:1000px) {
+  .gl-feature-content {width:83%;}
+  .gl-metrics {gap:5px;}
+  .gl-hltb {min-width:157px;}
+  .gl-hltb-icon {display:none;}
+  .gl-hltb-values {gap:3px;}
+  .gl-hltb-values strong {font-size:13px;}
+  .gl-hltb-values em {font-size:9px;}
+}
 `;
