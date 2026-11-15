@@ -2,7 +2,7 @@ import { callable, definePlugin, routerHook } from "@decky/api";
 import {
   ButtonItem, Navigation, PanelSection, PanelSectionRow, ToggleField,
 } from "@decky/ui";
-import { Component, ReactNode, useState } from "react";
+import { Component, ReactNode, useEffect, useState } from "react";
 import { MdLibraryBooks } from "react-icons/md";
 import { Dashboard } from "./Dashboard";
 import { UpdatesPanel } from "./UpdatesPanel";
@@ -55,11 +55,11 @@ function ControlPanel() {
   const [home, setHome] = useState(defaultHome);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
-  useState(() => {
+  useEffect(() => {
     const refresh = () => setHome(defaultHome);
     listeners.add(refresh);
-    return undefined;
-  });
+    return () => { listeners.delete(refresh); };
+  }, []);
   const changeHome = (enabled: boolean) => {
     if (busy) return;
     setBusy(true);
