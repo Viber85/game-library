@@ -90,6 +90,11 @@ export const DASHBOARD_CSS = String.raw`
 .gl-button.gl-focused { box-shadow:0 0 0 2px #fff,0 0 18px #1eafff; }
 .gl-empty { display:flex; flex:1; min-height:0; flex-direction:column; align-items:flex-start; justify-content:center; gap:15px; }
 .gl-empty h1 { margin:0; } .gl-empty p { margin:0; color:var(--gl-muted); }
+.gl-sync-note { position:absolute; bottom:40px; left:34px; right:34px;
+  max-width:75%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:11px; color:#9fb5ce; pointer-events:none; }
+.gl-filterbar { min-width:0; }
+.gl-filters { scroll-behavior:smooth; }
 .gl-footer { display:flex; gap:30px; align-items:center; justify-content:flex-end; flex:0 0 38px;
   color:#b6c8d9; border-top:1px solid #173b5d; font-size:12px; }
 .gl-footer span:first-child { margin-right:auto; }
