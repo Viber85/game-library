@@ -32,11 +32,20 @@ const asArray = (v: any): any[] => {
 };
 const firstString = (...vs: unknown[]): string => vs.find(x => typeof x === "string" && x.length > 0) as string || "";
 const finite = (v: unknown) => typeof v === "number" && Number.isFinite(v) ? v : 0;
-const pathFromAsset = (v: unknown): string | undefined => {
-  if (typeof v === "string" && /^(https?:|data:|file:)/.test(v)) return v;
-  if (Array.isArray(v)) return v.map(pathFromAsset).find(Boolean);
+/** Steam caches art on steamloopback.host and returns root-relative URLs. */
+function resolveArtUrl(url: unknown): string | undefined {
+  if (typeof url !== "string" || !url.trim()) return undefined;
+  const candidate = url.trim();
+  if (/^https?:\/\//i.test(candidate) || /^data:image\//i.test(candidate)) return candidate;
+  if (candidate.startsWith("/")) return "https://steamloopback.host" + candidate;
+  if (candidate.startsWith("steamloopback.host/")) return "https://" + candidate;
   return undefined;
-};
+}
+function artList(value: unknown): string[] {
+  return (Array.isArray(value) ? value : [value])
+    .map(resolveArtUrl).filter((v):v is string=>Boolean(v));
+}
+const pathFromAsset = (value:unknown) => artList(value)[0];
 
 function collectionRows(id: string): any[] {
   try {
@@ -139,6 +148,49 @@ export function getActiveUserId(): string {
 
 export function hasLibraryStore(): boolean {
   return !!globals().collectionStore || !!globals().appStore;
+}
+/**
+ * Match Steam's own hero resolution. Both jpg/png custom candidates are tested,
+ * then cached Steam details, then the public store hero and wide header.
+ * Calling this on selection (instead of only when app overviews load)
+ * also picks up freshly configured SteamGridDB/Steam custom artwork.
+ */
+export function heroCandidates(game: LibraryGame): string[] {
+  const store = globals().appStore as AnyObject | undefined;
+  const details = (window as any).appDetailsStore as AnyObject | undefined;
+  const overview = store?.GetAppOverviewByAppID?.(game.id);
+  const candidates: string[] = [];
+  const add = (value:unknown) => { candidates.push(...artList(value)); };
+  try {
+    if (overview) {
+      add(store?.GetCustomHeroImageURLs?.(overview));
+      const hero = details?.GetHeroImages?.(overview);
+      add(hero?.rgHeroImages);
+      add(details?.GetHeaderImages?.(overview));
+    }
+  } catch (error) {
+    console.warn("[game-library] Steam hero lookup failed", error);
+  }
+  add(game.hero);
+  if (!game.nonSteam) {
+    add("https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/library_hero.jpg");
+  }
+  add(game.poster);
+  if (!game.nonSteam) {
+    add("https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/header.jpg");
+  }
+  return [...new Set(candidates)];
+}
+export function posterCandidates(game:LibraryGame): string[] {
+  const store = globals().appStore as AnyObject | undefined;
+  const overview = store?.GetAppOverviewByAppID?.(game.id);
+  const out:string[]=[];
+  try {
+    if(overview)out.push(...artList(store?.GetCustomVerticalCapsuleURLs?.(overview)));
+  } catch { /* a cover may still have a regular Steam asset */ }
+  out.push(...artList(game.poster));
+  if(!game.nonSteam)out.push("https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/library_600x900.jpg");
+  return [...new Set(out)];
 }
 export function posterUrl(game: LibraryGame): string | undefined {
   return game.poster || (game.nonSteam ? undefined :
