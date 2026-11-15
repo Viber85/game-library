@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "rollup -c",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:navigation": "node --test tests/grid-navigation.mjs"
   },
   "dependencies": {
     "@decky/api": "^1.1.3",
