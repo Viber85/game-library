@@ -47,6 +47,16 @@ def _runtime_cache_path():
     return pathlib.Path(directory) / "hltb_cache.json" if directory else BASE / "hltb_cache.json"
 
 
+def _load_protondb():
+    """Load packaged module by file path, irrespective of Decky's sys.path."""
+    spec = importlib.util.spec_from_file_location("game_library_local_protondb", str(BASE / "protondb.py"))
+    if not spec or not spec.loader:
+        raise RuntimeError("ProtonDB helper missing. Reinstall the plugin.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _tabmaster_path():
     settings_dir = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR", "")
     if not settings_dir:
@@ -59,6 +69,7 @@ def _tabmaster_path():
 
 class Plugin:
     _hltb_service = None
+    _protondb_service = None
 
     async def _main(self):
         pass
@@ -88,6 +99,12 @@ class Plugin:
         if self._hltb_service is None:
             self._hltb_service = _load_hltb().HltbService(_runtime_cache_path())
         return await asyncio.to_thread(self._hltb_service.lookup, appid, name)
+
+    async def protondb_tier(self, appid: int):
+        if self._protondb_service is None:
+            cache = _runtime_cache_path().with_name("protondb_cache.json")
+            self._protondb_service = _load_protondb().ProtonDBService(cache)
+        return await asyncio.to_thread(self._protondb_service.get, appid)
 
 
     async def _unload(self):
