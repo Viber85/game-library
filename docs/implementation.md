@@ -11,6 +11,9 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **src/theme.ts** — scoped CSS, no global Steam stylesheet mutation
 - **src/HltbCard.tsx** — on-demand HowLongToBeat statistics for the selected game
 - **hltb.py** — direct website search, result matching and disk caching
+- **protondb.py** — direct ProtonDB summary tier lookups, cache and validation
+- **src/ProtonDBBadge.tsx** — community compatibility badge above Installed
+- **src/tabmaster.ts** and **src/steam.ts** — ID/name mapping for Unifideck `[Unifideck] Epic/GOG` collections
 - **src/index.tsx** — optional /library/home patch with React error fallback and stored preference
 - **src/tabmaster.ts** — read-only TabMaster tab definitions and supported filter mapping
 - **src/UpdatesPanel.tsx** — GitHub version checker and Decky-managed installer with confirmation
@@ -46,7 +49,7 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 5. Controller event ordering, home-route boot interception and HLTB website lookup must be tested on a real Decky/SteamOS build;
    successful TypeScript compilation does not validate focus routing.
 6. The Home route is patched only while Use as Steam Home is enabled. A React error boundary restores Steam's original Home if rendering fails; other plugins patching the same route may still conflict.
-7. TabMaster integration requires access to the active user's saved TabMaster settings. Complex filter types are not silently approximated; the native library remains available.
+7. TabMaster integration requires access to the active user's saved TabMaster settings. Complex filter types are not silently approximated; the native library remains available. Epic/GOG resolve exact Unifideck collection membership (including regenerated IDs).
 8. The GitHub repository is public. Updater module discovery uses an explicit local-file import because Decky does not guarantee the plugin directory is on Python's module search path. Installed versions older than v0.2.0-test.4 may need one manual ZIP update.
 
 ## Tests to run on a handheld
@@ -63,5 +66,5 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 ## Build / package
 
 Run npm install, npm run typecheck, npm run build.
-For installation, package plugin.json, main.py, updates.py, hltb.py, dist/index.js and any Decky-generated assets
+For installation, package plugin.json, main.py, updates.py, hltb.py, protondb.py, dist/index.js and any Decky-generated assets
 using the conventional Decky Loader plugin folder/ZIP layout.
