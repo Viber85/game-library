@@ -1,0 +1,15 @@
+{
+  "name": "Game Library",
+  "author": "Viber85",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": [
+      "library",
+      "theme",
+      "game-mode",
+      "dashboard"
+    ],
+    "description": "Independent controller-first Game Mode dashboard with permanent navigation rail."
+  }
+}
