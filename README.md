@@ -6,6 +6,7 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 
 - **Optional Steam Home replacement (enabled by default):** intercept Steam's /library/home route after Decky loads, so Game Library is used when entering Game Mode. Disable in Quick Access to restore native Home; the default preference persists across reboots.
 - Permanent left navigation rail. Focusing an icon reveals its label.
+- **View More:** Each library tab initially displays just 15 portrait cards followed by a View More tile. The tile opens a scrollable full-library grid, with matching art/selection styling, controller navigation and B to return. The grid renders 60 items at a time and extends as the user browses.
 - Explicit D-pad Up/Down movement on the rail, Right/B back to the games.
 - D-pad Up from the game row accesses the top library tabs; Left/Right navigates them. L1/R1 cycles tabs directly from the game row, tab strip and left rail.
 - Read-only TabMaster integration: active Steam user's tabs, order and hidden tab visibility are read from TabMaster settings.
@@ -14,7 +15,7 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - **Unifideck + TabMaster:** Epic/GOG tabs resolve their actual `[Unifideck] Epic` and `[Unifideck] GOG` Steam collection membership. If Unifideck recreates a collection, the plugin resolves the new ID by the saved collection name instead of silently showing the wrong library.
 - Hero artwork respects Steam user-selected hero images (including custom SteamGridDB art) and tries jpg/png, local cached, native Steam and store fallbacks in order. If the game has no hero, a cover is used when available.
 - **Steam game title logos** show directly above the game's name, using the same native/custom artwork data as the hero.
-- **ProtonDB community badge** above Installed: Platinum, Gold, Silver, Bronze and Borked are read from ProtonDB by verified Steam AppID, never conflated with Valve Verified. Non-Steam games without a known Steam match show No Steam match instead of a fabricated rating; results are cached locally.
+- **ProtonDB status in the same row as Installed/Non-Steam.** Steam titles are rated by AppID; Epic/GOG shortcuts are resolved by their game TITLE against the Steam catalog with strict similarity checks, and then rated using that game's ProtonDB community summary. Unmatched/ambiguous titles never show invented scores. Results and title matches are locally cached.
 - **HowLongToBeat** Story, Extras and 100% duration cards beside Steam playtime. The card now uses a compact horizontal three-column layout (fixed specificity conflict with Steam metric styles). Direct on-demand requests to howlongtobeat.com, with 7-day disk cache, name validation, and graceful offline handling. HLTB has no official public API and availability is not guaranteed.
 - The native SteamOS status bar owns the top of the screen: the duplicate internal header is hidden and the dashboard is inset below it; the featured art panel has no outlined card border.
 - Colors have been tuned toward the deep-navy and cyan UI concept.
