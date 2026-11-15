@@ -8,7 +8,7 @@ import {
 import type { IconType } from "react-icons";
 import {
   getLibraryGames, hasLibraryStore, heroUrl, lastPlayedLabel,
-  LibraryGame, openDetails, play, playtimeLabel, posterCandidates, heroCandidates, logoCandidates,
+  LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates, heroCandidates, logoCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
 import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster";
@@ -115,7 +115,7 @@ function GameCard({
       onGamepadFocus={onSelect}
       onMouseEnter={onSelect}
       onButtonDown={handleDirection}
-      onOKActionDescription="Play"
+      onOKActionDescription={gameActionLabel(game)}
       onOptionsActionDescription="Game details"
     >
       <div className="gl-poster">
@@ -131,7 +131,7 @@ export function Dashboard() {
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
   const [tabInfo, setTabInfo] = useState<{available: boolean; reason: string; tabs: SteamTab[]}>({available:false,reason:"Loading TabMaster…",tabs:[]});
   const [activeTab, setActiveTab] = useState("AllGames");
-  const [sort, setSort] = useState<Sort>("recent");
+  const [sort, setSort] = useState<Sort>("alphabetical");
   const [selectedId, setSelectedId] = useState<number | undefined>();
   const [viewAll,setViewAll] = useState(false);
   const [gridLimit,setGridLimit] = useState(60);
@@ -425,8 +425,8 @@ export function Dashboard() {
                 </div>
                 <Focusable className="gl-actions" flow-children="row">
                   <Focusable className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing
-                    onActivate={() => play(selected)} onOKActionDescription="Play">
-                    <MdPlayArrow /> {selected.installed || selected.nonSteam ? "Play" : "View Game"}
+                    onActivate={() => play(selected)} onOKActionDescription={gameActionLabel(selected)}>
+                    {selected.installed ? <MdPlayArrow /> : <MdDownload />} {gameActionLabel(selected)}
                   </Focusable>
                   <Focusable className="gl-button" focusClassName="gl-focused" noFocusRing
                     onActivate={() => openDetails(selected)} onOKActionDescription="Game details">
