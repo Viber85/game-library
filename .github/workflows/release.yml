@@ -38,6 +38,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Fix Decky Python updater import by loading updates.py from the installed plugin directory; GitHub release checks work with the now-public repository. Includes regression tests. Manual ZIP installation is required once from older broken versions. Dashboard navigation and hero artwork still need device confirmation." \
+            --notes "Game Library now includes optional default Steam Home replacement (on by default, reversible in Decky), original Steam/SteamGridDB game title logo above the name, and on-demand direct HowLongToBeat Story/Extras/100% times beside playtime. Results are cached locally. No official HLTB API exists, so availability may vary after website changes. Frontend, Python and package tests pass; SteamOS device test is still required." \
             --target "$GITHUB_SHA" \
             --prerelease
