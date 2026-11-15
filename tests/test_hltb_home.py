@@ -1,6 +1,8 @@
 import asyncio
 import json
 import pathlib
+import sys
+import main
 import tempfile
 import unittest
 from unittest import mock
@@ -47,6 +49,25 @@ class HowLongToBeatTests(unittest.TestCase):
                 stale = svc2.lookup(367520,"Hollow Knight")
             self.assertEqual(stale["data"]["main"],20)
             self.assertEqual(stale["status"],"ok")
+
+    def test_search_supplies_website_token_and_parses_rows(self):
+        init={"token":"short-lived-test-token","hpKey":"challenge","hpVal":"test"}
+        with mock.patch.object(hltb,"_request",side_effect=[
+            init,{"data":[{"game_name":"Mad Max","comp_main":72000}]}
+        ]) as request:
+            rows=hltb._search("Mad Max")
+        self.assertEqual(rows[0]["game_name"],"Mad Max")
+        args,kwargs=request.call_args_list[1]
+        self.assertEqual(kwargs["token"],"short-lived-test-token")
+        self.assertEqual(kwargs["body"]["challenge"],"test")
+        self.assertEqual(kwargs["hp"],("challenge","test"))
+
+    def test_backend_imports_packaged_client_without_plugin_path_on_sys_path(self):
+        search_path = [p for p in sys.path if pathlib.Path(p or ".").resolve()!=main.BASE]
+        with mock.patch.object(sys,"path",search_path):
+            with mock.patch.dict(sys.modules,{"hltb":None}):
+                loaded = main._load_hltb()
+        self.assertTrue(hasattr(loaded,"HltbService"))
 
     def test_nonsteam_launcher_is_not_queried(self):
         with tempfile.TemporaryDirectory() as folder:
