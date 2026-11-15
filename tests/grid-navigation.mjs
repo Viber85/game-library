@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getGridColumnCount, gridNeighbor } from "../src/gridNavigation.ts";
+import { getGridColumnCount, gridNeighbor, canEnterNavigationRail } from "../src/gridNavigation.ts";
 
 test("left/right never escape the grid or wrap to another row", () => {
   assert.equal(gridNeighbor(0, 72, 6, "left"), 0);
@@ -61,4 +61,21 @@ test("invalid target indices cannot jump beyond the grid", () => {
   assert.equal(gridNeighbor(5, 6, 6, "down"), 5);
   assert.equal(gridNeighbor(0, 1, 6, "right"), 0);
   assert.equal(gridNeighbor(0, 0, 6, "left"), 0);
+});
+
+test("sidebar receives focus only from true first-column grid cells", () => {
+  for (const columns of [4,5,6]) {
+    for (let i=0;i<2*columns;i++) {
+      assert.equal(
+        canEnterNavigationRail(i,60,columns,"left"),
+        i % columns === 0,
+      );
+      for (const dir of ["right","up","down"]) {
+        assert.equal(canEnterNavigationRail(i,60,columns,dir),false);
+      }
+    }
+  }
+  assert.equal(canEnterNavigationRail(12,12,6,"left"),false);
+  assert.equal(canEnterNavigationRail(-1,12,6,"left"),false);
+  assert.equal(canEnterNavigationRail(0,12,0,"left"),false);
 });
