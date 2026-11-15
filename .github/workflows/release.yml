@@ -40,6 +40,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library v0.2.0-test.9 fixes full-grid controller focus. D-pad arrows now stay within the grid, detect the actual responsive column count, and move one visual row at a time. Pressing left on a left-edge card no longer opens the sidebar. Removed nested Steam focus scope and mouse hover interference; pending focus is retained while more games load. Node navigation regression tests added and pass. Verify on handheld." \
+            --notes "Game Library v0.2.0-test.10: fixes access to the left sidebar from the first column of View More without losing grid position. Right/B returns focus to the previously selected card. The selected game hero now fills the entire Steam Home background behind navigation tabs, carousel and details; the left gradient remains to protect text readability. Regression tests and build pass; please verify on SteamOS device." \
             --target "$GITHUB_SHA" \
             --prerelease
