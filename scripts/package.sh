@@ -16,7 +16,7 @@ trap 'rm -rf "$stage"' EXIT
 
 dest="$stage/game-library"
 mkdir -p "$dest/dist"
-cp plugin.json main.py updates.py hltb.py package.json README.md "$dest/"
+cp plugin.json main.py updates.py hltb.py protondb.py package.json README.md "$dest/"
 cp dist/index.js "$dest/dist/index.js"
 
 # Add source files for auditability without deploying node_modules.
@@ -31,5 +31,6 @@ unzip -Z1 "$output" | grep -qx 'game-library/plugin.json'
 unzip -Z1 "$output" | grep -qx 'game-library/main.py'
 unzip -Z1 "$output" | grep -qx 'game-library/updates.py'
 unzip -Z1 "$output" | grep -qx 'game-library/hltb.py'
+unzip -Z1 "$output" | grep -qx 'game-library/protondb.py'
 unzip -Z1 "$output" | grep -qx 'game-library/dist/index.js'
 unzip -Zt "$output"
