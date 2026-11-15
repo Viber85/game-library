@@ -31,26 +31,34 @@ In SteamOS Game Mode: Decky → Settings → Developer → Install plugin from Z
 
 The manual dashboard route remains available. The plugin **replaces Steam Home by default** when Decky loads and Steam visits `/library/home`. Toggle **Use as Steam Home** off in Decky Game Library to restore the original page. It does not change the SteamOS boot process itself; if Decky loads late the original Home may briefly appear first.
 
+## Steam achievement progress
+
+The selected Steam title calls `SteamClient.Apps.GetMyAchievementsForApp(appId)` to
+count achievements with `bAchieved === true`, then displays `unlocked / total`
+with a blue progress bar like the approved concept. Steam's native
+`appDetailsStore.GetAppDetails(appId).achievements` counts provide a fallback
+when the detailed achievement list has not loaded. Empty/unavailable
+achievement information is never presented as unlocked achievements.
+Non-Steam shortcuts have no native Steam achievements and show a dash.
+
 ## Native Linux AppImage / Flatpak launches
 
-When the native Steam Play button works but Game Library's button does not,
-the issue is in our launch integration, **not** the user's shortcut or Proton
-settings. This was reproduced by the device owner.
+The user's native Steam Play button launches their AppImages and Flatpaks,
+but older Game Library releases did not.
 
-In versions through **v0.2.0-test.11**, the dashboard called
-`SteamClient.Apps.RunGame(String(appId), "", 0, 100)`. This selects launch
-option index `0`, which is not guaranteed to be the application's default
-option and can fail for native Linux shortcuts.
+**Fixed in this development version:** Non-Steam shortcuts require the
+**64-bit Steam gameID** `(uint32(appid) << 32) | 0x02000000` as the first
+argument of `SteamClient.Apps.RunGame`, rather than the 32-bit shortcut
+appid used in earlier versions. The plugin checks `appStore.m_mapApps`
+using signed and unsigned appid keys, verifies a stored `gameid` belongs
+to the chosen shortcut, and computes the canonical gameID if necessary.
+It preserves Steam's default launch option `-1` and the documented
+Library Details launch source `100`.
 
-Game Library now selects the default launch option `-1` and normalizes
-signed/non-Steam shortcut AppIDs to unsigned 32-bit IDs. The fourth parameter
-is `ELaunchSource._2ftLibraryDetails = 100` (an invocation source, not
-an app type). The Play button uses Steam's native launch API and does not
-alter app permissions, Proton, launch options or existing shortcut targets.
-
-The helper is covered by direct invocation and signed-AppID regression tests.
-Steam's API reports no launch result, so device verification is still
-required. Native Steam remains available as a fallback via Game Details.
+This implementation follows the same gameID resolution used by Unifideck.
+No launch options, executable permissions, Proton settings or shortcuts
+are modified. The Decky build and unit tests pass; actual Play behaviour
+must be confirmed on the owner's SteamOS device.
 
 ## Updates
 
