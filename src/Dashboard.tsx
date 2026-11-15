@@ -3,7 +3,7 @@ import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
   MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSearch, MdSettings,
-  MdShoppingCart, MdStar, MdVideogameAsset,
+  MdShoppingCart, MdStar, MdVideogameAsset, MdChevronRight, MdArrowBack,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
@@ -17,6 +17,7 @@ import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 
 type Sort = "recent" | "alphabetical";
+const INITIAL_GAME_COUNT = 15;
 
 interface RailAction {
   id: string;
@@ -75,7 +76,7 @@ function GameLogo({game}:{game:LibraryGame}) {
 }
 
 function GameCard({
-  game, index, selected, onSelect, onMove, cardRef,
+  game, index, selected, onSelect, onMove, cardRef, activate, onCancel,
 }: {
   game: LibraryGame;
   index: number;
@@ -83,6 +84,8 @@ function GameCard({
   onSelect: () => void;
   onMove: (button: GamepadButton) => void;
   cardRef?: React.Ref<HTMLDivElement>;
+  activate?: () => void;
+  onCancel?: () => void;
 }) {
   const [coverIndex,setCoverIndex] = useState(0);
   const covers = posterCandidates(game);
@@ -90,7 +93,8 @@ function GameCard({
   const handleDirection = (e: GamepadEvent) => {
     const b = e.detail?.button;
     if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT ||
-        b === GamepadButton.DIR_UP || b === GamepadButton.BUMPER_LEFT ||
+        b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN ||
+        b === GamepadButton.BUMPER_LEFT ||
         b === GamepadButton.BUMPER_RIGHT) {
       consume(e);
       onMove(b);
@@ -104,7 +108,8 @@ function GameCard({
       focusClassName="gl-focused"
       noFocusRing
       preferredFocus={index === 0}
-      onActivate={() => play(game)}
+      onActivate={activate ?? (() => play(game))}
+      onCancelButton={onCancel}
       onOptionsButton={() => openDetails(game)}
       onGamepadFocus={onSelect}
       onMouseEnter={onSelect}
@@ -127,10 +132,13 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState("AllGames");
   const [sort, setSort] = useState<Sort>("recent");
   const [selectedId, setSelectedId] = useState<number | undefined>();
+  const [viewAll,setViewAll] = useState(false);
   const [time, setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
   const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
 
@@ -161,6 +169,8 @@ export function Dashboard() {
     ? (a,b) => b.lastPlayed - a.lastPlayed || a.title.localeCompare(b.title)
     : (a,b) => a.title.localeCompare(b.title)), [tabResult.games,sort]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
+  const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
+  const gridColumns = window.innerWidth < 860 ? 4 : window.innerWidth < 1120 ? 5 : 6;
   // Hero images are resolved on selection to honor custom SteamGridDB artwork.
 
   const railActions: RailAction[] = [
@@ -177,14 +187,30 @@ export function Dashboard() {
     setRailIndex(target);
     railRefs.current[target]?.focus();
   };
+  const focusGrid = (index:number) => {
+    const next=Math.max(0,Math.min(shown.length-1,index));
+    const node=fullGridRefs.current[next];
+    node?.focus();
+    node?.scrollIntoView({block:"nearest",inline:"nearest"});
+    if(shown[next])setSelectedId(shown[next].id);
+  };
   const goToGame = (index = 0) => {
-    const next = Math.max(0, Math.min(shown.length - 1, index));
+    if (viewAll) { focusGrid(index); return; }
+    const next = Math.max(0, Math.min(previewGames.length - 1, index));
     const target = gameRefs.current[next];
     if (target) {
       target.focus();
       target.scrollIntoView({block:"nearest",inline:"nearest"});
-      setSelectedId(shown[next].id);
+      setSelectedId(previewGames[next].id);
     } else pillRefs.current[0]?.focus();
+  };
+  const openGrid = () => {
+    setViewAll(true);
+    window.requestAnimationFrame(()=>focusGrid(0));
+  };
+  const closeGrid = () => {
+    setViewAll(false);
+    window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
   const focusPill = (index:number) => {
     const target = pillRefs.current[Math.max(0,Math.min(tabs.length - 1,index))];
@@ -197,6 +223,7 @@ export function Dashboard() {
     const currentIndex = Math.max(0,tabs.findIndex(x => x.id === tab.id));
     const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
     setActiveTab(tabs[nextIndex].id);
+    setViewAll(false);
     setSelectedId(undefined);
     // Focus target after React applies the new selected tab and game list.
     window.requestAnimationFrame(() => focusPill(nextIndex));
@@ -267,7 +294,7 @@ export function Dashboard() {
                 ref={el => { pillRefs.current[index] = el; }}
                 className={"gl-pill" + (tab.id === item.id ? " gl-active" : "")}
                 focusClassName="gl-focused" noFocusRing
-                onActivate={() => { setActiveTab(item.id); setSelectedId(undefined); }}
+                onActivate={() => { setActiveTab(item.id); setViewAll(false); setSelectedId(undefined); }}
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
                   const b=e.detail?.button;
@@ -295,9 +322,43 @@ export function Dashboard() {
         </nav>
 
         {shown.length > 0 ? (
+          viewAll ? (
+            <section className="gl-grid-page" aria-label={"All games: "+tab.title}>
+              <div className="gl-grid-heading">
+                <div><h2>{tab.title}</h2><span>{shown.length} games · Full library</span></div>
+                <Focusable className="gl-grid-back" noFocusRing focusClassName="gl-focused"
+                  onActivate={closeGrid} onCancelButton={closeGrid}
+                  onOKActionDescription="Back to games">
+                  <MdArrowBack/> Back to carousel
+                </Focusable>
+              </div>
+              <Focusable className="gl-full-grid-scroll" flow-children="column">
+                <div className="gl-full-grid">
+                  {shown.map((game,index)=>(
+                    <GameCard key={game.id} game={game} index={index}
+                      selected={game.id===selected?.id}
+                      onSelect={()=>setSelectedId(game.id)}
+                      activate={()=>openDetails(game)}
+                      onCancel={closeGrid}
+                      onMove={button=>{
+                        if(button===GamepadButton.DIR_LEFT)index%gridColumns===0?focusRail(railIndex):focusGrid(index-1);
+                        else if(button===GamepadButton.DIR_RIGHT)focusGrid(index+1);
+                        else if(button===GamepadButton.DIR_UP)index<gridColumns?focusPill(tabs.indexOf(tab)):focusGrid(index-gridColumns);
+                        else if(button===GamepadButton.DIR_DOWN)focusGrid(index+gridColumns);
+                        else if(button===GamepadButton.BUMPER_LEFT)cycleTab(-1);
+                        else if(button===GamepadButton.BUMPER_RIGHT)cycleTab(1);
+                      }}
+                      cardRef={el=>{fullGridRefs.current[index]=el;}}
+                    />
+                  ))}
+                </div>
+              </Focusable>
+              <div className="gl-grid-hint">A Game details · B Back · L1/R1 Tabs</div>
+            </section>
+          ) : (
           <>
             <Focusable className="gl-strip" flow-children="row">
-              {shown.map((game, index) => (
+              {previewGames.map((game, index) => (
                 <GameCard
                   key={game.id}
                   game={game}
@@ -306,7 +367,10 @@ export function Dashboard() {
                   onSelect={() => setSelectedId(game.id)}
                   onMove={button=>{
                     if(button===GamepadButton.DIR_LEFT)index===0?focusRail(railIndex):goToGame(index-1);
-                    else if(button===GamepadButton.DIR_RIGHT)goToGame(index+1);
+                    else if(button===GamepadButton.DIR_RIGHT) {
+                      if (index===previewGames.length-1 && shown.length>INITIAL_GAME_COUNT) viewMoreRef.current?.focus();
+                      else goToGame(index+1);
+                    }
                     else if(button===GamepadButton.DIR_UP)focusPill(tabs.indexOf(tab));
                     else if(button===GamepadButton.BUMPER_LEFT)cycleTab(-1);
                     else if(button===GamepadButton.BUMPER_RIGHT)cycleTab(1);
@@ -314,6 +378,19 @@ export function Dashboard() {
                   cardRef={el=>{gameRefs.current[index]=el;}}
                 />
               ))}
+              {shown.length>INITIAL_GAME_COUNT &&
+                <Focusable ref={viewMoreRef} className="gl-view-more" noFocusRing focusClassName="gl-focused"
+                  onActivate={openGrid} onOKActionDescription="View all games"
+                  onButtonDown={(e:GamepadEvent)=>{
+                    const b=e.detail?.button;
+                    if(b===GamepadButton.DIR_LEFT){consume(e);goToGame(previewGames.length-1);}
+                    else if(b===GamepadButton.DIR_UP){consume(e);focusPill(tabs.indexOf(tab));}
+                    else if(handleBumper(e))return;
+                  }}>
+                  <MdChevronRight size={42}/>
+                  <strong>View More</strong>
+                  <span>All {shown.length} games</span>
+                </Focusable>}
             </Focusable>
             <div className="gl-pagination">{shown.length} games · L1/R1 Tabs · ↑ Tabs · ← Navigation</div>
 
@@ -324,10 +401,10 @@ export function Dashboard() {
                 <GameLogo key={"logo-"+selected.id} game={selected}/>
                 <h1>{selected.title}</h1>
                 <p className="gl-desc">Selected from your Steam library</p>
-                <ProtonDBBadge key={"proton-"+selected.id} game={selected}/>
                 <div className="gl-status">
                   <span><MdCheckCircle /> {selected.installed ? "Installed" : "Not installed"}</span>
                   {selected.nonSteam && <span><MdVideogameAsset /> Non-Steam</span>}
+                  <ProtonDBBadge key={"proton-"+selected.id} game={selected}/>
                 </div>
                 <div className="gl-metrics">
                   <div className="gl-metric"><MdAccessTime /><div><small>PLAYTIME</small><strong>{playtimeLabel(selected.playtimeMinutes)}</strong></div></div>
@@ -348,6 +425,7 @@ export function Dashboard() {
               </div>
             </section>}
           </>
+          )
         ) : (
           <div className="gl-empty">
             <h1>{!tabResult.supported ? "Open this tab in Steam" : games.length === 0 ? "Your library is not available yet" : "No games in this tab"}</h1>
