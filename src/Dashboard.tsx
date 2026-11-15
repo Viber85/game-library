@@ -76,7 +76,7 @@ function GameLogo({game}:{game:LibraryGame}) {
 }
 
 function GameCard({
-  game, index, selected, onSelect, onMove, cardRef, activate, onCancel,
+  game, index, selected, onSelect, onMove, cardRef, activate, onCancel, captureVertical=false,
 }: {
   game: LibraryGame;
   index: number;
@@ -86,6 +86,7 @@ function GameCard({
   cardRef?: React.Ref<HTMLDivElement>;
   activate?: () => void;
   onCancel?: () => void;
+  captureVertical?: boolean;
 }) {
   const [coverIndex,setCoverIndex] = useState(0);
   const covers = posterCandidates(game);
@@ -93,7 +94,7 @@ function GameCard({
   const handleDirection = (e: GamepadEvent) => {
     const b = e.detail?.button;
     if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT ||
-        b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN ||
+        b === GamepadButton.DIR_UP || (captureVertical && b === GamepadButton.DIR_DOWN) ||
         b === GamepadButton.BUMPER_LEFT ||
         b === GamepadButton.BUMPER_RIGHT) {
       consume(e);
@@ -133,6 +134,7 @@ export function Dashboard() {
   const [sort, setSort] = useState<Sort>("recent");
   const [selectedId, setSelectedId] = useState<number | undefined>();
   const [viewAll,setViewAll] = useState(false);
+  const [gridLimit,setGridLimit] = useState(60);
   const [time, setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -170,6 +172,7 @@ export function Dashboard() {
     : (a,b) => a.title.localeCompare(b.title)), [tabResult.games,sort]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
   const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
+  const visibleGridGames = shown.slice(0,gridLimit);
   const gridColumns = window.innerWidth < 860 ? 4 : window.innerWidth < 1120 ? 5 : 6;
   // Hero images are resolved on selection to honor custom SteamGridDB artwork.
 
@@ -205,10 +208,12 @@ export function Dashboard() {
     } else pillRefs.current[0]?.focus();
   };
   const openGrid = () => {
+    setGridLimit(60);
     setViewAll(true);
     window.requestAnimationFrame(()=>focusGrid(0));
   };
   const closeGrid = () => {
+    setSelectedId(previewGames[0]?.id);
     setViewAll(false);
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
@@ -224,6 +229,7 @@ export function Dashboard() {
     const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
     setActiveTab(tabs[nextIndex].id);
     setViewAll(false);
+    setGridLimit(60);
     setSelectedId(undefined);
     // Focus target after React applies the new selected tab and game list.
     window.requestAnimationFrame(() => focusPill(nextIndex));
@@ -294,7 +300,7 @@ export function Dashboard() {
                 ref={el => { pillRefs.current[index] = el; }}
                 className={"gl-pill" + (tab.id === item.id ? " gl-active" : "")}
                 focusClassName="gl-focused" noFocusRing
-                onActivate={() => { setActiveTab(item.id); setViewAll(false); setSelectedId(undefined); }}
+                onActivate={() => { setActiveTab(item.id); setViewAll(false); setGridLimit(60); setSelectedId(undefined); }}
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
                   const b=e.detail?.button;
@@ -334,11 +340,16 @@ export function Dashboard() {
               </div>
               <Focusable className="gl-full-grid-scroll" flow-children="column">
                 <div className="gl-full-grid">
-                  {shown.map((game,index)=>(
+                  {visibleGridGames.map((game,index)=>(
                     <GameCard key={game.id} game={game} index={index}
                       selected={game.id===selected?.id}
-                      onSelect={()=>setSelectedId(game.id)}
+                      onSelect={()=>{
+                        setSelectedId(game.id);
+                        if(index>=gridLimit-12 && gridLimit<shown.length)
+                          setGridLimit(v=>Math.min(v+60,shown.length));
+                      }}
                       activate={()=>openDetails(game)}
+                      captureVertical
                       onCancel={closeGrid}
                       onMove={button=>{
                         if(button===GamepadButton.DIR_LEFT)index%gridColumns===0?focusRail(railIndex):focusGrid(index-1);
