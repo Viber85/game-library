@@ -15,7 +15,7 @@ import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster"
 import { getActiveUserId } from "./steam";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
-import { getGridColumnCount, gridNeighbor, type GridDirection } from "./gridNavigation";
+import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
 
 type Sort = "recent" | "alphabetical";
 const INITIAL_GAME_COUNT = 15;
@@ -143,6 +143,7 @@ export function Dashboard() {
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridLayoutRef = useRef<HTMLDivElement>(null);
   const pendingGridIndex = useRef<number | null>(null);
+  const lastGridFocusIndex = useRef(0);
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
@@ -197,6 +198,7 @@ export function Dashboard() {
     if (!node || !node.isConnected) return false;
     node.focus();
     node.scrollIntoView({block:"nearest",inline:"nearest"});
+    lastGridFocusIndex.current=index;
     if (shown[index]) setSelectedId(shown[index].id);
     return true;
   };
@@ -229,14 +231,23 @@ export function Dashboard() {
       button===GamepadButton.DIR_DOWN?"down":undefined;
     if(!direction)return;
     const columns=getGridColumnCount(fullGridLayoutRef.current);
+    if (canEnterNavigationRail(index, shown.length, columns, direction)) {
+      // This is an explicit first-column -> sidebar transition, not Steam's
+      // free-form spatial focus search. Right/B returns to the same game.
+      lastGridFocusIndex.current=index;
+      focusRail(railIndex);
+      return;
+    }
     const target=gridNeighbor(index,shown.length,columns,direction);
     if(target!==index)focusGrid(target);
-    // At every boundary retain the current focus, including first column.
-    // B returns to the carousel, L1/R1 change the active tab.
+    // Right/down/up at grid boundaries remain bounded to the grid.
   };
-  const goToGame = (index = 0) => {
-    if (viewAll) { focusGrid(index); return; }
-    const next = Math.max(0, Math.min(previewGames.length - 1, index));
+  const goToGame = (index?: number) => {
+    if (viewAll) {
+      focusGrid(index ?? lastGridFocusIndex.current);
+      return;
+    }
+    const next = Math.max(0, Math.min(previewGames.length - 1, index ?? 0));
     const target = gameRefs.current[next];
     if (target) {
       target.focus();
@@ -245,11 +256,13 @@ export function Dashboard() {
     } else pillRefs.current[0]?.focus();
   };
   const openGrid = () => {
+    lastGridFocusIndex.current=0;
     pendingGridIndex.current=0;
     setGridLimit(60);
     setViewAll(true);
   };
   const closeGrid = () => {
+    lastGridFocusIndex.current=0;
     pendingGridIndex.current=null;
     setSelectedId(previewGames[0]?.id);
     setViewAll(false);
@@ -263,6 +276,7 @@ export function Dashboard() {
   /** LB/RB move between TabMaster tabs, matching Steam's native bumper shortcuts. */
   const cycleTab = (direction: number) => {
     if (!tabs.length) return;
+    lastGridFocusIndex.current=0;
     const currentIndex = Math.max(0,tabs.findIndex(x => x.id === tab.id));
     const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
     setActiveTab(tabs[nextIndex].id);
@@ -321,6 +335,10 @@ export function Dashboard() {
       </aside>
 
       <div className="gl-main">
+        {!viewAll && selected && <div className="gl-scene" aria-hidden="true">
+          <HeroBackdrop key={selected.id} game={selected}/>
+          <div className="gl-scene-shade"/>
+        </div>}
         <header className="gl-header">
           <div className="gl-brand">STEAM <span className="gl-brand-sub">LIBRARY</span></div>
           <div className="gl-header-tools">
@@ -396,7 +414,7 @@ export function Dashboard() {
                   ))}
                 </div>
               </div>
-              <div className="gl-grid-hint">A Game details · B Back · L1/R1 Tabs</div>
+              <div className="gl-grid-hint">← First column: Menu · → / B: Return · L1/R1 Tabs</div>
             </section>
           ) : (
           <>
@@ -438,8 +456,6 @@ export function Dashboard() {
             <div className="gl-pagination">{shown.length} games · L1/R1 Tabs · ↑ Tabs · ← Navigation</div>
 
             {selected && <section className="gl-feature" aria-label="Selected game">
-              <HeroBackdrop key={selected.id} game={selected} />
-              <div className="gl-feature-shade" />
               <div className="gl-feature-content">
                 <GameLogo key={"logo-"+selected.id} game={selected}/>
                 <h1>{selected.title}</h1>
