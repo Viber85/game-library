@@ -42,6 +42,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library v0.2.0-test.11: adds Launch Help for installed Non-Steam shortcuts (AppImage/Flatpak troubleshooting). This release does not modify Steam launch commands or force Proton; Play still invokes the native SteamClient.Apps.RunGame API. If native Steam also fails to launch, check Steam Compatibility for accidental Windows Proton or missing Linux executable. No game launch fix is claimed; on-device verification required." \
+            --notes "Game Library v0.2.0-test.12 fixes Play on AppImage and Flatpak non-Steam shortcuts when Steam native Play works. Previous implementation forced launch option 0. The new implementation selects Steam default option -1 and normalizes signed shortcut AppIDs to unsigned uint32 before calling SteamClient.Apps.RunGame. Launch Help is removed because the reported failure was in our code. New regression tests verify exact launch arguments. Device verification required." \
             --target "$GITHUB_SHA" \
             --prerelease
