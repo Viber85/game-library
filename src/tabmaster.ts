@@ -1,5 +1,5 @@
 import { callable } from "@decky/api";
-import { getCollectionIdSet, LibraryGame } from "./steam";
+import { getCollectionIdSet, getUnifideckCollectionIds, LibraryGame } from "./steam";
 
 export type TabMasterFilter = { type: string; inverted?: boolean; params?: Record<string, any> };
 export type SteamTab = {
@@ -40,7 +40,8 @@ function matchFilter(filter: TabMasterFilter, depth=0): Predicate | null {
   switch (filter.type) {
     case "collection": {
       const id = p.id ?? p.collection;
-      const set = typeof id === "string" ? getCollectionIdSet(id) : null;
+      const name = typeof p.name === "string" ? p.name : undefined;
+      const set = typeof id === "string" ? getCollectionIdSet(id, name) : null;
       if (set) fn = g => set.has(g.id);
       break;
     }
@@ -89,7 +90,16 @@ export function gamesForTab(tab: SteamTab, games: LibraryGame[]): {
   games: LibraryGame[];
   reason?: string;
 } {
+  // TabMaster may have an Epic/GOG tab whose backing Unifideck collection
+  // was recreated with a different ID. Resolve the exact native Steam collection.
+  const source = /^epic$/i.test(tab.title.trim()) ? "Epic" :
+    /^gog$/i.test(tab.title.trim()) ? "GOG" : null;
+  const collectionFallback = (source && (!tab.filters ||
+    (tab.filters.length === 1 && tab.filters[0].type === "collection")))
+      ? getUnifideckCollectionIds(source) : null;
   if (!tab.filters) {
+    if (collectionFallback !== null)
+      return {supported:true, games:games.filter(g=>collectionFallback.has(g.id))};
     switch(tab.id.toLowerCase()) {
       case "allgames": return { supported:true, games };
       case "installed": return { supported:true, games:games.filter(g=>g.installed) };
@@ -101,7 +111,12 @@ export function gamesForTab(tab: SteamTab, games: LibraryGame[]): {
   }
   const predicates = tab.filters.map(f=>matchFilter(f));
   if (predicates.some(x=>x===null)) {
-    return { supported:false, games:[], reason:"This TabMaster tab uses filters that require Steam's native tab view." };
+    if(collectionFallback !== null) {
+      return {supported:true, games:games.filter(g=>collectionFallback.has(g.id))};
+    }
+    return { supported:false, games:[], reason:
+      source ? "Unifideck "+source+" collection not available. Sync Unifideck and restart Steam." :
+      "This TabMaster tab uses filters that require Steam's native tab view." };
   }
   const fns=predicates as Predicate[];
   return { supported:true, games:games.filter(g=>tab.filtersMode==="or"
