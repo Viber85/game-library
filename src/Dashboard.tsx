@@ -15,6 +15,7 @@ import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster"
 import { getActiveUserId } from "./steam";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
+import { AchievementsCard } from "./AchievementsCard";
 import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
 
 type Sort = "recent" | "alphabetical";
@@ -469,7 +470,7 @@ export function Dashboard() {
                   <div className="gl-metric"><MdAccessTime /><div><small>PLAYTIME</small><strong>{playtimeLabel(selected.playtimeMinutes)}</strong></div></div>
                   <HowLongToBeatCard key={"hltb-"+selected.id} game={selected}/>
                   <div className="gl-metric"><MdGridView /><div><small>LAST PLAYED</small><strong>{lastPlayedLabel(selected.lastPlayed)}</strong></div></div>
-                  <div className="gl-metric"><MdStar /><div><small>ACHIEVEMENTS</small><strong>{selected.achievementsTotal !== undefined ? String(selected.achievementsUnlocked ?? 0) + " / " + selected.achievementsTotal : "—"}</strong></div></div>
+                  <AchievementsCard key={"achievements-"+selected.id} game={selected}/>
                 </div>
                 <Focusable className="gl-actions" flow-children="row">
                   <Focusable className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing
