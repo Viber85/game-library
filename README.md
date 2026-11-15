@@ -23,11 +23,13 @@ In SteamOS Game Mode: Decky → Settings → Developer → Install plugin from Z
 
 The plugin is an opt-in preview route: it **does not replace Steam Home** automatically.
 
-## Updates and private repositories
+## Updates
 
 The updater follows the installed package version and only recognizes this repository's validated, versioned release ZIP assets. The Decky installer requires GitHub's SHA-256 release digest. It never executes downloaded code in this plugin's Python backend.
 
-**The repository is currently private.** GitHub returns HTTP 404 to Decky requests without GitHub authentication. This means direct in-plugin update checking and installation will not work until releases are hosted publicly or an authenticated distribution workflow is introduced. Manual ZIP installation from a logged-in GitHub browser continues to work. Do not embed GitHub access tokens in plugin code.
+**The repository is public.** Decky can now fetch official GitHub release metadata without GitHub credentials. Starting with **v0.2.0-test.4**, the plugin also loads its packaged updater module directly by file path, avoiding the Decky Python `No module named 'updates'` error.
+
+**One-time manual update:** v0.2.0-test.2 and v0.2.0-test.3 may not update themselves because of the existing Python import bug. Install v0.2.0-test.4 from the GitHub Release ZIP through Decky Developer Mode. After that, test the in-plugin Check for updates action.
 
 ## Tests
 
