@@ -44,7 +44,7 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
    successful TypeScript compilation does not validate focus routing.
 6. No automatic replacement of /library/home until safe navigation has been verified.
 7. TabMaster integration requires access to the active user's saved TabMaster settings. Complex filter types are not silently approximated; the native library remains available.
-8. The GitHub repo is private, so unauthenticated SteamOS update requests return 404 until a public release channel is available.
+8. The GitHub repository is public. Updater module discovery uses an explicit local-file import because Decky does not guarantee the plugin directory is on Python's module search path. Installed versions older than v0.2.0-test.4 may need one manual ZIP update.
 
 ## Tests to run on a handheld
 
