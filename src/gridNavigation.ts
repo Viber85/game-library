@@ -28,7 +28,9 @@ export function getGridColumnCount(grid: HTMLElement | null, fallback = 6): numb
   return resolved > 0 ? resolved : fallback;
 }
 
-/** A bounded neighbor map: no wrapping, no rail escape, no dropped focus.
+/** A bounded neighbor map: no wrapping or dropped focus.
+ * D-pad Left at the true first column is handled by the dashboard as
+ * an intentional transition to the permanent navigation rail.
  * In the final incomplete row, Down may land on its last available card.
  */
 export function gridNeighbor(
@@ -56,4 +58,19 @@ export function gridNeighbor(
       return Math.min(index + columns, total - 1);
     }
   }
+}
+
+/** Allow entering the permanent navigation rail only from a real left-edge
+ * grid tile, not because Steam guessed a different column during scrolling.
+ */
+export function canEnterNavigationRail(
+  index: number,
+  total: number,
+  columns: number,
+  direction: GridDirection,
+): boolean {
+  return direction === "left" && Number.isInteger(index) &&
+    Number.isInteger(columns) && columns > 0 &&
+    Number.isInteger(total) && index >= 0 && index < total &&
+    index % columns === 0;
 }
