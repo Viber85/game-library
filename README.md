@@ -4,6 +4,7 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 
 ## Features in 0.2 development previews
 
+- **Optional Steam Home replacement (enabled by default):** intercept Steam's /library/home route after Decky loads, so Game Library is used when entering Game Mode. Disable in Quick Access to restore native Home; the default preference persists across reboots.
 - Permanent left navigation rail. Focusing an icon reveals its label.
 - Explicit D-pad Up/Down movement on the rail, Right/B back to the games.
 - D-pad Up from the game row accesses the top library tabs; Left/Right navigates them. L1/R1 cycles tabs directly from the game row, tab strip and left rail.
@@ -11,6 +12,8 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Supports exact local evaluation of common TabMaster filters (collection, installed, platform, regex, whitelist, blacklist and merge). Other filters show a **native Steam Library fallback** rather than incorrect game results.
 - SteamOS game metadata now uses `collectionStore.GetCollection(...).allApps` with additional overview fallbacks.
 - Hero artwork respects Steam user-selected hero images (including custom SteamGridDB art) and tries jpg/png, local cached, native Steam and store fallbacks in order. If the game has no hero, a cover is used when available.
+- **Steam game title logos** show directly above the game's name, using the same native/custom artwork data as the hero.
+- **HowLongToBeat** Story, Extras and 100% duration cards beside Steam playtime. Direct on-demand requests to howlongtobeat.com, with 7-day disk cache, name validation, and graceful offline handling. HLTB has no official public API and availability is not guaranteed.
 - The native SteamOS status bar owns the top of the screen: the duplicate internal header is hidden and the dashboard is inset below it; the featured art panel has no outlined card border.
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
@@ -21,7 +24,7 @@ Download `game-library-v*.zip` from [GitHub Releases](https://github.com/Viber85
 
 In SteamOS Game Mode: Decky → Settings → Developer → Install plugin from ZIP. Open **Game Library → Open Game Library Dashboard**.
 
-The plugin is an opt-in preview route: it **does not replace Steam Home** automatically.
+The manual dashboard route remains available. The plugin **replaces Steam Home by default** when Decky loads and Steam visits `/library/home`. Toggle **Use as Steam Home** off in Decky Game Library to restore the original page. It does not change the SteamOS boot process itself; if Decky loads late the original Home may briefly appear first.
 
 ## Updates
 
