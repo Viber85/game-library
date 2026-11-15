@@ -38,6 +38,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Fix compact HowLongToBeat layout (Story / Extras / 100% in a horizontal row), add real ProtonDB compatibility tier above Installed with local caching, and resolve Epic/GOG games through their actual Unifideck Steam collections even when TabMaster has a stale collection ID. Other UI/SteamOS work is unchanged. GitHub CI is green; please test on device." \
+            --notes "Game Library preview: initial carousel limited to 15 games with View More opening a scrollable controller-friendly full grid (progressively loads more cards). ProtonDB badge is now inline with Installed; Epic/GOG titles resolve to high-confidence Steam catalog matches before retrieving the real ProtonDB tier. CI tests pass; verify on SteamOS." \
             --target "$GITHUB_SHA" \
             --prerelease
