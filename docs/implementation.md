@@ -17,7 +17,7 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **src/index.tsx** — optional /library/home patch with React error fallback and stored preference
 - **src/tabmaster.ts** — read-only TabMaster tab definitions and supported filter mapping
 - **src/UpdatesPanel.tsx** — GitHub version checker and Decky-managed installer with confirmation
-- **src/LinuxLaunchHelp.tsx** — read-only AppImage/Flatpak troubleshooting dialog for installed Non-Steam shortcuts
+- **src/launchGame.ts** — Steam's default RunGame launch option (-1) and normalized unsigned shortcut AppID
 - **main.py** — read-only TabMaster settings bridge and release validation endpoints
 - **updates.py** — pinned GitHub repository and SHA-256 asset validation
 
