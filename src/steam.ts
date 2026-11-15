@@ -200,7 +200,7 @@ export function getUnifideckCollectionIds(store:"Epic"|"GOG"):Set<number>|null {
 export function protonDbAppId(game:LibraryGame):number|null {
   if(!game.nonSteam)return Number.isSafeInteger(game.id)&&game.id>0?game.id:null;
   try {
-    const overview=globals().appStore?.GetAppOverviewByAppID?.(game.id);
+    const overview = globals().appStore?.GetAppOverviewByAppID?.(game.id) as AnyObject | undefined;
     const candidate=Number(overview?.unifideck_steam_app_id ?? overview?.matched_steam_appid);
     if(Number.isSafeInteger(candidate)&&candidate>0&&candidate!==game.id){
       return candidate;
