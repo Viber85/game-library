@@ -25,14 +25,14 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - Persistent icon rail at the left; icons stay visible.
 - Label appears only beside an icon with keyboard/gamepad/mouse focus.
 - Horizontal carousel uses portrait art from the user's Steam library.
-- Details and selected-game hero are beneath the carousel. The carousel shows 15 games plus a View More tile. View More reveals a full, controller-navigable game grid with progressive rendering (60 at a time). User-selected Steam title logo appears above the name, and HowLongToBeat duration statistics appear beside Steam playtime.
+- Details are beneath the carousel; the selected-game hero is a full-height background behind both the carousel and details, with a left gradient for legible metadata. The carousel shows 15 games plus a View More tile. View More reveals a full, controller-navigable game grid with progressive rendering (60 at a time). User-selected Steam title logo appears above the name, and HowLongToBeat duration statistics appear beside Steam playtime.
 - The footer summarizes controller actions.
 
 ## Navigation
 
 - When the **first game** receives D-pad Left, focus is transferred to the rail.
 - In the rail, D-pad Up/Down explicitly moves focus between icons; D-pad Right or B returns to the first game.
-- View More: bounded D-pad navigation across a multi-column grid; Left/Right never wraps or escapes to the side rail; Up/Down follow actual rendered column geometry; newly rendered cards retain pending focus. A opens game details and B returns to the main carousel. L1/R1 switches TabMaster tabs.
+- View More: bounded D-pad navigation across a multi-column grid; Left enters the side rail only from the actual first column; Right/B returns to the same grid game; Up/Down follow actual rendered column geometry; newly rendered cards retain pending focus. A opens game details and B returns to the main carousel. L1/R1 switches TabMaster tabs.
 - D-pad Up on a game card enters the TabMaster tab bar; Left/Right navigates tabs and Down returns to games.
 - Press A to activate an icon or play a game.
 - Bumper mappings and QAM must continue using Steam's own shortcuts.
