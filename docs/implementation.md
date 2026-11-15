@@ -13,11 +13,12 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **hltb.py** — direct website search, result matching and disk caching
 - **protondb.py** — direct ProtonDB summary tier lookups, guarded Steam Store name-to-AppID resolution for Epic/GOG shortcuts, local caches, match validation
 - **src/ProtonDBBadge.tsx** — community compatibility badge above Installed
+- **src/AchievementsCard.tsx / src/achievements.ts** — live achievement counts from Steam client, native details fallback, trophy and progress bar
 - **src/tabmaster.ts** and **src/steam.ts** — ID/name mapping for Unifideck `[Unifideck] Epic/GOG` collections
 - **src/index.tsx** — optional /library/home patch with React error fallback and stored preference
 - **src/tabmaster.ts** — read-only TabMaster tab definitions and supported filter mapping
 - **src/UpdatesPanel.tsx** — GitHub version checker and Decky-managed installer with confirmation
-- **src/launchGame.ts** — Steam's default RunGame launch option (-1) and normalized unsigned shortcut AppID
+- **src/launchGame.ts** — 64-bit validated Steam gameID for Non-Steam shortcuts (signed/unsigned appStore probing), RunGame default option (-1)
 - **main.py** — read-only TabMaster settings bridge and release validation endpoints
 - **updates.py** — pinned GitHub repository and SHA-256 asset validation
 
@@ -44,7 +45,7 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 1. Steam library metadata and launch APIs are internal and can differ between SteamOS versions.
    The adapter uses guarded reads; if a client exposes no supported source, a fallback to Steam's
    built-in Library is shown rather than invented game data.
-2. Favorite status and achievements are shown only when available.
+2. Favorite status and achievements are shown only when available; achievements are fetched for the selected Steam game from GetMyAchievementsForApp, with native app details fallback.
    Steam cloud sync state is **not fabricated**.
 3. Non-Steam artwork uses Steam's custom art where available, otherwise a fallback tile.
 4. The descriptive store text for each game is not available from the base overview API.
@@ -64,6 +65,8 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - Missing metadata / missing cover art / large game collections.
 - At least 1280×800 and other handheld resolutions.
 - SteamOS updates and absence/presence of other theme plugins.
+- Launch an installed native Linux AppImage and Flatpak from the custom dashboard; verify it matches native Steam Play.
+- Select a Steam game with achievements already earned, verify the acquired count and percentage against native Steam.
 
 ## Build / package
 
