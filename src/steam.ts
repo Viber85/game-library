@@ -298,10 +298,22 @@ export function heroUrl(game: LibraryGame): string | undefined {
 export function openDetails(game: LibraryGame): void {
   Navigation.Navigate("/library/app/"+game.id);
 }
+/** Steam's native game page owns install flows (download target, language,
+ * store-specific Unifideck prompts). Never RunGame for an uninstalled shortcut. */
+export function gameActionLabel(game: LibraryGame): "Play" | "Install" {
+  return game.installed ? "Play" : "Install";
+}
 export function play(game: LibraryGame): void {
+  // Not installed: hand off to native Steam/Unifideck details so the real
+  // install wizard can select a location and validate entitlements. The
+  // dashboard does not claim installation has started until Steam does.
+  if (!game.installed) {
+    openDetails(game);
+    return;
+  }
   try {
     const apps = globals().SteamClient?.Apps;
-    if (typeof apps?.RunGame === "function" && (game.installed || game.nonSteam)) {
+    if (typeof apps?.RunGame === "function") {
       apps.RunGame(String(game.id), "", 0, 100);
       return;
     }
