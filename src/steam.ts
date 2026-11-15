@@ -181,6 +181,30 @@ export function heroCandidates(game: LibraryGame): string[] {
   }
   return [...new Set(candidates)];
 }
+/** Steam's configured logo for this game, including SteamGridDB custom images. */
+export function logoCandidates(game: LibraryGame): string[] {
+  const store = globals().appStore as AnyObject | undefined;
+  const details = (window as any).appDetailsStore as AnyObject | undefined;
+  const candidates:string[] = [];
+  const add = (source:unknown) => candidates.push(...artList(source));
+  try {
+    const overview = store?.GetAppOverviewByAppID?.(game.id);
+    if (overview) {
+      add(store?.GetCustomLogoImageURLs?.(overview)); // jpg, png; invalid files skipped on image error
+      add(details?.GetLogoImages?.(overview)?.rgLogoImages);
+    }
+    const logoFile = details?.GetAppDetails?.(game.id)?.libraryAssets?.strLogoImage;
+    if (typeof logoFile === "string" && logoFile) {
+      add("https://steamloopback.host/assets/"+game.id+"/"+encodeURIComponent(logoFile));
+    }
+  } catch (error) {
+    console.warn("[game-library] game logo lookup failed", error);
+  }
+  if (!game.nonSteam) add(
+    "https://shared.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/logo.png"
+  );
+  return [...new Set(candidates)];
+}
 export function posterCandidates(game:LibraryGame): string[] {
   const store = globals().appStore as AnyObject | undefined;
   const overview = store?.GetAppOverviewByAppID?.(game.id);
