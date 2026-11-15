@@ -38,6 +38,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library preview: initial carousel limited to 15 games with View More opening a scrollable controller-friendly full grid (progressively loads more cards). ProtonDB badge is now inline with Installed; Epic/GOG titles resolve to high-confidence Steam catalog matches before retrieving the real ProtonDB tier. CI tests pass; verify on SteamOS." \
+            --notes "Game Library v0.2.0-test.8: default sort is A-Z for every tab, including View More. Uninstalled games and Unifideck shortcuts now show Install instead of Play. Pressing Install opens the native Steam/Unifideck game details for installation options; only installed games launch via Play. Controller hints updated. CI checks pass; device verification pending." \
             --target "$GITHUB_SHA" \
             --prerelease
