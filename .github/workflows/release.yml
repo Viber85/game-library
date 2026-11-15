@@ -40,6 +40,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library v0.2.0-test.10: fixes access to the left sidebar from the first column of View More without losing grid position. Right/B returns focus to the previously selected card. The selected game hero now fills the entire Steam Home background behind navigation tabs, carousel and details; the left gradient remains to protect text readability. Regression tests and build pass; please verify on SteamOS device." \
+            --notes "Game Library v0.2.0-test.11: adds Launch Help for installed Non-Steam shortcuts (AppImage/Flatpak troubleshooting). This release does not modify Steam launch commands or force Proton; Play still invokes the native SteamClient.Apps.RunGame API. If native Steam also fails to launch, check Steam Compatibility for accidental Windows Proton or missing Linux executable. No game launch fix is claimed; on-device verification required." \
             --target "$GITHUB_SHA" \
             --prerelease
