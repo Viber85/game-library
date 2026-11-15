@@ -2,6 +2,8 @@ import asyncio
 import json
 import os
 import pathlib
+import sys
+import main
 import tempfile
 import unittest
 from unittest import mock
@@ -32,6 +34,25 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(result["latest"]["sha256"], "a"*64)
             release["assets"][0]["browser_download_url"] = "https://untrusted.example/zip"
             self.assertFalse(validate_github_feed(pkg,json.dumps([release]))["available"])
+
+
+    def test_packaged_updater_import_is_independent_of_sys_path(self):
+        """Reproduce Decky importing main.py without adding its folder to sys.path."""
+        plugin_folder = str(main.BASE)
+        narrowed_path = [p for p in sys.path if pathlib.Path(p or ".").resolve() != main.BASE]
+        with mock.patch.object(sys, "path", narrowed_path):
+            with mock.patch.dict(sys.modules, {"updates": None}):
+                result = asyncio.run(Plugin().validate_github_releases("[]"))
+        self.assertTrue(result.get("ok"), result)
+        self.assertFalse(result.get("available"))
+        self.assertNotIn("No module named", str(result))
+
+    def test_packaged_updater_missing_module_is_actionable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(main, "BASE", pathlib.Path(tmp)):
+                result = asyncio.run(Plugin().validate_github_releases("[]"))
+        self.assertFalse(result["ok"])
+        self.assertIn("updates.py missing", result["error"])
 
 
 class TabMasterTests(unittest.TestCase):
