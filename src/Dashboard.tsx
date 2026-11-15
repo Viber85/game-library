@@ -203,7 +203,7 @@ export function Dashboard() {
                 }}
                 onOKActionDescription={item.title}
               >
-                {item.title}{games.length && tabCounts.get(item.id) !== null
+                {item.title}{games.length > 0 && tabCounts.get(item.id) !== null
                   ? "  " + tabCounts.get(item.id) : ""}
               </Focusable>
             ))}
