@@ -15,7 +15,6 @@ import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster"
 import { getActiveUserId } from "./steam";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
-import { LinuxLaunchHelp } from "./LinuxLaunchHelp";
 import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
 
 type Sort = "recent" | "alphabetical";
@@ -481,8 +480,6 @@ export function Dashboard() {
                     onActivate={() => openDetails(selected)} onOKActionDescription="Game details">
                     <MdInfo /> Game Details
                   </Focusable>
-                  {selected.nonSteam && selected.installed &&
-                    <LinuxLaunchHelp key={"launch-"+selected.id} game={selected}/>}
 
                 </Focusable>
               </div>
