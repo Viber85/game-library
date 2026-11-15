@@ -6,6 +6,8 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 
 - **Optional Steam Home replacement (enabled by default):** intercept Steam's /library/home route after Decky loads, so Game Library is used when entering Game Mode. Disable in Quick Access to restore native Home; the default preference persists across reboots.
 - Permanent left navigation rail. Focusing an icon reveals its label.
+- **Alphabetical by default:** All library tabs and View More start in A–Z order. Users can switch to Recent using the existing sort pill.
+- **Correct Play / Install state:** only games marked as installed show Play. Uninstalled Steam games and Unifideck/non-Steam shortcuts show Install, which opens the game's native Steam/Unifideck details for its proper install workflow. The plugin never attempts to launch an uninstalled shortcut.
 - **View More:** Each library tab initially displays just 15 portrait cards followed by a View More tile. The tile opens a scrollable full-library grid, with matching art/selection styling, controller navigation and B to return. The grid renders 60 items at a time and extends as the user browses.
 - Explicit D-pad Up/Down movement on the rail, Right/B back to the games.
 - D-pad Up from the game row accesses the top library tabs; Left/Right navigates them. L1/R1 cycles tabs directly from the game row, tab strip and left rail.
