@@ -6,10 +6,13 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 
 - Permanent left navigation rail. Focusing an icon reveals its label.
 - Explicit D-pad Up/Down movement on the rail, Right/B back to the games.
-- D-pad Up from the game row accesses the top library tabs; Left/Right navigates them.
+- D-pad Up from the game row accesses the top library tabs; Left/Right navigates them. L1/R1 cycles tabs directly from the game row, tab strip and left rail.
 - Read-only TabMaster integration: active Steam user's tabs, order and hidden tab visibility are read from TabMaster settings.
 - Supports exact local evaluation of common TabMaster filters (collection, installed, platform, regex, whitelist, blacklist and merge). Other filters show a **native Steam Library fallback** rather than incorrect game results.
 - SteamOS game metadata now uses `collectionStore.GetCollection(...).allApps` with additional overview fallbacks.
+- Hero artwork respects Steam user-selected hero images (including custom SteamGridDB art) and tries jpg/png, local cached, native Steam and store fallbacks in order. If the game has no hero, a cover is used when available.
+- The native SteamOS status bar owns the top of the screen: the duplicate internal header is hidden and the dashboard is inset below it; the featured art panel has no outlined card border.
+- Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
 ## Installing
