@@ -28,7 +28,23 @@ const consume = (e: GamepadEvent) => { e.preventDefault(); e.stopPropagation(); 
 /** Tries each custom/local/store asset until one actually loads. */
 function HeroBackdrop({game}:{game:LibraryGame}) {
   const [imageIndex,setImageIndex] = useState(0);
-  const candidates = heroCandidates(game);
+  const [artRevision,setArtRevision] = useState(0);
+  // Steam may not have loaded library assets when the game first receives focus.
+  // Request only the selected game's details; never prefetch the whole library.
+  useEffect(() => {
+    let live=true;
+    const store=(window as any).appDetailsStore;
+    if(typeof store?.RequestAppDetails==="function"){
+      try {
+        void Promise.resolve(store.RequestAppDetails(game.id)).then(()=>{
+          if(live){setImageIndex(0);setArtRevision(n=>n+1);}
+        }).catch(()=>{/* cached art fallback stays available */});
+      } catch {/* stock assets may still be available */ }
+    }
+    return ()=>{live=false};
+  },[game.id]);
+  const candidates = useMemo(() => heroCandidates(game),
+    [game.id,game.hero,game.poster,artRevision]);
   const src = candidates[imageIndex];
   if (!src) return null;
   return <img className="gl-hero" src={src} alt="" key={src}
