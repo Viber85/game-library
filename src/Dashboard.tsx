@@ -8,7 +8,7 @@ import {
 import type { IconType } from "react-icons";
 import {
   getLibraryGames, hasLibraryStore, heroUrl, lastPlayedLabel,
-  LibraryGame, openDetails, play, playtimeLabel, posterUrl,
+  LibraryGame, openDetails, play, playtimeLabel, posterCandidates, heroCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
 import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster";
@@ -25,6 +25,16 @@ interface RailAction {
 
 const consume = (e: GamepadEvent) => { e.preventDefault(); e.stopPropagation(); };
 
+/** Tries each custom/local/store asset until one actually loads. */
+function HeroBackdrop({game}:{game:LibraryGame}) {
+  const [imageIndex,setImageIndex] = useState(0);
+  const candidates = heroCandidates(game);
+  const src = candidates[imageIndex];
+  if (!src) return null;
+  return <img className="gl-hero" src={src} alt="" key={src}
+    onError={() => setImageIndex(n => n+1)}/>;
+}
+
 function GameCard({
   game, index, selected, onSelect, onMove, cardRef,
 }: {
@@ -35,10 +45,14 @@ function GameCard({
   onMove: (button: GamepadButton) => void;
   cardRef?: React.Ref<HTMLDivElement>;
 }) {
-  const poster = posterUrl(game);
+  const [coverIndex,setCoverIndex] = useState(0);
+  const covers = posterCandidates(game);
+  const poster = covers[coverIndex];
   const handleDirection = (e: GamepadEvent) => {
     const b = e.detail?.button;
-    if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT || b === GamepadButton.DIR_UP) {
+    if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT ||
+        b === GamepadButton.DIR_UP || b === GamepadButton.BUMPER_LEFT ||
+        b === GamepadButton.BUMPER_RIGHT) {
       consume(e);
       onMove(b);
     }
@@ -60,7 +74,7 @@ function GameCard({
       onOptionsActionDescription="Game details"
     >
       <div className="gl-poster">
-        {poster ? <img src={poster} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : null}
+        {poster ? <img src={poster} alt="" loading="lazy" key={poster} onError={() => setCoverIndex(n => n+1)} /> : null}
         <span className="gl-poster-name">{game.title}</span>
         {game.installed && <MdCheckCircle className="gl-installed-indicator" aria-label="Installed" />}
       </div>
@@ -108,7 +122,7 @@ export function Dashboard() {
     ? (a,b) => b.lastPlayed - a.lastPlayed || a.title.localeCompare(b.title)
     : (a,b) => a.title.localeCompare(b.title)), [tabResult.games,sort]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
-  const hero = selected ? heroUrl(selected) : undefined;
+  // Hero images are resolved on selection to honor custom SteamGridDB artwork.
 
   const railActions: RailAction[] = [
     { id: "home", label: "Home", icon: MdHome, go: () => Navigation.Navigate("/library/home") },
@@ -138,6 +152,25 @@ export function Dashboard() {
     target?.focus();
     target?.scrollIntoView({block:"nearest",inline:"nearest"});
   };
+  /** LB/RB move between TabMaster tabs, matching Steam's native bumper shortcuts. */
+  const cycleTab = (direction: number) => {
+    if (!tabs.length) return;
+    const currentIndex = Math.max(0,tabs.findIndex(x => x.id === tab.id));
+    const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+    setActiveTab(tabs[nextIndex].id);
+    setSelectedId(undefined);
+    // Focus target after React applies the new selected tab and game list.
+    window.requestAnimationFrame(() => focusPill(nextIndex));
+  };
+  const handleBumper = (e:GamepadEvent):boolean => {
+    if (e.detail?.button === GamepadButton.BUMPER_LEFT) {
+      consume(e);cycleTab(-1);return true;
+    }
+    if (e.detail?.button === GamepadButton.BUMPER_RIGHT) {
+      consume(e);cycleTab(1);return true;
+    }
+    return false;
+  };
 
   return (
     <div className="gl-root">
@@ -158,6 +191,7 @@ export function Dashboard() {
                 onActivate={action.go}
                 onOKActionDescription={action.label}
                 onButtonDown={(e: GamepadEvent) => {
+                  if (handleBumper(e)) return;
                   const button = e.detail?.button;
                   if (button === GamepadButton.DIR_UP) { consume(e); focusRail(index-1); }
                   else if (button === GamepadButton.DIR_DOWN) { consume(e); focusRail(index+1); }
@@ -196,6 +230,7 @@ export function Dashboard() {
                 focusClassName="gl-focused" noFocusRing
                 onActivate={() => { setActiveTab(item.id); setSelectedId(undefined); }}
                 onButtonDown={(e:GamepadEvent) => {
+                  if(handleBumper(e))return;
                   const b=e.detail?.button;
                   if(b===GamepadButton.DIR_DOWN){consume(e);goToGame();}
                   else if(b===GamepadButton.DIR_LEFT){consume(e);index===0?focusRail(0):focusPill(index-1);}
@@ -211,6 +246,7 @@ export function Dashboard() {
           <Focusable ref={sortRef} className="gl-sort" focusClassName="gl-focused" noFocusRing
             onActivate={() => setSort((s) => s === "recent" ? "alphabetical" : "recent")}
             onButtonDown={(e:GamepadEvent)=>{
+              if(handleBumper(e))return;
               if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);focusPill(tabs.length-1);}
               else if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);goToGame();}
             }}
@@ -233,6 +269,8 @@ export function Dashboard() {
                     if(button===GamepadButton.DIR_LEFT)index===0?focusRail(railIndex):goToGame(index-1);
                     else if(button===GamepadButton.DIR_RIGHT)goToGame(index+1);
                     else if(button===GamepadButton.DIR_UP)focusPill(tabs.indexOf(tab));
+                    else if(button===GamepadButton.BUMPER_LEFT)cycleTab(-1);
+                    else if(button===GamepadButton.BUMPER_RIGHT)cycleTab(1);
                   }}
                   cardRef={el=>{gameRefs.current[index]=el;}}
                 />
@@ -241,7 +279,7 @@ export function Dashboard() {
             <div className="gl-pagination">{shown.length} games · ↑ Tabs · ← Navigation</div>
 
             {selected && <section className="gl-feature" aria-label="Selected game">
-              {hero && <img className="gl-hero" src={hero} alt="" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+              <HeroBackdrop key={selected.id} game={selected} />
               <div className="gl-feature-shade" />
               <div className="gl-feature-content">
                 <h1>{selected.title}</h1>
@@ -283,7 +321,7 @@ export function Dashboard() {
         )}
 
         {!tabInfo.available && <div className="gl-sync-note">TabMaster: {tabInfo.reason}. Using default tabs.</div>}
-        <footer className="gl-footer"><span>STEAM · Menu</span><span>A Select</span><span>B Back</span><span>← Navigation</span></footer>
+        <footer className="gl-footer"><span>STEAM · Menu</span><span>L1 / R1 · Tabs</span><span>A Select</span><span>B Back</span><span>← Navigation</span></footer>
       </div>
     </div>
   );
