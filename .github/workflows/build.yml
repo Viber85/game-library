@@ -1,4 +1,4 @@
-name: Build and typecheck
+name: Build and package Decky plugin
 
 on:
   push:
@@ -14,7 +14,11 @@ jobs:
           node-version: "24"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Build
-        run: npm run build
+      - name: Build and package ZIP
+        run: bash scripts/package.sh
+      - name: Publish installable ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-library-install-zip
+          path: game-library-v*.zip
+          if-no-files-found: error
