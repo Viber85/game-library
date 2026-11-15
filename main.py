@@ -27,6 +27,26 @@ def _load_updater():
 
 
 
+def _load_hltb():
+    """Load the locally packaged HLTB helper, regardless of Decky's Python sys.path."""
+    spec = importlib.util.spec_from_file_location("game_library_local_hltb", str(BASE / "hltb.py"))
+    if not spec or not spec.loader:
+        raise RuntimeError("HowLongToBeat helper missing. Reinstall the plugin.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _settings_path():
+    directory = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR")
+    return pathlib.Path(directory) / "game_library.json" if directory else BASE / ".game_library_settings.json"
+
+
+def _runtime_cache_path():
+    directory = os.environ.get("DECKY_PLUGIN_RUNTIME_DIR") or os.environ.get("DECKY_PLUGIN_SETTINGS_DIR")
+    return pathlib.Path(directory) / "hltb_cache.json" if directory else BASE / "hltb_cache.json"
+
+
 def _tabmaster_path():
     settings_dir = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR", "")
     if not settings_dir:
@@ -38,8 +58,37 @@ def _tabmaster_path():
 
 
 class Plugin:
+    _hltb_service = None
+
     async def _main(self):
         pass
+
+    async def get_dashboard_settings(self):
+        """Enabled by default on Steam Home, with a persisted opt-out in Decky."""
+        try:
+            data = json.loads(_settings_path().read_text(encoding="utf-8"))
+            return {"default_home": data.get("default_home", True) is True}
+        except (OSError, ValueError, TypeError):
+            return {"default_home": True}
+
+    async def set_dashboard_settings(self, default_home: bool):
+        if type(default_home) is not bool:
+            return False
+        path = _settings_path()
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = path.with_suffix(".tmp")
+            temporary.write_text(json.dumps({"default_home": default_home}), encoding="utf-8")
+            os.replace(temporary, path)
+            return True
+        except OSError:
+            return False
+
+    async def hltb_times(self, appid: int, name: str):
+        if self._hltb_service is None:
+            self._hltb_service = _load_hltb().HltbService(_runtime_cache_path())
+        return await asyncio.to_thread(self._hltb_service.lookup, appid, name)
+
 
     async def _unload(self):
         pass
