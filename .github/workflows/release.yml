@@ -44,6 +44,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library v0.2.0-test.12 fixes Play on AppImage and Flatpak non-Steam shortcuts when Steam native Play works. Previous implementation forced launch option 0. The new implementation selects Steam default option -1 and normalizes signed shortcut AppIDs to unsigned uint32 before calling SteamClient.Apps.RunGame. Launch Help is removed because the reported failure was in our code. New regression tests verify exact launch arguments. Device verification required." \
+            --notes "Game Library v0.2.0-test.13: fix Play for Steam native Non-Steam AppImage and Flatpak shortcuts using the validated 64-bit gameID (not the 32-bit appid), matching Unifideck. Achievement card now reads unlocked/total from Steam GetMyAchievementsForApp, falls back to Steam app details, and shows the blue progress bar from the approved visual. Unit and build tests pass. Real SteamOS device confirmation pending." \
             --target "$GITHUB_SHA" \
             --prerelease
