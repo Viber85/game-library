@@ -1,0 +1,28 @@
+/* Steam button left menu + app running menu overlay. */
+#MainNavMenuContainer,
+.mainmenuapprunning_NavigationMenu_1zXgP,
+.mainmenuapprunning_AppColumn_3FAI9,
+.mainmenu_MainMenu_3m2bS,
+.mainmenuapprunning_FocusedColumn_lz9Db {
+  background:linear-gradient(180deg,#091b31,#030c1d) !important;
+  color:var(--glm-text) !important;
+}
+#MainNavMenuContainer {border-right:1px solid var(--glm-border) !important;}
+#MainNavMenuContainer [role="menuitem"] {
+  background:transparent !important;
+  color:var(--glm-text) !important;
+  border-left:3px solid transparent !important;
+  border-radius:7px !important;
+}
+#MainNavMenuContainer [role="menuitem"]:is(.gpfocus,.gpfocuswithin),
+#MainNavMenuContainer [role="menuitem"][aria-selected="true"] {
+  background:linear-gradient(90deg,#174875,#112b4a) !important;
+  border-left-color:var(--glm-accent) !important;
+  color:#fff !important;
+  box-shadow:inset 0 0 0 1px rgba(75,193,255,.42),
+    0 0 13px rgba(32,164,255,.26) !important;
+}
+.mainmenuapprunning_NavigationMenuItem_1G0K4.mainmenuapprunning_Active_1jG8i>div:first-child {
+  background:var(--glm-accent) !important;
+}
+#MainNavMenuContainer [class*="Separator"] {background:var(--glm-border) !important;}
