@@ -44,6 +44,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library v0.2.0-test.13: fix Play for Steam native Non-Steam AppImage and Flatpak shortcuts using the validated 64-bit gameID (not the 32-bit appid), matching Unifideck. Achievement card now reads unlocked/total from Steam GetMyAchievementsForApp, falls back to Steam app details, and shows the blue progress bar from the approved visual. Unit and build tests pass. Real SteamOS device confirmation pending." \
+            --notes "Game Library v0.2.0-test.14: bundle a matching Midnight Navy/Cyan system-wide CSS Loader theme for Steam Menu, QAM, Settings, Downloads, header/footer, dialogs and buttons. A new reversible System Colors option inside Game Library installs/removes the CSS Loader theme without changing other themes. CSS Loader must be installed and Game Library Midnight activated once in CSS Loader after Refresh. Includes safe installer tests; real SteamOS device verification pending." \
             --target "$GITHUB_SHA" \
             --prerelease
