@@ -164,7 +164,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "7";
+const AUDIT_REVISION = "8";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -256,13 +256,17 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     // Document-root marker also works when Steam mounts Settings outside .BasicUI.
     document.documentElement?.setAttribute?.('data-glm-settings-root','');
     const findPane=(element,minWidth,maxWidth)=>{
+      // Prefer the outermost Settings pane, not the first inner scroll list.
+      // Storage's games list is nested and its disk/header background sits
+      // outside that list; styling only the inner list leaves a blue haze.
+      let pane=null;
       for(let parent=element?.parentElement;parent&&parent!==root;
           parent=parent.parentElement){
         const b=parent.getBoundingClientRect?.();
         if(b&&b.width>=width*minWidth&&b.width<=width*maxWidth&&
-          b.height>=height*.48&&b.height<=height*1.1)return parent;
+          b.height>=height*.48&&b.height<=height*1.1)pane=parent;
       }
-      return null;
+      return pane;
     };
     const navPane=findPane(nav[0],.10,.40);
     const mainPane=findPane(rows[0],.42,.91);
