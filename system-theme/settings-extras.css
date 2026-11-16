@@ -255,7 +255,7 @@ html[data-glm-settings-root] [data-glm-settings-sidebar] {
   background-image:none !important;
 }
 html[data-glm-settings-root] [data-glm-settings-main],
-html[data-glm-settings-root] [data-glm-settings-main] > div:not([data-glm-settings-row]):not([data-glm-settings-row-part]) {
+html[data-glm-settings-root] [data-glm-settings-main] > :where(div:not([data-glm-settings-row]):not([data-glm-settings-row-part])) {
   background:var(--glm-settings-canvas) !important;
   background-image:none !important;
 }
