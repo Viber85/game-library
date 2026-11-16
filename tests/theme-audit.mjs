@@ -22,6 +22,8 @@ function createSteamPage(initial="settings") {
     body:surface,
     querySelector:(query)=>{
       if(query===".BasicUI" || query.includes("#GamepadUI_Full_Root"))return surface;
+      if(mode==="settings"&&query.includes("gamepadpagedsettings_") &&
+          query.includes("gamepaddialog_Field"))return row;
       if(mode==="settings"&&query.includes("gamepadpagedsettings_"))return settings;
       if(mode==="settings"&&query.includes("gamepaddialog_Field"))return row;
       if(mode==="game"&&query.includes("appdetails_"))return game;
