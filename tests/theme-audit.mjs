@@ -274,3 +274,55 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   assert.equal(html.hasAttribute("data-glm-settings-root"),false);
   assert.equal(main.hasAttribute("data-glm-settings-main"),false);
 });
+
+
+test("fast Midnight watcher responds to Steam DOM changes before slow polling",()=>{
+  let observed=null,notify=null,frame=null,frameCalls=0,scans=0;
+  let disconnected=0,cancelled=0,stopped=0,fallbackMs=0;
+  const root={querySelectorAll:()=>[]};
+  const document={
+    documentElement:{},body:root,
+    querySelector:(query)=>query.includes(".BasicUI")?root:null,
+    querySelectorAll:(query)=>query==="style"?
+      [{textContent:"--game-library-midnight-active: 44;"}]:[],
+  };
+  class MockObserver {
+    constructor(callback){notify=callback;}
+    observe(node,options){observed={node,options};}
+    disconnect(){disconnected++;}
+  }
+  const window={};
+  const context={window,document,Date,JSON,Set,Map,Array,Math,
+    MutationObserver:MockObserver,
+    getComputedStyle:()=>({
+      backgroundColor:"rgb(2, 8, 21)",getPropertyValue:()=> "44",
+    }),
+    requestAnimationFrame:(callback)=>{frameCalls++;frame=callback;return 7;},
+    cancelAnimationFrame:(id)=>{if(id===7)cancelled++;},
+    setInterval:(_callback,delay)=>{fallbackMs=delay;return 12;},
+    clearInterval:(id)=>{if(id===12)stopped++;},
+  };
+  const run=(script)=>vm.runInNewContext(script,context);
+  assert.equal(run(THEME_AUDIT_INSTALL_SCRIPT),true);
+  assert.equal(observed?.node,document.documentElement);
+  assert.equal(observed?.options.childList,true);
+  assert.equal(observed?.options.subtree,true);
+  assert.equal(observed?.options.attributes,undefined,
+    "Our own theme marker attribute writes must not reschedule scans");
+  assert.equal(fallbackMs,5000,"Periodic scan is only a slow fallback");
+  scans=parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks;
+  assert.equal(scans,1,"Initial synchronous scan still runs");
+  notify();notify();notify(); // Many Steam React insertions in the same frame
+  assert.equal(frameCalls,1,"DOM changes coalesce into one animation frame");
+  assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,1);
+  frame();
+  assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,2);
+  notify(); // An update queued while Midnight is being disabled
+  assert.equal(run(THEME_AUDIT_REMOVE_SCRIPT),true);
+  assert.equal(disconnected,1);
+  assert.equal(cancelled,1);
+  assert.equal(stopped,1);
+  assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).installed,false);
+  frame(); // Stale queued frame after removal must not run a scan
+  assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,0);
+});
