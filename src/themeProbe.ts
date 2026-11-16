@@ -164,7 +164,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "4";
+const AUDIT_REVISION = "5";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -174,79 +174,123 @@ const AUDIT_REVISION = "4";
  * All markers are removed on each scan, so other pages revert normally.
  */
 export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
-  const attrs=['data-glm-settings-root','data-glm-settings-row',
-    'data-glm-settings-navitem','data-glm-settings-row-part'];
+  // Visual-only recognition; never inspect page text, credentials, network
+  // names, URLs, values, images or game data.
+  const attrs = ['data-glm-settings-root','data-glm-settings-row',
+    'data-glm-settings-navitem','data-glm-settings-row-part',
+    'data-glm-settings-sidebar','data-glm-settings-main'];
   try {
-    const previousRows=new Set(document.querySelectorAll('[data-glm-settings-row]'));
-    const previousParts=new Set(document.querySelectorAll('[data-glm-settings-row-part]'));
-    for(const node of document.querySelectorAll('[data-glm-settings-root],[data-glm-settings-row],[data-glm-settings-navitem],[data-glm-settings-row-part]'))
+    const oldRows=new Set(document.querySelectorAll('[data-glm-settings-row]'));
+    const oldParts=new Set(document.querySelectorAll('[data-glm-settings-row-part]'));
+    for(const node of document.querySelectorAll(attrs.map(a=>'['+a+']').join(',')))
       for(const attr of attrs)node.removeAttribute?.(attr);
     const root=document.querySelector('.BasicUI') ||
       document.querySelector('#GamepadUI_Full_Root');
-    if(!root || !root.querySelectorAll)return false;
-    const semantic=document.querySelector('[class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]');
+    if(!root)return false;
+    const semantic=Boolean(document.querySelector(
+      '[class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]'));
     const width=window.innerWidth||document.documentElement?.clientWidth||0;
     const height=window.innerHeight||document.documentElement?.clientHeight||0;
     if(width<500||height<270)return false;
-    const nodes=Array.from(root.querySelectorAll('[class]')).slice(0,1450);
-    const right=[],left=[],rectangles=new Map();
-    const blueGray=(element)=>{
-      const raw=getComputedStyle(element).backgroundColor||'';
-      const p=raw.match(/[0-9.]+/g)?.map(Number)||[];
-      if(p.length<3 || p.length>3 && p[3]<.65)return false;
-      const [r,g,b]=p;
-      return b>=75 && b>r+12 && b>=g*.85 && g>=r*.83;
-    };
-    for(const el of nodes){
-      if(!el.getBoundingClientRect || !/^(?:DIV|BUTTON|LI|SECTION)$/i.test(el.tagName||''))continue;
-      const box=el.getBoundingClientRect();
-      if(!box||box.height<23||box.height>100||box.top<height*.035||
-         box.bottom>height*.97)continue;
-      rectangles.set(el,box);
-      if(box.left>=width*.24 && box.width>=width*.42 &&
-         box.width<=width*.80 && (blueGray(el)||previousRows.has(el)))right.push(el);
-      if(box.left>=0 && box.left<=width*.18 && box.width>=width*.09 &&
-         box.width<=width*.35 && box.right<=width*.41)left.push(el);
-    }
-    // Count distinct row elevations, not nested nodes in a single row.
-    const bands=(items)=>{
-      const seen=new Set();
-      for(const el of items){
-        const box=rectangles.get(el);
-        if(box)seen.add(Math.round(box.top/13));
+    const left=[],right=[];
+    const positions=new Map();
+    const isRow=(el,kind)=>{
+      if(!el || !/^(?:DIV|BUTTON|LI|SECTION)$/i.test(el.tagName||'') ||
+          typeof el.getBoundingClientRect!=='function')return false;
+      const b=el.getBoundingClientRect();
+      if(b.top<height*.035 || b.bottom>height*.98)return false;
+      if(kind==='left'){
+        if(b.height<20||b.height>78||b.left<0||b.left>width*.23||
+           b.width<width*.10||b.width>width*.36||b.right>width*.44)return false;
+      }else{
+        if(b.height<24||b.height>104||b.left<width*.22||
+           b.width<width*.40||b.width>width*.85||b.right>width*1.07)return false;
       }
-      return seen.size;
+      positions.set(el,b);
+      return true;
     };
-    if(!semantic && (bands(left)<8 || bands(right)<4))return false;
-    root.setAttribute?.('data-glm-settings-root','');
-    const uniqueRows=new Map();
-    for(const el of right){
-      const box=rectangles.get(el), key=Math.round(box.top/9);
-      const old=uniqueRows.get(key);
-      if(!old||rectangles.get(old).width<box.width)uniqueRows.set(key,el);
+    const pushStack=(stack,kind)=>{
+      for(const el of stack){
+        if(!isRow(el,kind))continue;
+        const arr=kind==='left'?left:right;
+        arr.push(el);
+      }
+    };
+    // Element sampling hits rendered rows, even if Valve has thousands of
+    // off-screen nodes or paints a row via pseudo elements/gradients.
+    if(typeof document.elementsFromPoint==='function'){
+      for(let y=Math.round(height*.075);y<height*.94;y+=15){
+        pushStack(document.elementsFromPoint(width*.14,y).slice(0,16),'left');
+        pushStack(document.elementsFromPoint(width*.56,y).slice(0,18),'right');
+      }
     }
-    const rows=Array.from(uniqueRows.values());
+    // Browser builds without elementsFromPoint or with a nested Steam pane.
+    // The result is still confirmed by a two-column Settings layout.
+    if(left.length<8||right.length<4){
+      const all=root.querySelectorAll?.('[class]')||[];
+      const limit=Math.min(all.length,6500);
+      for(let i=0;i<limit;i++){
+        const el=all[i];
+        if(isRow(el,'left'))left.push(el);
+        else if(isRow(el,'right'))right.push(el);
+      }
+    }
+    const groupRows=(nodes)=>{
+      const groups=new Map();
+      for(const el of nodes){
+        const rect=positions.get(el);
+        if(!rect)continue;
+        const key=Math.round(rect.top/11);
+        const existing=groups.get(key);
+        // The outer full-width field is preferable to a nested label.
+        if(!existing||positions.get(existing).width<rect.width)groups.set(key,el);
+      }
+      return Array.from(groups.values()).sort((a,b)=>positions.get(a).top-positions.get(b).top);
+    };
+    const nav=groupRows(left),rows=groupRows(right);
+    // Distinct settings categories on the left + broad field strips on the
+    // right. Unlike screen-copy matching, this is language independent.
+    const match=Boolean(semantic || (nav.length>=8 && rows.length>=4));
+    if(!match)return false;
+    root.setAttribute?.('data-glm-settings-root','');
+    const findPane=(element,minWidth,maxWidth)=>{
+      for(let parent=element?.parentElement;parent&&parent!==root;
+          parent=parent.parentElement){
+        const b=parent.getBoundingClientRect?.();
+        if(b&&b.width>=width*minWidth&&b.width<=width*maxWidth&&
+          b.height>=height*.48&&b.height<=height*1.1)return parent;
+      }
+      return null;
+    };
+    const navPane=findPane(nav[0],.10,.40);
+    const mainPane=findPane(rows[0],.42,.91);
+    navPane?.setAttribute?.('data-glm-settings-sidebar','');
+    mainPane?.setAttribute?.('data-glm-settings-main','');
+    const blueGray=(el)=>{
+      const style=getComputedStyle(el);
+      const rgba=String(style.backgroundColor||'').match(/[0-9.]+/g)?.map(Number)||[];
+      if(rgba.length>=4&&rgba[3]<.35)return false;
+      const painted=rgba.length>=3 && rgba[2]>=rgba[0]+8 &&
+        rgba[2]>=rgba[1]*.83 && rgba[2]>=70 &&
+        !(rgba[1]>150&&rgba[2]>165);
+      return painted || style.backgroundImage && style.backgroundImage!=='none';
+    };
     for(const row of rows){
       row.setAttribute?.('data-glm-settings-row','');
-      const box=rectangles.get(row);
-      // An independently colored end segment often holds network icons.
-      for(const child of Array.from(row.children||[]).slice(0,12)){
-        if(!child.getBoundingClientRect || !(blueGray(child)||previousParts.has(child)))continue;
+      const b=positions.get(row);
+      // Recolor only painted child strips; never the small toggle tracks,
+      // Wi-Fi glyphs, SVG icons, or actual form controls.
+      for(const child of Array.from(row.children||[]).slice(0,16)){
+        if(!/^(?:DIV|SECTION)$/i.test(child.tagName||'') ||
+           !child.getBoundingClientRect)continue;
         const c=child.getBoundingClientRect();
-        if(c.width>=16 && c.width<width*.23 &&
-           c.height>=box.height*.6 && c.height<=box.height*1.2)
+        if(c.width<Math.max(64,width*.053) || c.width>b.width*.98 ||
+           c.height<b.height*.55 || c.height>b.height*1.25)continue;
+        if(blueGray(child)||oldParts.has(child))
           child.setAttribute?.('data-glm-settings-row-part','');
       }
     }
-    if(bands(left)>=8){
-      const nav=new Map();
-      for(const el of left){
-        const box=rectangles.get(el), key=Math.round(box.top/9);
-        const old=nav.get(key);
-        if(!old||rectangles.get(old).width<box.width)nav.set(key,el);
-      }
-      for(const el of nav.values())el.setAttribute?.('data-glm-settings-navitem','');
-    }
+    for(const item of nav)item.setAttribute?.('data-glm-settings-navitem','');
     return rows.length>0;
   }catch{return false;}
 })()`;
