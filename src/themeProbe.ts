@@ -164,7 +164,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "5";
+const AUDIT_REVISION = "6";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -302,9 +302,15 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   const revision = "${AUDIT_REVISION}";
   let state = window[key];
   if (state && state.revision === revision) return true;
-  if (state && state.intervalId) clearInterval(state.intervalId);
-  state = { revision, intervalId: null, latestSettings: null, latestGame: null,
-    latestOther: null, sampleTicks:0, lastScanAt:0 };
+  if (state) {
+    state.observer?.disconnect?.();
+    if (state.frameId != null && typeof cancelAnimationFrame === 'function')
+      cancelAnimationFrame(state.frameId);
+    if (state.intervalId != null) clearInterval(state.intervalId);
+  }
+  state = { revision, intervalId: null, observer: null, frameId: null,
+    latestSettings: null, latestGame: null, latestOther: null,
+    sampleTicks:0, lastScanAt:0 };
   window[key] = state;
   const sample = () => {
     if (window[key] !== state) return;
@@ -327,8 +333,38 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       /* Steam may be rebuilding its React tree; retry on the next tick. */
     }
   };
+  // Steam builds its Settings DOM in stages. Observe structural additions
+  // and coalesce them into one scan on the next frame instead of waiting
+  // for the 1.8-second polling interval. Only childList is observed:
+  // our own data-glm-* marker attribute changes NEVER trigger this watcher.
+  const scheduleScan=()=>{
+    if(window[key]!==state || state.frameId!=null)return;
+    if(typeof requestAnimationFrame!=='function') {
+      sample();
+      return;
+    }
+    state.frameId=requestAnimationFrame(()=>{
+      state.frameId=null;
+      if(window[key]===state)sample();
+    });
+  };
   sample();
-  state.intervalId = setInterval(sample, 1800);
+  let observing=false;
+  if(typeof MutationObserver==='function' && document.documentElement) {
+    try {
+      state.observer=new MutationObserver(scheduleScan);
+      state.observer.observe(document.documentElement,{
+        childList:true,subtree:true
+      });
+      observing=true;
+    }catch{
+      state.observer?.disconnect?.();
+      state.observer=null;
+    }
+  }
+  // Slow fallback for Steam route changes that don't insert DOM nodes,
+  // and for clients without MutationObserver support.
+  state.intervalId=setInterval(sample,observing?5000:1800);
   return true;
 })()`;
 
@@ -347,7 +383,18 @@ export const THEME_AUDIT_READ_SCRIPT = `(() => {
 export const THEME_AUDIT_REMOVE_SCRIPT = `(() => {
   const key = "${AUDIT_KEY}";
   const state = window[key];
-  if (state && state.intervalId) clearInterval(state.intervalId);
+  if (state) {
+    state.observer?.disconnect?.();
+    if(state.frameId!=null && typeof cancelAnimationFrame==='function')
+      cancelAnimationFrame(state.frameId);
+    if(state.intervalId!=null)clearInterval(state.intervalId);
+  }
+  // Remove temporary visual markers as soon as Midnight is disabled.
+  const attrs=['data-glm-settings-root','data-glm-settings-row',
+    'data-glm-settings-navitem','data-glm-settings-row-part',
+    'data-glm-settings-sidebar','data-glm-settings-main'];
+  for(const node of document.querySelectorAll(attrs.map(a=>'['+a+']').join(',')))
+    for(const attr of attrs)node.removeAttribute?.(attr);
   delete window[key];
   return true;
 })()`;
