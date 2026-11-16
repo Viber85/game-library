@@ -57,6 +57,17 @@ def _load_protondb():
     return module
 
 
+def _system_theme():
+    """Load only our bundled theme installer, not arbitrary sys.path modules."""
+    path = BASE / "system_theme.py"
+    spec = importlib.util.spec_from_file_location("game_library_theme_installer", str(path))
+    if not spec or not spec.loader:
+        raise RuntimeError("System theme helper missing from Decky installation")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.ThemeInstaller(BASE)
+
+
 def _tabmaster_path():
     settings_dir = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR", "")
     if not settings_dir:
@@ -138,6 +149,27 @@ class Plugin:
         result = await asyncio.to_thread(self._protondb_service.get, appid_to_query)
         return {**result, "appid": appid_to_query, "matched_title": matched_title}
 
+
+
+    async def system_theme_status(self):
+        try:
+            return await asyncio.to_thread(_system_theme().status)
+        except Exception as exc:
+            return {"ok": False, "installed": False, "error": type(exc).__name__}
+
+    async def install_system_theme(self):
+        """User-triggered installation into CSS Loader's documented theme path."""
+        try:
+            return await asyncio.to_thread(_system_theme().install)
+        except Exception as exc:
+            return {"ok": False, "installed": False, "error": type(exc).__name__}
+
+    async def remove_system_theme(self):
+        """Only remove files which were installed by this Game Library theme."""
+        try:
+            return await asyncio.to_thread(_system_theme().remove)
+        except Exception as exc:
+            return {"ok": False, "installed": False, "error": type(exc).__name__}
 
 
     async def _unload(self):
