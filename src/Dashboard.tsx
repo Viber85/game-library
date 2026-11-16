@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
-  MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSettings,
+  MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSearch, MdSettings,
   MdShoppingCart, MdStar, MdVideogameAsset, MdChevronRight, MdArrowBack,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
@@ -137,6 +137,7 @@ export function Dashboard() {
   const [selectedId, setSelectedId] = useState<number | undefined>();
   const [viewAll,setViewAll] = useState(false);
   const [gridLimit,setGridLimit] = useState(60);
+  const [time,setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sidebarRef = useRef<HTMLElement>(null);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -152,7 +153,8 @@ export function Dashboard() {
 
   useEffect(() => {
     const refresh = window.setInterval(() => setGames(getLibraryGames()), 15000);
-    return () => { window.clearInterval(refresh); };
+    const clock = window.setInterval(() => setTime(new Date()), 15000);
+    return () => { window.clearInterval(refresh); window.clearInterval(clock); };
   }, []);
 
   useEffect(() => {
@@ -358,12 +360,25 @@ export function Dashboard() {
           <HeroBackdrop key={selected.id} game={selected}/>
           <div className="gl-scene-shade"/>
         </div>}
-        {/* The SteamOS status indicators remain native, above this header. */}
-        <header className="gl-header gl-library-topbar" aria-label="Game Library">
+        {/* A floating, self-contained navigation bar; no simulated system stats. */}
+        <header className="gl-header gl-library-topbar" aria-label="Library navigation">
           <div className="gl-topbar-titles">
-            <span className="gl-topbar-title">Game Library</span>
-            <span className="gl-topbar-divider" aria-hidden="true" />
             <span className="gl-topbar-current" title={tab.title} aria-live="polite">{tab.title}</span>
+          </div>
+          <div className="gl-topbar-tools">
+            <Focusable className="gl-topbar-search" focusClassName="gl-focused" noFocusRing
+              onActivate={() => Navigation.Navigate("/search")} onOKActionDescription="Search games"
+              onButtonDown={(e:GamepadEvent) => {
+                if(handleBumper(e))return;
+                if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);focusPill(Math.max(0,tabs.indexOf(tab)));}
+              }}
+              onCancelButton={() => focusPill(Math.max(0,tabs.indexOf(tab)))}
+              aria-label="Search Steam games" title="Search">
+              <MdSearch aria-hidden="true" />
+            </Focusable>
+            <time className="gl-topbar-clock" dateTime={time.toISOString()}>
+              {time.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
+            </time>
           </div>
         </header>
 
