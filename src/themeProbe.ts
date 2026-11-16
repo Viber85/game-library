@@ -48,9 +48,9 @@ export const THEME_PROBE_SCRIPT=`(() => {
   // SSIDs, games or image data are accessed. Useful if CSS modules are hashed.
   const surfaces = new Map();
   let surfaceElements = 0;
-  if(routeKind!=='other'||count(settings)||count(games)){
+  if(count('.BasicUI,#GamepadUI_Full_Root,[class*="gamepadui_BasicUI"]')>0){
     const all = surface?.querySelectorAll?.('[class]') || [];
-    const limit = Math.min(all.length, 360);
+    const limit = Math.min(all.length, 280);
     for(let n=0;n<limit;n++){
       const element=all[n];
       if(!element || !/^(?:DIV|BUTTON|SECTION|LI|A)$/i.test(element.tagName||''))continue;
@@ -158,10 +158,13 @@ export type ThemeAudit={
   installed:boolean;
   latestSettings:ThemeAuditSample|null;
   latestGame:ThemeAuditSample|null;
+  latestOther:ThemeAuditSample|null;
+  sampleTicks:number;
+  lastScanAt:number;
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "2";
+const AUDIT_REVISION = "3";
 
 export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   const key = "${AUDIT_KEY}";
@@ -169,13 +172,18 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   let state = window[key];
   if (state && state.revision === revision) return true;
   if (state && state.intervalId) clearInterval(state.intervalId);
-  state = { revision, intervalId: null, latestSettings: null, latestGame: null };
+  state = { revision, intervalId: null, latestSettings: null, latestGame: null,
+    latestOther: null, sampleTicks:0, lastScanAt:0 };
   window[key] = state;
   const sample = () => {
     if (window[key] !== state) return;
     try {
       const probe = JSON.parse(${THEME_PROBE_SCRIPT});
       const at = Date.now();
+      state.sampleTicks++;
+      state.lastScanAt=at;
+      if (probe.routeKind === 'other' && probe.surfaceElements >= 4)
+        state.latestOther = {at,probe};
       if (probe.settingsRoots > 0 || probe.fieldRows > 0 && probe.networkRows > 0 ||
           probe.routeKind === 'settings' && probe.surfaceElements >= 3)
         state.latestSettings = { at, probe };
@@ -187,7 +195,7 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
     }
   };
   sample();
-  state.intervalId = setInterval(sample, 1250);
+  state.intervalId = setInterval(sample, 1800);
   return true;
 })()`;
 
@@ -196,7 +204,10 @@ export const THEME_AUDIT_READ_SCRIPT = `(() => {
   return JSON.stringify({
     installed: Boolean(state && state.revision === "${AUDIT_REVISION}"),
     latestSettings: state?.latestSettings || null,
-    latestGame: state?.latestGame || null
+    latestGame: state?.latestGame || null,
+    latestOther: state?.latestOther || null,
+    sampleTicks: state?.sampleTicks || 0,
+    lastScanAt: state?.lastScanAt || 0
   });
 })()`;
 
@@ -225,7 +236,10 @@ export function parseThemeAudit(value:unknown):ThemeAudit|null {
   return {
     installed:obj.installed===true,
     latestSettings:read(obj.latestSettings),
-    latestGame:read(obj.latestGame)
+    latestGame:read(obj.latestGame),
+    latestOther:read(obj.latestOther),
+    sampleTicks: Number.isSafeInteger(obj.sampleTicks) ? Math.max(0,Number(obj.sampleTicks)) : 0,
+    lastScanAt: typeof obj.lastScanAt==="number" && Number.isFinite(obj.lastScanAt) ? obj.lastScanAt : 0
   };
 }
 
@@ -234,11 +248,15 @@ export function parseThemeAudit(value:unknown):ThemeAudit|null {
  * when the Steam page has changed.
  */
 export function latestThemePage(audit:ThemeAudit|null,now:number):
-  {kind:"Settings"|"Game Details";sample:ThemeAuditSample}|null {
+  {kind:"Settings"|"Game Details"|"Unclassified";sample:ThemeAuditSample}|null {
   if(!audit)return null;
-  const candidates: Array<{kind:"Settings"|"Game Details";sample:ThemeAuditSample}> = [];
+  const candidates: Array<{kind:"Settings"|"Game Details"|"Unclassified";sample:ThemeAuditSample}> = [];
   if(audit.latestSettings)candidates.push({kind:"Settings",sample:audit.latestSettings});
   if(audit.latestGame)candidates.push({kind:"Game Details",sample:audit.latestGame});
+  // Unknown-route snapshots must not supersede recently detected Settings
+  // or Game Details. They are a fallback to learn actual minified CSS classes.
+  if(!candidates.some(x=>now-x.sample.at<180000) && audit.latestOther)
+    candidates.push({kind:"Unclassified",sample:audit.latestOther});
   candidates.sort((a,b)=>b.sample.at-a.sample.at);
   const item=candidates[0];
   if(!item||item.sample.at>now+2000||now-item.sample.at>180000)return null;
