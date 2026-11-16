@@ -70,8 +70,9 @@ test("Settings covers both System controls and Internet network lists",()=>{
   assert.ok(settings.includes(".gpfocus"),"Controller focus is styled");
   assert.ok(settings.includes("aria-selected"),"Selected list items styled");
   assert.ok(settings.includes("html[data-glm-settings-root] [data-glm-settings-main] {") &&
-    settings.includes("background:#0c1b32 !important;"),
-    "Settings scroll canvas matches row blue");
+    settings.includes("--glm-settings-canvas:#0a1b30;") &&
+    settings.includes("--glm-settings-section:#0f2842;"),
+    "Settings content and rows share the Midnight 0.4.3 palette");
   for(const marker of ["data-glm-settings-sidebar","data-glm-settings-main"])
     assert.ok(settings.includes(marker),"Steam Settings pane fallback: "+marker);
   for(const marker of ["data-glm-settings-root","data-glm-settings-row",
@@ -79,6 +80,26 @@ test("Settings covers both System controls and Internet network lists",()=>{
     assert.ok(settings.includes(marker),"Hashed Steam Settings fallback: "+marker);
 });
 
+test("Storage and System reuse a consistent scoped Midnight palette",()=>{
+  const native=css("settings.css");
+  for(const [name,color] of [
+    ["--glm-settings-sidebar","#081425"],
+    ["--glm-settings-canvas","#0a1b30"],
+    ["--glm-settings-section","#0f2842"],
+    ["--glm-settings-control","#123452"],
+    ["--glm-settings-focus","#163a5e"],
+  ])assert.ok(settings.includes(name+":"+color+";"),name);
+  assert.ok(native.includes("background:#0a1b30 !important"),"Semantic native Settings");
+  for(const anchor of ["contentmanagement_ContentManagement",
+    "contentmanagement_AppsGrid","contentmanagement_InstallFolder",
+    "contentmanagement_AppBody","contentmanagement_DriveUsageIndicator"])
+    assert.ok(settings.includes(anchor),anchor);
+  assert.ok(settings.includes("html[data-glm-settings-root]"),"Settings-only scope");
+  assert.doesNotMatch(stripCssComments(css("shared.css")),
+    /(?:#GamepadUI_Full_Root|\.BasicUI)\s*\{\s*background(?:-color)?\s*:/);
+  assert.doesNotMatch(stripCssComments(settings),
+    /(?:^|[\s,])(?:img|video)\s*\{/i,"Keep native Steam artwork");
+});
 test("Steam game details include Media Notes Activity pills and action buttons",()=>{
   const anchors=[
     "appdetailsnotessection_NoteLink",
