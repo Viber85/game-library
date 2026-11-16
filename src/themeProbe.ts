@@ -164,7 +164,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "6";
+const AUDIT_REVISION = "7";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -268,6 +268,31 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     const mainPane=findPane(rows[0],.42,.91);
     navPane?.setAttribute?.('data-glm-settings-sidebar','');
     mainPane?.setAttribute?.('data-glm-settings-main','');
+
+    // Elements already present below the fold must receive Midnight styling
+    // BEFORE the user scrolls to them. Bounding boxes still have reliable
+    // width, x-position and height when their y-position is off-screen.
+    // Restrict this scan to the confirmed Settings content pane; do not
+    // traverse the whole Steam DOM or touch artwork, icons or form inputs.
+    const allRows=[...rows];
+    if(mainPane?.querySelectorAll && rows.length){
+      const nominalWidth=positions.get(rows[Math.floor(rows.length/2)])?.width||width*.6;
+      const candidates=mainPane.querySelectorAll('[class]');
+      const limit=Math.min(candidates.length,2400);
+      const seen=new Set(rows);
+      for(let n=0;n<limit;n++){
+        const el=candidates[n];
+        if(seen.has(el) || !/^(?:DIV|BUTTON|LI|SECTION)$/i.test(el.tagName||'') ||
+           !el.getBoundingClientRect)continue;
+        const b=el.getBoundingClientRect();
+        if(b.height<24 || b.height>104 || b.left<width*.22 ||
+           b.width<width*.4 || b.width>width*.85 ||
+           b.width<nominalWidth*.76 || b.width>nominalWidth*1.18)continue;
+        seen.add(el);
+        positions.set(el,b);
+        allRows.push(el);
+      }
+    }
     const blueGray=(el)=>{
       const style=getComputedStyle(el);
       const rgba=String(style.backgroundColor||'').match(/[0-9.]+/g)?.map(Number)||[];
@@ -277,7 +302,7 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
         !(rgba[1]>150&&rgba[2]>165);
       return painted || style.backgroundImage && style.backgroundImage!=='none';
     };
-    for(const row of rows){
+    for(const row of allRows){
       row.setAttribute?.('data-glm-settings-row','');
       const b=positions.get(row);
       // Recolor only painted child strips; never the small toggle tracks,
