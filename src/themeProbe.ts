@@ -391,7 +391,15 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   // Scroll can expose pre-existing offscreen nodes without inserting any
   // DOM children. Capture-phase scroll also reaches nested Steam list panes.
   // All events share the same one-scan-per-frame scheduler.
-  state.onScroll=scheduleScan;
+  let lastScrollAt=0;
+  state.onScroll=()=>{
+    // Avoid doing a full Settings geometry scan for every wheel/touch tick.
+    if(document.documentElement?.hasAttribute?.('data-glm-settings-root')===false)return;
+    const now=Date.now();
+    if(now-lastScrollAt<100)return;
+    lastScrollAt=now;
+    scheduleScan();
+  };
   document.addEventListener?.('scroll',state.onScroll,true);
   // Slow fallback for Steam route changes that don't insert DOM nodes,
   // and for clients without MutationObserver support.
