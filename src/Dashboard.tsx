@@ -148,6 +148,7 @@ export function Dashboard() {
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
+  const [railExpanded, setRailExpanded] = useState(false);
 
   useEffect(() => {
     const refresh = window.setInterval(() => setGames(getLibraryGames()), 15000);
@@ -192,6 +193,7 @@ export function Dashboard() {
   const focusRail = (index: number) => {
     const target = (index + railActions.length) % railActions.length;
     setRailIndex(target);
+    setRailExpanded(true);
     railRefs.current[target]?.focus();
   };
   const commitGridFocus = (index:number):boolean => {
@@ -244,6 +246,7 @@ export function Dashboard() {
     // Right/down/up at grid boundaries remain bounded to the grid.
   };
   const goToGame = (index?: number) => {
+    setRailExpanded(false);
     if (viewAll) {
       focusGrid(index ?? lastGridFocusIndex.current);
       return;
@@ -270,6 +273,7 @@ export function Dashboard() {
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
   const focusPill = (index:number) => {
+    setRailExpanded(false);
     const target = pillRefs.current[Math.max(0,Math.min(tabs.length - 1,index))];
     target?.focus();
     target?.scrollIntoView({block:"nearest",inline:"nearest"});
@@ -299,9 +303,20 @@ export function Dashboard() {
   };
 
   return (
-    <div className="gl-root">
+    <div className={"gl-root" + (railExpanded ? " gl-nav-expanded" : "")}>
       <style>{DASHBOARD_CSS}</style>
-      <aside className="gl-sidebar" aria-label="Steam navigation">
+      <aside
+        className="gl-sidebar"
+        aria-label="Steam navigation"
+        aria-expanded={railExpanded}
+        onFocusCapture={() => setRailExpanded(true)}
+        onBlurCapture={event => {
+          // Only collapse after focus really leaves the sidebar, not while
+          // moving Up/Down between its icons with the controller.
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            setRailExpanded(false);
+        }}
+      >
         <div className="gl-sidebar-brand" aria-hidden="true"><MdVideogameAsset /></div>
         <Focusable className="gl-rail" flow-children="column">
           {railActions.map((action, index) => {
@@ -313,7 +328,7 @@ export function Dashboard() {
                 className="gl-rail-item"
                 focusClassName="gl-focused"
                 noFocusRing
-                onGamepadFocus={() => setRailIndex(index)}
+                onGamepadFocus={() => { setRailIndex(index); setRailExpanded(true); }}
                 onActivate={action.go}
                 onOKActionDescription={action.label}
                 onButtonDown={(e: GamepadEvent) => {
@@ -326,6 +341,7 @@ export function Dashboard() {
                 onCancelButton={() => goToGame()}
                 onCancelActionDescription="Return to games"
                 title={action.label}
+                aria-label={action.label}
               >
                 <Icon className="gl-rail-icon" />
                 <span className="gl-rail-label">{action.label}</span>
