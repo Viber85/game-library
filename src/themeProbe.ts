@@ -253,6 +253,8 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     const match=Boolean(semantic || (nav.length>=8 && rows.length>=4));
     if(!match)return false;
     root.setAttribute?.('data-glm-settings-root','');
+    // Document-root marker also works when Steam mounts Settings outside .BasicUI.
+    document.documentElement?.setAttribute?.('data-glm-settings-root','');
     const findPane=(element,minWidth,maxWidth)=>{
       for(let parent=element?.parentElement;parent&&parent!==root;
           parent=parent.parentElement){
