@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "test:navigation": "node --test tests/grid-navigation.mjs",
     "test:launch": "node --test tests/launch-game.mjs",
-    "test:achievements": "node --test tests/achievements.mjs"
+    "test:achievements": "node --test tests/achievements.mjs",
+    "test:theme": "node --test tests/theme-tabs.mjs"
   },
   "dependencies": {
     "@decky/api": "^1.1.3",
