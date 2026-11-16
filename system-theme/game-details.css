@@ -1,0 +1,135 @@
+/* Game Library Midnight — native Steam game details / individual game pages.
+ * Game artwork, logos and videos are NOT recolored or hidden.
+ * Only game-page surfaces, navigation, action controls, stats and feeds.
+ */
+
+/* Large light-blue backdrops behind the game header and detail sections. */
+.BasicUI [class*="basicappdetailssectionstyler_AppDetailsRoot"],
+.BasicUI [class*="appdetails_ScrollContainer"],
+.BasicUI [class*="appdetailsoverview_Container"] {
+  background-color:#020815 !important;
+  background-image:none !important;
+  color:var(--glm-text) !important;
+}
+/* Preserve the actual hero imagery; don't style sharedappdetailsheader_ImgContainer. */
+.BasicUI [class*="appdetailsoverview_BackdropGlass"],
+.BasicUI [class*="appdetailsoverview_ColumnContainer"],
+.BasicUI [class*="appdetailsplaysection_PlayBar"],
+.BasicUI [class*="basicappdetailssectionstyler_PlaySection"] {
+  background:linear-gradient(110deg,rgba(6,20,39,.98),rgba(12,37,65,.95)) !important;
+  background-image:linear-gradient(110deg,rgba(6,20,39,.98),rgba(12,37,65,.95)) !important;
+  border-color:var(--glm-border) !important;
+  color:var(--glm-text) !important;
+}
+.BasicUI [class*="appdetailsplaysection_StickyHeader"] {
+  background:rgba(5,18,34,.97) !important;
+  box-shadow:0 4px 15px rgba(0,0,0,.3) !important;
+}
+.BasicUI [class*="appdetailsplaysection_PlayBarLabel"],
+.BasicUI [class*="appdetailsplaysection_PlayBarDetailLabel"],
+.BasicUI [class*="appdetailsplaysection_LastPlayedInfo"],
+.BasicUI [class*="appdetailsplaysection_PlayBar"] [class*="Label"] {
+  color:var(--glm-text) !important;
+}
+.BasicUI [class*="appdetailsplaysection_PlayBar"] [class*="Subtitle"],
+.BasicUI [class*="appdetailsplaysection_PlayBar"] [class*="Description"] {
+  color:var(--glm-muted) !important;
+}
+
+/* The original green Play / blue Install buttons adopt Midnight's blue.
+ * Preserve focus, disabled and destructive Steam button semantics. */
+.BasicUI [class*="basicappdetailssectionstyler_AppActionButton"],
+.BasicUI [class*="appactionbutton_Green"] [class*="appactionbutton_ButtonChild"],
+.BasicUI [class*="appactionbutton_PlayButton"][class*="appactionbutton_ButtonChild"] {
+  background:#bce8ff !important;
+  background-image:none !important;
+  color:#05172b !important;
+  border:1px solid #8dd8ff !important;
+  border-radius:8px !important;
+}
+.BasicUI [class*="appactionbutton_Green"] [class*="appactionbutton_ButtonText"],
+.BasicUI [class*="appactionbutton_PlayButton"] [class*="appactionbutton_ButtonText"] {
+  color:#05172b !important;
+}
+.BasicUI [class*="basicappdetailssectionstyler_AppActionButton"]:is(.gpfocus,.gpfocuswithin,:focus-within),
+.BasicUI [class*="appactionbutton_PlayButton"]:is(.gpfocus,:focus-visible),
+.BasicUI [class*="appactionbutton_Green"] [class*="appactionbutton_ButtonChild"]:is(.gpfocus,:focus-visible) {
+  background:#e9f7ff !important;
+  color:#05172b !important;
+  box-shadow:0 0 0 2px #f5fbff,0 0 13px #23b9ff77 !important;
+}
+.BasicUI [class*="appdetailsplaysection_MenuButton"] {
+  background:#12314f !important;
+  color:var(--glm-text) !important;
+  border:1px solid var(--glm-border) !important;
+}
+.BasicUI [class*="appdetailsplaysection_MenuButton"]:is(.gpfocus,:focus-visible) {
+  background:#205580 !important;
+  box-shadow:0 0 0 2px var(--glm-accent) !important;
+}
+
+/* Game sub-navigation: Activity / Your Stuff / Community / Game Info. */
+.BasicUI [class*="appdetailssection_SectionHeader"],
+.BasicUI [class*="appdetailssection_AppDetailsSectionContainer"],
+.BasicUI [class*="appdetailssection_RightColumnSection"] {
+  background:#0b1d35 !important;
+  color:var(--glm-text) !important;
+  border-color:var(--glm-border) !important;
+}
+.BasicUI [class*="appdetailssection_Highlight"],
+.BasicUI [class*="appdetailscommunityfeed_CommunityItem"],
+.BasicUI [class*="appdetailscommunityfeed_ActivityFeed"],
+.BasicUI [class*="appdetailsactivitysection_ActivityFeedContainer"],
+.BasicUI [class*="appactivityday_Event"],
+.BasicUI [class*="appactivityday_EventBody"],
+.BasicUI [class*="apppartnereventspage_PartnerEvent"] {
+  background:#102942 !important;
+  background-image:none !important;
+  color:var(--glm-text) !important;
+  border-color:var(--glm-border) !important;
+}
+/* Steam's small activity cards and user update strips. */
+.BasicUI [class*="appdetailsactivitysection_NoActivity"],
+.BasicUI [class*="appdetailsactivitysection_Loading"],
+.BasicUI [class*="appdetailscommunityfeed_AddToFeed"],
+.BasicUI [class*="appdetailscommunityfeed_Preview"],
+.BasicUI [class*="appdetailscommunityfeed_HeaderStyles"],
+.BasicUI [class*="appactivityday_EventBody"] [class*="Event"] {
+  background:#0e223b !important;
+  color:var(--glm-text) !important;
+}
+/* The tabs and native selector style in game details. */
+.BasicUI [class*="appdetails"] [role="tab"],
+.BasicUI [class*="appdetails"] [class*="TabButton"] {
+  background:transparent !important;
+  color:var(--glm-muted) !important;
+  border-bottom-color:transparent !important;
+}
+.BasicUI [class*="appdetails"] [role="tab"]:is([aria-selected="true"],.gpfocus),
+.BasicUI [class*="appdetails"] [class*="TabButton"]:is(.gpfocus,.gpfocuswithin) {
+  color:#f2faff !important;
+  background:#194369 !important;
+  border-bottom-color:var(--glm-accent) !important;
+  box-shadow:inset 0 0 0 1px var(--glm-border) !important;
+}
+
+/* Metadata panels, compatible game info, achievement tiles. */
+.BasicUI [class*="appdetailsprimarylinkssection_LinksSection"],
+.BasicUI [class*="appdetailsgameinfopanel_DeckVerifiedInfo"],
+.BasicUI [class*="basicappdetailssectionstyler_DeckVerifiedFeedback"],
+.BasicUI [class*="appdetailsachievementssection_AchievementCarouselItem"],
+.BasicUI [class*="spotlightgameplaysummary_SummaryCarouselContainer"],
+.BasicUI [class*="appdetailsdlcsection_Item"] {
+  background:#102740 !important;
+  color:var(--glm-text) !important;
+  border-color:var(--glm-border) !important;
+}
+.BasicUI [class*="appdetails"] [class*="SectionHeader"],
+.BasicUI [class*="appdetails"] [class*="Title"],
+.BasicUI [class*="appdetails"] [class*="Label"] {
+  color:var(--glm-text) !important;
+}
+.BasicUI [class*="appdetails"] [class*="Description"] {
+  color:var(--glm-muted) !important;
+}
+/* Native Steam game artwork is kept unmodified by design. */
