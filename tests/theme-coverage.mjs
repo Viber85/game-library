@@ -103,8 +103,8 @@ test("Midnight palette has high contrast for Settings and notes",()=>{
   assert.ok(contrast("#4ac1ff","#10273f")>=4.5);
 });
 
-test("0.4.1 forces replacement of earlier cached style revision",()=>{
+test("0.4.2 forces replacement of earlier cached style revision",()=>{
   const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"41"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"42"/);
   assert.match(runtime,/CLEANUP_SCRIPT/);
 });
