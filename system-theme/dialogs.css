@@ -1,0 +1,28 @@
+/* Context menus, popovers and confirmation dialogs. */
+.gamepadcontextmenu_contextMenuContents_sIgB-,
+.gamepaddialog_GamepadDialogContent_3joNk,
+.DialogContent._DialogLayout {
+  background:linear-gradient(155deg,#0e2542,#050f22) !important;
+  color:var(--glm-text) !important;
+  border:1px solid var(--glm-border) !important;
+  border-radius:14px !important;
+  box-shadow:0 12px 30px rgba(0,0,0,.48) !important;
+}
+.gamepadcontextmenu_contextMenuItem_1sdvo {
+  color:var(--glm-text) !important;
+  border-radius:7px !important;
+}
+.gamepadcontextmenu_contextMenuItem_1sdvo.gpfocus {
+  background:var(--glm-panel-hover) !important;
+  color:#fff !important;
+  box-shadow:inset 0 0 0 2px var(--glm-accent) !important;
+}
+.gamepadcontextmenu_contextMenuItem_1sdvo:is(.Play,.Install,.Download,.Update,.Launch) {
+  background:var(--glm-accent-soft) !important;
+}
+.gamepadcontextmenu_ContextMenuSeparator_1KL6n,
+.gamepadcontextmenu_contextMenuContents_sIgB- hr {
+  background:var(--glm-border) !important;
+  border:0 !important;
+}
+.DialogHeader,.DialogBodyText {color:var(--glm-text) !important;}
