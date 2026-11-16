@@ -1,0 +1,152 @@
+/* Game Library Midnight 0.4.1 — sections below native Steam's hero.
+ * Leave artwork, videos, thumbnails, logos, avatars, typography/layout and
+ * content untouched. Only recolor surfaces and focus/interaction states.
+ */
+
+/* Steam detail section strips and subnavigation (Activity, Your Stuff,
+ * Community, Game Info), including state before controller focus. */
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailssection_SectionHeader"],[class*="appdetailssection_AppDetailsSectionContainer"],
+ [class*="appdetailssection_Section"],[class*="appdetailssection_Container"],
+ [class*="appdetailsoverview_ColumnContainer"]) {
+  background:#0a1c32 !important;
+  background-image:none !important;
+  color:var(--glm-text) !important;
+  border-color:var(--glm-border) !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailssection_SectionTab"],[class*="appdetailssection_Tab"],
+ [class*="appdetailssection_SectionButton"],[class*="appdetailssection_Button"],
+ [class*="appdetailssection_SectionHeader"] button) {
+  color:#b8cde1 !important;
+  background-color:transparent !important;
+  border-color:transparent !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailssection_SectionTab"],[class*="appdetailssection_Tab"],
+ [class*="appdetailssection_SectionButton"],[class*="appdetailssection_Button"]):is(.gpfocus,.gpfocuswithin,:focus-visible,[aria-selected="true"]),
+.BasicUI [class*="appdetails_Container"] [class*="appdetailssection_Selected"] {
+  background-color:#17476b !important;
+  border-color:#4ac1ff !important;
+  color:#f3faff !important;
+}
+/* Activity feed and its posts, including the currently bright media/news rows. */
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsactivitysection_Container"],[class*="appdetailsactivitysection_ActivityFeed"],
+ [class*="appdetailsactivitysection_Event"],[class*="appdetailsactivitysection_EmptyState"],
+ [class*="appdetailscommunityfeed_ActivityFeed"],[class*="appdetailscommunityfeed_CommunityItem"],
+ [class*="appactivityday_EventBody"],[class*="appactivityday_Event"],
+ [class*="apppartnereventspage_PartnerEvent"]) {
+  background:#10273f !important;
+  background-image:none !important;
+  color:#f0f8ff !important;
+  border-color:rgba(100,170,216,.2) !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailscommunityfeed_CommunityItem"],[class*="appactivityday_Event"],
+ [class*="appdetailsactivitysection_Event"]):is(.gpfocus,.gpfocuswithin,:focus-visible) {
+  background:#194766 !important;
+  border-color:var(--glm-accent) !important;
+}
+/* Media carousel container, screenshot instructions, Gallery/Media button,
+ * and the related panel that remains bright blue in the screenshot. */
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsmediasection_Container"],[class*="appdetailsmediasection_MediaSection"],
+ [class*="appdetailsmediasection_Media"],[class*="appdetailsmedialibrary_Container"],
+ [class*="appdetailsmedialibrary_MediaSection"],
+ [class*="appdetailssection_MediaSection"],[class*="appdetailsmedialibrary_NoMedia"],
+ [class*="appdetailssection_EmptyState"],[class*="appdetailscommunityfeed_AddToFeed"]) {
+  background:#102940 !important;
+  background-image:none !important;
+  color:#e5f2ff !important;
+  border:1px solid rgba(99,169,221,.22) !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsmediasection_MediaButton"],[class*="appdetailsmedialibrary_MediaLibraryButton"],
+ [class*="appdetailsmediasection_ViewMedia"],[class*="appdetailsmedialibrary_OpenMedia"],
+ [class*="appdetailssection_ViewAllButton"],[class*="appdetailssection_SectionActionButton"]) {
+  background:#153c60 !important;
+  color:#ebf8ff !important;
+  border:1px solid rgba(87,178,238,.42) !important;
+  border-radius:8px !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsmediasection_MediaButton"],[class*="appdetailsmedialibrary_MediaLibraryButton"],
+ [class*="appdetailsmediasection_ViewMedia"],[class*="appdetailsmedialibrary_OpenMedia"],
+ [class*="appdetailssection_ViewAllButton"]):is(.gpfocus,.gpfocuswithin,:focus-visible) {
+  background:#215782 !important;
+  box-shadow:0 0 0 2px var(--glm-accent) !important;
+}
+/* Notes containers, individual note cards, "Add note" and edit action. */
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsnotessection_Container"],[class*="appdetailsnotessection_NotesSection"],
+ [class*="appdetailsnotessection_Note"],[class*="appdetailsnotessection_Notes"],
+ [class*="appdetailsnotessection_NoteLink"],[class*="appdetailsnotessection_NoteList"],
+ [class*="appdetailsnotessection_EmptyState"],[class*="appdetailsnotessection_Editor"]) {
+  background:#0c223a !important;
+  background-image:none !important;
+  border-color:rgba(99,168,219,.25) !important;
+  color:#eef8ff !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsnotessection_AddNote"],[class*="appdetailsnotessection_Edit"],
+ [class*="appdetailsnotessection_NoteButton"],[class*="appdetailsnotessection_NoteLink"]):is(.gpfocus,.gpfocuswithin,:focus-visible) {
+  background-color:#205581 !important;
+  box-shadow:inset 0 0 0 2px var(--glm-accent) !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsnotessection_NoteText"],[class*="appdetailsnotessection_Description"],
+ [class*="appdetailsnotessection_NoteBody"]) {
+  color:#bcd1e8 !important;
+}
+
+/* Metadata/pill badges and small secondary Game Details buttons. Game logos,
+ * HLTB text and achievement icons stay sharp; only chip backgrounds change. */
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsplaysection_MenuButton"],[class*="appdetailsplaysection_OptionsButton"],
+ [class*="appdetailsplaysection_ControllerButton"],[class*="appdetailsplaysection_SettingsButton"],
+ [class*="appdetailsplaysection_MoreButton"],[class*="appdetailsplaysection_ActionButton"],
+ [class*="appdetailsoverview_InfoButton"],[class*="appdetailsgameinfopanel_InfoButton"],
+ [class*="appdetailsprimarylinkssection_LinkButton"]) {
+  background:#153650 !important;
+  color:#d9f1ff !important;
+  border:1px solid rgba(117,182,228,.3) !important;
+  border-radius:8px !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsplaysection_MenuButton"],[class*="appdetailsplaysection_OptionsButton"],
+ [class*="appdetailsplaysection_ControllerButton"],[class*="appdetailsplaysection_SettingsButton"],
+ [class*="appdetailsplaysection_MoreButton"],[class*="appdetailsprimarylinkssection_LinkButton"]):is(.gpfocus,.gpfocuswithin,:focus-visible) {
+  background:#22547a !important;
+  border-color:#4ac1ff !important;
+  box-shadow:0 0 0 2px rgba(74,193,255,.68) !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsgameinfopanel_Badge"],[class*="appdetailsgameinfopanel_Tag"],
+ [class*="appdetailsplaysection_Stat"],[class*="appdetailsoverview_StatusBadge"],
+ [class*="appdetailsgameinfopanel_CompatBadge"],[class*="appdetailsprimarylinkssection_Badge"],
+ [class*="appdetailsachievementssection_AchievementCount"]) {
+  background-color:rgba(12,37,61,.9) !important;
+  border:1px solid rgba(100,176,230,.35) !important;
+  color:#ccecff !important;
+  border-radius:7px !important;
+}
+
+/* The banner's lower statistics strip (HLTB, play time and last played)
+ * should use midnight-blue, but the original banner/art must be preserved. */
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsplaysection_PlayBar"],[class*="appdetailsplaysection_PlayBarInfo"],
+ [class*="appdetailsplaysection_Stats"],[class*="appdetailsoverview_Stats"],
+ [class*="appdetailsoverview_MetadataBar"]) {
+  background-color:rgba(6,24,44,.94) !important;
+  background-image:none !important;
+  border-color:var(--glm-border) !important;
+  color:#f2f8ff !important;
+}
+.BasicUI [class*="appdetails_Container"]
+ :is([class*="appdetailsplaysection_StatLabel"],[class*="appdetailsplaysection_LastPlayedLabel"],
+ [class*="appdetailsoverview_StatLabel"]) {
+  color:#a8c9e2 !important;
+}
+/* Native media (cover, background, screenshots/video, avatars) is deliberately
+ * NOT selected, to protect actual Steam library and user artwork. */
