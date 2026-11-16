@@ -1,26 +1,121 @@
-/* Game Mode Settings — preserve sidebar and controller navigation. */
-.PageListColumn {
-  background:#061429 !important;
-  border-right:1px solid var(--glm-border) !important;
-}
-.DialogContent,.DialogContent_InnerWidth,.DialogContentTransition {
-  background:var(--glm-bg-deep) !important;
+/* Game Library Midnight — SteamOS Game Mode Settings.
+ * Targets the actual gamepadpagedsettings_* DOM, not a generic
+ * .PageListColumn class. Use stable CSS-module prefixes because hashes
+ * change with Steam client updates. Keep existing layout and navigation.
+ */
+
+/* Overall full-page settings background and the two columns. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog"],
+.BasicUI [class*="gamepadpage_DialogBackground"] {
+  background:#020815 !important;
+  background-color:#020815 !important;
   color:var(--glm-text) !important;
 }
-.PageListColumn .Panel {background:transparent !important;color:var(--glm-text) !important;
-  border-radius:9px !important;}
-.PageListColumn .Panel.gpfocus,
-.PageListColumn .Panel[aria-selected="true"] {
-  background:var(--glm-panel-hover) !important;
-  box-shadow:inset 3px 0 0 var(--glm-accent),0 0 0 1px var(--glm-border) !important;
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageListColumn"] {
+  background:#061428 !important;
+  background-color:#061428 !important;
+  border-right:1px solid var(--glm-border) !important;
 }
-.PageListColumn .Panel.gpfocus * {color:var(--glm-text) !important;}
-.gamepaddialog_Field_S-_La {
-  border-bottom-color:var(--glm-border) !important;
+.BasicUI [class*="gamepadpagedsettings_PagedSettingDialog_ContentColumn"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"] [class*="DialogContent"] {
+  background:transparent !important;
+  background-color:transparent !important;
+  color:var(--glm-text) !important;
 }
-.gamepaddialog_Field_S-_La:is(.gpfocus,.gpfocuswithin) {
-  background:var(--glm-panel-hover) !important;
-  box-shadow:inset 3px 0 0 var(--glm-accent) !important;
+
+/* Settings labels in the left navigation: the current SteamOS names. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageListItem"] {
+  color:var(--glm-muted) !important;
+  background:transparent !important;
+  border-left:3px solid transparent !important;
+  border-radius:8px !important;
 }
-.DialogControlsSectionHeader,.DialogHeader {color:var(--glm-text) !important;}
-.DialogBodyText {color:var(--glm-muted) !important;}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageListItem"][class*="gamepadpagedsettings_Active"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageListItem"][aria-selected="true"] {
+  color:var(--glm-text) !important;
+  background:#173452 !important;
+  border-left-color:var(--glm-accent) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageListItem"]:is(.gpfocus,.gpfocuswithin,:focus-visible) {
+  color:#fff !important;
+  background:#205180 !important;
+  border-left-color:#87dcff !important;
+  box-shadow:inset 0 0 0 1px var(--glm-accent),0 0 13px #109bec55 !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_Title"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"] .DialogHeader {
+  color:var(--glm-text) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_Separator"] {
+  background:var(--glm-border) !important;
+}
+
+/* The bright cobalt rows seen in SteamOS System/Language/Updates.
+ * Field backgrounds are applied even without focus, not only on hover. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_Field_"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_Field "],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  .gamepaddialog_Field {
+  background:#112941 !important;
+  background-image:none !important;
+  color:var(--glm-text) !important;
+  border-bottom:1px solid rgba(103,171,221,.2) !important;
+  border-radius:7px !important;
+}
+/* Some Steam releases use a field subclass without the underscore suffix. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_HighlightOnFocus"] {
+  background:#112941 !important;
+  background-image:none !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_Field"]:is(.gpfocus,.gpfocuswithin,:focus-within,:hover) {
+  background:#1b466d !important;
+  background-image:none !important;
+  box-shadow:inset 2px 0 0 var(--glm-accent) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_FieldLabel"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_FieldLabelValue"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  .DialogControlsSectionHeader {
+  color:var(--glm-text) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_FieldDescription"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  .DialogBodyText {
+  color:var(--glm-muted) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddropdown_DropDownControlButton"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  button.DialogButton {
+  background:#143f68 !important;
+  background-image:none !important;
+  color:var(--glm-text) !important;
+  border:1px solid rgba(81,174,241,.32) !important;
+  border-radius:8px !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddropdown_DropDownControlButton"]:is(.gpfocus,:focus-visible) {
+  background:#235786 !important;
+  box-shadow:0 0 0 2px var(--glm-accent) !important;
+}
+
+/* Preserve cyan toggles and sliders, not the former neon blue gradients. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_Toggle"][class*="gamepaddialog_On"]
+  [class*="gamepaddialog_ToggleRail"] {
+  background:#19b9ed !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepadslider_SliderTrackActive"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="progressbar_Percent"] {
+  background:var(--glm-accent) !important;
+}
