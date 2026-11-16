@@ -20,6 +20,9 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **src/UpdatesPanel.tsx** — GitHub version checker and Decky-managed installer with confirmation
 - **system-theme/*.css** — bundled Midnight color sheets (no CSS Loader manifest or dependency)
 - **src/themeTabs.ts** — allowlist for Steam main Game Mode and QAM/Menu browser tabs
+- **system-theme/settings.css** — correct PagedSettingsDialog structure, categories, unfocused setting rows and dropdowns
+- **system-theme/game-details.css** — native Steam game detail page (playbar, game statistics, Activity, tabs and cards; artwork untouched)
+- **src/themeClassAliases.ts + src/themeCssCompiler.ts** — map Steam's live CSS-module classes to readable selectors via Decky findClassModule; handle minified classes and lazy-loaded pages
 - **src/builtinThemeRuntime.ts** — Decky-native CSS injection/recovery/removal across Steam UI tabs
 - **src/themeController.ts** — persistent Midnight/Off theme selection, default Midnight
 - **src/BuiltinThemePanel.tsx** — built-in Appearance toggle and active-window diagnostics
@@ -32,6 +35,9 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - Midnight is the **default** Game Library theme, independently of CSS Loader.
 - The native Decky API injects stylesheet strings into each Steam UI window,
   with a distinct CSS bundle for the main Game Mode and overlay menus.
+- CSS injection uses a revisioned ownership marker and is replaced on upgrade;
+  if a lazily loaded Steam page exposes new minified CSS classes, the plugin
+  recompiles its stylesheet from the actual Steam class module registry.
 - Tab discovery uses the Steam CEF debug-tab listing; supported targets are
   explicit: Steam Big Picture/SharedJSContext plus QuickAccess/MainMenu windows.
   The runtime retries injection when tabs appear or reload.
