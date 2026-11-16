@@ -139,6 +139,7 @@ export function Dashboard() {
   const [gridLimit,setGridLimit] = useState(60);
   const [time, setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const sidebarRef = useRef<HTMLElement>(null);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
   const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -303,19 +304,22 @@ export function Dashboard() {
   };
 
   return (
-    <div className={"gl-root" + (railExpanded ? " gl-nav-expanded" : "")}>
+    <div
+      className={"gl-root" + (railExpanded ? " gl-nav-expanded" : "")}
+      onFocusCapture={event => {
+        // Focus moves within the sidebar must not collapse it; outside
+        // focus (mouse, keyboard, controller) restores the compact rail.
+        if (!sidebarRef.current?.contains(event.target as Node))
+          setRailExpanded(false);
+      }}
+    >
       <style>{DASHBOARD_CSS}</style>
       <aside
+        ref={sidebarRef}
         className="gl-sidebar"
         aria-label="Steam navigation"
         aria-expanded={railExpanded}
         onFocusCapture={() => setRailExpanded(true)}
-        onBlurCapture={event => {
-          // Only collapse after focus really leaves the sidebar, not while
-          // moving Up/Down between its icons with the controller.
-          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
-            setRailExpanded(false);
-        }}
       >
         <div className="gl-sidebar-brand" aria-hidden="true"><MdVideogameAsset /></div>
         <Focusable className="gl-rail" flow-children="column">
