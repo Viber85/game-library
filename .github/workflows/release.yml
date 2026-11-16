@@ -25,6 +25,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Test controller grid navigation
         run: npm run test:navigation
+      - name: Test animated sidebar focus and layout
+        run: npm run test:sidebar
       - name: Test built-in theme window targeting
         run: npm run test:theme
       - name: Test minified Steam CSS class compatibility
