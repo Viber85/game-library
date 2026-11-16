@@ -23,46 +23,46 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
-## Steam-wide Midnight system colors
+## Built-in Midnight theme (default, no CSS Loader)
 
-The Game Library dashboard's palette is now available as a **separate CSS Loader
-system-wide theme** bundled directly into this Decky plugin. It follows the
-CSS Loader documented `theme.json` manifest v8 and injects into
-`bigpicture` and `bigpictureoverlay`, so the following SteamOS Game Mode
-surfaces match our navy/cyan appearance:
+**Game Library Midnight is the default system-wide Game Mode theme** when
+this Decky plugin starts. No second plugin, separate theme installation or
+CSS Loader activation is required.
 
-- **Steam Menu / system sidebar** — midnight-navy panels, cyan focus, pale text
-- **Quick Access Menu / Decky panels** — dark-blue tab rail and cyan selection
-- **Settings** — midnight background, blue selection panels, focused fields
-- **Downloads** — blue task cards, cyan action/focus and progress graph
-- **Buttons and confirmation menus** — pale-blue primary, dark secondary,
-  cyan highlight; destructive controls retain their warning colors
-- **Header and footer** — deep navy and consistent borders
+The plugin uses Decky's own `injectCssIntoTab` / `removeCssFromTab` APIs.
+It loads its bundled style sheets for Steam's main Game Mode browser and its
+separate Quick Access / Steam Menu windows, and re-checks them as menus open.
+The exact same navy and cyan tokens as our dashboard apply to:
 
-Palette: background `#020815`, raised surface `#0C1B32`,
-interactive cyan `#4AC1FF`. Fonts, positions, controller navigation,
-the library's hero artwork, other apps and the Linux Desktop are unchanged.
+- **Steam Menu / sidebar** — dark panels, cyan active items and focus
+- **QAM / Decky panels** — dark-blue sections and focused tabs
+- **Settings** — navy surfaces, blue settings rows and controls
+- **Downloads** — matching cards, buttons, graphs and focus states
+- **Header, footer, dialog buttons and context menus** — shared palette
 
-**Install and activate:**
+Colors: background `#020815`, card `#0C1B32`, focus `#4AC1FF`.
+All existing Steam controls, layouts and controller navigation remain intact.
 
-1. Update Game Library using the release ZIP in Decky Developer Mode.
-2. Install **CSS Loader** via Decky's plugin store if not already present.
-3. In Game Library's QAM panel, switch on **Install Midnight system theme**.
-   This installs the bundled CSS into CSS Loader's standard
-   `$DECKY_HOME/themes` or `~/homebrew/themes` directory.
-4. Open **CSS Loader** → **Refresh** → enable **Game Library Midnight**.
-   This one-time activation is required because CSS Loader manages its own
-   active themes. Game Library does not silently edit CSS Loader's settings.
+**To use:** install the newest Game Library ZIP. Midnight activates
+automatically as soon as Decky loads it, including after returning from
+Desktop Mode or rebooting the handheld.
 
-**Revert / disable:** turn off **Game Library Midnight** in CSS Loader first,
-then switch **Install Midnight system theme** off in the Game Library panel
-to remove its managed files; refresh CSS Loader if necessary.
+**To revert:** Game Library → Appearance → turn **Midnight — Default Theme**
+off. This immediately removes the styles managed by our plugin and saves the
+setting for subsequent restarts. Turn it on again to restore the theme.
 
-The theme does not edit other themes and will refuse to overwrite an
-unrelated theme folder. Disable other Steam-wide CSS Loader themes if they
-conflict. Steam client updates can change CSS selectors and may need
-further compatibility fixes. Applying the theme across separate Steam
-menus is not verified on the MSI Claw until device testing.
+The internal theme registry currently has **Midnight** and **Off**; future
+color variants can be added without changing the Game Library dashboard or
+requiring an external theming plugin.
+
+If the previously released CSS Loader version of Game Library Midnight
+is enabled on the device, disable that old CSS Loader copy once to avoid
+two copies of the same style competing. It is **not** needed for the new
+integrated theme.
+
+The separate QAM and Steam Menu windows must still be checked on the
+actual SteamOS device. Steam client updates can change CSS selectors,
+and late-created windows may briefly show native colors until detected.
 
 ## Installing
 
