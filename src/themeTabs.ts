@@ -25,7 +25,8 @@ export function classifySteamTab(item:BrowserTab): SteamTab|null {
   const url=typeof item.url==="string"?item.url:"";
   if(!title||title.length>180)return null;
   if(BIG_PICTURE_TITLES.has(title))return {title,scope:"main"};
-  if(STEAM_SHARED_TITLES.has(title)&&looksLikeGamepadUrl(url))
+  if((STEAM_SHARED_TITLES.has(title)||title.startsWith("Game Mode")) &&
+      looksLikeGamepadUrl(url))
     return {title,scope:"main"};
   if(title.startsWith("QuickAccess")||title.startsWith("MainMenu"))
     return {title,scope:"overlay"};
