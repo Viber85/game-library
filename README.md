@@ -87,6 +87,21 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.4 — glass library header and cleaner game details:** Removed the
+repeated `Selected from your Steam library` text beneath every selected
+game title. The Game Library dashboard again shows a dedicated top
+header, styled as a translucent/frosted Midnight bar like the approved
+reference. The left side displays the bold `Game Library` title and the
+name of the currently selected TabMaster tab in similarly prominent
+type, separated by a thin cyan divider. The existing tab pills sit
+directly below in a matching glass treatment; controller focus, tab
+counts, sort control, L1/R1 switching and View More are unchanged.
+The top header lives BELOW SteamOS's native status bar and does not
+create duplicate search, wireless, battery or clock controls. Responsive
+rules keep long tab names ellipsized on narrow screens and reduce its
+height on handheld displays. No native Midnight CSS or notification
+surface code was changed.
+
 **v0.4.3 — consistent Midnight Settings and Storage:** System, Internet
 and Storage now share the same layered palette: sidebar `#081425`,
 main Settings content `#0A1B30`, sections and list rows `#0F2842`,
