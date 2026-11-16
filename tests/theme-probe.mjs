@@ -39,5 +39,5 @@ test("untrusted class samples are bounded and do not include user values",()=>{
     sampleClasses:Array.from({length:20},(_,i)=>"A".repeat(200)+i),
   });
   assert.equal(p?.sampleClasses.length,8);
-  assert.ok(p!.sampleClasses.every(v=>v.length<=90));
+  assert.ok(p.sampleClasses.every(v=>v.length<=90));
 });
