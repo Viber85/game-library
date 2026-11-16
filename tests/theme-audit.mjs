@@ -215,3 +215,62 @@ test("hashed Steam Settings gray rows adopt stable Midnight markers without read
   assert.doesNotMatch(STEAM_SETTINGS_MARK_SCRIPT,
     /\.innerText|\.textContent|localStorage|sessionStorage|ssid|networkName|\.value\b/i);
 });
+
+
+test("visible Settings rows are themed by point sampling even beyond 1450 DOM nodes",()=>{
+  let mode="settings";
+  const make=(x,y,w,h)=>{
+    const attributes=new Set();
+    return {
+      tagName:"DIV",className:"_steam_minified",children:[],parentElement:null,
+      setAttribute:(key)=>attributes.add(key),
+      removeAttribute:(key)=>attributes.delete(key),
+      hasAttribute:(key)=>attributes.has(key),
+      getBoundingClientRect:()=>({
+        left:x,top:y,width:w,height:h,right:x+w,bottom:y+h,
+      }),
+    };
+  };
+  const root=make(0,0,1000,800);root.className="BasicUI";
+  root.querySelectorAll=(selector)=>{
+    if(selector==="[class]")throw new Error("Do not enumerate full Steam DOM");
+    return [];
+  };
+  const html=make(0,0,1000,800);
+  const sidebar=make(30,50,260,700),main=make(300,50,700,700);
+  sidebar.parentElement=root;main.parentElement=root;
+  const left=Array.from({length:12},(_,i)=>make(75,86+i*42,205,34));
+  const right=Array.from({length:8},(_,i)=>make(321,155+i*56,655,42));
+  for(const item of left)item.parentElement=sidebar;
+  for(const item of right)item.parentElement=main;
+  const nodes=[root,sidebar,main,...left,...right,html];
+  const doc={
+    documentElement:html,
+    querySelector:(selector)=>selector===".BasicUI"?root:null,
+    querySelectorAll:(selector)=>selector.startsWith("[data-glm-")?
+      nodes.filter(n=>selector.split(",").some(part=>
+        n.hasAttribute(part.trim().slice(1,-1)))):[],
+    elementsFromPoint:(x,y)=>mode==="settings"?
+      [...left,...right].filter(n=>{
+        const b=n.getBoundingClientRect();
+        return x>=b.left && x<b.right && y>=b.top && y<b.bottom;
+      }):[],
+  };
+  const run=()=>vm.runInNewContext(STEAM_SETTINGS_MARK_SCRIPT,{
+    window:{innerWidth:1000,innerHeight:800},document:doc,
+    getComputedStyle:()=>({backgroundColor:"rgba(0, 0, 0, 0)",backgroundImage:"none"}),
+    Math,Map,Set,Array,
+  });
+  assert.equal(run(),true);
+  assert.equal(html.hasAttribute("data-glm-settings-root"),true,
+    "Document root can scope CSS even when Settings uses a separate React root");
+  assert.equal(sidebar.hasAttribute("data-glm-settings-sidebar"),true);
+  assert.equal(main.hasAttribute("data-glm-settings-main"),true);
+  assert.equal(right.filter(n=>n.hasAttribute("data-glm-settings-row")).length,8);
+  assert.equal(left.filter(n=>n.hasAttribute("data-glm-settings-navitem")).length,12);
+  assert.equal(run(),true,"Already recolored/transparent rows stay detected");
+  mode="home";
+  assert.equal(run(),false);
+  assert.equal(html.hasAttribute("data-glm-settings-root"),false);
+  assert.equal(main.hasAttribute("data-glm-settings-main"),false);
+});
