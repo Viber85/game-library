@@ -110,3 +110,58 @@ test("CSS watcher doesn't store personal data or persist snapshots",()=>{
   assert.match(THEME_AUDIT_INSTALL_SCRIPT,/setInterval/);
   assert.match(THEME_AUDIT_REMOVE_SCRIPT,/clearInterval/);
 });
+
+test("captures minified Steam Settings via route and actual computed blue rows",()=>{
+  let mode="settings",tick=()=>{};
+  const rows=Array.from({length:7},(_,i)=>({
+    tagName:"DIV",className:"_steam_field_"+i,
+  }));
+  const root={className:"BasicUI",querySelectorAll:(selector)=>
+    mode==="settings" && selector==="[class]"?rows:[]};
+  const state={location:{pathname:"/settings/system",hash:""}};
+  const doc={
+    documentElement:{},body:root,
+    querySelector:(selector)=>selector.includes(".BasicUI")?root:null,
+    querySelectorAll:(selector)=>{
+      if(selector==="style")return [{textContent:"--game-library-midnight-active: 42;"}];
+      if(selector.includes(".BasicUI")||selector.includes("#GamepadUI_Full_Root"))return [root];
+      return [];
+    }
+  };
+  const browser={window:state,document:doc,Date,JSON,Set,Map,Array,Math,
+    getComputedStyle:()=>({
+      backgroundColor:"rgb(58, 103, 171)",
+      getPropertyValue:()=> "42",
+    }),
+    setInterval:(fn)=>{tick=fn;return 1;},
+    clearInterval:()=>{},
+  };
+  const run=(script)=>vm.runInNewContext(script,browser);
+  assert.equal(run(THEME_AUDIT_INSTALL_SCRIPT),true);
+  mode="qam";
+  tick();
+  const audit=parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT));
+  const chosen=latestThemePage(audit,Date.now());
+  assert.equal(chosen?.kind,"Settings");
+  assert.equal(chosen?.sample.probe.settingsRoots,0,
+    "The old semantic Steam selector still does not match");
+  assert.equal(chosen?.sample.probe.routeKind,"settings");
+  assert.equal(chosen?.sample.probe.surfaceElements,7);
+  assert.equal(chosen?.sample.probe.colorSamples[0]?.color,"rgb(58, 103, 171)");
+  assert.ok((audit?.sampleTicks||0)>=2);
+});
+
+test("unknown route returns a clearly labeled CSS surface sample, not a fake Settings match",()=>{
+  const now=Date.now();
+  const data=parseThemeAudit({
+    installed:true,sampleTicks:4,lastScanAt:now,
+    latestSettings:null,latestGame:null,
+    latestOther:{at:now,probe:{
+      visibleUI:true,routeKind:"other",surfaceElements:5,
+      colorSamples:[{color:"rgb(54, 102, 164)",count:5,className:"_steam_abc123"}]
+    }}
+  });
+  const item=latestThemePage(data,now);
+  assert.equal(item?.kind,"Unclassified");
+  assert.equal(item?.sample.probe.colorSamples[0]?.className,"_steam_abc123");
+});
