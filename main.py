@@ -65,7 +65,10 @@ def _builtin_theme_bundle(theme_id):
         raise ValueError("Unsupported built-in theme")
     assets = BASE / "system-theme"
     scopes = {
-        "main": ("shared.css", "buttons.css", "settings.css", "game-details.css", "downloads.css", "dialogs.css"),
+        "main": (
+            "shared.css", "buttons.css", "settings.css", "settings-extras.css",
+            "game-details.css", "game-details-extras.css", "downloads.css", "dialogs.css",
+        ),
         "overlay": ("shared.css", "buttons.css", "menus.css", "qam.css", "dialogs.css"),
     }
     result = {}
