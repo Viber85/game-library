@@ -329,12 +329,13 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   if (state && state.revision === revision) return true;
   if (state) {
     state.observer?.disconnect?.();
+    if (state.onScroll) document.removeEventListener?.('scroll',state.onScroll,true);
     if (state.frameId != null && typeof cancelAnimationFrame === 'function')
       cancelAnimationFrame(state.frameId);
     if (state.intervalId != null) clearInterval(state.intervalId);
   }
   state = { revision, intervalId: null, observer: null, frameId: null,
-    latestSettings: null, latestGame: null, latestOther: null,
+    onScroll:null, latestSettings: null, latestGame: null, latestOther: null,
     sampleTicks:0, lastScanAt:0 };
   window[key] = state;
   const sample = () => {
@@ -387,6 +388,11 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       state.observer=null;
     }
   }
+  // Scroll can expose pre-existing offscreen nodes without inserting any
+  // DOM children. Capture-phase scroll also reaches nested Steam list panes.
+  // All events share the same one-scan-per-frame scheduler.
+  state.onScroll=scheduleScan;
+  document.addEventListener?.('scroll',state.onScroll,true);
   // Slow fallback for Steam route changes that don't insert DOM nodes,
   // and for clients without MutationObserver support.
   state.intervalId=setInterval(sample,observing?5000:1800);
@@ -410,6 +416,7 @@ export const THEME_AUDIT_REMOVE_SCRIPT = `(() => {
   const state = window[key];
   if (state) {
     state.observer?.disconnect?.();
+    if(state.onScroll)document.removeEventListener?.('scroll',state.onScroll,true);
     if(state.frameId!=null && typeof cancelAnimationFrame==='function')
       cancelAnimationFrame(state.frameId);
     if(state.intervalId!=null)clearInterval(state.intervalId);
