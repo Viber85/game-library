@@ -105,7 +105,13 @@ async function applyToTab(
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
   // Steam can rebuild QAM/Home's DOM without changing the DevTools tab title.
   // The runtime detects lost styles and reinstalls them without duplicates.
-  if(await activeInTab(title))return;
+  if(await activeInTab(title)) {
+    if(managedTabs.has(title))return;
+    // Theme styles can survive a plugin hot-reload. Adopt ownership by
+    // removing only our marked orphan style, then installing a tracked one.
+    try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
+    catch{/* Retry with a normal injection below. */}
+  }
   await removeKnown(title);
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
   try{
