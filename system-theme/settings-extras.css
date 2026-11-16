@@ -185,8 +185,9 @@
  * sibling React root, and the native row fill can be a gradient/child layer.
  * The geometry classifier activates these only on a detected Settings page. */
 html[data-glm-settings-root] [data-glm-settings-main] {
-  background:#020815 !important;
-  background-color:#020815 !important;
+  /* Match the actual Midnight field strips rather than leaving black gaps. */
+  background:#0c1b32 !important;
+  background-color:#0c1b32 !important;
   background-image:none !important;
   color:#f3f8ff !important;
 }
@@ -227,4 +228,18 @@ html[data-glm-settings-root] [data-glm-settings-navitem]:is(.gpfocus,.gpfocuswit
   background-color:#173452 !important;
   color:#f3f8ff !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
+}
+
+/* v0.4.2-test.7: the unpainted spaces between Settings categories and
+ * scrollable fields inherit a black Steam canvas. Make that underlying
+ * Settings-only canvas the SAME navy as the field strips (#0c1b32).
+ * The sidebar's separate #061428 override remains intact. */
+html[data-glm-settings-root] :is(.BasicUI,#GamepadUI_Full_Root),
+.BasicUI[data-glm-settings-root],
+#GamepadUI_Full_Root[data-glm-settings-root] {
+  background-color:#0c1b32 !important;
+}
+html[data-glm-settings-root] [data-glm-settings-main],
+html[data-glm-settings-root] [data-glm-settings-main] > div {
+  background-color:#0c1b32 !important;
 }
