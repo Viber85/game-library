@@ -87,6 +87,22 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.3 — consistent Midnight Settings and Storage:** System, Internet
+and Storage now share the same layered palette: sidebar `#081425`,
+main Settings content `#0A1B30`, sections and list rows `#0F2842`,
+action controls `#123452` and focused rows `#163A5E`.
+Storage's disk selector cards, usage-bar track and application list have
+dedicated `contentmanagement_*` selectors, resolved through the current
+Steam CSS module aliases when Valve minifies its class names. The Settings
+watcher now marks the outer content pane rather than only the inner games
+scroll list, so the Storage header and rows share the same background.
+Steam artwork, native icons, disk usage segments, controls and scroll
+behavior are preserved. Crucially, the volume/achievement notification
+overlay transparency fix from v0.4.2-test.8 remains untouched:
+there is no unconditional full-screen `.BasicUI` or GamepadUI fill.
+Automated tests check colors, CSS alias handling, nested Storage lists,
+and no blanket Steam overlay background. The exact visual match on the
+handheld still needs to be confirmed after installation.
 **v0.4.2-test.8 — notification overlay transparency:** On the MSI Claw,
 raising/lowering volume or showing an achievement briefly blanked the game
 to black only while Midnight was enabled. This implicates the built-in theme
