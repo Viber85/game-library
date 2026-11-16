@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import vm from "node:vm";
 import {
+  STEAM_SETTINGS_MARK_SCRIPT,
   THEME_AUDIT_INSTALL_SCRIPT,
   THEME_AUDIT_READ_SCRIPT,
   THEME_AUDIT_REMOVE_SCRIPT,
@@ -164,4 +165,53 @@ test("unknown route returns a clearly labeled CSS surface sample, not a fake Set
   const item=latestThemePage(data,now);
   assert.equal(item?.kind,"Unclassified");
   assert.equal(item?.sample.probe.colorSamples[0]?.className,"_steam_abc123");
+});
+
+
+test("hashed Steam Settings gray rows adopt stable Midnight markers without reading labels",()=>{
+  let mode="settings";
+  const element=(x,y,w,h,color)=> {
+    const attrs=new Set();
+    return {
+      tagName:"DIV",className:"_minified"+y,children:[],
+      setAttribute:(name)=>attrs.add(name),
+      removeAttribute:(name)=>attrs.delete(name),
+      hasAttribute:(name)=>attrs.has(name),
+      getBoundingClientRect:()=>({
+        left:x,top:y,width:w,height:h,right:x+w,bottom:y+h,
+      }),
+      get color(){return attrs.has("data-glm-settings-row")?
+        "rgb(12, 27, 50)":color;},
+    };
+  };
+  const nav=Array.from({length:12},(_,i)=>element(50,68+i*43,210,36,"rgb(55, 88, 140)"));
+  const rows=Array.from({length:8},(_,i)=>element(300,155+i*54,640,39,"rgb(76, 160, 255)"));
+  const root=element(0,0,1000,760,"rgb(2, 8, 21)");
+  root.className="BasicUI";
+  root.querySelectorAll=(selector)=>selector==="[class]"&&mode==="settings"?
+    [...nav,...rows]:[];
+  const nodes=[root,...nav,...rows];
+  const doc={
+    documentElement:{clientWidth:1000,clientHeight:760},
+    querySelector:(selector)=>selector===".BasicUI"?root:null,
+    querySelectorAll:(selector)=>selector.startsWith("[data-glm-")?
+      nodes.filter(n=>selector.split(",").some(token=>n.hasAttribute(token.slice(1,-1)))):[],
+  };
+  const run=()=>vm.runInNewContext(STEAM_SETTINGS_MARK_SCRIPT,{
+    window:{innerWidth:1000,innerHeight:760},document:doc,
+    getComputedStyle:(node)=>({backgroundColor:node.color}),
+    Array,Map,Set,Math,
+  });
+  assert.equal(run(),true,"The real Settings geometry is detected without classes");
+  assert.equal(root.hasAttribute("data-glm-settings-root"),true);
+  assert.equal(rows.filter(n=>n.hasAttribute("data-glm-settings-row")).length,8);
+  assert.equal(nav.filter(n=>n.hasAttribute("data-glm-settings-navitem")).length,12);
+  assert.equal(run(),true,"Styled rows remain detected on subsequent scans");
+  assert.equal(rows.filter(n=>n.hasAttribute("data-glm-settings-row")).length,8);
+  mode="home";
+  assert.equal(run(),false);
+  assert.equal(root.hasAttribute("data-glm-settings-root"),false);
+  assert.equal(rows.some(n=>n.hasAttribute("data-glm-settings-row")),false);
+  assert.doesNotMatch(STEAM_SETTINGS_MARK_SCRIPT,
+    /\.innerText|\.textContent|localStorage|sessionStorage|ssid|networkName|\.value\b/i);
 });
