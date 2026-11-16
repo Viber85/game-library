@@ -87,6 +87,25 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.2-test.2 QAM-safe diagnostics:** The previous diagnostic reported
+`Settings page / rows: 0 / 0` despite a verified Midnight CSS marker
+in `Steam Big Picture Mode`. This can occur because native Steam unmounts
+Settings/Game Details when QAM is opened to inspect the results. The plugin
+now installs a tiny **read-only in-memory page sampler** inside Steam Game
+Mode while Midnight is active. It retains the most recent Settings and Game
+Details CSS counts and computed background color for up to three minutes.
+When QAM opens, Appearance → **Reapply theme & diagnose** can show those
+pre-QAM observations, marked with the captured page and age. It does not
+store Wi-Fi names, game titles, text nodes, URLs or values. The sampler
+stops when Midnight is switched off or the plugin unloads.
+
+This update also fixes an existing CSS-probe bug: a comma-separated
+selector caused it to sample the Settings panel rather than a child field
+row. To get a useful result, open Settings → System/Internet for at least
+two seconds, then open QAM → Game Library → Appearance and run diagnostics.
+The change improves our measurement; it does not claim the remaining
+bright-blue Settings rows are already recolored.
+
 **v0.4.2-test.1 Steam CSS diagnostics:** v0.4.1 CSS coverage tests
 passed while actual Settings and Game Details looked unchanged on the
 owner's handheld. That test strategy was insufficient.
