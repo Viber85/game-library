@@ -87,6 +87,25 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.2-test.8 — notification overlay transparency:** On the MSI Claw,
+raising/lowering volume or showing an achievement briefly blanked the game
+to black only while Midnight was enabled. This implicates the built-in theme
+but does not yet prove which individual CSS selector is responsible.
+Removed the blanket `background-color` override for
+`#GamepadUI_Full_Root` and `.BasicUI` in shared.css. Steam can reuse
+those root containers for transient notification/compositor surfaces,
+which must remain transparent over a game. The Midnight variables and
+targeted QAM, Steam Menu, Settings, Downloads and game detail styles are
+retained; Settings detection, row colors and scroll logic are unchanged.
+The revision marker is incremented so old injected styles are replaced,
+and the coverage test rejects unscoped full-root background fills.
+
+This release is a **targeted diagnostic fix**. Confirm in-game volume and
+achievement notifications no longer blank the screen. Some general
+backgrounds may fall back to native Steam colors where no dedicated
+Midnight selector exists; report any such regression rather than
+reintroducing an opaque root background.
+
 **v0.4.2-test.7 — scroll and background continuity:** Addresses the
 last visible black bands behind SteamOS Settings fields and the off-screen
 rows that appeared in native gray/blue only after scrolling. When the
