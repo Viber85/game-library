@@ -40,6 +40,17 @@ test("full Midnight theme CSS is syntactically balanced",()=>{
     assertBalancedCss(css(name));
 });
 
+test("Steam root stays transparent for volume and achievement popups",()=>{
+  const shared=stripCssComments(css("shared.css"));
+  // GamepadUI / BasicUI may be used as a transparent full-screen CEF
+  // overlay over a running game. Only explicit panels may be opaque.
+  assert.doesNotMatch(shared,/#[Gg]amepadUI_Full_Root\s*,\s*\.BasicUI\s*\{/);
+  assert.doesNotMatch(shared,/(?:#GamepadUI_Full_Root|\.BasicUI)\s*\{\s*background(?:-color)?\s*:/);
+  assert.ok(shared.includes("--glm-bg: #020815"));
+  assert.ok(css("qam.css").includes("#QuickAccess-Menu"));
+  assert.ok(css("settings-extras.css").includes("[data-glm-settings-main]"));
+});
+
 test("Settings covers both System controls and Internet network lists",()=>{
   const anchors=[
     "gamepadpagedsettings_PagedSettingsDialog_PageContent",
