@@ -28,8 +28,8 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const count = (q) => {
     try { return document.querySelectorAll(q).length; } catch { return 0; }
   };
-  const settings = '[class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"],[class*="pagedsettings_PagedSettingsDialog_PageContent"]';
-  const fields = '[class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"]';
+  const settings = '[class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"],[class*="pagedsettings_PagedSettingsDialog_PageContent"],[data-glm-settings-root]';
+  const fields = '[class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"],[data-glm-settings-row]';
   const networks = '[class*="networksettings_"],[class*="wifisettings_"],[class*="connectionsettings_"],[class*="wirelesssettings_"]';
   const games = '[class*="appdetails_Container"],[class*="appdetails_ScrollContainer"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]';
   const sections = '[class*="appdetailssection_"],[class*="appdetailsnotessection_"],[class*="appdetailsmediasection_"]';
@@ -42,7 +42,7 @@ export const THEME_PROBE_SCRIPT=`(() => {
   // Steam can minify all Settings class names. The route is an independent
   // signal; only its coarse category is returned, never the actual URL/AppID.
   const route = String(window.location?.pathname||'')+' '+String(window.location?.hash||'');
-  const routeKind = /(?:^|[\\s\\/#])settings(?:[\\s\\/#?]|$)/i.test(route) ? 'settings'
+  const routeKind = (count('[data-glm-settings-root]')>0 || /(?:^|[\\s\\/#])settings(?:[\\s\\/#?]|$)/i.test(route)) ? 'settings'
     : /(?:library\\/app\\/|library\\/game\\/|game\\/details\\/)/i.test(route) ? 'game' : 'other';
   // Bounded scan of live CSS backgrounds on the page; no text, URLs, values,
   // app names or image data are accessed. Useful if CSS modules are hashed.
@@ -164,7 +164,90 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "3";
+const AUDIT_REVISION = "4";
+
+/**
+ * Some SteamOS clients hash every CSS-module class. Identify only a
+ * Settings-like TWO COLUMN layout: a tall stack of short left-side nav
+ * entries and at least four long blue-gray rows in the right pane.
+ * No displayed text, network names, URLs or values are read.
+ * All markers are removed on each scan, so other pages revert normally.
+ */
+export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
+  const attrs=['data-glm-settings-root','data-glm-settings-row',
+    'data-glm-settings-navitem','data-glm-settings-row-part'];
+  try {
+    for(const node of document.querySelectorAll('[data-glm-settings-root],[data-glm-settings-row],[data-glm-settings-navitem],[data-glm-settings-row-part]'))
+      for(const attr of attrs)node.removeAttribute?.(attr);
+    const root=document.querySelector('.BasicUI') ||
+      document.querySelector('#GamepadUI_Full_Root');
+    if(!root || !root.querySelectorAll)return false;
+    const semantic=document.querySelector('[class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]');
+    const width=window.innerWidth||document.documentElement?.clientWidth||0;
+    const height=window.innerHeight||document.documentElement?.clientHeight||0;
+    if(width<500||height<270)return false;
+    const nodes=Array.from(root.querySelectorAll('[class]')).slice(0,1450);
+    const right=[],left=[],rectangles=new Map();
+    const blueGray=(element)=>{
+      const raw=getComputedStyle(element).backgroundColor||'';
+      const p=raw.match(/[0-9.]+/g)?.map(Number)||[];
+      if(p.length<3 || p.length>3 && p[3]<.65)return false;
+      const [r,g,b]=p;
+      return b>=75 && b>r+12 && b>=g*.85 && g>=r*.83;
+    };
+    for(const el of nodes){
+      if(!el.getBoundingClientRect || !/^(?:DIV|BUTTON|LI|SECTION)$/i.test(el.tagName||''))continue;
+      const box=el.getBoundingClientRect();
+      if(!box||box.height<23||box.height>100||box.top<height*.035||
+         box.bottom>height*.97)continue;
+      rectangles.set(el,box);
+      if(box.left>=width*.24 && box.width>=width*.42 &&
+         box.width<=width*.80 && blueGray(el))right.push(el);
+      if(box.left>=0 && box.left<=width*.18 && box.width>=width*.09 &&
+         box.width<=width*.35 && box.right<=width*.41)left.push(el);
+    }
+    // Count distinct row elevations, not nested nodes in a single row.
+    const bands=(items)=>{
+      const seen=new Set();
+      for(const el of items){
+        const box=rectangles.get(el);
+        if(box)seen.add(Math.round(box.top/13));
+      }
+      return seen.size;
+    };
+    if(!semantic && (bands(left)<8 || bands(right)<4))return false;
+    root.setAttribute?.('data-glm-settings-root','');
+    const uniqueRows=new Map();
+    for(const el of right){
+      const box=rectangles.get(el), key=Math.round(box.top/9);
+      const old=uniqueRows.get(key);
+      if(!old||rectangles.get(old).width<box.width)uniqueRows.set(key,el);
+    }
+    const rows=Array.from(uniqueRows.values());
+    for(const row of rows){
+      row.setAttribute?.('data-glm-settings-row','');
+      const box=rectangles.get(row);
+      // An independently colored end segment often holds network icons.
+      for(const child of Array.from(row.children||[]).slice(0,12)){
+        if(!child.getBoundingClientRect || !blueGray(child))continue;
+        const c=child.getBoundingClientRect();
+        if(c.width>=16 && c.width<width*.23 &&
+           c.height>=box.height*.6 && c.height<=box.height*1.2)
+          child.setAttribute?.('data-glm-settings-row-part','');
+      }
+    }
+    if(bands(left)>=8){
+      const nav=new Map();
+      for(const el of left){
+        const box=rectangles.get(el), key=Math.round(box.top/9);
+        const old=nav.get(key);
+        if(!old||rectangles.get(old).width<box.width)nav.set(key,el);
+      }
+      for(const el of nav.values())el.setAttribute?.('data-glm-settings-navitem','');
+    }
+    return rows.length>0;
+  }catch{return false;}
+})()`;
 
 export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   const key = "${AUDIT_KEY}";
@@ -178,6 +261,8 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   const sample = () => {
     if (window[key] !== state) return;
     try {
+      // Mark unrecognized Steam Settings surfaces before the QAM unmounts them.
+      ${STEAM_SETTINGS_MARK_SCRIPT};
       const probe = JSON.parse(${THEME_PROBE_SCRIPT});
       const at = Date.now();
       state.sampleTicks++;
