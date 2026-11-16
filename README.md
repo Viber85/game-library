@@ -87,6 +87,27 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.2-test.4 — Settings gray surfaces:** The screenshot from MSI Claw
+showed native gray/bright-blue Settings and Internet/Wi-Fi rows still escaping
+Midnight styling, although the Steam CEF CSS marker was verified.
+Midnight now has a *class-independent Settings-only fallback* inside the
+existing Steam CEF watcher. It identifies a two-column Settings layout using
+only visible element geometry and blue/gray computed background colors.
+It then marks individual settings rows, network row icon end caps and left
+navigation items for Midnight styling. This avoids recoloring unrelated
+game artwork, Downloads, chats or QAM when Steam CSS modules are minified.
+Native controls, network names, keyboard focus order and click behavior are
+unchanged. The markers are cleared on leaving Settings; previous marked
+rows survive successive watcher scans without flicker.
+
+The fallback also makes the previously missed Settings screen available to
+the pre-QAM diagnostic snapshot, so `Detected page route` and row counts can
+be meaningful even without recognizable Steam CSS module names. New tests
+exercise minified classes, repeated scan stability and cleanup. As always,
+actual device visual verification is required: after installing this preview,
+open Settings → Internet, look for dark navy network strips, and capture a
+new image if any gray sections remain.
+
 **v0.4.2-test.3 SteamOS class-independent diagnostics:** A device screenshot
 from v0.4.2-test.2 still showed the Midnight CSS marker as verified in
 `Steam Big Picture Mode` but **No active page snapshot** and Settings
