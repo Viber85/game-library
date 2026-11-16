@@ -1,0 +1,43 @@
+/* Steam Quick Access Menu, tabs and plugin panels. */
+#QuickAccess-Menu,
+.quickaccessmenu_Menu_1gJzx,
+.quickaccessmenu_Tabs_3Ag1w,
+.quickaccessmenu_Title_34nl5,
+.quickaccessmenu_PanelOuterNav_2BB6u {
+  background:var(--glm-bg-deep) !important;
+  color:var(--glm-text) !important;
+}
+#QuickAccess-Menu [role="tab"],
+.quickaccessmenu_Tab_1S76C {
+  color:var(--glm-muted) !important;
+  background:transparent !important;
+  border-radius:9px !important;
+  border-left:3px solid transparent !important;
+}
+#QuickAccess-Menu [role="tab"][aria-selected="true"],
+.quickaccessmenu_Tab_1S76C.quickaccessmenu_Selected_2QHMu {
+  color:#e9f8ff !important;
+  background:var(--glm-panel-hover) !important;
+  border-left-color:var(--glm-accent) !important;
+}
+#QuickAccess-Menu [role="tab"].gpfocus,
+.quickaccessmenu_Tab_1S76C.gpfocus {
+  background:var(--glm-panel-hover) !important;
+  box-shadow:0 0 0 2px var(--glm-accent),0 0 12px rgba(24,159,255,.3) !important;
+}
+.quickaccessmenu_TabGroupPanel_1QO7b,
+.quickaccessmenu_TabGroupPanel_1QO7b.scrollpanel_ScrollPanel_1CXdi {
+  background:linear-gradient(145deg,#0c1b32,#07142a) !important;
+  color:var(--glm-text) !important;
+  border-left:1px solid var(--glm-border);
+}
+.quickaccessmenu_Title_34nl5 {
+  color:var(--glm-text) !important;
+  border-bottom:1px solid var(--glm-border) !important;
+}
+.quickaccesscontrols_Text_1hJkB,
+.quickaccesscontrols_BatteryPercentageLabel_3Rxxi {color:var(--glm-text) !important;}
+#QuickAccess-Menu .gamepaddialog_Field_S-_La.gpfocuswithin {
+  background:var(--glm-panel-hover) !important;
+  box-shadow:inset 2px 0 0 var(--glm-accent) !important;
+}
