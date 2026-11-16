@@ -87,6 +87,26 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.2-test.1 Steam CSS diagnostics:** v0.4.1 CSS coverage tests
+passed while actual Settings and Game Details looked unchanged on the
+owner's handheld. That test strategy was insufficient.
+
+The theme runtime now discovers visible Steam Game Mode CEF targets,
+validates that the target contains the live Game Mode DOM (not an
+off-screen SharedJSContext), and confirms the style revision appears
+in that same document before reporting success. It no longer
+silently assumes an English `Steam Big Picture Mode` tab exists.
+
+In **Game Library → Appearance → Reapply theme & diagnose**, the plugin
+retries injection and reports the actual CEF tab, CSS marker, active
+style count, number of native Settings rows/Internet network entries/
+Game Details sections, and a sample *computed background color*.
+It reports only CSS class names and counts, never network names, game
+titles, or other user data. Use it with System Settings or a game's
+native details page open and share a photo of the diagnostics if colors
+remain unchanged. This is a diagnostic test release, not a claim that
+every SteamOS stylesheet selector has already been fixed.
+
 The separate QAM and Steam Menu windows must still be checked on the
 actual SteamOS device. Steam client updates can change CSS selectors,
 and late-created windows may briefly show native colors until detected.
