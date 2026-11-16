@@ -1,0 +1,26 @@
+/* Game Mode Settings — preserve sidebar and controller navigation. */
+.PageListColumn {
+  background:#061429 !important;
+  border-right:1px solid var(--glm-border) !important;
+}
+.DialogContent,.DialogContent_InnerWidth,.DialogContentTransition {
+  background:var(--glm-bg-deep) !important;
+  color:var(--glm-text) !important;
+}
+.PageListColumn .Panel {background:transparent !important;color:var(--glm-text) !important;
+  border-radius:9px !important;}
+.PageListColumn .Panel.gpfocus,
+.PageListColumn .Panel[aria-selected="true"] {
+  background:var(--glm-panel-hover) !important;
+  box-shadow:inset 3px 0 0 var(--glm-accent),0 0 0 1px var(--glm-border) !important;
+}
+.PageListColumn .Panel.gpfocus * {color:var(--glm-text) !important;}
+.gamepaddialog_Field_S-_La {
+  border-bottom-color:var(--glm-border) !important;
+}
+.gamepaddialog_Field_S-_La:is(.gpfocus,.gpfocuswithin) {
+  background:var(--glm-panel-hover) !important;
+  box-shadow:inset 3px 0 0 var(--glm-accent) !important;
+}
+.DialogControlsSectionHeader,.DialogHeader {color:var(--glm-text) !important;}
+.DialogBodyText {color:var(--glm-muted) !important;}
