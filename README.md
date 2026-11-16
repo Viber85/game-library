@@ -87,6 +87,32 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.2-test.5 — visible SteamOS Settings layout styling:** After the
+v0.4.2-test.4 screenshot still showed the original blue-gray Internet panel,
+the native Settings fallback was upgraded. The earlier probe looked only at
+the first 1,450 CSS-class elements and required native rows to advertise a
+blue background directly. Neither assumption is reliable on real SteamOS:
+hidden DOM nodes can precede the visible screen, and row backgrounds can be
+painted by nested elements or CSS gradients.
+
+The new Steam CEF sampler uses `elementsFromPoint` to locate **actually
+visible** left-side categories and right-side field strips by screen geometry,
+then applies temporary theme markers to the Settings content pane, navigation
+pane, rows and painted child strips. CSS is scoped to the native document
+root in case Settings is mounted outside the `.BasicUI` subtree.
+Matching no longer depends on a row's initial computed color. No text,
+SSID, URL or form value is inspected, and no control is replaced. The markers
+are removed when Settings is closed. A synthetic test confirms detection
+with fully minified class names, transparent row backgrounds, a large
+off-screen DOM and correct marker cleanup.
+
+The intended result is navy Settings panels and rows with cyan controller
+focus. This is an on-device test release; success in CI does not verify
+the actual SteamOS appearance. If elements remain gray, collect
+`Game Library → Appearance → Reapply theme & diagnose` after visiting
+Settings for at least five seconds; the Settings row count tells us
+whether the native watcher tagged the page.
+
 **v0.4.2-test.4 — Settings gray surfaces:** The screenshot from MSI Claw
 showed native gray/bright-blue Settings and Internet/Wi-Fi rows still escaping
 Midnight styling, although the Steam CEF CSS marker was verified.
