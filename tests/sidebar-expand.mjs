@@ -27,3 +27,19 @@ test("labels are inline in the expanded rail, not floating tooltip popups",()=>{
   assert.match(css,/@media \(prefers-reduced-motion:reduce\)/);
   assert.match(ui,/<span className="gl-rail-label">\{action\.label\}<\/span>/);
 });
+
+
+test("reference glass topbar keeps Steam status bar native and shows active tab",()=>{
+  assert.match(ui,/<header className="gl-header gl-library-topbar" aria-label="Game Library">/);
+  assert.match(ui,/<span className="gl-topbar-title">Game Library<\/span>/);
+  assert.match(ui,/<span className="gl-topbar-current" title=\{tab\.title\} aria-live="polite">\{tab\.title\}<\/span>/);
+  assert.match(css,/\.gl-main > \.gl-header\.gl-library-topbar\s*\{[\s\S]*?display:flex/);
+  assert.match(css,/\.gl-main > \.gl-header\.gl-library-topbar\s*\{[\s\S]*?backdrop-filter:blur\(13px\)/);
+  assert.match(css,/\.gl-topbar-current\s*\{[\s\S]*?font-size:clamp\(20px,2\.1vw,27px\)/);
+  assert.match(css,/\.gl-filterbar \.gl-pill\.gl-active\s*\{/);
+  assert.doesNotMatch(ui,/Selected from your Steam library/);
+  assert.doesNotMatch(ui,/<span className="gl-time">/);
+  assert.doesNotMatch(ui,/MdSearch/);
+  assert.match(ui,/className="gl-pill"/);
+  assert.match(ui,/const cycleTab = \(direction: number\)/);
+});
