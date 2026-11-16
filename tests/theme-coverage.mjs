@@ -58,6 +58,7 @@ test("Settings covers both System controls and Internet network lists",()=>{
   for(const anchor of anchors)assert.ok(settings.includes(anchor),anchor);
   assert.ok(settings.includes(".gpfocus"),"Controller focus is styled");
   assert.ok(settings.includes("aria-selected"),"Selected list items styled");
+  assert.match(settings,/html\\[data-glm-settings-root\\] \\[data-glm-settings-main\\][\\s\\S]*?background:#0c1b32/,"Settings scroll canvas matches row blue");
   for(const marker of ["data-glm-settings-sidebar","data-glm-settings-main"])
     assert.ok(settings.includes(marker),"Steam Settings pane fallback: "+marker);
   for(const marker of ["data-glm-settings-root","data-glm-settings-row",
@@ -110,6 +111,6 @@ test("Midnight palette has high contrast for Settings and notes",()=>{
 
 test("0.4.2 forces replacement of earlier cached style revision",()=>{
   const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"44"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"45"/);
   assert.match(runtime,/CLEANUP_SCRIPT/);
 });
