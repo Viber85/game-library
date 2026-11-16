@@ -58,7 +58,9 @@ test("Settings covers both System controls and Internet network lists",()=>{
   for(const anchor of anchors)assert.ok(settings.includes(anchor),anchor);
   assert.ok(settings.includes(".gpfocus"),"Controller focus is styled");
   assert.ok(settings.includes("aria-selected"),"Selected list items styled");
-  assert.match(settings,/html\\[data-glm-settings-root\\] \\[data-glm-settings-main\\][\\s\\S]*?background:#0c1b32/,"Settings scroll canvas matches row blue");
+  assert.ok(settings.includes("html[data-glm-settings-root] [data-glm-settings-main] {") &&
+    settings.includes("background:#0c1b32 !important;"),
+    "Settings scroll canvas matches row blue");
   for(const marker of ["data-glm-settings-sidebar","data-glm-settings-main"])
     assert.ok(settings.includes(marker),"Steam Settings pane fallback: "+marker);
   for(const marker of ["data-glm-settings-root","data-glm-settings-row",
