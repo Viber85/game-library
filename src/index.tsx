@@ -6,7 +6,9 @@ import { Component, ReactNode, useEffect, useState } from "react";
 import { MdLibraryBooks } from "react-icons/md";
 import { Dashboard } from "./Dashboard";
 import { UpdatesPanel } from "./UpdatesPanel";
-import { SystemThemePanel } from "./SystemThemePanel";
+import { BuiltinThemePanel } from "./BuiltinThemePanel";
+import { startBuiltInThemeRuntime, stopBuiltInThemeRuntime } from "./builtinThemeRuntime";
+import { loadDefaultTheme } from "./themeController";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const HOME_ROUTE = "/library/home";
@@ -105,7 +107,7 @@ function ControlPanel() {
           </div>
         </PanelSectionRow>
       </PanelSection>
-      <SystemThemePanel />
+      <BuiltinThemePanel />
       <UpdatesPanel />
     </>
   );
@@ -114,6 +116,12 @@ function ControlPanel() {
 export default definePlugin(() => {
   unloaded = false;
   routerHook.addRoute(DASHBOARD_ROUTE, Dashboard, { exact: true });
+  // Built-in Midnight system colors are applied automatically as soon as
+  // Decky loads this plugin; CSS Loader is not needed or consulted.
+  startBuiltInThemeRuntime();
+  void loadDefaultTheme().catch(error=>{
+    console.error("[game-library] built-in theme startup failed", error);
+  });
   // Load persisted settings before patching so disabled Home never flashes on at boot.
   void getSettings().then((saved) => {
     if(unloaded) return;
@@ -131,6 +139,7 @@ export default definePlugin(() => {
     icon: <MdLibraryBooks />,
     onDismount() {
       unloaded = true;
+      stopBuiltInThemeRuntime();
       listeners.clear();
       if(homePatch) {
         routerHook.removePatch(HOME_ROUTE, homePatch);
