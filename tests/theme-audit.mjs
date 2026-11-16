@@ -14,7 +14,7 @@ function createSteamPage(initial="settings") {
   let removed=0;
   const row={className:"gamepaddialog_Field_S-_La",querySelectorAll:()=>[]};
   const settings={className:"gamepadpagedsettings_PagedSettingsDialog_PageContent_wIOLO",
-    querySelectorAll:()=>[row]};
+    querySelectorAll:()=>[row],querySelector:()=>row};
   const game={className:"appdetails_Container_abc",querySelectorAll:()=>[row]};
   const surface={className:"BasicUI"};
   const document={
