@@ -2,7 +2,11 @@ import {
   executeInTab, fetchNoCors, injectCssIntoTab, removeCssFromTab,
 } from "@decky/api";
 import { identifySteamTabs, FALLBACK_MAIN_TITLES, type ThemeScope, type SteamTab } from "./themeTabs";
-import { STEAM_PAGE_CHECK_SCRIPT, THEME_PROBE_SCRIPT, parseThemeProbe, type ThemeProbe } from "./themeProbe";
+import {
+  STEAM_PAGE_CHECK_SCRIPT, THEME_PROBE_SCRIPT, parseThemeProbe, type ThemeProbe,
+  THEME_AUDIT_INSTALL_SCRIPT, THEME_AUDIT_READ_SCRIPT,
+  THEME_AUDIT_REMOVE_SCRIPT, parseThemeAudit, latestThemePage,
+} from "./themeProbe";
 import { compileMidnightCss } from "./themeCssCompiler";
 
 export type ThemeId = "midnight" | "off";
@@ -34,6 +38,9 @@ export type ThemeDiagnostics={
   computedFieldColor:string;
   computedRootColor:string;
   sampleClasses:string[];
+  captureSource:"live"|"before-qam"|"none";
+  capturedPage:string;
+  captureAgeSeconds:number;
   details:string;
 };
 
@@ -140,6 +147,16 @@ async function listTabs():Promise<SteamTab[]> {
   return [];
 }
 
+async function ensureThemeAudit(title:string):Promise<void>{
+  try{
+    const response=await bounded(executeInTab(title,false,THEME_AUDIT_INSTALL_SCRIPT));
+    if(!response.success||response.result!==true)
+      console.warn("[game-library] Native Steam CSS watcher could not start in",title);
+  }catch(error){
+    console.warn("[game-library] Unable to install native Steam CSS watcher",error);
+  }
+}
+
 async function activeInTab(title:string):Promise<boolean> {
   try{
     const r=await bounded(executeInTab(title,false,checkMarker));
@@ -174,7 +191,10 @@ async function applyToTab(
   const previous=managedTabs.get(title);
   // Steam can rebuild QAM/Home's DOM without changing the DevTools tab title.
   if(previous?.signature===signature && previous.scope===scope &&
-     await activeInTab(title))return;
+     await activeInTab(title)){
+    if(scope==="main")await ensureThemeAudit(title);
+    return;
+  }
   // Remove previously injected CSS (including the incomplete older release)
   // and replace it with the current selector and style revision.
   await removeKnown(title);
@@ -200,6 +220,7 @@ async function applyToTab(
       return;
     }
     managedTabs.set(title,{cssId,scope,signature});
+    if(scope==="main")await ensureThemeAudit(title);
   }catch(e){
     // Keep the theme enabled and retry when Steam opens the menu again.
     console.warn("[game-library] theme injection deferred for",title,e);
@@ -236,9 +257,13 @@ async function cleanup():Promise<void> {
   // Remove any orphaned Midnight styles created by a previous plugin
   // instance after a hot-reload. Only styles with our unique marker match.
   const tabs=await listTabs();
-  for(const {title} of tabs){
+  for(const {title,scope} of tabs){
     try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
     catch{/* browser may have closed */}
+    if(scope==="main"){
+      try{await bounded(executeInTab(title,false,THEME_AUDIT_REMOVE_SCRIPT));}
+      catch{/* browser may have closed */}
+    }
   }
   report({appliedTabs:0,hasMain:false,hasMenu:false,hasQAM:false,issue:""});
 }
@@ -288,6 +313,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       cssSheets:0,settingsRoots:0,settingsFields:0,networkRows:0,
       gameRoots:0,gameSections:0,computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
+      captureSource:"none",capturedPage:"",captureAgeSeconds:0,
       details:main?"Unable to inspect Steam UI.":"No Steam Game Mode tab could be verified.",
     };
     if(!main)return empty;
@@ -299,25 +325,42 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     }catch(error){empty.details="Steam CSS inspection failed: "+String(error).slice(0,140);}
     if(!probe)return empty;
     const applied=probe.visibleUI && probe.marker===STYLE_REVISION && probe.sheets>0;
-    const onSettings=probe.settingsRoots>0;
-    const onGame=probe.gameRoots>0;
-    let details= !probe.visibleUI?"The selected CEF tab is not the visible Steam UI.":
-      !applied?"Midnight CSS is missing from the visible Steam document.":
-      onSettings&&probe.fieldRows===0
-        ?"Midnight CSS exists, but no Settings row selectors match this Steam build.":
-      onGame&&probe.gameSections===0
-        ?"Midnight CSS exists, but no Game Details section selectors match this Steam build.":
-      !onSettings&&!onGame
-        ?"Theme injection verified. Open Settings or a game page and run this check again.":
-      "Theme CSS is present; these are the actual Steam element counts.";
+    const liveSettings=probe.settingsRoots>0;
+    const liveGame=probe.gameRoots>0;
+    // Steam may remove Settings/Game Details from the main tab when QAM opens.
+    // Our in-tab watcher retains the last page's CSS counts in memory, rather
+    // than mistaking the resulting 0/0 live DOM for a broken CSS selector.
+    let snapshot=null as ReturnType<typeof latestThemePage>;
+    try{
+      const response=await bounded(executeInTab(main.title,false,THEME_AUDIT_READ_SCRIPT));
+      if(response.success)snapshot=latestThemePage(parseThemeAudit(response.result),Date.now());
+    }catch(error){console.warn("[game-library] last native CSS page snapshot unavailable",error);}
+    const usingSnapshot=!liveSettings&&!liveGame&&snapshot!==null;
+    const inspected=usingSnapshot?snapshot!.sample.probe:probe;
+    const onSettings=inspected.settingsRoots>0;
+    const onGame=inspected.gameRoots>0;
+    const details=!probe.visibleUI?"Selected CEF tab does not expose the Steam Game Mode DOM.":
+      !applied?"Midnight CSS is not verified in this Steam document.":
+      usingSnapshot
+        ? "Steam may hide the previous screen while QAM is open. Showing an automatic CSS snapshot captured before QAM; review the row color and counts."
+        :onSettings&&inspected.fieldRows===0
+          ?"Settings was detected but its row selectors did not match."
+        :onGame&&inspected.gameSections===0
+          ?"Game Details was detected but its section selectors did not match."
+        :!onSettings&&!onGame
+          ?"No Settings/Game Details DOM is present and no recent snapshot was found. Close QAM, visit the problem page for at least 2 seconds, then reopen QAM and run this check."
+        :"Native page selectors are present. Compare its sampled color with the Midnight palette.";
     return {
       target:main.title,discoveredTabs:tabs.length,
       detectedVisibleUI:probe.visibleUI,applied,
       themeMarker:probe.marker,cssSheets:probe.sheets,
-      settingsRoots:probe.settingsRoots,settingsFields:probe.fieldRows,
-      networkRows:probe.networkRows,gameRoots:probe.gameRoots,
-      gameSections:probe.gameSections,computedFieldColor:probe.fieldColor,
-      computedRootColor:probe.rootColor,sampleClasses:probe.sampleClasses,
+      settingsRoots:inspected.settingsRoots,settingsFields:inspected.fieldRows,
+      networkRows:inspected.networkRows,gameRoots:inspected.gameRoots,
+      gameSections:inspected.gameSections,computedFieldColor:inspected.fieldColor,
+      computedRootColor:inspected.rootColor,sampleClasses:inspected.sampleClasses,
+      captureSource:usingSnapshot?"before-qam":onSettings||onGame?"live":"none",
+      capturedPage:usingSnapshot?snapshot!.kind:onSettings?"Settings":onGame?"Game Details":"",
+      captureAgeSeconds:usingSnapshot?Math.max(0,Math.round((Date.now()-snapshot!.sample.at)/1000)):0,
       details,
     };
   });
