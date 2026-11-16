@@ -298,7 +298,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       else empty.details="Decky could not execute a read-only CSS inspection.";
     }catch(error){empty.details="Steam CSS inspection failed: "+String(error).slice(0,140);}
     if(!probe)return empty;
-    const applied=probe.marker===STYLE_REVISION && probe.sheets>0;
+    const applied=probe.visibleUI && probe.marker===STYLE_REVISION && probe.sheets>0;
     const onSettings=probe.settingsRoots>0;
     const onGame=probe.gameRoots>0;
     let details= !probe.visibleUI?"The selected CEF tab is not the visible Steam UI.":
