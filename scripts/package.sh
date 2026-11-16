@@ -35,5 +35,7 @@ unzip -Z1 "$output" | grep -qx 'game-library/hltb.py'
 unzip -Z1 "$output" | grep -qx 'game-library/protondb.py'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/shared.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/qam.css'
+unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings.css'
+unzip -Z1 "$output" | grep -qx 'game-library/system-theme/game-details.css'
 unzip -Z1 "$output" | grep -qx 'game-library/dist/index.js'
 unzip -Zt "$output"
