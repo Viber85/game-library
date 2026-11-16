@@ -109,6 +109,28 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - This is a **diagnostic correction**, not proof that every Settings CSS
   selector matches the physical MSI Claw's Steam version.
 
+## v0.4.2-test.3: live-class-independent CSS inspection
+
+- A physical MSI Claw screenshot on v0.4.2-test.2 showed Midnight CSS
+  verification succeeded, but `No active page snapshot` persisted. The
+  watcher had depended exclusively on readable Steam CSS-module selectors.
+- Steam main-page diagnostics now classify only the broad route kind
+  (`settings`, `game`, `other`), never exposing its original URL.
+- Every 1.8 seconds, the lightweight CEF watcher inspects at most 280
+  class-bearing Steam UI elements, excluding actual image/video/SVG nodes,
+  and records only their computed blue surface color, count and sanitized
+  CSS class token. Supports minified SteamOS class names.
+- Read-only snapshots survive opening QAM; if neither an official Settings
+  nor Game Details class nor route is detectable, the sample is explicitly
+  labeled `Unclassified` rather than fabricating a Settings match.
+- The Appearance diagnostics shows watcher health (active, scan count,
+  most recent scan) and selected background/color class samples.
+- A mocked minified Settings DOM regression test verifies route detection,
+  blue background grouping and snapshot retention when the page is
+  unmounted by QAM.
+- The actual remapping of remaining SteamOS UI elements is deferred
+  until real device class information is observed.
+
 ## Layout at 1280×800
 
 - Persistent icon rail at the left; icons stay visible.
