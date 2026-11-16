@@ -60,7 +60,12 @@ class BuiltInThemeTests(unittest.TestCase):
         self.assertIn("#MainNavMenuContainer", css["overlay"])
         self.assertIn("#QuickAccess-Menu", css["overlay"])
         self.assertIn("downloads_DownloadsPage", css["main"])
-        self.assertIn(".PageListColumn", css["main"])
+        self.assertIn("gamepadpagedsettings_PagedSettingsDialog_PageListColumn", css["main"])
+        self.assertIn("gamepadpagedsettings_PagedSettingsDialog_PageContent", css["main"])
+        self.assertIn("appdetailsoverview_ColumnContainer", css["main"])
+        self.assertIn("appdetailsplaysection_PlayBar", css["main"])
+        self.assertIn("appdetailsactivitysection_ActivityFeedContainer", css["main"])
+        self.assertIn("gamepadpagedsettings_", css["main"])
         self.assertNotIn("downloads_DownloadsPage", css["overlay"])
         self.assertNotIn("quickaccessmenu_Menu", css["main"])
         for content in css.values():
