@@ -1,4 +1,4 @@
-name: Publish Game Library preview release
+name: Publish Game Library release
 
 on:
   push:
@@ -58,6 +58,6 @@ jobs:
           if [[ "$VERSION" == *"-"* ]]; then PREVIEW=(--prerelease); fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG}" \
-            --notes "Game Library v0.4.2-test.8: targeted SteamOS volume and achievement black-screen flash mitigation. Midnight no longer paints the entire shared Steam GamepadUI/BasicUI root opaque navy; Valve can reuse these surfaces for transparent in-game notification overlays. All targeted Midnight Settings, Wi-Fi, Steam Menu, QAM, Downloads and game detail styles are retained, along with offscreen row detection and scroll updates. Added regression test against global root background fill; style revision invalidates stale injected CSS. This is a test build: verify in-game volume and achievement toasts and report any unthemed page backgrounds." \
+            --notes "Game Library v0.4.3: unifies native SteamOS System, Internet and Storage Settings under the Midnight navy palette. Settings sidebar #081425, main canvas #0A1B30, sections and app rows #0F2842, action controls #123452 and focused rows #163A5E. Steam Storage disk pills, app list, and usage-bar track receive targeted contentmanagement styles, including alias support on minified Steam builds. The Settings watcher now marks the outer content pane so the Storage header matches the games list. Existing icons, art, usage slices, controls and controller navigation remain native. Importantly, the volume/achievement black-flash fix from test.8 remains: no global opaque background on Steam's overlay root. Automated tests pass; confirm appearance on the handheld after installation." \
             --target "$GITHUB_SHA" \
             "${PREVIEW[@]}"
