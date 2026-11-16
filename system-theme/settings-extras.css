@@ -178,3 +178,53 @@
   color:#f3f8ff !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
 }
+
+
+/* v0.4.2-test.5: bound to the *active native Steam document*, not just
+ * a .BasicUI ancestor. Some SteamOS builds mount their Settings pane in a
+ * sibling React root, and the native row fill can be a gradient/child layer.
+ * The geometry classifier activates these only on a detected Settings page. */
+html[data-glm-settings-root] [data-glm-settings-main] {
+  background:#020815 !important;
+  background-color:#020815 !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+}
+html[data-glm-settings-root] [data-glm-settings-sidebar] {
+  background:#061428 !important;
+  background-color:#061428 !important;
+  background-image:none !important;
+  border-right:1px solid rgba(97,166,223,.27) !important;
+}
+html[data-glm-settings-root] [data-glm-settings-row] {
+  background:#0c1b32 !important;
+  background-color:#0c1b32 !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+  border-color:rgba(97,166,223,.23) !important;
+}
+html[data-glm-settings-root] [data-glm-settings-row-part] {
+  background:#0c1b32 !important;
+  background-color:#0c1b32 !important;
+  background-image:none !important;
+}
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) {
+  background:#16365c !important;
+  background-color:#16365c !important;
+  box-shadow:inset 3px 0 0 #4ac1ff !important;
+}
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) [data-glm-settings-row-part] {
+  background:#16365c !important;
+  background-color:#16365c !important;
+}
+html[data-glm-settings-root] [data-glm-settings-navitem] {
+  background:transparent !important;
+  background-color:transparent !important;
+  color:#a6bed8 !important;
+}
+html[data-glm-settings-root] [data-glm-settings-navitem]:is(.gpfocus,.gpfocuswithin,:focus-within,[aria-selected="true"],[aria-current="page"]) {
+  background:#173452 !important;
+  background-color:#173452 !important;
+  color:#f3f8ff !important;
+  box-shadow:inset 3px 0 0 #4ac1ff !important;
+}
