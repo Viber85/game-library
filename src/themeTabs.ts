@@ -6,9 +6,15 @@ export function classifySteamTab(item:BrowserTab): {title:string;scope:ThemeScop
   const title=item.title.trim();
   const url=typeof item.url==="string"?item.url:"";
   if(!title||title.length>180)return null;
-  if(title==="Steam Big Picture Mode" ||
-     url.includes("Valve%20Steam%20Gamepad") ||
-     url.includes("Valve Steam Gamepad/default"))
+  const gamepadUrl =
+    url.includes("Valve%20Steam%20Gamepad") ||
+    url.includes("Valve Steam Gamepad/default") ||
+    url.includes("https://steamloopback.host/routes/") ||
+    url.includes("https://steamloopback.host/index.html");
+  const nativeSteamTab = ["SP", "Steam", "SharedJSContext",
+    "Steam Shared Context presented by Valve™"].includes(title);
+  if(title==="Steam Big Picture Mode" || (gamepadUrl &&
+    (nativeSteamTab || title.startsWith("Game Mode"))))
     return {title,scope:"main"};
   if(title.startsWith("QuickAccess")||title.startsWith("MainMenu"))
     return {title,scope:"overlay"};
