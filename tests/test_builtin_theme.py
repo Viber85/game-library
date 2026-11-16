@@ -65,6 +65,15 @@ class BuiltInThemeTests(unittest.TestCase):
         self.assertIn("appdetailsoverview_ColumnContainer", css["main"])
         self.assertIn("appdetailsplaysection_PlayBar", css["main"])
         self.assertIn("appdetailsactivitysection_ActivityFeedContainer", css["main"])
+        # 0.4.1: media/notes and native Internet/Wi-Fi are packaged into
+        # Steam's main Game Mode tab, not the overlay/QAM stylesheet.
+        self.assertIn("appdetailsnotessection_NoteLink", css["main"])
+        self.assertIn("appdetailsmedialibrary_MediaLibraryButton", css["main"])
+        self.assertIn("networksettings_NetworkItem", css["main"])
+        self.assertIn("gamepaddropdown_DropDownControlButton", css["main"])
+        self.assertIn("appdetailsplaysection_OptionsButton", css["main"])
+        self.assertNotIn("appdetailsnotessection_NoteLink", css["overlay"])
+        self.assertNotIn("networksettings_NetworkItem", css["overlay"])
         self.assertIn("gamepadpagedsettings_", css["main"])
         self.assertNotIn("downloads_DownloadsPage", css["overlay"])
         self.assertNotIn("quickaccessmenu_Menu", css["main"])
