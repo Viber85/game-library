@@ -40,6 +40,6 @@ test("reference glass topbar keeps Steam status bar native and shows active tab"
   assert.doesNotMatch(ui,/Selected from your Steam library/);
   assert.doesNotMatch(ui,/<span className="gl-time">/);
   assert.doesNotMatch(ui,/MdSearch/);
-  assert.match(ui,/className="gl-pill"/);
+  assert.match(ui,/className=\{\s*"gl-pill"\s*\+/);
   assert.match(ui,/const cycleTab = \(direction: number\)/);
 });
