@@ -4,6 +4,7 @@ import test from "node:test";
 
 const ui=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/theme.ts",import.meta.url),"utf8");
+const status=readFileSync(new URL("../src/SystemStatusBar.tsx",import.meta.url),"utf8");
 
 test("focus opens navigation and returning to games collapses it",()=>{
   assert.match(ui,/const \[railExpanded, setRailExpanded\] = useState\(false\)/);
@@ -34,10 +35,10 @@ test("floating library header shows only current tab with real search and clock"
   assert.match(ui,/<span className="gl-topbar-current" title=\{tab\.title\} aria-live="polite">\{tab\.title\}<\/span>/);
   assert.doesNotMatch(ui,/<span className="gl-topbar-title">Game Library<\/span>/);
   assert.doesNotMatch(ui,/gl-topbar-divider/);
-  assert.match(ui,/<div className="gl-topbar-tools">/);
-  assert.match(ui,/<Focusable className="gl-topbar-search"/);
-  assert.match(ui,/onActivate=\{\(\) => Navigation\.Navigate\("\/search"\)\}/);
-  assert.match(ui,/<time className="gl-topbar-clock" dateTime=\{time\.toISOString\(\)\}>/);
+  assert.match(ui,/<SystemStatusBar time=\{time\} searchRef=\{headerSearchRef\}/);
+  assert.match(status,/<Focusable ref=\{searchRef\} className="gl-topbar-search"/);
+  assert.match(status,/onActivate=\{\(\)=>Navigation\.Navigate\("\/search"\)\}/);
+  assert.match(status,/<time className="gl-topbar-clock" dateTime=\{time\.toISOString\(\)\}>/);
   assert.match(ui,/const clock = window\.setInterval\(\(\) => setTime\(new Date\(\)\), 15000\)/);
   assert.match(css,/\.gl-main > \.gl-header\.gl-library-topbar\s*\{[\s\S]*?border-radius:17px/);
   assert.match(css,/\.gl-main > \.gl-header\.gl-library-topbar\s*\{[\s\S]*?backdrop-filter:blur\(15px\)/);
@@ -46,6 +47,12 @@ test("floating library header shows only current tab with real search and clock"
   assert.doesNotMatch(ui,/Selected from your Steam library/);
   assert.match(ui,/className=\{\s*"gl-pill"\s*\+/);
   assert.match(ui,/const cycleTab = \(direction: number\)/);
-  // Native Steam HUD is not simulated with fake Wi-Fi or battery readings.
-  assert.doesNotMatch(ui,/gl-topbar-battery|gl-topbar-wifi/);
+  for(const name of ["gl-topbar-wifi","gl-topbar-bluetooth","gl-topbar-battery",
+    "gl-topbar-notifications","gl-topbar-avatar","gl-topbar-clock"])
+    assert.ok(status.includes(name),"Missing topbar feature: "+name);
+  assert.match(status,/callable<\[\], DeviceStatus>\("get_system_status"\)/);
+  assert.match(status,/onActivate=\{\(\)=>Navigation.Navigate\("\/settings"\)\}/);
+  assert.match(status,/onStatusButtonDown/);
+  assert.match(ui,/headerSearchRef\.current\?\.focus\(\)/);
+  assert.doesNotMatch(status,/Math\.random\(\)/);
 });
