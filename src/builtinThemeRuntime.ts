@@ -2,6 +2,7 @@ import {
   executeInTab, fetchNoCors, injectCssIntoTab, removeCssFromTab,
 } from "@decky/api";
 import { identifySteamTabs, type ThemeScope } from "./themeTabs";
+import { compileMidnightCss } from "./themeCssCompiler";
 
 export type ThemeId = "midnight" | "off";
 export type ThemeBundle = {
@@ -34,7 +35,14 @@ const CLEANUP_SCRIPT = `(() => {
   }
 })()`;
 
-type TabRecord={cssId:string;scope:ThemeScope};
+type TabRecord={cssId:string;scope:ThemeScope;signature:number};
+/** Noncryptographic signature used only to identify CSS versions/class-alias changes. */
+function cssSignature(text:string):number {
+  let result=2166136261;
+  for(let index=0;index<text.length;index++)
+    result=Math.imul(result^text.charCodeAt(index),16777619);
+  return result>>>0;
+}
 const managedTabs=new Map<string,TabRecord>();
 const listeners=new Set<(next:ThemeStatus)=>void>();
 let theme:ThemeBundle|null=null;
@@ -106,20 +114,22 @@ async function applyToTab(
   title:string,scope:ThemeScope,epoch:number,
 ):Promise<void> {
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
+  // CSS modules may finish loading when Settings or game-details is opened.
+  // Compile live Steam class aliases on each check, then re-inject only if
+  // the mapping changed. This allows themed pages to work after lazy loads.
+  const css=compileMidnightCss(theme.css[scope])+markerCss;
+  const signature=cssSignature(css);
+  const previous=managedTabs.get(title);
   // Steam can rebuild QAM/Home's DOM without changing the DevTools tab title.
-  // The runtime detects lost styles and reinstalls them without duplicates.
-  if(await activeInTab(title)) {
-    if(managedTabs.has(title))return;
-  }
-  // Replace both previous CSS revisions and an untracked style left after a
-  // Decky/Steam hot reload. Old settings/game-page CSS was incomplete.
-  // Only our own uniquely-marked <style> elements are removed.
+  if(previous?.signature===signature && previous.scope===scope &&
+     await activeInTab(title))return;
+  // Remove previously injected CSS (including the incomplete older release)
+  // and replace it with the current selector and style revision.
   await removeKnown(title);
   try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
-  catch{/* The tab may have been rebuilt; injection below will retry. */}
+  catch{/* Steam may have rebuilt the tab while we were checking. */}
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
   try{
-    const css=theme.css[scope]+markerCss;
     // API typings return string, but the Decky backend may return a Promise.
     const cssId=await bounded(injectCssIntoTab(title,css) as unknown as Promise<string>|string);
     if(typeof cssId!=="string"||cssId.length<8)throw new Error("Invalid style identifier");
@@ -128,7 +138,7 @@ async function applyToTab(
       catch{/* tab may have disappeared */}
       return;
     }
-    managedTabs.set(title,{cssId,scope});
+    managedTabs.set(title,{cssId,scope,signature});
   }catch(e){
     // Keep the theme enabled and retry when Steam opens the menu again.
     console.warn("[game-library] theme injection deferred for",title,e);
