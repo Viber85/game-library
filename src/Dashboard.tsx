@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
-  MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSearch, MdSettings,
+  MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSettings,
   MdShoppingCart, MdStar, MdVideogameAsset, MdChevronRight, MdArrowBack,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
@@ -11,6 +11,7 @@ import {
   LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates, heroCandidates, logoCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
+import { SystemStatusBar } from "./SystemStatusBar";
 import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster";
 import { getActiveUserId } from "./steam";
 import { HowLongToBeatCard } from "./HltbCard";
@@ -141,6 +142,7 @@ export function Dashboard() {
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sidebarRef = useRef<HTMLElement>(null);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const headerSearchRef = useRef<HTMLDivElement>(null);
   const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridLayoutRef = useRef<HTMLDivElement>(null);
@@ -365,21 +367,15 @@ export function Dashboard() {
           <div className="gl-topbar-titles">
             <span className="gl-topbar-current" title={tab.title} aria-live="polite">{tab.title}</span>
           </div>
-          <div className="gl-topbar-tools">
-            <Focusable className="gl-topbar-search" focusClassName="gl-focused" noFocusRing
-              onActivate={() => Navigation.Navigate("/search")} onOKActionDescription="Search games"
-              onButtonDown={(e:GamepadEvent) => {
-                if(handleBumper(e))return;
-                if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);focusPill(Math.max(0,tabs.indexOf(tab)));}
-              }}
-              onCancelButton={() => focusPill(Math.max(0,tabs.indexOf(tab)))}
-              aria-label="Search Steam games" title="Search">
-              <MdSearch aria-hidden="true" />
-            </Focusable>
-            <time className="gl-topbar-clock" dateTime={time.toISOString()}>
-              {time.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
-            </time>
-          </div>
+          <SystemStatusBar time={time} searchRef={headerSearchRef}
+            onStatusButtonDown={(e:GamepadEvent)=>{
+              if(handleBumper(e))return;
+              if(e.detail?.button===GamepadButton.DIR_DOWN){
+                consume(e);
+                focusPill(Math.max(0,tabs.indexOf(tab)));
+              }
+            }}
+          />
         </header>
 
         <nav className="gl-filterbar" aria-label="Library filters">
@@ -393,7 +389,8 @@ export function Dashboard() {
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
                   const b=e.detail?.button;
-                  if(b===GamepadButton.DIR_DOWN){consume(e);goToGame();}
+                  if(b===GamepadButton.DIR_UP){consume(e);headerSearchRef.current?.focus();}
+                  else if(b===GamepadButton.DIR_DOWN){consume(e);goToGame();}
                   else if(b===GamepadButton.DIR_LEFT){consume(e);index===0?focusRail(0):focusPill(index-1);}
                   else if(b===GamepadButton.DIR_RIGHT){consume(e);index===tabs.length-1?sortRef.current?.focus():focusPill(index+1);}
                 }}
