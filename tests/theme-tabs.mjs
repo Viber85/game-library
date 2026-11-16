@@ -13,6 +13,13 @@ test("main Game Mode and Steam overlay windows receive separate styling",()=>{
 
 test("discover gamepad UI when Steam changes its tab caption",()=>{
   assert.equal(classifySteamTab({title:"Game Mode UI",url:"file:///Valve%20Steam%20Gamepad/default"})?.scope,"main");
+  assert.equal(classifySteamTab({
+    title:"SP",url:"https://steamloopback.host/routes/library/home"
+  })?.scope,"main");
+  assert.equal(classifySteamTab({
+    title:"SharedJSContext",url:"https://steamloopback.host/index.html"
+  })?.scope,"main");
+  assert.equal(classifySteamTab({title:"Steam",url:"https://example.com"})?.scope??null,null);
 });
 
 test("avoid injecting into Steam store, desktop, browser or other apps",()=>{
