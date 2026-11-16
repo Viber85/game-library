@@ -87,6 +87,30 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.6 — complete floating SteamOS-style status bar:** The header keeps the
+large active TabMaster tab name on the left and now shows Search,
+Notifications, Wi-Fi, Bluetooth, battery with actual percentage and charging
+icon, a live clock and the current Steam avatar on the right. Notifications
+show a real unread badge when Steam's notification store is accessible;
+unavailable count does not become a fake zero. The avatar is read from the
+existing Steam user store when available, otherwise a neutral person icon
+is used. The notification, network, Bluetooth, battery and profile controls
+open Steam pages. Controller Up from tabs focuses the search control; Down
+returns to the active tab and L1/R1 shortcuts are preserved.
+
+Battery readings use the local Linux power-supply device; Wi-Fi uses
+NetworkManager connection state and signal and Bluetooth uses Linux rfkill
+or the local BlueZ adapter state. These are **read-only** calls via the
+packaged Decky Python backend. They never send or display SSIDs, addresses
+or device identifiers. Missing data results in an unavailable-state icon,
+not invented percentages or radio states. Device status is refreshed every
+12 seconds; live Steam notification/avatar information every 5 seconds.
+No extra daemon, root mutation or network requests are needed for hardware
+state. The native Steam overlay CSS and the previous volume/achievement
+flash fix are untouched. Automated checks cover the new status collector,
+frontend icon wiring, focus behavior and ZIP packaging; confirm the actual
+hardware data on MSI Claw after installation.
+
 **v0.4.5 — floating active-tab header:** The dashboard's header now shows
 only the currently selected TabMaster tab (for example Steam or Epic),
 in larger, high-contrast typography. The redundant `Game Library`
