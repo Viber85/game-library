@@ -1,0 +1,43 @@
+/* Game Library Midnight — same colors as the Game Library dashboard.
+ * CSS Loader targets the main Steam UI and its separate overlay windows.
+ * Color-only changes: do not hide controls, alter scale, or change focus order. */
+:root {
+  --glm-bg: #020815;
+  --glm-bg-deep: #030c1a;
+  --glm-panel: #0c1b32;
+  --glm-panel-raised: #102944;
+  --glm-panel-hover: #183d66;
+  --glm-border: rgba(97,166,223,.27);
+  --glm-text: #f3f8ff;
+  --glm-muted: #a6bed8;
+  --glm-accent: #4ac1ff;
+  --glm-accent-strong: #1aaff5;
+  --glm-accent-soft: rgba(74,193,255,.15);
+  --glm-primary: #ccecff;
+  --glm-primary-ink: #07182e;
+  --glm-danger: #ef778b;
+}
+#GamepadUI_Full_Root,
+.BasicUI {background-color:var(--glm-bg) !important;}
+/* Retain original wallpaper/hero artwork wherever Steam uses it. */
+#header {background:linear-gradient(90deg,rgba(3,12,26,.98),rgba(8,31,60,.91)) !important;
+  border-bottom:1px solid var(--glm-border) !important;}
+#Footer {background:rgba(2,8,21,.95) !important;
+  border-top:1px solid var(--glm-border) !important;}
+#header [class*="HeaderItem"],
+#Footer [class*="ActionButtonLabel"],
+#Footer [class*="ActionButtonLegend"] {color:var(--glm-text) !important;}
+#header .gpfocus,#Footer .gpfocus {
+  box-shadow:inset 0 0 0 2px var(--glm-accent),0 0 12px rgba(25,158,251,.3) !important;
+  background:var(--glm-panel-hover) !important;
+}
+.searchbar_SearchFieldBackground_3F4YR,
+.searchbar_SearchContainer_161Tj,
+.searchbar_SearchBox_2a1-s {
+  background-color:var(--glm-panel) !important;
+  color:var(--glm-text) !important;
+}
+.searchbar_SearchContainer_161Tj.gpfocuswithin {
+  box-shadow:0 0 0 2px var(--glm-accent) !important;
+}
+.searchbar_SearchBox_2a1-s::placeholder {color:var(--glm-muted) !important;}
