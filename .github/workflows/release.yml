@@ -54,6 +54,6 @@ jobs:
           if [[ "$VERSION" == *"-"* ]]; then PREVIEW=(--prerelease); fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG}" \
-            --notes "Game Library 0.4.0 introduces an animated focus-expanding navigation rail. The icon-only menu expands to show inline labels and moves the game dashboard instead of overlaying it. Up/Down keeps the rail open; Right/B returns to games and collapses it. Includes responsive sizes, reduced-motion support and regression checks. The Midnight theme and existing game functionality are unchanged. Device validation pending." \
+            --notes "Game Library v0.4.1 improves the built-in Midnight theme across SteamOS Game Mode Settings (System/Internet and other categories), Wi-Fi connected/available lists, dropdowns, toggles, focus and buttons, and native game Details (Media, Notes, Activity, secondary buttons, metadata, tabs and stats). Keeps game artwork and 0.4.0 animated sidebar unchanged. Adds live lazy-loaded CSS-module mapping, forces replacement of older style revisions, validates packaged CSS, and runs new syntax/accessibility/theme regression checks. GitHub build/tests passed; all individual SteamOS screens and third-party plugin badges still require device verification." \
             --target "$GITHUB_SHA" \
             "${PREVIEW[@]}"
