@@ -27,8 +27,8 @@ const MODULE_ANCHORS:Record<string,readonly string[]> = {
   appdetailscommunityfeed:["CommunityItem","HeaderStyles"],
   appdetailsactivitysection:["ActivityFeedContainer","NoActivity"],
   appactivityday:["EventBody","Event"],
-  appdetailsprimarylinkssection:["LinksSection"],
-  appdetailsgameinfopanel:["DeckVerifiedInfo"],
+  appdetailsprimarylinkssection:["LinksSection","LinkButton"],
+  appdetailsgameinfopanel:["DeckVerifiedInfo","CompatBadge"],
   appdetailsachievementssection:["AchievementCarouselItem"],
   appdetailsdlcsection:["Item","Remainder"],
   spotlightgameplaysummary:["SummaryCarouselContainer","SummaryAchievement"],
@@ -46,9 +46,6 @@ const MODULE_ANCHORS:Record<string,readonly string[]> = {
   appdetailsmediasection:["MediaSection","MediaButton","ViewMedia"],
   appdetailsmedialibrary:["MediaLibraryButton","NoMedia","OpenMedia"],
   appdetailsnotessection:["NoteLink","NotesSection","NoteBody"],
-  appdetailsprimarylinkssection:["LinksSection","LinkButton"],
-  appdetailsgameinfopanel:["DeckVerifiedInfo","CompatBadge"],
-
 };
 
 function getSteamModules():AliasRegistry {
