@@ -38,6 +38,12 @@ export type ThemeDiagnostics={
   computedFieldColor:string;
   computedRootColor:string;
   sampleClasses:string[];
+  colorSamples:Array<{color:string;count:number;className:string}>;
+  surfaceElements:number;
+  detectedRoute:string;
+  watcherRunning:boolean;
+  watcherTicks:number;
+  watcherAgeSeconds:number;
   captureSource:"live"|"before-qam"|"none";
   capturedPage:string;
   captureAgeSeconds:number;
@@ -313,6 +319,8 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       cssSheets:0,settingsRoots:0,settingsFields:0,networkRows:0,
       gameRoots:0,gameSections:0,computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
+      colorSamples:[],surfaceElements:0,detectedRoute:"other",
+      watcherRunning:false,watcherTicks:0,watcherAgeSeconds:0,
       captureSource:"none",capturedPage:"",captureAgeSeconds:0,
       details:main?"Unable to inspect Steam UI.":"No Steam Game Mode tab could be verified.",
     };
@@ -331,9 +339,13 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     // Our in-tab watcher retains the last page's CSS counts in memory, rather
     // than mistaking the resulting 0/0 live DOM for a broken CSS selector.
     let snapshot=null as ReturnType<typeof latestThemePage>;
+    let audit:ReturnType<typeof parseThemeAudit>=null;
     try{
       const response=await bounded(executeInTab(main.title,false,THEME_AUDIT_READ_SCRIPT));
-      if(response.success)snapshot=latestThemePage(parseThemeAudit(response.result),Date.now());
+      if(response.success) {
+        audit=parseThemeAudit(response.result);
+        snapshot=latestThemePage(audit,Date.now());
+      }
     }catch(error){console.warn("[game-library] last native CSS page snapshot unavailable",error);}
     const usingSnapshot=!liveSettings&&!liveGame&&snapshot!==null;
     const inspected=usingSnapshot?snapshot!.sample.probe:probe;
@@ -342,13 +354,18 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     const details=!probe.visibleUI?"Selected CEF tab does not expose the Steam Game Mode DOM.":
       !applied?"Midnight CSS is not verified in this Steam document.":
       usingSnapshot
-        ? "Steam may hide the previous screen while QAM is open. Showing an automatic CSS snapshot captured before QAM; review the row color and counts."
+        ? snapshot!.kind==="Unclassified"
+          ? "Steam CSS was sampled, but this build uses an unrecognized Settings/Game page route or classes. Use the detected background colors and CSS class examples below."
+          : "Steam may hide the previous screen while QAM is open. Showing a CSS snapshot captured before QAM; compare color values and classes."
+
         :onSettings&&inspected.fieldRows===0
           ?"Settings was detected but its row selectors did not match."
         :onGame&&inspected.gameSections===0
           ?"Game Details was detected but its section selectors did not match."
         :!onSettings&&!onGame
-          ?"No Settings/Game Details DOM is present and no recent snapshot was found. Close QAM, visit the problem page for at least 2 seconds, then reopen QAM and run this check."
+          ?audit?.installed && audit.sampleTicks>0
+            ?"Background watcher is running, but no matching Settings/Game screen has been recognized. Visit Settings, then reopen QAM; if still empty, inspect the route and class samples."
+            :"Background watcher was not running in the Steam tab. Reapply theme, close QAM, and open Settings again."
         :"Native page selectors are present. Compare its sampled color with the Midnight palette.";
     return {
       target:main.title,discoveredTabs:tabs.length,
@@ -358,6 +375,10 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       networkRows:inspected.networkRows,gameRoots:inspected.gameRoots,
       gameSections:inspected.gameSections,computedFieldColor:inspected.fieldColor,
       computedRootColor:inspected.rootColor,sampleClasses:inspected.sampleClasses,
+      colorSamples:inspected.colorSamples,surfaceElements:inspected.surfaceElements,
+      detectedRoute:inspected.routeKind,
+      watcherRunning:audit?.installed===true,watcherTicks:audit?.sampleTicks??0,
+      watcherAgeSeconds:audit?.lastScanAt?Math.max(0,Math.round((Date.now()-audit.lastScanAt)/1000)):0,
       captureSource:usingSnapshot?"before-qam":onSettings||onGame?"live":"none",
       capturedPage:usingSnapshot?snapshot!.kind:onSettings?"Settings":onGame?"Game Details":"",
       captureAgeSeconds:usingSnapshot?Math.max(0,Math.round((Date.now()-snapshot!.sample.at)/1000)):0,
