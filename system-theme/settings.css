@@ -7,20 +7,21 @@
 /* Overall full-page settings background and the two columns. */
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog"],
 .BasicUI [class*="gamepadpage_DialogBackground"] {
-  background:#020815 !important;
-  background-color:#020815 !important;
+  background:#0a1b30 !important;
+  background-color:#0a1b30 !important;
   color:var(--glm-text) !important;
 }
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageListColumn"] {
-  background:#061428 !important;
-  background-color:#061428 !important;
+  background:#081425 !important;
+  background-color:#081425 !important;
   border-right:1px solid var(--glm-border) !important;
 }
 .BasicUI [class*="gamepadpagedsettings_PagedSettingDialog_ContentColumn"],
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"],
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"] [class*="DialogContent"] {
-  background:transparent !important;
-  background-color:transparent !important;
+  background:#0a1b30 !important;
+  background-color:#0a1b30 !important;
+  background-image:none !important;
   color:var(--glm-text) !important;
 }
 
@@ -59,7 +60,7 @@
   [class*="gamepaddialog_Field "],
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   .gamepaddialog_Field {
-  background:#112941 !important;
+  background:#0f2842 !important;
   background-image:none !important;
   color:var(--glm-text) !important;
   border-bottom:1px solid rgba(103,171,221,.2) !important;
@@ -68,12 +69,12 @@
 /* Some Steam releases use a field subclass without the underscore suffix. */
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddialog_HighlightOnFocus"] {
-  background:#112941 !important;
+  background:#0f2842 !important;
   background-image:none !important;
 }
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddialog_Field"]:is(.gpfocus,.gpfocuswithin,:focus-within,:hover) {
-  background:#1b466d !important;
+  background:#163a5e !important;
   background-image:none !important;
   box-shadow:inset 2px 0 0 var(--glm-accent) !important;
 }
@@ -95,7 +96,7 @@
   [class*="gamepaddropdown_DropDownControlButton"],
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   button.DialogButton {
-  background:#143f68 !important;
+  background:#123452 !important;
   background-image:none !important;
   color:var(--glm-text) !important;
   border:1px solid rgba(81,174,241,.32) !important;
@@ -103,7 +104,7 @@
 }
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddropdown_DropDownControlButton"]:is(.gpfocus,:focus-visible) {
-  background:#235786 !important;
+  background:#1a466d !important;
   box-shadow:0 0 0 2px var(--glm-accent) !important;
 }
 
