@@ -30,7 +30,11 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const networks = '[class*="networksettings_"],[class*="wifisettings_"],[class*="connectionsettings_"],[class*="wirelesssettings_"]';
   const games = '[class*="appdetails_Container"],[class*="appdetails_ScrollContainer"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]';
   const sections = '[class*="appdetailssection_"],[class*="appdetailsnotessection_"],[class*="appdetailsmediasection_"]';
-  const target = document.querySelector(settings+' '+fields) || document.querySelector(fields);
+  // First locate the actual native Settings root, then inspect a row inside
+  // it. Concatenating two comma-separated selectors would incorrectly match
+  // the Settings root itself rather than a Field child.
+  const settingsRoot = document.querySelector(settings);
+  const target = settingsRoot ? settingsRoot.querySelector(fields) : null;
   const surface = document.querySelector('.BasicUI') || document.body;
   const classNames = new Set();
   if (count(settings) || count(games)) {
