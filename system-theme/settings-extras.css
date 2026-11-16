@@ -1,0 +1,136 @@
+/* Game Library Midnight 0.4.1: all SteamOS Game Mode Settings fields.
+ * Scope to Steam's settings page; never change layout, interaction, click
+ * targets, network availability, icons, or the user's text and values.
+ * Steam may expose readable or minified CSS modules; the runtime expands
+ * known aliases when possible.
+ */
+
+/* Settings page top-level layers and section strips. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddialog_Field"],[class*="gamepaddialog_Field_"],[class*="gamepaddialog_HighlightOnFocus"],
+ [class*="gamepadpagedsettings_SettingsRow"],[class*="gamepadsettings_SettingsRow"]) {
+  background-color:#10273f !important;
+  background-image:none !important;
+  color:var(--glm-text) !important;
+  border-color:rgba(102,169,216,.22) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"]):is(.gpfocus,.gpfocuswithin,:focus-within) {
+  background-color:#1a4267 !important;
+  border-color:rgba(74,193,255,.65) !important;
+  box-shadow:inset 3px 0 0 var(--glm-accent) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddialog_FieldLabel"],[class*="gamepaddialog_FieldLabelValue"],[class*="gamepaddialog_FieldIcon"],
+ [class*="gamepadpagedsettings_SectionTitle"],[class*="gamepadpagedsettings_SectionHeader"]) {
+  color:#f2f8ff !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddialog_FieldDescription"],[class*="gamepaddialog_FieldSubtext"],
+ [class*="gamepadpagedsettings_SectionDescription"]) {
+  color:#acc4dc !important;
+}
+
+/* All Settings categories: select/dropdown, action and secondary buttons.
+ * Includes System/Internet/Storage/Bluetooth/Controller/Cloud/In Game. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddropdown_DropDownControlButton"],[class*="gamepadpagedsettings_DropDown"],
+ [class*="gamepaddialog_Button"],button.DialogButton,select) {
+  background:#123452 !important;
+  background-image:none !important;
+  color:#f2f9ff !important;
+  border:1px solid rgba(99,171,226,.38) !important;
+  border-radius:8px !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddropdown_DropDownControlButton"],[class*="gamepaddialog_Button"],
+ button.DialogButton,select):is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+  background:#1d527d !important;
+  border-color:var(--glm-accent) !important;
+  box-shadow:0 0 0 2px rgba(74,193,255,.7) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddropdown_DropDownControlButton"],button.DialogButton):disabled {
+  opacity:.54 !important;
+}
+/* Controls retain their actual checked/disabled value and track geometry. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddialog_ToggleRail"],[class*="gamepadslider_SliderTrack"]) {
+  background-color:#34475e !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ [class*="gamepaddialog_On"] [class*="gamepaddialog_ToggleRail"],
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([role="switch"][aria-checked="true"],[class*="gamepaddialog_Toggle"][class*="gamepaddialog_On"]) {
+  background-color:#22bde9 !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ [class*="gamepadslider_SliderTrackActive"] {
+  background:#4ac1ff !important;
+}
+
+/* Settings > Internet. Wi-Fi list rows and available networks are *not*
+ * regular Field elements on several SteamOS builds. Color those surfaces
+ * explicitly while keeping the network names and state icons intact. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
+ [class*="networksettings_NetworkListItem"],[class*="networksettings_ConnectedNetwork"],
+ [class*="networksettings_AvailableNetwork"],[class*="networksettings_WifiNetwork"],
+ [class*="networksettings_NetworkEntry"],[class*="networksettings_Network"],
+ [class*="wifisettings_NetworkItem"],[class*="wifisettings_NetworkRow"],
+ [class*="connectionsettings_Network"],[class*="wirelesssettings_Network"],
+ [class*="gamepadnetwork_Network"]) {
+  background-color:#0f2944 !important;
+  background-image:none !important;
+  border-bottom-color:rgba(104,174,225,.24) !important;
+  color:#edf6ff !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
+ [class*="networksettings_NetworkListItem"],[class*="networksettings_NetworkEntry"],
+ [class*="wifisettings_NetworkItem"],[class*="connectionsettings_Network"]):is(.gpfocus,.gpfocuswithin,:focus-visible,:hover) {
+  background-color:#205078 !important;
+  box-shadow:inset 3px 0 0 var(--glm-accent) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="networksettings_Connected"],[class*="networksettings_CurrentNetwork"],
+ [class*="wifisettings_Connected"],[class*="connectionsettings_Connected"]) {
+  border-left:3px solid #54ceef !important;
+  background-color:#163f57 !important;
+}
+/* Network lock and Wi-Fi signal icons; don't touch their signal fill/shape. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="networksettings_Icon"],[class*="networksettings_Signal"],
+ [class*="wifisettings_Signal"],[class*="networksettings_Secure"],
+ [class*="networksettings_Lock"]) {
+  color:#92dfff !important;
+}
+
+/* Some live Steam builds use shared settings lists without a network-
+ * specific CSS-module name. In the Settings PageContent only, recolor rows
+ * that Valve exposes with listbox/menuitem semantics. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([role="listbox"] > [role="option"],[role="list"] > [role="listitem"]) {
+  background:#102940 !important;
+  color:#edf6ff !important;
+  border-bottom-color:rgba(102,174,225,.22) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([role="listbox"] > [role="option"],[role="list"] > [role="listitem"]):is(.gpfocus,[aria-selected="true"],:focus-visible) {
+  background:#1b4b70 !important;
+  box-shadow:inset 3px 0 0 var(--glm-accent) !important;
+}
+
+/* Popup dropdown options and sliders scoped to settings (but not the Steam
+ * keyboard, chat, game artwork, or performance overlay). */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog"]
+ :is([class*="gamepaddropdown_DropDownMenu"],[class*="gamepadpagedsettings_Popover"]) {
+  background:#0c2038 !important;
+  color:var(--glm-text) !important;
+  border-color:var(--glm-border) !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog"]
+ :is([class*="gamepaddropdown_DropDownMenuItem"],[role="option"]):is(.gpfocus,[aria-selected="true"]) {
+  background:#23527a !important;
+  color:#f5fbff !important;
+}
