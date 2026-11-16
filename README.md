@@ -87,6 +87,22 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.5 — floating active-tab header:** The dashboard's header now shows
+only the currently selected TabMaster tab (for example Steam or Epic),
+in larger, high-contrast typography. The redundant `Game Library`
+title and divider are gone. Its top bar is a separate rounded, translucent
+frosted-glass surface close to the upper display edge instead of a
+full-width opaque strip. On the right, a functional Steam search shortcut
+and a live local clock appear; neither pretends to expose SteamOS Wi-Fi
+or battery state. Steam's system status bar may be absent or covered
+depending on the current Game Mode environment, so the new header does not
+depend on its visibility. The floating panel is part of the dashboard only,
+never a global CSS overlay. Existing selected-game hero, library filtering,
+controller L1/R1 navigation, and the fixed Midnight notification overlay
+transparency remain unchanged. Tests cover heading, real search action,
+clock refresh and focus navigation. Check the physical handheld for exact
+screen-edge spacing.
+
 **v0.4.4 — glass library header and cleaner game details:** Removed the
 repeated `Selected from your Steam library` text beneath every selected
 game title. The Game Library dashboard again shows a dedicated top
