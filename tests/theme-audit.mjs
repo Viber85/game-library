@@ -238,11 +238,15 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   };
   const html=make(0,0,1000,800);
   const sidebar=make(30,50,260,700),main=make(300,50,700,700);
+  // Mimic Storage: games are in a nested scroll list, while disk tabs sit
+  // in the surrounding Settings content pane.
+  const storageScroll=make(310,85,680,620);
   sidebar.parentElement=root;main.parentElement=root;
+  storageScroll.parentElement=main;
   const left=Array.from({length:12},(_,i)=>make(75,86+i*42,205,34));
   const right=Array.from({length:8},(_,i)=>make(321,155+i*56,655,42));
   for(const item of left)item.parentElement=sidebar;
-  for(const item of right)item.parentElement=main;
+  for(const item of right)item.parentElement=storageScroll;
   // Rows already mounted below the visible scroll viewport must not
   // wait for their first scroll event before receiving Midnight colors.
   const offscreen=[make(321,930,655,42),make(321,1090,655,42)];
@@ -251,7 +255,7 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   tinyControl.parentElement=main;
   main.querySelectorAll=(selector)=>selector==="[class]"?
     [...right,...offscreen,tinyControl]:[];
-  const nodes=[root,sidebar,main,...left,...right,...offscreen,tinyControl,html];
+  const nodes=[root,sidebar,main,storageScroll,...left,...right,...offscreen,tinyControl,html];
   const doc={
     documentElement:html,
     querySelector:(selector)=>selector===".BasicUI"?root:null,
@@ -273,7 +277,10 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   assert.equal(html.hasAttribute("data-glm-settings-root"),true,
     "Document root can scope CSS even when Settings uses a separate React root");
   assert.equal(sidebar.hasAttribute("data-glm-settings-sidebar"),true);
-  assert.equal(main.hasAttribute("data-glm-settings-main"),true);
+  assert.equal(main.hasAttribute("data-glm-settings-main"),true,
+    "Outer Settings canvas must include Storage disk tabs, not just games");
+  assert.equal(storageScroll.hasAttribute("data-glm-settings-main"),false,
+    "Nested scrolling container must not replace the outer Settings pane");
   assert.equal(right.filter(n=>n.hasAttribute("data-glm-settings-row")).length,8);
   assert.equal(offscreen.filter(n=>n.hasAttribute("data-glm-settings-row")).length,2,
     "Pre-existing offscreen rows must be themed before scrolling");
