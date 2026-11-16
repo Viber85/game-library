@@ -98,7 +98,31 @@ async function listTabs():Promise<SteamTab[]> {
     const response=await bounded(fetchNoCors(DEBUG_TABS_URL));
     if(response.ok){
       const parsed=identifySteamTabs(await bounded(response.json()));
-      if(parsed.length)return parsed;
+      if(parsed.length){
+        const checked:SteamTab[]=[];
+        for(const tab of parsed) {
+          if(tab.scope==="overlay"){checked.push(tab);continue;}
+          // The Steam CEF list can contain an off-screen SharedJSContext/SP.
+          // Don't count that as the visible Game Mode page without DOM proof.
+          try{
+            const value=await bounded(executeInTab(tab.title,false,STEAM_PAGE_CHECK_SCRIPT),1500);
+            if(value.success&&value.result===true)checked.push(tab);
+          }catch{ /* ephemeral CEF tab: skip and retry next cycle */ }
+        }
+        if(checked.some(t=>t.scope==="main"))return checked;
+        // If only overlays were found, still attempt the known visible Home
+        // titles before returning; don't silently style overlays alone.
+        for(const title of FALLBACK_MAIN_TITLES){
+          if(checked.some(t=>t.title===title))continue;
+          try{
+            const result=await bounded(executeInTab(title,false,STEAM_PAGE_CHECK_SCRIPT),1500);
+            if(result.success&&result.result===true){
+              return [{title,scope:"main"},...checked];
+            }
+          }catch{ /* try next candidate */ }
+        }
+        return checked;
+      }
     }
   }catch(error){
     console.warn("[game-library] CEF tab discovery unavailable",error);
