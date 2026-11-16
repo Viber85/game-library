@@ -37,7 +37,7 @@ jobs:
         run: npm run test:achievements
       - name: Typecheck, build and package
         run: bash scripts/package.sh
-      - name: Publish GitHub pre-release
+      - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -48,8 +48,10 @@ jobs:
             echo "Release $TAG already exists; refusing to overwrite a previously published version."
             exit 0
           fi
+          PREVIEW=()
+          if [[ "$VERSION" == *"-"* ]]; then PREVIEW=(--prerelease); fi
           gh release create "$TAG" "$ZIP" \
-            --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library v0.2.0-test.16: fix Midnight coverage on native Steam Settings and game-details pages. Uses correct PagedSettingsDialog classes, a dedicated game-details stylesheet for metadata, Play bar and Activity, and runtime Steam CSS-class alias resolution to handle minified class names. Re-applies styles on lazy-loaded pages and removes older CSS revisions left by hot reload. No CSS Loader required. GitHub test/build verification passed; visual confirmation on device still required." \
+            --title "Game Library ${TAG}" \
+            --notes "Game Library 0.4.0 introduces an animated focus-expanding navigation rail. The icon-only menu expands to show inline labels and moves the game dashboard instead of overlaying it. Up/Down keeps the rail open; Right/B returns to games and collapses it. Includes responsive sizes, reduced-motion support and regression checks. The Midnight theme and existing game functionality are unchanged. Device validation pending." \
             --target "$GITHUB_SHA" \
-            --prerelease
+            "${PREVIEW[@]}"
