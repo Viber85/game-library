@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
+import { ButtonItem, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
 import {
-  subscribeThemeStatus, themeRuntimeStatus, type ThemeStatus,
+  subscribeThemeStatus, themeRuntimeStatus, runThemeDiagnostics,
+  refreshBuiltinTheme, type ThemeDiagnostics, type ThemeStatus,
 } from "./builtinThemeRuntime";
 import { selectBuiltinTheme } from "./themeController";
 
@@ -10,10 +11,13 @@ export function BuiltinThemePanel(){
   const [current,setCurrent]=useState<ThemeStatus>(themeRuntimeStatus);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
+  const [diagnostics,setDiagnostics]=useState<ThemeDiagnostics|null>(null);
+  const [checking,setChecking]=useState(false);
   useEffect(()=>subscribeThemeStatus(setCurrent),[]);
   const change=(enabled:boolean)=>{
     if(busy)return;
     setError("");
+    setDiagnostics(null);
     setBusy(true);
     void selectBuiltinTheme(enabled?"midnight":"off")
       .catch(e=>setError("Unable to change system theme: "+String(e)))
@@ -46,6 +50,39 @@ export function BuiltinThemePanel(){
         </div>
       </div>
     </PanelSectionRow>
+    {enabled&&<PanelSectionRow>
+      <ButtonItem layout="below" disabled={busy||checking} onClick={()=>{
+        setChecking(true);
+        setError("");
+        void refreshBuiltinTheme().then(()=>runThemeDiagnostics())
+          .then(result=>setDiagnostics(result))
+          .catch(err=>setError("Steam CSS diagnostics failed: "+String(err)))
+          .finally(()=>setChecking(false));
+      }}>
+        {checking?"Inspecting Steam UI…":"Reapply theme & diagnose"}
+      </ButtonItem>
+    </PanelSectionRow>}
+    {diagnostics&&<PanelSectionRow>
+      <div style={{fontSize:12,lineHeight:1.5,whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>
+        <strong>Actual Steam CSS check</strong>
+        <div>CEF tab: {diagnostics.target}</div>
+        <div>Visible Steam UI: {diagnostics.detectedVisibleUI?"Yes":"No"}</div>
+        <div>CSS in Steam document: {diagnostics.applied?"Verified":"Not verified"} · stylesheets: {diagnostics.cssSheets}</div>
+        <div>Settings page / rows: {diagnostics.settingsRoots} / {diagnostics.settingsFields}</div>
+        <div>Network entries: {diagnostics.networkRows}</div>
+        <div>Game page / sections: {diagnostics.gameRoots} / {diagnostics.gameSections}</div>
+        {diagnostics.computedFieldColor&&
+          <div>Actual row background: {diagnostics.computedFieldColor}</div>}
+        {diagnostics.sampleClasses.length>0&&
+          <div>Detected Steam classes: {diagnostics.sampleClasses.slice(0,4).join(", ")}</div>}
+        <div style={{marginTop:4,color:diagnostics.applied?"#c5e7f7":"#ffb1b9"}}>{diagnostics.details}</div>
+        <div style={{opacity:.7,marginTop:4}}>
+          Open Settings or a game's details, then press this button. A screenshot
+          of this panel helps identify SteamOS class differences without
+          exposing network names or game titles.
+        </div>
+      </div>
+    </PanelSectionRow>}
     {error&&<PanelSectionRow><div style={{fontSize:12,color:"#ffb1b9"}}>{error}</div></PanelSectionRow>}
   </PanelSection>;
 }
