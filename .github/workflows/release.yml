@@ -27,6 +27,8 @@ jobs:
         run: npm run test:navigation
       - name: Test built-in theme window targeting
         run: npm run test:theme
+      - name: Test minified Steam CSS class compatibility
+        run: npm run test:css-aliases
       - name: Test native Steam shortcut launching
         run: npm run test:launch
       - name: Test Steam achievements
