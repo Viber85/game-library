@@ -87,6 +87,30 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.2-test.3 SteamOS class-independent diagnostics:** A device screenshot
+from v0.4.2-test.2 still showed the Midnight CSS marker as verified in
+`Steam Big Picture Mode` but **No active page snapshot** and Settings
+`0 / 0`. The previous watcher only saved the page when its expected
+Steam CSS class names matched, so it could silently ignore a valid
+Settings page whose class names had changed.
+
+The built-in appearance watcher now uses both page-route classification
+(Settings / game details) **and** a bounded, class-independent survey
+of computed blue-background UI surfaces. It retains only the color,
+number of matching elements and a short sanitized CSS class token, never
+the page URL, game ID, Wi-Fi network names, text or input contents.
+An explicitly labeled **Unclassified** fallback is available when
+Steam's page route itself is unrecognized. The diagnostic panel also
+reports whether the native Steam watcher is running, how many scans
+completed, and the time since the last scan.
+
+This version does **not** recolor unknown Steam elements automatically:
+their exact CSS classes must first be observed to avoid accidentally
+changing artwork or controls. From Settings > System/Internet, leave the
+screen open for 5 seconds, then open QAM > Game Library > Appearance and
+run `Reapply theme & diagnose`. The blue surface class/color samples are
+the most useful part of the report for the next targeted correction.
+
 **v0.4.2-test.2 QAM-safe diagnostics:** The previous diagnostic reported
 `Settings page / rows: 0 / 0` despite a verified Midnight CSS marker
 in `Steam Big Picture Mode`. This can occur because native Steam unmounts
