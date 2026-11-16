@@ -45,7 +45,7 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const routeKind = /(?:^|[\\s\\/#])settings(?:[\\s\\/#?]|$)/i.test(route) ? 'settings'
     : /(?:library\\/app\\/|library\\/game\\/|game\\/details\\/)/i.test(route) ? 'game' : 'other';
   // Bounded scan of live CSS backgrounds on the page; no text, URLs, values,
-  // SSIDs, games or image data are accessed. Useful if CSS modules are hashed.
+  // app names or image data are accessed. Useful if CSS modules are hashed.
   const surfaces = new Map();
   let surfaceElements = 0;
   if(count('.BasicUI,#GamepadUI_Full_Root,[class*="gamepadui_BasicUI"]')>0){
