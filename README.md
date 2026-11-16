@@ -71,6 +71,22 @@ classes using Decky's live Steam webpack class map and re-injects the theme
 only when the real class mapping changes. A versioned CSS marker removes
 older, incomplete themes left behind by hot reload.
 
+**v0.4.1 — expanded Midnight coverage:** new bundled CSS reaches more
+Steam Game Mode controls than v0.4.0, including the System/Internet Settings
+rows, Internet/Wi-Fi network entries, connected and selected states, dropdowns,
+toggles, section headings and action buttons. It also covers native game
+details **Media, Notes, Activity**, the stats strip, secondary action buttons,
+sub-navigation and metadata chips. Steam artwork, game icons, existing
+controller navigation and the sidebar animation are unchanged.
+
+The theme's native Steam CSS-module translator recognizes extra lazily loaded
+network/media/notes components. A revision marker ensures that a hot-reloaded
+v0.4.1 instance replaces older v0.4.0 styles instead of keeping stale CSS.
+The package verifies both new stylesheets in its installation ZIP, and CI
+tests check stylesheet syntax, scope, coverage and foreground/background
+contrast. Valve's actual DOM and third-party plugin badges can vary, so the
+photos' remaining visual cases still require verification on the handheld.
+
 The separate QAM and Steam Menu windows must still be checked on the
 actual SteamOS device. Steam client updates can change CSS selectors,
 and late-created windows may briefly show native colors until detected.
