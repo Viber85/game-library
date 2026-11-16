@@ -29,17 +29,23 @@ test("labels are inline in the expanded rail, not floating tooltip popups",()=>{
 });
 
 
-test("reference glass topbar keeps Steam status bar native and shows active tab",()=>{
-  assert.match(ui,/<header className="gl-header gl-library-topbar" aria-label="Game Library">/);
-  assert.match(ui,/<span className="gl-topbar-title">Game Library<\/span>/);
+test("floating library header shows only current tab with real search and clock",()=>{
+  assert.match(ui,/<header className="gl-header gl-library-topbar" aria-label="Library navigation">/);
   assert.match(ui,/<span className="gl-topbar-current" title=\{tab\.title\} aria-live="polite">\{tab\.title\}<\/span>/);
-  assert.match(css,/\.gl-main > \.gl-header\.gl-library-topbar\s*\{[\s\S]*?display:flex/);
-  assert.match(css,/\.gl-main > \.gl-header\.gl-library-topbar\s*\{[\s\S]*?backdrop-filter:blur\(13px\)/);
-  assert.match(css,/\.gl-topbar-current\s*\{[\s\S]*?font-size:clamp\(20px,2\.1vw,27px\)/);
-  assert.match(css,/\.gl-filterbar \.gl-pill\.gl-active\s*\{/);
+  assert.doesNotMatch(ui,/<span className="gl-topbar-title">Game Library<\/span>/);
+  assert.doesNotMatch(ui,/gl-topbar-divider/);
+  assert.match(ui,/<div className="gl-topbar-tools">/);
+  assert.match(ui,/<Focusable className="gl-topbar-search"/);
+  assert.match(ui,/onActivate=\{\(\) => Navigation\.Navigate\("\/search"\)\}/);
+  assert.match(ui,/<time className="gl-topbar-clock" dateTime=\{time\.toISOString\(\)\}>/);
+  assert.match(ui,/const clock = window\.setInterval\(\(\) => setTime\(new Date\(\)\), 15000\)/);
+  assert.match(css,/\.gl-main > \.gl-header\.gl-library-topbar\s*\{[\s\S]*?border-radius:17px/);
+  assert.match(css,/\.gl-main > \.gl-header\.gl-library-topbar\s*\{[\s\S]*?backdrop-filter:blur\(15px\)/);
+  assert.match(css,/\.gl-root\s*\{padding-top:20px;\}/);
+  assert.match(css,/\.gl-topbar-current\s*\{[\s\S]*?font-size:clamp\(22px,2\.5vw,31px\)/);
   assert.doesNotMatch(ui,/Selected from your Steam library/);
-  assert.doesNotMatch(ui,/<span className="gl-time">/);
-  assert.doesNotMatch(ui,/MdSearch/);
   assert.match(ui,/className=\{\s*"gl-pill"\s*\+/);
   assert.match(ui,/const cycleTab = \(direction: number\)/);
+  // Native Steam HUD is not simulated with fake Wi-Fi or battery readings.
+  assert.doesNotMatch(ui,/gl-topbar-battery|gl-topbar-wifi/);
 });
