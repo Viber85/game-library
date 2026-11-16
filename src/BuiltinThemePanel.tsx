@@ -68,6 +68,10 @@ export function BuiltinThemePanel(){
         <div>CEF tab: {diagnostics.target}</div>
         <div>Visible Steam UI: {diagnostics.detectedVisibleUI?"Yes":"No"}</div>
         <div>CSS in Steam document: {diagnostics.applied?"Verified":"Not verified"} · stylesheets: {diagnostics.cssSheets}</div>
+        <div>Page inspection: {diagnostics.captureSource==="before-qam"
+          ?"Captured before QAM · "+diagnostics.capturedPage+" · "+diagnostics.captureAgeSeconds+"s ago"
+          :diagnostics.captureSource==="live"?"Live "+diagnostics.capturedPage
+          :"No active page snapshot"}</div>
         <div>Settings page / rows: {diagnostics.settingsRoots} / {diagnostics.settingsFields}</div>
         <div>Network entries: {diagnostics.networkRows}</div>
         <div>Game page / sections: {diagnostics.gameRoots} / {diagnostics.gameSections}</div>
@@ -77,9 +81,10 @@ export function BuiltinThemePanel(){
           <div>Detected Steam classes: {diagnostics.sampleClasses.slice(0,4).join(", ")}</div>}
         <div style={{marginTop:4,color:diagnostics.applied?"#c5e7f7":"#ffb1b9"}}>{diagnostics.details}</div>
         <div style={{opacity:.7,marginTop:4}}>
-          Open Settings or a game's details, then press this button. A screenshot
-          of this panel helps identify SteamOS class differences without
-          exposing network names or game titles.
+          To capture the previous screen: close QAM, open System/Internet
+          Settings or Game Details for at least two seconds, then reopen QAM
+          and run this check. Only CSS classes, counts and colors are shown —
+          no Wi-Fi names or game titles.
         </div>
       </div>
     </PanelSectionRow>}
