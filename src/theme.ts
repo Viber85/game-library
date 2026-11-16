@@ -493,4 +493,112 @@ export const DASHBOARD_CSS = String.raw`
   .gl-metric .gl-achievement-content {gap:5px;}
   .gl-metric .gl-achievement-content small {font-size:8px;}
 }
+
+/* v0.4.0 — focus-expand navigation rail.
+ * Flex width animation genuinely pushes the dashboard instead of covering it.
+ * Controller focus remains on the original rail item throughout the motion. */
+.gl-root {
+  --gl-nav-closed-width: 76px;
+  --gl-nav-open-width: 218px;
+  --gl-nav-motion: 220ms cubic-bezier(.22,1,.36,1);
+}
+.gl-root .gl-sidebar {
+  width:var(--gl-nav-closed-width);
+  flex:0 0 var(--gl-nav-closed-width);
+  min-width:0;
+  overflow:visible;
+  transition:
+    width var(--gl-nav-motion),
+    flex-basis var(--gl-nav-motion),
+    background-color var(--gl-nav-motion);
+  will-change:width,flex-basis;
+}
+.gl-root.gl-nav-expanded .gl-sidebar {
+  width:var(--gl-nav-open-width);
+  flex-basis:var(--gl-nav-open-width);
+  background:linear-gradient(180deg,rgba(7,23,43,.985),rgba(3,12,28,.99));
+}
+.gl-root .gl-rail {
+  align-items:flex-start;
+  width:100%;
+}
+.gl-root .gl-rail-item {
+  justify-content:flex-start;
+  width:54px;
+  height:54px;
+  padding:0 13px;
+  gap:0;
+  overflow:hidden;
+  border-radius:12px;
+  transition:
+    width var(--gl-nav-motion),
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+.gl-root.gl-nav-expanded .gl-rail-item {
+  width:100%;
+  gap:13px;
+}
+.gl-root .gl-rail-icon {
+  flex:0 0 27px;
+  width:27px;
+  height:27px;
+}
+.gl-root .gl-rail .gl-rail-label,
+.gl-root .gl-rail-item.gl-focused .gl-rail-label,
+.gl-root .gl-rail-item:hover .gl-rail-label {
+  display:block;
+  position:static;
+  padding:0;
+  margin:0;
+  min-width:0;
+  max-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  background:none;
+  border:none;
+  box-shadow:none;
+  font-size:14px;
+  line-height:1.25;
+  font-weight:650;
+  color:inherit;
+  opacity:0;
+  visibility:hidden;
+  transform:translateX(-6px);
+  pointer-events:none;
+  transition:
+    max-width var(--gl-nav-motion),
+    opacity 140ms ease,
+    transform var(--gl-nav-motion),
+    visibility 0ms linear 220ms;
+}
+.gl-root.gl-nav-expanded .gl-rail .gl-rail-label {
+  max-width:150px;
+  opacity:1;
+  visibility:visible;
+  transform:translateX(0);
+  transition:
+    max-width var(--gl-nav-motion),
+    opacity 150ms ease 50ms,
+    transform var(--gl-nav-motion),
+    visibility 0ms linear 0ms;
+}
+.gl-root .gl-main {
+  min-width:0;
+  transition:padding var(--gl-nav-motion);
+}
+@media (max-width:900px) {
+  .gl-root {
+    --gl-nav-closed-width:66px;
+    --gl-nav-open-width:204px;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .gl-root .gl-sidebar,
+  .gl-root .gl-rail-item,
+  .gl-root .gl-rail .gl-rail-label {
+    transition-duration:0ms !important;
+    transition-delay:0ms !important;
+  }
+}
 `;
