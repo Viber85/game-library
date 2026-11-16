@@ -15,6 +15,9 @@ export type ThemeProbe={
   fieldColor:string;
   rootColor:string;
   sampleClasses:string[];
+  routeKind:"settings"|"game"|"other";
+  surfaceElements:number;
+  colorSamples:Array<{color:string;count:number;className:string}>;
 };
 
 export const STEAM_PAGE_CHECK_SCRIPT=`(() => Boolean(
@@ -36,6 +39,38 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const settingsRoot = document.querySelector(settings);
   const target = settingsRoot ? settingsRoot.querySelector(fields) : null;
   const surface = document.querySelector('.BasicUI') || document.body;
+  // Steam can minify all Settings class names. The route is an independent
+  // signal; only its coarse category is returned, never the actual URL/AppID.
+  const route = String(window.location?.pathname||'')+' '+String(window.location?.hash||'');
+  const routeKind = /(?:^|[\\s\\/#])settings(?:[\\s\\/#?]|$)/i.test(route) ? 'settings'
+    : /(?:library\\/app\\/|library\\/game\\/|game\\/details\\/)/i.test(route) ? 'game' : 'other';
+  // Bounded scan of live CSS backgrounds on the page; no text, URLs, values,
+  // SSIDs, games or image data are accessed. Useful if CSS modules are hashed.
+  const surfaces = new Map();
+  let surfaceElements = 0;
+  if(routeKind!=='other'||count(settings)||count(games)){
+    const all = surface?.querySelectorAll?.('[class]') || [];
+    const limit = Math.min(all.length, 360);
+    for(let n=0;n<limit;n++){
+      const element=all[n];
+      if(!element || !/^(?:DIV|BUTTON|SECTION|LI|A)$/i.test(element.tagName||''))continue;
+      const token=typeof element.className==='string' ? element.className.split(/\\s+/)
+        .find(x=>/^[A-Za-z0-9_-]{3,100}$/.test(x) && x!=='gpfocus') : null;
+      if(!token)continue;
+      const color=getComputedStyle(element).backgroundColor;
+      if(typeof color!=='string' || !/^rgba?\\(/.test(color))continue;
+      const components=color.match(/[\\d.]+/g)?.map(Number)||[];
+      if(components.length<3 || (components.length>3&&components[3]<.65))continue;
+      const [r,g,b]=components;
+      if(!(b>=55 && b>r*1.12 && b>=g*.83))continue;
+      surfaceElements++;
+      const item=surfaces.get(color)||{color,count:0,className:token};
+      item.count++;
+      surfaces.set(color,item);
+    }
+  }
+  const colorSamples=[...surfaces.values()]
+    .sort((a,b)=>b.count-a.count).slice(0,4);
   const classNames = new Set();
   if (count(settings) || count(games)) {
     const root = document.querySelector(settings) || document.querySelector(games);
@@ -64,7 +99,10 @@ export const THEME_PROBE_SCRIPT=`(() => {
     gameSections: count(sections),
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
     rootColor: getComputedStyle(surface).backgroundColor,
-    sampleClasses: Array.from(classNames)
+    sampleClasses: Array.from(classNames),
+    routeKind,
+    surfaceElements,
+    colorSamples
   });
 })()`;
 
@@ -86,6 +124,17 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     gameSections:integer(obj.gameSections),
     fieldColor:typeof obj.fieldColor==="string"?obj.fieldColor.slice(0,60):"",
     rootColor:typeof obj.rootColor==="string"?obj.rootColor.slice(0,60):"",
+    routeKind:obj.routeKind==="settings"?"settings":obj.routeKind==="game"?"game":"other",
+    surfaceElements:integer(obj.surfaceElements),
+    colorSamples:Array.isArray(obj.colorSamples)?
+      obj.colorSamples.slice(0,4).flatMap(entry=>{
+        if(!entry||typeof entry!=="object")return [];
+        const sample=entry as Record<string,unknown>;
+        if(typeof sample.color!=="string"|| !/^rgba?\\([\\d.,\\s]+\\)$/.test(sample.color) ||
+           typeof sample.className!=="string" || !/^[A-Za-z0-9_-]{3,100}$/.test(sample.className))return [];
+        return [{color:sample.color.slice(0,55),count:integer(sample.count),
+          className:sample.className.slice(0,100)}];
+      }):[],
     sampleClasses:Array.isArray(obj.sampleClasses)
       ? obj.sampleClasses.filter((v):v is string=>typeof v==="string")
         .slice(0,8).map(v=>v.slice(0,90))
@@ -112,7 +161,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "1";
+const AUDIT_REVISION = "2";
 
 export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   const key = "${AUDIT_KEY}";
@@ -127,9 +176,11 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
     try {
       const probe = JSON.parse(${THEME_PROBE_SCRIPT});
       const at = Date.now();
-      if (probe.settingsRoots > 0 || probe.fieldRows > 0 && probe.networkRows > 0)
+      if (probe.settingsRoots > 0 || probe.fieldRows > 0 && probe.networkRows > 0 ||
+          probe.routeKind === 'settings' && probe.surfaceElements >= 3)
         state.latestSettings = { at, probe };
-      if (probe.gameRoots > 0 || probe.gameSections > 0)
+      if (probe.gameRoots > 0 || probe.gameSections > 0 ||
+          probe.routeKind === 'game' && probe.surfaceElements >= 3)
         state.latestGame = { at, probe };
     } catch (error) {
       /* Steam may be rebuilding its React tree; retry on the next tick. */
