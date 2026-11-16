@@ -53,7 +53,8 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 ## Layout at 1280×800
 
 - Persistent icon rail at the left; icons stay visible.
-- Label appears only beside an icon with keyboard/gamepad/mouse focus.
+- The left rail expands from 76 px to 218 px on keyboard/gamepad focus, shifting the dashboard rather than overlaying the game list. Each label fades in beside its icon, rather than floating as a tooltip. At narrow widths use 66 px to 204 px; reduced-motion preferences disable animations.
+- Focus remains in the rail through D-pad Up/Down; pressing Right/B returns to the previously focused grid card (or first preview game) and collapses it.
 - Horizontal carousel uses portrait art from the user's Steam library.
 - Details are beneath the carousel; the selected-game hero is a full-height background behind both the carousel and details, with a left gradient for legible metadata. The carousel shows 15 games plus a View More tile. View More reveals a full, controller-navigable game grid with progressive rendering (60 at a time). User-selected Steam title logo appears above the name, and HowLongToBeat duration statistics appear beside Steam playtime.
 - The footer summarizes controller actions.
