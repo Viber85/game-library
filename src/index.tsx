@@ -6,6 +6,7 @@ import { Component, ReactNode, useEffect, useState } from "react";
 import { MdLibraryBooks } from "react-icons/md";
 import { Dashboard } from "./Dashboard";
 import { UpdatesPanel } from "./UpdatesPanel";
+import { SystemThemePanel } from "./SystemThemePanel";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const HOME_ROUTE = "/library/home";
@@ -104,6 +105,7 @@ function ControlPanel() {
           </div>
         </PanelSectionRow>
       </PanelSection>
+      <SystemThemePanel />
       <UpdatesPanel />
     </>
   );
