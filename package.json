@@ -12,7 +12,8 @@
     "test:theme": "node --test tests/theme-tabs.mjs",
     "test:css-aliases": "node --test tests/theme-css-aliases.mjs",
     "test:sidebar": "node --test tests/sidebar-expand.mjs",
-    "test:coverage": "node --test tests/theme-coverage.mjs"
+    "test:coverage": "node --test tests/theme-coverage.mjs",
+    "test:probe": "node --test tests/theme-probe.mjs"
   },
   "dependencies": {
     "@decky/api": "^1.1.3",
