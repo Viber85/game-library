@@ -601,4 +601,98 @@ export const DASHBOARD_CSS = String.raw`
     transition-delay:0ms !important;
   }
 }
+
+/* v0.4.4 — reference-inspired glass library header.
+ * It occupies real layout space BELOW the native SteamOS status bar; never
+ * duplicate search, battery, Wi-Fi or clock in this plugin's own header. */
+.gl-main > .gl-header.gl-library-topbar {
+  display:flex;
+  flex:0 0 54px;
+  height:54px;
+  min-height:54px;
+  align-items:center;
+  justify-content:flex-start;
+  margin:0 -32px;
+  padding:0 32px;
+  min-width:0;
+  background:linear-gradient(90deg,rgba(9,26,47,.78),rgba(12,33,59,.47) 72%,rgba(7,22,42,.22));
+  border-bottom:1px solid rgba(140,197,242,.20);
+  box-shadow:inset 0 1px 0 rgba(212,239,255,.08),0 7px 24px rgba(0,9,26,.19);
+  backdrop-filter:blur(13px);
+  -webkit-backdrop-filter:blur(13px);
+}
+.gl-topbar-titles {
+  display:flex;
+  min-width:0;
+  align-items:center;
+  gap:17px;
+}
+.gl-topbar-title {
+  flex:0 0 auto;
+  color:#f5faff;
+  font-size:clamp(23px,2.35vw,31px);
+  font-weight:790;
+  line-height:1.1;
+  letter-spacing:-.02em;
+  text-shadow:0 2px 9px rgba(0,0,0,.30);
+}
+.gl-topbar-divider {
+  flex:0 0 1px;
+  height:27px;
+  background:linear-gradient(180deg,transparent,rgba(144,209,255,.73),transparent);
+}
+.gl-topbar-current {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#bdeaff;
+  font-size:clamp(20px,2.1vw,27px);
+  font-weight:750;
+  line-height:1.15;
+  text-shadow:0 1px 8px rgba(0,0,0,.26);
+}
+.gl-main > .gl-filterbar {
+  flex-basis:61px;
+  min-height:0;
+  gap:12px;
+}
+.gl-filterbar .gl-pill,
+.gl-filterbar .gl-sort {
+  background:rgba(12,33,58,.66);
+  border:1px solid rgba(138,191,236,.29);
+  box-shadow:inset 0 1px 0 rgba(214,242,255,.09),0 4px 13px rgba(0,11,27,.18);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-radius:999px;
+}
+.gl-filterbar .gl-pill.gl-active {
+  background:linear-gradient(160deg,#a9ddff,#71c4f6);
+  color:#071a30;
+  border-color:#a7e1ff;
+  box-shadow:0 2px 16px rgba(41,169,249,.30);
+}
+.gl-filterbar .gl-pill.gl-focused,
+.gl-filterbar .gl-sort.gl-focused {
+  box-shadow:0 0 0 2px #eaf8ff,0 0 17px rgba(35,182,255,.57);
+}
+@media (max-height:730px) {
+  .gl-main > .gl-header.gl-library-topbar {
+    flex-basis:44px;
+    height:44px;
+    min-height:44px;
+  }
+  .gl-topbar-title {font-size:23px;}
+  .gl-topbar-current {font-size:20px;}
+  .gl-main > .gl-filterbar {flex-basis:52px;}
+}
+@media (max-width:900px) {
+  .gl-main > .gl-header.gl-library-topbar {
+    margin:0 -20px;
+    padding:0 20px;
+  }
+  .gl-topbar-titles {gap:11px;}
+  .gl-topbar-title {font-size:22px;}
+  .gl-topbar-current {font-size:19px;}
+}
 `;
