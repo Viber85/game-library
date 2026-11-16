@@ -9,14 +9,14 @@
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="gamepaddialog_Field"],[class*="gamepaddialog_Field_"],[class*="gamepaddialog_HighlightOnFocus"],
  [class*="gamepadpagedsettings_SettingsRow"],[class*="gamepadsettings_SettingsRow"]) {
-  background-color:#10273f !important;
+  background-color:#0f2842 !important;
   background-image:none !important;
   color:var(--glm-text) !important;
   border-color:rgba(102,169,216,.22) !important;
 }
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"]):is(.gpfocus,.gpfocuswithin,:focus-within) {
-  background-color:#1a4267 !important;
+  background-color:#163a5e !important;
   border-color:rgba(74,193,255,.65) !important;
   box-shadow:inset 3px 0 0 var(--glm-accent) !important;
 }
@@ -80,7 +80,7 @@
  [class*="wifisettings_NetworkItem"],[class*="wifisettings_NetworkRow"],
  [class*="connectionsettings_Network"],[class*="wirelesssettings_Network"],
  [class*="gamepadnetwork_Network"]) {
-  background-color:#0f2944 !important;
+  background-color:#0f2842 !important;
   background-image:none !important;
   border-bottom-color:rgba(104,174,225,.24) !important;
   color:#edf6ff !important;
@@ -89,14 +89,14 @@
  :is([class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
  [class*="networksettings_NetworkListItem"],[class*="networksettings_NetworkEntry"],
  [class*="wifisettings_NetworkItem"],[class*="connectionsettings_Network"]):is(.gpfocus,.gpfocuswithin,:focus-visible,:hover) {
-  background-color:#205078 !important;
+  background-color:#163a5e !important;
   box-shadow:inset 3px 0 0 var(--glm-accent) !important;
 }
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="networksettings_Connected"],[class*="networksettings_CurrentNetwork"],
  [class*="wifisettings_Connected"],[class*="connectionsettings_Connected"]) {
   border-left:3px solid #54ceef !important;
-  background-color:#163f57 !important;
+  background-color:#123452 !important;
 }
 /* Network lock and Wi-Fi signal icons; don't touch their signal fill/shape. */
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
@@ -111,13 +111,13 @@
  * that Valve exposes with listbox/menuitem semantics. */
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([role="listbox"] > [role="option"],[role="list"] > [role="listitem"]) {
-  background:#102940 !important;
+  background:#0f2842 !important;
   color:#edf6ff !important;
   border-bottom-color:rgba(102,174,225,.22) !important;
 }
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([role="listbox"] > [role="option"],[role="list"] > [role="listitem"]):is(.gpfocus,[aria-selected="true"],:focus-visible) {
-  background:#1b4b70 !important;
+  background:#163a5e !important;
   box-shadow:inset 3px 0 0 var(--glm-accent) !important;
 }
 
@@ -143,29 +143,29 @@
  * These rules win over default blue/gray Steam field backgrounds. */
 .BasicUI[data-glm-settings-root] [data-glm-settings-row],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row] {
-  background:#0c1b32 !important;
-  background-color:#0c1b32 !important;
+  background:#0f2842 !important;
+  background-color:#0f2842 !important;
   background-image:none !important;
   border-color:rgba(97,166,223,.23) !important;
   color:#eaf6ff !important;
 }
 .BasicUI[data-glm-settings-root] [data-glm-settings-row-part],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row-part] {
-  background:#0c1b32 !important;
-  background-color:#0c1b32 !important;
+  background:#0f2842 !important;
+  background-color:#0f2842 !important;
   background-image:none !important;
 }
 .BasicUI[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible,:hover),
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible,:hover) {
-  background:#16365c !important;
-  background-color:#16365c !important;
+  background:#163a5e !important;
+  background-color:#163a5e !important;
   border-color:rgba(74,193,255,.52) !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
 }
 .BasicUI[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible,:hover) [data-glm-settings-row-part],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible,:hover) [data-glm-settings-row-part] {
-  background:#16365c !important;
-  background-color:#16365c !important;
+  background:#163a5e !important;
+  background-color:#163a5e !important;
 }
 .BasicUI[data-glm-settings-root] [data-glm-settings-navitem],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-navitem] {
@@ -185,38 +185,38 @@
  * sibling React root, and the native row fill can be a gradient/child layer.
  * The geometry classifier activates these only on a detected Settings page. */
 html[data-glm-settings-root] [data-glm-settings-main] {
-  /* Match the actual Midnight field strips rather than leaving black gaps. */
-  background:#0c1b32 !important;
-  background-color:#0c1b32 !important;
+  /* Uniform Settings canvas behind separate field strips. */
+  background:#0a1b30 !important;
+  background-color:#0a1b30 !important;
   background-image:none !important;
   color:#f3f8ff !important;
 }
 html[data-glm-settings-root] [data-glm-settings-sidebar] {
-  background:#061428 !important;
-  background-color:#061428 !important;
+  background:#081425 !important;
+  background-color:#081425 !important;
   background-image:none !important;
   border-right:1px solid rgba(97,166,223,.27) !important;
 }
 html[data-glm-settings-root] [data-glm-settings-row] {
-  background:#0c1b32 !important;
-  background-color:#0c1b32 !important;
+  background:#0f2842 !important;
+  background-color:#0f2842 !important;
   background-image:none !important;
   color:#f3f8ff !important;
   border-color:rgba(97,166,223,.23) !important;
 }
 html[data-glm-settings-root] [data-glm-settings-row-part] {
-  background:#0c1b32 !important;
-  background-color:#0c1b32 !important;
+  background:#0f2842 !important;
+  background-color:#0f2842 !important;
   background-image:none !important;
 }
 html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) {
-  background:#16365c !important;
-  background-color:#16365c !important;
+  background:#163a5e !important;
+  background-color:#163a5e !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
 }
 html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) [data-glm-settings-row-part] {
-  background:#16365c !important;
-  background-color:#16365c !important;
+  background:#163a5e !important;
+  background-color:#163a5e !important;
 }
 html[data-glm-settings-root] [data-glm-settings-navitem] {
   background:transparent !important;
@@ -230,16 +230,77 @@ html[data-glm-settings-root] [data-glm-settings-navitem]:is(.gpfocus,.gpfocuswit
   box-shadow:inset 3px 0 0 #4ac1ff !important;
 }
 
-/* v0.4.2-test.7: the unpainted spaces between Settings categories and
- * scrollable fields inherit a black Steam canvas. Make that underlying
- * Settings-only canvas the SAME navy as the field strips (#0c1b32).
- * The sidebar's separate #061428 override remains intact. */
+/* Settings-only scroll canvas; never paint global game/notification roots. */
 html[data-glm-settings-root] :is(.BasicUI,#GamepadUI_Full_Root),
 .BasicUI[data-glm-settings-root],
 #GamepadUI_Full_Root[data-glm-settings-root] {
-  background-color:#0c1b32 !important;
+  background-color:#0a1b30 !important;
 }
 html[data-glm-settings-root] [data-glm-settings-main],
 html[data-glm-settings-root] [data-glm-settings-main] > div {
-  background-color:#0c1b32 !important;
+  background-color:#0a1b30 !important;
+}
+
+/* Midnight v0.4.3: consistent native Settings/Storage surfaces.
+ * CSS is active only while Settings is detected, never over notifications. */
+html[data-glm-settings-root] {
+  --glm-settings-sidebar:#081425;
+  --glm-settings-canvas:#0a1b30;
+  --glm-settings-section:#0f2842;
+  --glm-settings-control:#123452;
+  --glm-settings-focus:#163a5e;
+}
+html[data-glm-settings-root] [data-glm-settings-sidebar] {
+  background:var(--glm-settings-sidebar) !important;
+  background-image:none !important;
+}
+html[data-glm-settings-root] [data-glm-settings-main],
+html[data-glm-settings-root] [data-glm-settings-main] > div:not([data-glm-settings-row]):not([data-glm-settings-row-part]) {
+  background:var(--glm-settings-canvas) !important;
+  background-image:none !important;
+}
+html[data-glm-settings-root] [data-glm-settings-row],
+html[data-glm-settings-root] [data-glm-settings-row-part] {
+  background:var(--glm-settings-section) !important;
+  background-image:none !important;
+}
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover),
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) [data-glm-settings-row-part] {
+  background:var(--glm-settings-focus) !important;
+}
+/* Storage uses contentmanagement modules, not generic Settings Field rows.
+ * Preserve thumbnail art, disk bar segments, icon and controller behavior. */
+html[data-glm-settings-root] :is(
+  [class*="contentmanagement_ContentManagement"],
+  [class*="contentmanagement_AppsGrid"],
+  [class*="contentmanagement_AppList"],
+  [class*="contentmanagement_AppsList"]
+) {
+  background:var(--glm-settings-canvas) !important;
+  background-image:none !important;
+}
+html[data-glm-settings-root] [class*="contentmanagement_InstallFolder"] {
+  background:var(--glm-settings-section) !important;
+  background-image:none !important;
+  color:var(--glm-text) !important;
+  border-color:var(--glm-border) !important;
+}
+html[data-glm-settings-root] [class*="contentmanagement_InstallFolder"]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,[class*="contentmanagement_IsSelected"]
+) {
+  background:var(--glm-settings-control) !important;
+  border-color:var(--glm-accent) !important;
+}
+html[data-glm-settings-root] [class*="contentmanagement_AppBody"] {
+  background:var(--glm-settings-section) !important;
+  background-image:none !important;
+  color:var(--glm-text) !important;
+}
+html[data-glm-settings-root] [class*="contentmanagement_AppBody"]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within
+) {
+  background:var(--glm-settings-focus) !important;
+}
+html[data-glm-settings-root] [class*="contentmanagement_DriveUsageIndicator"] {
+  background-color:var(--glm-settings-section) !important;
 }
