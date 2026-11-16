@@ -46,6 +46,6 @@ jobs:
           fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG} (development preview)" \
-            --notes "Game Library v0.2.0-test.14: bundle a matching Midnight Navy/Cyan system-wide CSS Loader theme for Steam Menu, QAM, Settings, Downloads, header/footer, dialogs and buttons. A new reversible System Colors option inside Game Library installs/removes the CSS Loader theme without changing other themes. CSS Loader must be installed and Game Library Midnight activated once in CSS Loader after Refresh. Includes safe installer tests; real SteamOS device verification pending." \
+            --notes "Game Library v0.2.0-test.15: Midnight is now the built-in default system-wide Game Mode color theme, with NO CSS Loader dependency. Decky-native CSS injection handles Steam Menu, QAM, Settings, Downloads, buttons and dialogs and re-applies when Steam opens or reloads these windows. Appearance in Game Library includes an On/Off switch persisted across restarts, and disabling restores native Steam colors. Legacy CSS Loader installer has been removed. Theme registry is prepared for future variants; on-device compatibility still requires confirmation." \
             --target "$GITHUB_SHA" \
             --prerelease
