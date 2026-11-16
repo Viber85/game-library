@@ -226,7 +226,7 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     }
     // Browser builds without elementsFromPoint or with a nested Steam pane.
     // The result is still confirmed by a two-column Settings layout.
-    if(left.length<8||right.length<4){
+    if(typeof document.elementsFromPoint!=='function'){
       const all=root.querySelectorAll?.('[class]')||[];
       const limit=Math.min(all.length,6500);
       for(let i=0;i<limit;i++){
