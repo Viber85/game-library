@@ -14,6 +14,15 @@ test("minified Steam Settings class is matched alongside readable SteamOS class"
   assert.ok(mapped.includes("color:white"));
 });
 
+test("Steam Storage hashed module classes match Midnight disk and app rows",()=>{
+  const css='.BasicUI [class*="contentmanagement_InstallFolder"],[class*="contentmanagement_AppBody"] {background:#0f2842!important}';
+  const expanded=expandThemeClassAliases(css,{contentmanagement:{
+    InstallFolder:"_0StorageDiskHash",AppBody:"_0StorageAppRowHash"
+  }});
+  assert.ok(expanded.includes('[class~="_0StorageDiskHash"]'));
+  assert.ok(expanded.includes('[class~="_0StorageAppRowHash"]'));
+  assert.ok(expanded.includes("#0f2842"));
+});
 test("game detail selectors are rewritten without changing hero style or layout",()=>{
   const css='.BasicUI [class*="appdetailsoverview_ColumnContainer"] {background:#020815!important}';
   const result=expandThemeClassAliases(css,{
