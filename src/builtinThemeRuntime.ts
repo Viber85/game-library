@@ -23,11 +23,14 @@ const TIMEOUT_MS = 3000;
 const DEBUG_TABS_URL = "http://localhost:8080/json";
 // Marker is scoped to the actual Steam document, not our React dashboard.
 const MARKER = "--game-library-midnight-active";
-const markerCss = `\n:root { ${MARKER}: 1; }\n`;
+// Version the marker so Steam cannot mistakenly keep last release's CSS
+// after an in-place Decky update (the old style node survives hot reload).
+const STYLE_REVISION = "16";
+const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
   for (const element of document.querySelectorAll("style")) {
-    if (element.textContent?.includes("--game-library-midnight-active: 1;")) element.remove();
+    if (element.textContent?.includes("--game-library-midnight-active:")) element.remove();
   }
 })()`;
 
@@ -80,7 +83,7 @@ async function listTabs():Promise<Array<{title:string;scope:ThemeScope}>> {
 async function activeInTab(title:string):Promise<boolean> {
   try{
     const r=await bounded(executeInTab(title,false,checkMarker));
-    return r.success && (r.result==="1" || r.result===1);
+    return r.success && String(r.result).trim()===STYLE_REVISION;
   }catch{return false;}
 }
 
@@ -107,12 +110,13 @@ async function applyToTab(
   // The runtime detects lost styles and reinstalls them without duplicates.
   if(await activeInTab(title)) {
     if(managedTabs.has(title))return;
-    // Theme styles can survive a plugin hot-reload. Adopt ownership by
-    // removing only our marked orphan style, then installing a tracked one.
-    try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
-    catch{/* Retry with a normal injection below. */}
   }
+  // Replace both previous CSS revisions and an untracked style left after a
+  // Decky/Steam hot reload. Old settings/game-page CSS was incomplete.
+  // Only our own uniquely-marked <style> elements are removed.
   await removeKnown(title);
+  try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
+  catch{/* The tab may have been rebuilt; injection below will retry. */}
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
   try{
     const css=theme.css[scope]+markerCss;
