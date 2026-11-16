@@ -18,9 +18,22 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **src/index.tsx** — optional /library/home patch with React error fallback and stored preference
 - **src/tabmaster.ts** — read-only TabMaster tab definitions and supported filter mapping
 - **src/UpdatesPanel.tsx** — GitHub version checker and Decky-managed installer with confirmation
+- **system-theme/*.css + theme.json** — standalone CSS Loader v8 system-wide theme for Steam bigpicture and bigpictureoverlay contexts
+- **system_theme.py** — guarded install/status/remove operations into the CSS Loader theme directory; never writes other theme settings
+- **src/SystemThemePanel.tsx** — Decky QAM install/remove controls with explicit CSS Loader activation steps
 - **src/launchGame.ts** — 64-bit validated Steam gameID for Non-Steam shortcuts (signed/unsigned appStore probing), RunGame default option (-1)
 - **main.py** — read-only TabMaster settings bridge and release validation endpoints
 - **updates.py** — pinned GitHub repository and SHA-256 asset validation
+
+## System-wide appearance
+
+- Dedicated CSS Loader theme (not a global style injected only into Game Library's React root).
+- Scope includes Steam Menu, QAM, Settings, Downloads, buttons, dialogs and header/footer.
+- Palette matches Game Library: `#020815` / `#0C1B32` / `#4AC1FF`.
+- Installation is opt-in. The user separately enables the theme in CSS Loader.
+- Restore original colors by disabling it in CSS Loader and removing its files from the Game Library panel.
+- CSS Loader manifest uses `bigpicture` and `bigpictureoverlay` targets, validated by Python tests.
+- Existing Steam controller navigation and React focus logic are untouched.
 
 ## Layout at 1280×800
 
