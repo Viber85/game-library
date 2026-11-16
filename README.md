@@ -87,6 +87,22 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.2-test.6 — near-immediate Midnight Settings styling:** Replaces
+the native CEF Settings watcher's 1.8-second polling-only response with a
+`MutationObserver` watching structural Steam UI changes. Newly mounted
+Settings elements are inspected using one batched
+`requestAnimationFrame` callback, before the next paint when possible.
+The existing visual geometry classifier, actual Midnight CSS and controller
+navigation are unchanged. Observing `childList` only avoids self-triggering
+scans when our `data-glm-*` CSS markers are added or removed.
+
+A five-second backup scan handles unusual Steam changes that do not insert
+DOM nodes. Older browsers without `MutationObserver` retain the original
+1.8-second interval. The watcher, pending animation frame, and timer are
+all cleaned up when the theme is disabled or an older watcher revision is
+replaced. New tests check frame coalescing, no attribute feedback loops,
+and cleanup. Real-world fade/flash elimination must be confirmed on-device.
+
 **v0.4.2-test.5 — visible SteamOS Settings layout styling:** After the
 v0.4.2-test.4 screenshot still showed the original blue-gray Internet panel,
 the native Settings fallback was upgraded. The earlier probe looked only at
