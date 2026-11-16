@@ -42,6 +42,45 @@ def _settings_path():
     return pathlib.Path(directory) / "game_library.json" if directory else BASE / ".game_library_settings.json"
 
 
+def _read_preferences():
+    try:
+        saved = json.loads(_settings_path().read_text(encoding="utf-8"))
+        return saved if isinstance(saved, dict) else {}
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
+def _write_preferences(settings):
+    """Atomically preserve unrelated preferences, including the Home option."""
+    path = _settings_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(settings), encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def _builtin_theme_bundle(theme_id):
+    """Only read bundled, fixed theme assets; no user-provided paths or CSS."""
+    if theme_id != "midnight":
+        raise ValueError("Unsupported built-in theme")
+    assets = BASE / "system-theme"
+    scopes = {
+        "main": ("shared.css", "buttons.css", "settings.css", "downloads.css", "dialogs.css"),
+        "overlay": ("shared.css", "buttons.css", "menus.css", "qam.css", "dialogs.css"),
+    }
+    result = {}
+    for scope, files in scopes.items():
+        chunks = []
+        for filename in files:
+            path = assets / filename
+            if not path.is_file() or path.is_symlink() or path.stat().st_size > 100_000:
+                raise OSError("Bundled CSS unavailable: " + filename)
+            chunks.append(path.read_text(encoding="utf-8"))
+        result[scope] = "\n".join(chunks)
+    return {"id": theme_id, "name": "Midnight", "css": result}
+
+
+
 def _runtime_cache_path():
     directory = os.environ.get("DECKY_PLUGIN_RUNTIME_DIR") or os.environ.get("DECKY_PLUGIN_SETTINGS_DIR")
     return pathlib.Path(directory) / "hltb_cache.json" if directory else BASE / "hltb_cache.json"
@@ -88,24 +127,41 @@ class Plugin:
 
     async def get_dashboard_settings(self):
         """Enabled by default on Steam Home, with a persisted opt-out in Decky."""
-        try:
-            data = json.loads(_settings_path().read_text(encoding="utf-8"))
-            return {"default_home": data.get("default_home", True) is True}
-        except (OSError, ValueError, TypeError):
-            return {"default_home": True}
+        return {"default_home": _read_preferences().get("default_home", True) is True}
 
     async def set_dashboard_settings(self, default_home: bool):
         if type(default_home) is not bool:
             return False
-        path = _settings_path()
         try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            temporary = path.with_suffix(".tmp")
-            temporary.write_text(json.dumps({"default_home": default_home}), encoding="utf-8")
-            os.replace(temporary, path)
+            saved = _read_preferences()
+            saved["default_home"] = default_home
+            _write_preferences(saved)
             return True
         except OSError:
             return False
+
+    async def get_theme_settings(self):
+        """Midnight is the built-in default; Off restores native Steam colors."""
+        theme = _read_preferences().get("theme_id", "midnight")
+        return {"theme_id": theme if theme in ("midnight", "off") else "midnight",
+                "available": [{"id": "midnight", "name": "Midnight"}]}
+
+    async def set_theme_settings(self, theme_id: str):
+        if theme_id not in ("midnight", "off") or type(theme_id) is not str:
+            return False
+        try:
+            saved = _read_preferences()
+            saved["theme_id"] = theme_id
+            _write_preferences(saved)
+            return True
+        except OSError:
+            return False
+
+    async def get_builtin_theme(self, theme_id: str = "midnight"):
+        try:
+            return {"ok": True, **_builtin_theme_bundle(theme_id)}
+        except (OSError, ValueError, UnicodeError) as error:
+            return {"ok": False, "error": type(error).__name__}
 
     async def hltb_times(self, appid: int, name: str):
         if self._hltb_service is None:
