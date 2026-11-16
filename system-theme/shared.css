@@ -17,8 +17,10 @@
   --glm-primary-ink: #07182e;
   --glm-danger: #ef778b;
 }
-#GamepadUI_Full_Root,
-.BasicUI {background-color:var(--glm-bg) !important;}
+/* Do NOT paint the full GamepadUI or .BasicUI root. Valve reuses these
+ * containers for transient volume/achievement notifications over games;
+ * turning a normally transparent CEF surface opaque causes a black flash.
+ * Actual panels/pages are colored by their scoped Midnight stylesheets. */
 /* Retain original wallpaper/hero artwork wherever Steam uses it. */
 #header {background:linear-gradient(90deg,rgba(3,12,26,.98),rgba(8,31,60,.91)) !important;
   border-bottom:1px solid var(--glm-border) !important;}
