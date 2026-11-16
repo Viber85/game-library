@@ -69,6 +69,28 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
   Steam Menu, QAM, controller focus and navigation. Some third-party badges
   may remain independently styled if their plugins own their DOM.
 
+## v0.4.2-test.1: native Steam CSS verification
+
+- Prior coverage-only tests did not check that actual SteamOS CEF elements
+  matched the bundled Midnight CSS selectors. On-device photos confirmed
+  that the visible theme did not change after v0.4.1.
+- `src/themeTabs.ts`: recognize English and localized visible Big Picture
+  windows, sort visible windows ahead of SharedJSContext, validate that the
+  target contains an actual Steam Game Mode DOM before using it.
+- `src/builtinThemeRuntime.ts`: no assumed fallback tab; post-injection
+  read-back checks the actual document style revision and the injected
+  stylesheet before counting the target as styled. Use revision 42 to
+  invalidate stale CSS from 0.4.1.
+- `src/themeProbe.ts`: on-demand read-only CEF probe for current CSS marker,
+  style count, native Settings rows, network entries, game sections and
+  their computed surface colors. Only CSS class names are returned, never
+  network SSIDs, game titles, usernames or content.
+- `src/BuiltinThemePanel.tsx`: `Reapply theme & diagnose` triggers a
+  forced reload and shows real-device counters to guide selector fixes.
+- Automated tests validate tab detection, parser sanitization and probe
+  construction. They cannot assert visual compatibility with every SteamOS
+  build; request device evidence before claiming that specific UI is fixed.
+
 ## Layout at 1280×800
 
 - Persistent icon rail at the left; icons stay visible.
