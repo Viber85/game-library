@@ -137,7 +137,6 @@ export function Dashboard() {
   const [selectedId, setSelectedId] = useState<number | undefined>();
   const [viewAll,setViewAll] = useState(false);
   const [gridLimit,setGridLimit] = useState(60);
-  const [time, setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sidebarRef = useRef<HTMLElement>(null);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -153,8 +152,7 @@ export function Dashboard() {
 
   useEffect(() => {
     const refresh = window.setInterval(() => setGames(getLibraryGames()), 15000);
-    const clock = window.setInterval(() => setTime(new Date()), 60000);
-    return () => { window.clearInterval(refresh); window.clearInterval(clock); };
+    return () => { window.clearInterval(refresh); };
   }, []);
 
   useEffect(() => {
@@ -360,14 +358,12 @@ export function Dashboard() {
           <HeroBackdrop key={selected.id} game={selected}/>
           <div className="gl-scene-shade"/>
         </div>}
-        <header className="gl-header">
-          <div className="gl-brand">STEAM <span className="gl-brand-sub">LIBRARY</span></div>
-          <div className="gl-header-tools">
-            <Focusable className="gl-header-control" focusClassName="gl-focused" noFocusRing
-              onActivate={() => Navigation.Navigate("/search")} onOKActionDescription="Search">
-              <MdSearch />
-            </Focusable>
-            <span className="gl-time">{time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+        {/* The SteamOS status indicators remain native, above this header. */}
+        <header className="gl-header gl-library-topbar" aria-label="Game Library">
+          <div className="gl-topbar-titles">
+            <span className="gl-topbar-title">Game Library</span>
+            <span className="gl-topbar-divider" aria-hidden="true" />
+            <span className="gl-topbar-current" title={tab.title} aria-live="polite">{tab.title}</span>
           </div>
         </header>
 
@@ -480,7 +476,6 @@ export function Dashboard() {
               <div className="gl-feature-content">
                 <GameLogo key={"logo-"+selected.id} game={selected}/>
                 <h1>{selected.title}</h1>
-                <p className="gl-desc">Selected from your Steam library</p>
                 <div className="gl-status">
                   <span><MdCheckCircle /> {selected.installed ? "Installed" : "Not installed"}</span>
                   {selected.nonSteam && <span><MdVideogameAsset /> Non-Steam</span>}
