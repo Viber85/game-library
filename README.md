@@ -23,6 +23,47 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Steam-wide Midnight system colors
+
+The Game Library dashboard's palette is now available as a **separate CSS Loader
+system-wide theme** bundled directly into this Decky plugin. It follows the
+CSS Loader documented `theme.json` manifest v8 and injects into
+`bigpicture` and `bigpictureoverlay`, so the following SteamOS Game Mode
+surfaces match our navy/cyan appearance:
+
+- **Steam Menu / system sidebar** — midnight-navy panels, cyan focus, pale text
+- **Quick Access Menu / Decky panels** — dark-blue tab rail and cyan selection
+- **Settings** — midnight background, blue selection panels, focused fields
+- **Downloads** — blue task cards, cyan action/focus and progress graph
+- **Buttons and confirmation menus** — pale-blue primary, dark secondary,
+  cyan highlight; destructive controls retain their warning colors
+- **Header and footer** — deep navy and consistent borders
+
+Palette: background `#020815`, raised surface `#0C1B32`,
+interactive cyan `#4AC1FF`. Fonts, positions, controller navigation,
+the library's hero artwork, other apps and the Linux Desktop are unchanged.
+
+**Install and activate:**
+
+1. Update Game Library using the release ZIP in Decky Developer Mode.
+2. Install **CSS Loader** via Decky's plugin store if not already present.
+3. In Game Library's QAM panel, switch on **Install Midnight system theme**.
+   This installs the bundled CSS into CSS Loader's standard
+   `$DECKY_HOME/themes` or `~/homebrew/themes` directory.
+4. Open **CSS Loader** → **Refresh** → enable **Game Library Midnight**.
+   This one-time activation is required because CSS Loader manages its own
+   active themes. Game Library does not silently edit CSS Loader's settings.
+
+**Revert / disable:** turn off **Game Library Midnight** in CSS Loader first,
+then switch **Install Midnight system theme** off in the Game Library panel
+to remove its managed files; refresh CSS Loader if necessary.
+
+The theme does not edit other themes and will refuse to overwrite an
+unrelated theme folder. Disable other Steam-wide CSS Loader themes if they
+conflict. Steam client updates can change CSS selectors and may need
+further compatibility fixes. Applying the theme across separate Steam
+menus is not verified on the MSI Claw until device testing.
+
 ## Installing
 
 Download `game-library-v*.zip` from [GitHub Releases](https://github.com/Viber85/game-library/releases).
