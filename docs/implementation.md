@@ -22,6 +22,9 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **src/themeTabs.ts** — allowlist for Steam main Game Mode and QAM/Menu browser tabs
 - **system-theme/settings.css** — correct PagedSettingsDialog structure, categories, unfocused setting rows and dropdowns
 - **system-theme/game-details.css** — native Steam game detail page (playbar, game statistics, Activity, tabs and cards; artwork untouched)
+- **system-theme/settings-extras.css** — all Settings categories' rows, focus/toggles/dropdowns and Wi-Fi Internet list, connected/selected states
+- **system-theme/game-details-extras.css** — native details Media, Notes, activity feed, secondary buttons, metadata/compatibility chips and stat strips
+- **tests/theme-coverage.mjs** — lint checks on bundled CSS syntax, scoped selectors, media safety, controller focus, semantic section coverage and color contrast
 - **src/themeClassAliases.ts + src/themeCssCompiler.ts** — map Steam's live CSS-module classes to readable selectors via Decky findClassModule; handle minified classes and lazy-loaded pages
 - **src/builtinThemeRuntime.ts** — Decky-native CSS injection/recovery/removal across Steam UI tabs
 - **src/themeController.ts** — persistent Midnight/Off theme selection, default Midnight
@@ -49,6 +52,22 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
   are read or modified.
 - Changing color values does not replace buttons, Steam routes or controller
   focus logic.
+
+## v0.4.1 polish verification
+
+- Original test device screenshots show remaining bright blue rows in System,
+  Wi-Fi networks under Internet, and Media/Notes/secondary actions on game pages.
+- New CSS is scoped to main Game Mode only; it does not recolor screenshots,
+  logos, artwork, content, non-Steam browsers or third-party plugin UI.
+- The class mapping layer resolves additional live Steam CSS modules that may
+  appear only after opening Internet/Notes/Media.
+- Midnight CSS revision 41 ensures reloads replace stale older rules.
+- Build/packaging, all previous regression tests, and new static CSS coverage
+  tests must pass before tagging v0.4.1.
+- On-device acceptance check: System, Internet (connected and available
+  networks), game Details Media/Notes and compatibility badges, Downloads,
+  Steam Menu, QAM, controller focus and navigation. Some third-party badges
+  may remain independently styled if their plugins own their DOM.
 
 ## Layout at 1280×800
 
