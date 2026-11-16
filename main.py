@@ -37,6 +37,17 @@ def _load_hltb():
     return module
 
 
+def _load_system_status():
+    """Load bundled local telemetry without depending on Decky's sys.path."""
+    spec = importlib.util.spec_from_file_location(
+        "game_library_local_status", str(BASE / "system_status.py"))
+    if spec is None or spec.loader is None:
+        raise RuntimeError("system_status.py missing")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _settings_path():
     directory = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR")
     return pathlib.Path(directory) / "game_library.json" if directory else BASE / ".game_library_settings.json"
@@ -116,6 +127,13 @@ class Plugin:
 
     async def _main(self):
         pass
+
+    async def get_system_status(self):
+        """Read-only hardware status. Unknown values remain None."""
+        try:
+            return await asyncio.to_thread(_load_system_status().get_system_status)
+        except (OSError, RuntimeError, ValueError):
+            return {"battery": None, "wifi": None, "bluetooth": None}
 
     async def get_dashboard_settings(self):
         """Enabled by default on Steam Home, with a persisted opt-out in Decky."""
