@@ -68,6 +68,10 @@ export function BuiltinThemePanel(){
         <div>CEF tab: {diagnostics.target}</div>
         <div>Visible Steam UI: {diagnostics.detectedVisibleUI?"Yes":"No"}</div>
         <div>CSS in Steam document: {diagnostics.applied?"Verified":"Not verified"} · stylesheets: {diagnostics.cssSheets}</div>
+        <div>Steam CSS watcher: {diagnostics.watcherRunning
+          ?"Active · "+diagnostics.watcherTicks+" scans · "+diagnostics.watcherAgeSeconds+"s since last scan"
+          :"Not active"}</div>
+        <div>Detected page route: {diagnostics.detectedRoute}</div>
         <div>Page inspection: {diagnostics.captureSource==="before-qam"
           ?"Captured before QAM · "+diagnostics.capturedPage+" · "+diagnostics.captureAgeSeconds+"s ago"
           :diagnostics.captureSource==="live"?"Live "+diagnostics.capturedPage
@@ -79,12 +83,17 @@ export function BuiltinThemePanel(){
           <div>Actual row background: {diagnostics.computedFieldColor}</div>}
         {diagnostics.sampleClasses.length>0&&
           <div>Detected Steam classes: {diagnostics.sampleClasses.slice(0,4).join(", ")}</div>}
+        <div>Blue surface elements sampled: {diagnostics.surfaceElements}</div>
+        {diagnostics.colorSamples.slice(0,3).map((item,i)=>
+          <div key={i} style={{fontSize:11,opacity:.85}}>
+            {item.color} · {item.count} elements · .{item.className}
+          </div>)}
         <div style={{marginTop:4,color:diagnostics.applied?"#c5e7f7":"#ffb1b9"}}>{diagnostics.details}</div>
         <div style={{opacity:.7,marginTop:4}}>
-          To capture the previous screen: close QAM, open System/Internet
-          Settings or Game Details for at least two seconds, then reopen QAM
-          and run this check. Only CSS classes, counts and colors are shown —
-          no Wi-Fi names or game titles.
+          Close QAM, open Settings → System or Internet for at least five
+          seconds, then reopen QAM and run this check. The blue CSS class
+          samples also work when Steam uses unknown/minified class names.
+          No Wi-Fi names or game titles are collected.
         </div>
       </div>
     </PanelSectionRow>}
