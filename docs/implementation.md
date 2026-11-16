@@ -91,6 +91,24 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
   construction. They cannot assert visual compatibility with every SteamOS
   build; request device evidence before claiming that specific UI is fixed.
 
+## v0.4.2-test.2: observations captured before QAM opens
+
+- `src/themeProbe.ts`: Steam CEF read-only CSS watcher samples the
+  currently visible native Settings or Game Details page every 1.25s. It
+  retains only each page's most recent DOM counts, CSS class names and
+  computed colors in memory, never user content, names or network credentials.
+- `src/builtinThemeRuntime.ts`: native Decky CSS injection installs the
+  watcher in the actual Steam main tab; switching themes off or unloading
+  removes the interval. The diagnostics panel favors a live page, falling
+  back to an at-most-3-minute pre-QAM snapshot when Steam removes it.
+- Corrected the original comma-separated `settings + fields` selector,
+  which read the containing Settings panel's color instead of a row.
+- `tests/theme-audit.mjs` executes the injected script inside an isolated
+  simulated Steam browser, asserts last-settings/last-game retention after
+  QAM unmount, timer cleanup, short TTL, no storage or user-content access.
+- This is a **diagnostic correction**, not proof that every Settings CSS
+  selector matches the physical MSI Claw's Steam version.
+
 ## Layout at 1280×800
 
 - Persistent icon rail at the left; icons stay visible.
