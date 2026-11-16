@@ -34,6 +34,21 @@ const MODULE_ANCHORS:Record<string,readonly string[]> = {
   spotlightgameplaysummary:["SummaryCarouselContainer","SummaryAchievement"],
   downloads:["DownloadsPage","SectionItem"],
   progressbar:["Percent","ProgressBar"],
+  // New CSS modules are discovered only when the relevant page is open.
+  // This permits theme overlays for Internet, Bluetooth and Notes that
+  // Valve may load lazily after navigating to the category.
+  networksettings:["NetworkListItem","NetworkItem","ConnectedNetwork"],
+  wifisettings:["NetworkItem","NetworkRow"],
+  connectionsettings:["NetworkEntry","ConnectedNetwork"],
+  wirelesssettings:["NetworkItem","NetworkRow"],
+  gamepadnetwork:["NetworkItem","NetworkList"],
+  gamepadsettings:["SettingsRow","SettingsSection"],
+  appdetailsmediasection:["MediaSection","MediaButton","ViewMedia"],
+  appdetailsmedialibrary:["MediaLibraryButton","NoMedia","OpenMedia"],
+  appdetailsnotessection:["NoteLink","NotesSection","NoteBody"],
+  appdetailsprimarylinkssection:["LinksSection","LinkButton"],
+  appdetailsgameinfopanel:["DeckVerifiedInfo","CompatBadge"],
+
 };
 
 function getSteamModules():AliasRegistry {
@@ -42,8 +57,12 @@ function getSteamModules():AliasRegistry {
     try {
       const module=findClassModule((candidate:any)=>{
         if(!candidate || typeof candidate!=="object")return false;
-        const count=anchors.filter(k=>typeof candidate[k]==="string").length;
-        return count>=Math.min(2,anchors.length);
+        const found=anchors.filter(k=>typeof candidate[k]==="string");
+        if(found.length>=2)return true;
+        // Steam updates may remove one anchor from a module. A single
+        // DISTINCTIVE class name is enough to identify the module; short,
+        // generic keys like "Item", "Field" or "Button" are not.
+        return found.some(k=>k.length>=13 && !/^(?:Field|Button|Item|Title|Label)$/.test(k));
       });
       if(module)registry[prefix]=module as Record<string,string>;
     }catch(error){
