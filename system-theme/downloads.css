@@ -1,0 +1,46 @@
+/* Downloads graph, download list and action buttons. */
+.downloads_DownloadsPage_1bq4x,
+.downloadgraph_GraphAndStats_3KDkL,
+.downloads_ItemListWrapper_1l0Lm,
+.downloads_ItemListScrollWrapper_Z6wLC {
+  background:var(--glm-bg-deep) !important;
+  color:var(--glm-text) !important;
+}
+.downloads_SectionItem_1VNuY {
+  background:var(--glm-panel) !important;
+  border:1px solid var(--glm-border) !important;
+  border-radius:11px !important;
+}
+.downloads_SectionItemWrapper_21P7c.gpfocus .downloads_SectionItem_1VNuY {
+  background:var(--glm-panel-hover) !important;
+  border-color:var(--glm-accent) !important;
+  box-shadow:0 0 0 1px var(--glm-accent) !important;
+}
+.downloads_Name_35eOQ,
+.downloads_Title_TK9wv,
+.downloadgraph_Figure_eXF8x,
+.downloadgraph_Status_3BdWq,
+.downloadgraph_LegendText_1iulC {
+  color:var(--glm-text) !important;
+}
+.downloads_ProgressDetails_sv3ZH,
+.downloads_Count_1CGnw,
+.downloads_SectionItemStatus_1Sygg {
+  color:var(--glm-muted) !important;
+}
+.downloads_Button_3oavR.DialogButton:enabled {
+  background:var(--glm-panel-hover) !important;
+  color:var(--glm-text) !important;
+  border:1px solid var(--glm-border) !important;
+}
+.downloads_Button_3oavR.DialogButton:enabled.gpfocus {
+  background:var(--glm-primary) !important;
+  color:var(--glm-primary-ink) !important;
+}
+.downloads_ProgressBar_1vMU1,
+.downloadgraph_GraphLine_3H2JW,
+.downloadgraph_Disk_1QHr4 svg {
+  accent-color:var(--glm-accent) !important;
+  stroke:var(--glm-accent) !important;
+}
+.downloadgraph_GraphLine_3H2JW {stroke:var(--glm-accent) !important;}
