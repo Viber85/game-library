@@ -130,7 +130,7 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
       obj.colorSamples.slice(0,4).flatMap(entry=>{
         if(!entry||typeof entry!=="object")return [];
         const sample=entry as Record<string,unknown>;
-        if(typeof sample.color!=="string"|| !/^rgba?\\([\\d.,\\s]+\\)$/.test(sample.color) ||
+        if(typeof sample.color!=="string"|| !/^rgba?[(][0-9., ]+[)]$/.test(sample.color) ||
            typeof sample.className!=="string" || !/^[A-Za-z0-9_-]{3,100}$/.test(sample.className))return [];
         return [{color:sample.color.slice(0,55),count:integer(sample.count),
           className:sample.className.slice(0,100)}];
