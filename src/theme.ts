@@ -649,13 +649,62 @@ export const DASHBOARD_CSS = String.raw`
   line-height:1.1;
   text-shadow:0 1px 10px rgba(0,0,0,.28);
 }
-.gl-topbar-tools {
+.gl-topbar-status {
   flex:0 0 auto;
   display:flex;
+  flex-direction:row;
   align-items:center;
-  gap:14px;
+  gap:8px;
+  min-width:0;
   color:#e8f6ff;
 }
+.gl-topbar-icon,.gl-topbar-battery,.gl-topbar-avatar {
+  display:inline-flex;
+  position:relative;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  color:#d9eeff;
+  border-radius:10px;
+  min-height:30px;
+  outline:none;
+}
+.gl-topbar-icon {
+  width:28px;
+  font-size:19px;
+}
+.gl-topbar-icon.gl-focused,.gl-topbar-battery.gl-focused,.gl-topbar-avatar.gl-focused,
+.gl-topbar-icon:hover,.gl-topbar-battery:hover,.gl-topbar-avatar:hover {
+  background:rgba(41,101,152,.62);
+  box-shadow:0 0 0 2px #bde9ff;
+}
+.gl-topbar-icon.gl-status-dim {
+  opacity:.45;
+}
+.gl-topbar-unread {
+  position:absolute;
+  top:-3px;
+  right:-4px;
+  display:block;
+  min-width:14px;
+  height:14px;
+  padding:0 3px;
+  border-radius:7px;
+  background:#4ac1ff;
+  color:#031627;
+  font-size:9px;
+  font-weight:800;
+  line-height:14px;
+  text-align:center;
+}
+.gl-topbar-battery {gap:3px;padding:0 3px;}
+.gl-topbar-battery-icon {display:flex;align-items:center;font-size:25px;}
+.gl-topbar-battery-icon.gl-battery-charging {color:#6de2ff;}
+.gl-topbar-battery-percent {font-size:12px;font-weight:750;font-variant-numeric:tabular-nums;}
+.gl-topbar-avatar {width:31px;height:31px;overflow:hidden;background:rgba(48,89,122,.46);}
+.gl-topbar-avatar img {display:block;width:100%;height:100%;object-fit:cover;border-radius:9px;}
+.gl-topbar-avatar svg {font-size:27px;}
+
 .gl-topbar-search {
   flex:0 0 33px;
   width:33px;
@@ -728,9 +777,24 @@ export const DASHBOARD_CSS = String.raw`
     border-radius:14px;
   }
   .gl-topbar-current {font-size:clamp(19px,2.5vw,24px);}
-  .gl-topbar-tools {gap:9px;}
+  .gl-topbar-status {gap:4px;}
+  .gl-topbar-icon {width:23px;font-size:17px;}
+  .gl-topbar-battery-icon {font-size:22px;}
+  .gl-topbar-battery-percent {font-size:11px;}
+  .gl-topbar-avatar {width:26px;height:26px;}
+  .gl-topbar-avatar svg {font-size:24px;}
   .gl-topbar-clock {font-size:12px;min-width:44px;}
   .gl-topbar-search {width:30px;height:30px;flex-basis:30px;}
+}
+@media (max-width:720px) {
+  .gl-main > .gl-header.gl-library-topbar {padding:0 7px 0 11px;gap:6px;}
+  .gl-topbar-current {font-size:18px;}
+  .gl-topbar-status {gap:2px;}
+  .gl-topbar-icon {width:20px;}
+  .gl-topbar-clock {min-width:38px;font-size:11px;}
+  .gl-topbar-battery {gap:1px;padding:0;}
+  .gl-topbar-search {width:24px;height:28px;flex-basis:24px;}
+
 }
 
 `;
