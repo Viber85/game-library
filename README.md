@@ -60,6 +60,17 @@ is enabled on the device, disable that old CSS Loader copy once to avoid
 two copies of the same style competing. It is **not** needed for the new
 integrated theme.
 
+**v0.2.0-test.16:** expands Midnight coverage on native Steam game detail
+pages and Settings. The original Settings implementation targeted a generic
+`.PageListColumn` class that SteamOS doesn't use; the new stylesheet matches
+`gamepadpagedsettings_PagedSettingsDialog_*`, including unfocused controls,
+category navigation and dropdowns. A new `game-details.css` covers play
+controls, game metadata, activity feeds and subnavigation while preserving
+Steam game artwork. Steam can minify CSS classes, so the plugin also resolves
+classes using Decky's live Steam webpack class map and re-injects the theme
+only when the real class mapping changes. A versioned CSS marker removes
+older, incomplete themes left behind by hot reload.
+
 The separate QAM and Steam Menu windows must still be checked on the
 actual SteamOS device. Steam client updates can change CSS selectors,
 and late-created windows may briefly show native colors until detected.
