@@ -43,6 +43,8 @@ const MODULE_ANCHORS:Record<string,readonly string[]> = {
   wirelesssettings:["NetworkItem","NetworkRow"],
   gamepadnetwork:["NetworkItem","NetworkList"],
   gamepadsettings:["SettingsRow","SettingsSection"],
+  // Storage uses its own webpack CSS module; Steam can hash all class names.
+  contentmanagement:["ContentManagement","InstallFolder","DriveUsageIndicator"],
   appdetailsmediasection:["MediaSection","MediaButton","ViewMedia"],
   appdetailsmedialibrary:["MediaLibraryButton","NoMedia","OpenMedia"],
   appdetailsnotessection:["NoteLink","NotesSection","NoteBody"],
