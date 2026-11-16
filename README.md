@@ -87,6 +87,25 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.2-test.7 — scroll and background continuity:** Addresses the
+last visible black bands behind SteamOS Settings fields and the off-screen
+rows that appeared in native gray/blue only after scrolling. When the
+existing Midnight layout classifier recognizes Settings, its right-hand
+scroll canvas now uses the same `#0c1b32` blue as the rows, including
+underlying gaps and immediate scroll-content wrappers. Existing rows
+outside the visible viewport are marked in a bounded scan of the confirmed
+Settings content pane (up to 2,400 elements), using horizontal geometry,
+without requiring them to be visible first. Steam's native controls,
+icons, artwork, and navigation are preserved. A captured scroll listener
+re-evaluates reused/virtualized rows (throttled to 100 ms); DOM mutation
+observation remains the primary path for newly mounted content. The
+listener is removed when the theme turns off or reinitializes. New tests
+verify below-the-fold rows receive theme markers before scrolling and
+small controls aren't wrongly treated as whole rows.
+
+This is a test release: CI can validate the synthetic conditions, but
+the appearance of actual scrolled pages must be checked on the handheld.
+
 **v0.4.2-test.6 — near-immediate Midnight Settings styling:** Replaces
 the native CEF Settings watcher's 1.8-second polling-only response with a
 `MutationObserver` watching structural Steam UI changes. Newly mounted
