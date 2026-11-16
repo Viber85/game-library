@@ -18,22 +18,31 @@ Its Rollup/Decky setup follows the conventions of the owner's existing Claw Metr
 - **src/index.tsx** — optional /library/home patch with React error fallback and stored preference
 - **src/tabmaster.ts** — read-only TabMaster tab definitions and supported filter mapping
 - **src/UpdatesPanel.tsx** — GitHub version checker and Decky-managed installer with confirmation
-- **system-theme/*.css + theme.json** — standalone CSS Loader v8 system-wide theme for Steam bigpicture and bigpictureoverlay contexts
-- **system_theme.py** — guarded install/status/remove operations into the CSS Loader theme directory; never writes other theme settings
-- **src/SystemThemePanel.tsx** — Decky QAM install/remove controls with explicit CSS Loader activation steps
+- **system-theme/*.css** — bundled Midnight color sheets (no CSS Loader manifest or dependency)
+- **src/themeTabs.ts** — allowlist for Steam main Game Mode and QAM/Menu browser tabs
+- **src/builtinThemeRuntime.ts** — Decky-native CSS injection/recovery/removal across Steam UI tabs
+- **src/themeController.ts** — persistent Midnight/Off theme selection, default Midnight
+- **src/BuiltinThemePanel.tsx** — built-in Appearance toggle and active-window diagnostics
 - **src/launchGame.ts** — 64-bit validated Steam gameID for Non-Steam shortcuts (signed/unsigned appStore probing), RunGame default option (-1)
 - **main.py** — read-only TabMaster settings bridge and release validation endpoints
 - **updates.py** — pinned GitHub repository and SHA-256 asset validation
 
-## System-wide appearance
+## System-wide appearance — integrated
 
-- Dedicated CSS Loader theme (not a global style injected only into Game Library's React root).
-- Scope includes Steam Menu, QAM, Settings, Downloads, buttons, dialogs and header/footer.
-- Palette matches Game Library: `#020815` / `#0C1B32` / `#4AC1FF`.
-- Installation is opt-in. The user separately enables the theme in CSS Loader.
-- Restore original colors by disabling it in CSS Loader and removing its files from the Game Library panel.
-- CSS Loader manifest uses `bigpicture` and `bigpictureoverlay` targets, validated by Python tests.
-- Existing Steam controller navigation and React focus logic are untouched.
+- Midnight is the **default** Game Library theme, independently of CSS Loader.
+- The native Decky API injects stylesheet strings into each Steam UI window,
+  with a distinct CSS bundle for the main Game Mode and overlay menus.
+- Tab discovery uses the Steam CEF debug-tab listing; supported targets are
+  explicit: Steam Big Picture/SharedJSContext plus QuickAccess/MainMenu windows.
+  The runtime retries injection when tabs appear or reload.
+- Palette: `#020815` / `#0C1B32` / `#4AC1FF`.
+- User can disable it via Game Library → Appearance; managed styles are removed.
+  The preference is saved alongside (without overwriting) the Steam Home setting.
+- Theme registry supports future IDs. Currently `midnight` and `off`.
+- No third-party theming app, CSS Loader theme directory, or CSS Loader settings
+  are read or modified.
+- Changing color values does not replace buttons, Steam routes or controller
+  focus logic.
 
 ## Layout at 1280×800
 
