@@ -1,7 +1,8 @@
 import {
   executeInTab, fetchNoCors, injectCssIntoTab, removeCssFromTab,
 } from "@decky/api";
-import { identifySteamTabs, type ThemeScope } from "./themeTabs";
+import { identifySteamTabs, FALLBACK_MAIN_TITLES, type ThemeScope, type SteamTab } from "./themeTabs";
+import { STEAM_PAGE_CHECK_SCRIPT, THEME_PROBE_SCRIPT, parseThemeProbe, type ThemeProbe } from "./themeProbe";
 import { compileMidnightCss } from "./themeCssCompiler";
 
 export type ThemeId = "midnight" | "off";
@@ -18,6 +19,23 @@ export type ThemeStatus = {
   hasQAM:boolean;
   issue:string;
 };
+export type ThemeDiagnostics={
+  target:string;
+  discoveredTabs:number;
+  detectedVisibleUI:boolean;
+  applied:boolean;
+  themeMarker:string;
+  cssSheets:number;
+  settingsRoots:number;
+  settingsFields:number;
+  networkRows:number;
+  gameRoots:number;
+  gameSections:number;
+  computedFieldColor:string;
+  computedRootColor:string;
+  sampleClasses:string[];
+  details:string;
+};
 
 const RECHECK_MS = 6500;
 const TIMEOUT_MS = 3000;
@@ -26,7 +44,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "41";
+const STYLE_REVISION = "42";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -75,17 +93,27 @@ function bounded<T>(value:PromiseLike<T>|T,timeout=TIMEOUT_MS):Promise<T> {
   });
 }
 
-async function listTabs():Promise<Array<{title:string;scope:ThemeScope}>> {
+async function listTabs():Promise<SteamTab[]> {
   try{
     const response=await bounded(fetchNoCors(DEBUG_TABS_URL));
     if(response.ok){
       const parsed=identifySteamTabs(await bounded(response.json()));
       if(parsed.length)return parsed;
     }
-  }catch{ /* Steam remote tab discovery can be temporarily unavailable */ }
-  // The default Game Mode page is accessible by this Decky tab title.
-  // We do not guess ephemeral QAM or Steam Menu titles if discovery fails.
-  return [{title:"Steam Big Picture Mode",scope:"main"}];
+  }catch(error){
+    console.warn("[game-library] CEF tab discovery unavailable",error);
+  }
+  // Never invent a Steam target title. Previous versions counted a generated
+  // CSS UUID against a guessed "Steam Big Picture Mode" tab as success, even
+  // when the actual visible Steam tab was named Steam/SP or localized.
+  // Probe a fixed allowlist and *verify it actually has the Steam Game Mode DOM*.
+  for(const title of FALLBACK_MAIN_TITLES){
+    try{
+      const value=await bounded(executeInTab(title,false,STEAM_PAGE_CHECK_SCRIPT));
+      if(value.success && value.result===true)return [{title,scope:"main"}];
+    }catch{ /* move to next known title */ }
+  }
+  return [];
 }
 
 async function activeInTab(title:string):Promise<boolean> {
@@ -138,6 +166,15 @@ async function applyToTab(
       catch{/* tab may have disappeared */}
       return;
     }
+    // CSS injection's UUID alone is not proof that Steam applied it.
+    // Check the actual document marker before claiming a styled tab.
+    const verified=await activeInTab(title);
+    if(!verified){
+      try{await bounded(removeCssFromTab(title,cssId) as unknown as Promise<void>|void);}
+      catch{/* Steam may have replaced the document */}
+      console.warn("[game-library] CSS was accepted but did not appear in",title);
+      return;
+    }
     managedTabs.set(title,{cssId,scope,signature});
   }catch(e){
     // Keep the theme enabled and retry when Steam opens the menu again.
@@ -155,13 +192,17 @@ async function syncTheme():Promise<void>{
   }
   if(epoch!==generation)return;
   const actual=new Set(tabs.map(x=>x.title));
+  // These counts represent verified marker-bearing Steam tabs, not merely
+  // successful API requests or CSS content compiled inside Decky.
   const main=tabs.some(t=>t.scope==="main"&&managedTabs.has(t.title));
   const qam=tabs.some(t=>t.title.startsWith("QuickAccess")&&managedTabs.has(t.title));
   const menu=tabs.some(t=>t.title.startsWith("MainMenu")&&managedTabs.has(t.title));
   report({
     appliedTabs:[...managedTabs.keys()].filter(t=>actual.has(t)).length,
     hasMain:main,hasQAM:qam,hasMenu:menu,
-    issue:main?"": "Waiting for Steam Game Mode browser to become available",
+    issue:main?"": tabs.length===0
+      ?"Steam Game Mode tab not discovered. Run Theme Diagnostics from Appearance."
+      :"CSS not verified in the visible Steam UI. Run Theme Diagnostics.",
   });
 }
 
@@ -202,6 +243,71 @@ export async function setBuiltinTheme(
     startTimer();
     await queue(syncTheme);
   }
+}
+
+
+/** Read-only on-device validation. Reports both injection and whether the
+ * user's *actual* Settings / Game Details elements exist in that document.
+ * No SSIDs, game titles, usernames, input values or web content is read.
+ */
+export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
+  return queue(async()=>{
+    if(!shuttingDown&&desired==="midnight"&&theme)await syncTheme();
+    const tabs=await listTabs();
+    const main=tabs.find(t=>t.scope==="main");
+    const empty:ThemeDiagnostics={
+      target:main?.title??"Not found",
+      discoveredTabs:tabs.length,
+      detectedVisibleUI:false,
+      applied:false,
+      themeMarker:"",
+      cssSheets:0,settingsRoots:0,settingsFields:0,networkRows:0,
+      gameRoots:0,gameSections:0,computedFieldColor:"",
+      computedRootColor:"",sampleClasses:[],
+      details:main?"Unable to inspect Steam UI.":"No Steam Game Mode tab could be verified.",
+    };
+    if(!main)return empty;
+    let probe:ThemeProbe|null=null;
+    try{
+      const execution=await bounded(executeInTab(main.title,false,THEME_PROBE_SCRIPT));
+      if(execution.success)probe=parseThemeProbe(execution.result);
+      else empty.details="Decky could not execute a read-only CSS inspection.";
+    }catch(error){empty.details="Steam CSS inspection failed: "+String(error).slice(0,140);}
+    if(!probe)return empty;
+    const applied=probe.marker===STYLE_REVISION && probe.sheets>0;
+    const onSettings=probe.settingsRoots>0;
+    const onGame=probe.gameRoots>0;
+    let details= !probe.visibleUI?"The selected CEF tab is not the visible Steam UI.":
+      !applied?"Midnight CSS is missing from the visible Steam document.":
+      onSettings&&probe.fieldRows===0
+        ?"Midnight CSS exists, but no Settings row selectors match this Steam build.":
+      onGame&&probe.gameSections===0
+        ?"Midnight CSS exists, but no Game Details section selectors match this Steam build.":
+      !onSettings&&!onGame
+        ?"Theme injection verified. Open Settings or a game page and run this check again.":
+      "Theme CSS is present; these are the actual Steam element counts.";
+    return {
+      target:main.title,discoveredTabs:tabs.length,
+      detectedVisibleUI:probe.visibleUI,applied,
+      themeMarker:probe.marker,cssSheets:probe.sheets,
+      settingsRoots:probe.settingsRoots,settingsFields:probe.fieldRows,
+      networkRows:probe.networkRows,gameRoots:probe.gameRoots,
+      gameSections:probe.gameSections,computedFieldColor:probe.fieldColor,
+      computedRootColor:probe.rootColor,sampleClasses:probe.sampleClasses,
+      details,
+    };
+  });
+}
+
+/** Retry injection after Steam changes routes or after plugin hot reload.
+ * This never changes saved theme preferences. */
+export async function refreshBuiltinTheme():Promise<void>{
+  await queue(async()=>{
+    if(shuttingDown||desired!=="midnight")return;
+    const tabs=await listTabs();
+    for(const t of tabs)await removeKnown(t.title);
+    await syncTheme();
+  });
 }
 
 export function startBuiltInThemeRuntime(){
