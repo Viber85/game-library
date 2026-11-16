@@ -28,6 +28,8 @@ jobs:
         run: npm run test:coverage
       - name: Test real Steam UI theme diagnostics
         run: npm run test:probe
+      - name: Test pre-QAM native Steam CSS snapshots
+        run: npm run test:audit
       - name: Test native Steam shortcut launching
         run: npm run test:launch
       - name: Test Steam achievements
