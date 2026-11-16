@@ -177,6 +177,8 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
   const attrs=['data-glm-settings-root','data-glm-settings-row',
     'data-glm-settings-navitem','data-glm-settings-row-part'];
   try {
+    const previousRows=new Set(document.querySelectorAll('[data-glm-settings-row]'));
+    const previousParts=new Set(document.querySelectorAll('[data-glm-settings-row-part]'));
     for(const node of document.querySelectorAll('[data-glm-settings-root],[data-glm-settings-row],[data-glm-settings-navitem],[data-glm-settings-row-part]'))
       for(const attr of attrs)node.removeAttribute?.(attr);
     const root=document.querySelector('.BasicUI') ||
@@ -202,7 +204,7 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
          box.bottom>height*.97)continue;
       rectangles.set(el,box);
       if(box.left>=width*.24 && box.width>=width*.42 &&
-         box.width<=width*.80 && blueGray(el))right.push(el);
+         box.width<=width*.80 && (blueGray(el)||previousRows.has(el)))right.push(el);
       if(box.left>=0 && box.left<=width*.18 && box.width>=width*.09 &&
          box.width<=width*.35 && box.right<=width*.41)left.push(el);
     }
@@ -229,7 +231,7 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
       const box=rectangles.get(row);
       // An independently colored end segment often holds network icons.
       for(const child of Array.from(row.children||[]).slice(0,12)){
-        if(!child.getBoundingClientRect || !blueGray(child))continue;
+        if(!child.getBoundingClientRect || !(blueGray(child)||previousParts.has(child)))continue;
         const c=child.getBoundingClientRect();
         if(c.width>=16 && c.width<width*.23 &&
            c.height>=box.height*.6 && c.height<=box.height*1.2)
