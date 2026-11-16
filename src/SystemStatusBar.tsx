@@ -1,6 +1,6 @@
 import { callable } from "@decky/api";
 import { Focusable, Navigation, type GamepadEvent } from "@decky/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Ref } from "react";
 import {
   MdAccountCircle, MdBattery20, MdBattery50, MdBattery80,
   MdBatteryChargingFull, MdBatteryFull, MdBatteryUnknown,
@@ -49,7 +49,7 @@ function batteryIcon(status: Battery | null) {
 type Props = {
   time: Date;
   onStatusButtonDown: (event: GamepadEvent) => void;
-  searchRef: React.Ref<HTMLDivElement>;
+  searchRef: Ref<HTMLDivElement>;
 };
 
 export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
