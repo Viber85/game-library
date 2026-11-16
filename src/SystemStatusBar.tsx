@@ -100,7 +100,18 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
 
   const profile = () => {
     let id="";
-    try { id=getActiveUserId(); } catch { /* No active Steam account. */ }
+    try {
+      const g=globalThis as any;
+      const nativeId=g.App?.m_CurrentUser?.strSteamID ??
+        g.SteamClient?.User?.GetSteamID?.();
+      if (nativeId && /^\d{16,20}$/.test(String(nativeId))) id=String(nativeId);
+      // getActiveUserId() returns a Steam account32 identifier, not SteamID64.
+      if (!id) {
+        const account=getActiveUserId();
+        if (/^\d{1,10}$/.test(account))
+          id=(76561197960265728n+BigInt(account)).toString();
+      }
+    } catch { /* No active Steam account. */ }
     if (/^\d{16,20}$/.test(id))
       Navigation.NavigateToSteamWeb("https://steamcommunity.com/profiles/" + id);
     else Navigation.OpenMainMenu();
