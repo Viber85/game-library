@@ -243,7 +243,15 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   const right=Array.from({length:8},(_,i)=>make(321,155+i*56,655,42));
   for(const item of left)item.parentElement=sidebar;
   for(const item of right)item.parentElement=main;
-  const nodes=[root,sidebar,main,...left,...right,html];
+  // Rows already mounted below the visible scroll viewport must not
+  // wait for their first scroll event before receiving Midnight colors.
+  const offscreen=[make(321,930,655,42),make(321,1090,655,42)];
+  for(const item of offscreen)item.parentElement=main;
+  const tinyControl=make(900,1130,70,36);
+  tinyControl.parentElement=main;
+  main.querySelectorAll=(selector)=>selector==="[class]"?
+    [...right,...offscreen,tinyControl]:[];
+  const nodes=[root,sidebar,main,...left,...right,...offscreen,tinyControl,html];
   const doc={
     documentElement:html,
     querySelector:(selector)=>selector===".BasicUI"?root:null,
@@ -267,21 +275,31 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   assert.equal(sidebar.hasAttribute("data-glm-settings-sidebar"),true);
   assert.equal(main.hasAttribute("data-glm-settings-main"),true);
   assert.equal(right.filter(n=>n.hasAttribute("data-glm-settings-row")).length,8);
+  assert.equal(offscreen.filter(n=>n.hasAttribute("data-glm-settings-row")).length,2,
+    "Pre-existing offscreen rows must be themed before scrolling");
+  assert.equal(tinyControl.hasAttribute("data-glm-settings-row"),false,
+    "Small controls and icons must not be mistaken for field strips");
   assert.equal(left.filter(n=>n.hasAttribute("data-glm-settings-navitem")).length,12);
   assert.equal(run(),true,"Already recolored/transparent rows stay detected");
   mode="home";
   assert.equal(run(),false);
   assert.equal(html.hasAttribute("data-glm-settings-root"),false);
   assert.equal(main.hasAttribute("data-glm-settings-main"),false);
+  assert.equal(offscreen.some(n=>n.hasAttribute("data-glm-settings-row")),false);
 });
 
 
 test("fast Midnight watcher responds to Steam DOM changes before slow polling",()=>{
   let observed=null,notify=null,frame=null,frameCalls=0,scans=0;
   let disconnected=0,cancelled=0,stopped=0,fallbackMs=0;
+  let onScroll=null,removedScroll=0;
   const root={querySelectorAll:()=>[]};
   const document={
     documentElement:{},body:root,
+    addEventListener:(event,fn,capture)=>{if(event==="scroll"&&capture)onScroll=fn;},
+    removeEventListener:(event,fn,capture)=>{
+      if(event==="scroll"&&capture&&fn===onScroll)removedScroll++;
+    },
     querySelector:(query)=>query.includes(".BasicUI")?root:null,
     querySelectorAll:(query)=>query==="style"?
       [{textContent:"--game-library-midnight-active: 44;"}]:[],
@@ -313,13 +331,16 @@ test("fast Midnight watcher responds to Steam DOM changes before slow polling",(
   scans=parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks;
   assert.equal(scans,1,"Initial synchronous scan still runs");
   notify();notify();notify(); // Many Steam React insertions in the same frame
-  assert.equal(frameCalls,1,"DOM changes coalesce into one animation frame");
+  assert.equal(typeof onScroll,"function","Nested scrolling must trigger the watcher");
+  onScroll(); // The same frame is shared by DOM updates and scroll movement.
+  assert.equal(frameCalls,1,"DOM and scroll changes coalesce into one frame");
   assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,1);
   frame();
   assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,2);
   notify(); // An update queued while Midnight is being disabled
   assert.equal(run(THEME_AUDIT_REMOVE_SCRIPT),true);
   assert.equal(disconnected,1);
+  assert.equal(removedScroll,1,"Scroll listener removed on theme disable");
   assert.equal(cancelled,1);
   assert.equal(stopped,1);
   assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).installed,false);
