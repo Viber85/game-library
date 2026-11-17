@@ -304,3 +304,31 @@ html[data-glm-settings-root] [class*="contentmanagement_AppBody"]:is(
 html[data-glm-settings-root] [class*="contentmanagement_DriveUsageIndicator"] {
   background-color:var(--glm-settings-section) !important;
 }
+
+
+/* v0.4.9 — flat native Settings canvas on EVERY Settings category, including
+ * Display, Downloads, Family and sparse pages.
+ * These selectors are scoped to a VERIFIED Settings DOM; never give generic
+ * Steam UI roots an opaque background during in-game notifications. */
+html[data-glm-settings-root] :is(.BasicUI,#GamepadUI_Full_Root)[data-glm-settings-root] {
+  background:#0a1b30 !important;
+  background-image:none !important;
+}
+html[data-glm-settings-root] [data-glm-settings-main],
+html[data-glm-settings-root] [data-glm-settings-surface] {
+  background:#0a1b30 !important;
+  background-color:#0a1b30 !important;
+  background-image:none !important;
+  box-shadow:none;
+}
+html[data-glm-settings-root] [data-glm-settings-main]::before,
+html[data-glm-settings-root] [data-glm-settings-surface]::before {
+  background-image:none !important;
+}
+/* Marked field strips remain distinct and uniform; do not flatten
+ * interactive buttons, input tracks, selected navigation or sliders. */
+html[data-glm-settings-root] [data-glm-settings-row]:not(.gpfocus):not(.gpfocuswithin):not(:focus-within):not(:hover),
+html[data-glm-settings-root] [data-glm-settings-row-part] {
+  background:#0f2842 !important;
+  background-image:none !important;
+}
