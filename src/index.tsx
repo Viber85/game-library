@@ -1,6 +1,6 @@
 import { callable, definePlugin, routerHook } from "@decky/api";
 import {
-  ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, ToggleField,
+  ButtonItem, Navigation, PanelSection, PanelSectionRow, ToggleField,
 } from "@decky/ui";
 import { Component, ReactNode, useEffect, useState } from "react";
 import { MdLibraryBooks } from "react-icons/md";
@@ -12,16 +12,13 @@ import { loadDefaultTheme } from "./themeController";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const HOME_ROUTE = "/library/home";
-type TabSource = "auto" | "steam" | "tabmaster";
-const getSettings = callable<[], { default_home: boolean; tab_source?: TabSource }>("get_dashboard_settings");
+const getSettings = callable<[], { default_home: boolean }>("get_dashboard_settings");
 const setSettings = callable<[boolean], boolean>("set_dashboard_settings");
-const saveTabSource = callable<[TabSource], boolean>("set_tab_source");
 
 /** Home patch only: other Steam UI and game routes remain completely native. */
 type HomePatch = Parameters<typeof routerHook.addPatch>[1];
 let homePatch: HomePatch | undefined;
 let defaultHome = true;
-let tabSource: TabSource = "auto";
 let unloaded = false;
 const listeners = new Set<() => void>();
 
@@ -59,12 +56,10 @@ function updateHomePatch() {
 
 function ControlPanel() {
   const [home, setHome] = useState(defaultHome);
-  const [source,setSource] = useState<TabSource>(tabSource);
   const [busy, setBusy] = useState(false);
-  const [sourceBusy,setSourceBusy] = useState(false);
   const [status, setStatus] = useState("");
   useEffect(() => {
-    const refresh = () => { setHome(defaultHome);setSource(tabSource); };
+    const refresh = () => setHome(defaultHome);
     listeners.add(refresh);
     return () => { listeners.delete(refresh); };
   }, []);
@@ -83,20 +78,6 @@ function ControlPanel() {
     }).finally(() => setBusy(false));
   };
 
-  const changeTabSource = (next: TabSource) => {
-    if(sourceBusy || next===source)return;
-    setSourceBusy(true);
-    setStatus("");
-    void saveTabSource(next).then((saved)=>{
-      if(!saved)throw new Error("Tab source could not be saved");
-      tabSource=next;
-      setSource(next);
-      emit();
-    }).catch(error=>{
-      setStatus("Could not save tab source: "+String(error));
-    }).finally(()=>setSourceBusy(false));
-  };
-
   return (
     <>
       <PanelSection title="Game Library · Game Mode">
@@ -107,22 +88,6 @@ function ControlPanel() {
             checked={home}
             disabled={busy}
             onChange={changeHome}
-          />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <DropdownItem label="Library tabs"
-            description="Auto uses TabMaster only when Decky has it enabled. Steam shows built-in library filters."
-            rgOptions={[
-              {data:"auto",label:"Auto (recommended)"},
-              {data:"steam",label:"Steam"},
-              {data:"tabmaster",label:"TabMaster"},
-            ]}
-            selectedOption={source}
-            disabled={sourceBusy}
-            onChange={(option)=>{
-              const next=option.data as TabSource;
-              if(next==="auto"||next==="steam"||next==="tabmaster")changeTabSource(next);
-            }}
           />
         </PanelSectionRow>
         <PanelSectionRow>
@@ -161,8 +126,6 @@ export default definePlugin(() => {
   void getSettings().then((saved) => {
     if(unloaded) return;
     defaultHome = saved.default_home !== false;
-    tabSource = saved.tab_source==="steam" || saved.tab_source==="tabmaster"
-      ? saved.tab_source : "auto";
     updateHomePatch();
     emit();
   }).catch((error) => {
