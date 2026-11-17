@@ -539,8 +539,7 @@ export function Dashboard() {
           </div>
         )}
 
-        {!tabInfo.available && tabInfo.mode==="tabmaster" &&
-          <div className="gl-sync-note">TabMaster is unavailable: {tabInfo.reason}. Showing Steam tabs.</div>}
+
         <footer className="gl-footer"><span>STEAM · Menu</span><span>L1 / R1 · Tabs</span><span>A Select</span><span>B Back</span><span>← Navigation</span></footer>
       </div>
     </div>
