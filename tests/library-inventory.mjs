@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  nativeRows,nativeAppId,nativeCollectionRows,nativeLibraryRows,nativeBooleanFlag
+  nativeRows,nativeAppId,nativeCollectionRows,nativeLibraryRows,nativeBooleanFlag,
+  defaultLibraryTabGames
 } from "../src/libraryInventory.ts";
 
 const ids=rows=>rows.map(nativeAppId);
@@ -75,4 +76,23 @@ test("Empty/missing native stores cannot produce phantom games",()=>{
   assert.deepEqual(nativeLibraryRows({GetCollection:()=>{throw Error("not ready");}},{}),[]);
   assert.deepEqual(nativeCollectionRows(null),[]);
   assert.deepEqual(nativeRows(null),[]);
+});
+
+test("fallback tabs select distinct inventories, not the same first games",()=>{
+  const games=[
+    {id:1,installed:true,favorite:true,nonSteam:false},
+    {id:2,installed:true,favorite:false,nonSteam:false},
+    {id:3,installed:false,favorite:true,nonSteam:false},
+    {id:4,installed:true,favorite:false,nonSteam:true},
+    {id:5,installed:false,favorite:false,nonSteam:false},
+  ];
+  const idsFor=id=>defaultLibraryTabGames(id,games).map(g=>g.id);
+  assert.deepEqual(idsFor("AllGames"),[1,2,3,4,5],
+    "All Games must show uninstalled titles too");
+  assert.deepEqual(idsFor("Installed"),[1,2,4],
+    "Installed must exclude uninstalled games");
+  assert.deepEqual(idsFor("Favorites"),[1,3],
+    "Favorites must include favorited games even if not installed");
+  assert.deepEqual(idsFor("NonSteam"),[4]);
+  assert.equal(defaultLibraryTabGames("Epic",games),null);
 });
