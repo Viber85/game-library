@@ -979,4 +979,174 @@ export const DASHBOARD_CSS = String.raw`
   }
 }
 
+
+/* v0.4.12 — enlarged dashboard carousel and hero information.
+ * Only the home carousel and selected game are affected. The full grid,
+ * controller focus, navigation rail and native Steam status/footer stay put. */
+.gl-main > .gl-strip {
+  height:306px;
+  padding:11px 4px 15px;
+  gap:14px;
+}
+.gl-main .gl-strip .gl-game,
+.gl-main .gl-strip .gl-view-more {
+  width:clamp(151px,13vw,208px);
+  flex:0 0 clamp(151px,13vw,208px);
+  height:274px;
+}
+.gl-main .gl-strip .gl-poster-name {
+  font-size:clamp(14px,1.2vw,17px);
+  line-height:1.17;
+}
+.gl-main .gl-feature-content {
+  width:min(960px,89%);
+  padding:10px 26px;
+  min-width:0;
+}
+.gl-main .gl-feature .gl-game-logo {
+  max-height:80px;
+  max-width:min(460px,100%);
+  margin-bottom:6px;
+}
+.gl-main .gl-feature h1 {
+  font-size:clamp(28px,3.15vw,40px);
+  line-height:1.10;
+  margin-bottom:5px;
+}
+.gl-main .gl-feature .gl-status {
+  gap:14px;
+  margin-bottom:9px;
+}
+.gl-main .gl-feature .gl-status > span {
+  font-size:15px;
+}
+.gl-main .gl-feature .gl-metrics {
+  width:100%;
+  max-width:100%;
+  gap:10px;
+  margin-bottom:12px;
+  align-items:stretch;
+}
+.gl-main .gl-feature .gl-metric {
+  height:92px;
+  min-height:92px;
+  max-height:92px;
+  padding:12px;
+  gap:9px;
+  font-size:25px;
+  min-width:0;
+}
+.gl-main .gl-feature .gl-metric > svg {
+  font-size:23px;
+}
+.gl-main .gl-feature .gl-metric small {
+  font-size:11px;
+}
+.gl-main .gl-feature .gl-metric strong {
+  font-size:18px;
+}
+.gl-main .gl-feature .gl-hltb {
+  flex:1.95 1 0;
+  min-width:0;
+}
+.gl-main .gl-feature .gl-hltb .gl-hltb-body small {
+  font-size:10px;
+  margin-bottom:9px;
+}
+.gl-main .gl-feature .gl-hltb .gl-hltb-values {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:0 9px;
+}
+.gl-main .gl-feature .gl-hltb .gl-hltb-values em {
+  font-size:11px;
+}
+.gl-main .gl-feature .gl-hltb .gl-hltb-values strong {
+  font-size:18px;
+}
+.gl-main .gl-feature .gl-achievement-card {
+  flex:1.25 1 0;
+}
+.gl-main .gl-feature .gl-achievement-card .gl-achievement-content {
+  gap:9px;
+}
+.gl-main .gl-feature .gl-achievement-card .gl-achievement-stats strong {
+  font-size:17px;
+}
+.gl-main .gl-feature .gl-achievement-track {
+  height:7px;
+}
+.gl-main .gl-feature .gl-actions .gl-button {
+  font-size:17px;
+  min-width:156px;
+  padding:12px 23px;
+}
+@media (max-height:730px) {
+  .gl-main > .gl-strip {
+    height:239px;
+    padding:9px 4px 14px;
+  }
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {height:213px;}
+  .gl-main .gl-feature-content {padding:9px 21px;}
+  .gl-main .gl-feature .gl-game-logo {max-height:64px;margin-bottom:5px;}
+  .gl-main .gl-feature h1 {font-size:30px;margin-bottom:4px;}
+  .gl-main .gl-feature .gl-status {gap:11px;margin-bottom:8px;}
+  .gl-main .gl-feature .gl-metrics {gap:7px;margin-bottom:9px;}
+  .gl-main .gl-feature .gl-metric {
+    height:84px;min-height:84px;max-height:84px;padding:8px 9px;gap:7px;
+  }
+  .gl-main .gl-feature .gl-metric > svg {font-size:20px;}
+  .gl-main .gl-feature .gl-metric strong {font-size:16px;}
+  .gl-main .gl-feature .gl-hltb .gl-hltb-body small {font-size:9px;margin-bottom:7px;}
+  .gl-main .gl-feature .gl-hltb .gl-hltb-values em {font-size:10px;}
+  .gl-main .gl-feature .gl-hltb .gl-hltb-values strong {font-size:16px;}
+  .gl-main .gl-feature .gl-achievement-card .gl-achievement-stats strong {font-size:15px;}
+  .gl-main .gl-feature .gl-actions .gl-button {padding:10px 20px;}
+}
+@media (max-height:650px) {
+  .gl-main > .gl-strip {height:218px;padding:8px 4px 12px;}
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {height:196px;}
+  .gl-main .gl-feature-content {padding:7px 19px;}
+  .gl-main .gl-feature .gl-game-logo {max-height:52px;margin-bottom:4px;}
+  .gl-main .gl-feature h1 {font-size:26px;}
+  .gl-main .gl-feature .gl-status {margin-bottom:6px;}
+  .gl-main .gl-feature .gl-metrics {gap:6px;margin-bottom:7px;}
+  .gl-main .gl-feature .gl-metric {
+    height:75px;min-height:75px;max-height:75px;padding:6px 8px;gap:5px;
+  }
+  .gl-main .gl-feature .gl-metric strong {font-size:15px;}
+  .gl-main .gl-feature .gl-hltb .gl-hltb-values strong {font-size:15px;}
+  .gl-main .gl-feature .gl-actions .gl-button {padding:9px 18px;}
+}
+@media (max-height:610px) {
+  .gl-main > .gl-strip {height:200px;padding:7px 4px 10px;}
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {height:181px;}
+  .gl-main .gl-feature .gl-game-logo {max-height:44px;margin-bottom:3px;}
+  .gl-main .gl-feature h1 {font-size:24px;}
+  .gl-main .gl-feature .gl-status > span {font-size:13px;}
+  .gl-main .gl-feature .gl-metric {
+    height:69px;min-height:69px;max-height:69px;padding:5px 7px;
+  }
+}
+@media (max-width:1000px) {
+  .gl-main .gl-feature-content {width:94%;padding-left:18px;padding-right:18px;}
+  .gl-main .gl-feature .gl-metrics {gap:6px;}
+  .gl-main .gl-feature .gl-metric {padding-left:7px;padding-right:7px;gap:5px;}
+  .gl-main .gl-feature .gl-metric small {font-size:9px;}
+  .gl-main .gl-feature .gl-hltb .gl-hltb-values {column-gap:4px;}
+  .gl-main .gl-feature .gl-hltb .gl-hltb-values em {font-size:9px;}
+  .gl-main .gl-feature .gl-hltb .gl-hltb-values strong {font-size:clamp(13px,1.7vw,16px);}
+  .gl-main .gl-feature .gl-achievement-card .gl-achievement-stats strong {font-size:14px;}
+}
+@media (max-width:900px) {
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {
+    width:clamp(141px,13.8vw,190px);
+    flex-basis:clamp(141px,13.8vw,190px);
+  }
+}
+
 `;
