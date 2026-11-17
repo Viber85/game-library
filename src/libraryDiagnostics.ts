@@ -1,7 +1,7 @@
 import {
   NATIVE_LIBRARY_COLLECTIONS, nativeAppId, nativeCollectionRows,
   nativeLibraryRows, nativeRows,
-} from "./libraryInventory";
+} from "./libraryInventory.ts";
 
 /**
  * On-device, read-only diagnostics for the ACTUAL Game Library document.
