@@ -131,16 +131,36 @@ export function nativeBooleanFlag(item:unknown,keys:readonly string[]):boolean|u
   return undefined;
 }
 
-/** One authoritative definition of the Steam-compatible fallback categories.
- * The source list and the filter rules must never drift apart. */
+/** Use Valve's native Steam collections when present. In Game Mode these
+ * collections can differ substantially from raw app overview booleans:
+ * Non-Steam shortcuts often have installed=true even though Valve's
+ * Installed Steam tab deliberately excludes them.
+ */
+export type NativeSteamTabSets = {
+  allGames?: ReadonlySet<number>|null;
+  installed?: ReadonlySet<number>|null;
+  favorites?: ReadonlySet<number>|null;
+};
 export function defaultLibraryTabGames<T extends {
-  installed:boolean;favorite:boolean;nonSteam:boolean;
-}>(id:string,games:T[]):T[]|null{
+  id:number;installed:boolean;favorite:boolean;nonSteam:boolean;
+}>(id:string,games:T[],native:NativeSteamTabSets={}):T[]|null{
   switch(id.toLowerCase()){
-    case "allgames":return games;
-    case "installed":return games.filter(g=>g.installed);
-    case "favorites":return games.filter(g=>g.favorite);
-    case "nonsteam":return games.filter(g=>g.nonSteam);
+    case "allgames":
+      // Valve's all-games native collection is the Steam-only library,
+      // not type-games (which includes non-Steam shortcuts on this build).
+      return native.allGames != null
+        ? games.filter(g=>native.allGames!.has(g.id))
+        : games.filter(g=>!g.nonSteam);
+    case "installed":
+      return native.installed != null
+        ? games.filter(g=>native.installed!.has(g.id))
+        : games.filter(g=>g.installed && !g.nonSteam);
+    case "favorites":
+      return native.favorites != null
+        ? games.filter(g=>native.favorites!.has(g.id))
+        : games.filter(g=>g.favorite);
+    case "nonsteam":
+      return games.filter(g=>g.nonSteam);
     default:return null;
   }
 }
