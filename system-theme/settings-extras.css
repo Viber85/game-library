@@ -360,10 +360,11 @@ html[data-glm-settings-root] [data-glm-settings-row-part]:where(:not([role="butt
 /* Readable Steam field/network modules and list entries: also transparent.
  * The CSS compiler expands readable class aliases on hashed Steam builds. */
 html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
- :is([class*="gamepaddialog_Field_"],[class*="gamepaddialog_HighlightOnFocus"],
+ :is([class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"],
      [class*="gamepadpagedsettings_SettingsRow"],[class*="gamepadsettings_SettingsRow"],
      [class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
      [class*="networksettings_NetworkListItem"],[class*="networksettings_NetworkEntry"],
+     [class*="networksettings_Connected"],[class*="networksettings_CurrentNetwork"],
      [class*="wifisettings_NetworkItem"],[class*="wifisettings_NetworkRow"],
      [class*="connectionsettings_Network"],[class*="wirelesssettings_Network"],
      [class*="gamepadnetwork_Network"],
@@ -391,10 +392,11 @@ html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSetting
  * Midnight focused fill and a cyan inset accent as the left navigation. */
 html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
 html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
- :is([class*="gamepaddialog_Field_"],[class*="gamepaddialog_HighlightOnFocus"],
+ :is([class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"],
      [class*="gamepadpagedsettings_SettingsRow"],[class*="gamepadsettings_SettingsRow"],
      [class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
      [class*="networksettings_NetworkListItem"],[class*="networksettings_NetworkEntry"],
+     [class*="networksettings_Connected"],[class*="networksettings_CurrentNetwork"],
      [class*="wifisettings_NetworkItem"],[class*="connectionsettings_Network"],
      [role="listbox"] > [role="option"],[role="list"] > [role="listitem"])
  :is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,[aria-selected="true"]) {
