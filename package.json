@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rollup -c",
     "typecheck": "tsc --noEmit",
-    "test:navigation": "node --test tests/grid-navigation.mjs",
+    "test:navigation": "node --test tests/grid-navigation.mjs tests/tab-source.mjs",
     "test:launch": "node --test tests/launch-game.mjs",
     "test:achievements": "node --test tests/achievements.mjs",
     "test:theme": "node --test tests/theme-tabs.mjs",
