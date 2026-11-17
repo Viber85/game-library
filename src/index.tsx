@@ -5,12 +5,14 @@ import {
 import { Component, ReactNode, useEffect, useState } from "react";
 import { MdLibraryBooks } from "react-icons/md";
 import { Dashboard } from "./Dashboard";
+import { LibraryDiagnostics } from "./LibraryDiagnostics";
 import { UpdatesPanel } from "./UpdatesPanel";
 import { BuiltinThemePanel } from "./BuiltinThemePanel";
 import { startBuiltInThemeRuntime, stopBuiltInThemeRuntime } from "./builtinThemeRuntime";
 import { loadDefaultTheme } from "./themeController";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
+const LIBRARY_DIAGNOSTICS_ROUTE = "/game-library/library-diagnostics";
 const HOME_ROUTE = "/library/home";
 const getSettings = callable<[], { default_home: boolean }>("get_dashboard_settings");
 const setSettings = callable<[boolean], boolean>("set_dashboard_settings");
@@ -98,6 +100,14 @@ function ControlPanel() {
             Open Game Library Dashboard
           </ButtonItem>
         </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={() => {
+            Navigation.Navigate(LIBRARY_DIAGNOSTICS_ROUTE);
+            Navigation.CloseSideMenus();
+          }}>
+            Inspect Library Sources
+          </ButtonItem>
+        </PanelSectionRow>
         {status && <PanelSectionRow><div style={{fontSize:12}}>{status}</div></PanelSectionRow>}
         <PanelSectionRow>
           <div style={{fontSize:12,opacity:.75,lineHeight:1.5}}>
@@ -116,6 +126,7 @@ function ControlPanel() {
 export default definePlugin(() => {
   unloaded = false;
   routerHook.addRoute(DASHBOARD_ROUTE, Dashboard, { exact: true });
+  routerHook.addRoute(LIBRARY_DIAGNOSTICS_ROUTE, LibraryDiagnostics, { exact: true });
   // Built-in Midnight system colors are applied automatically as soon as
   // Decky loads this plugin; CSS Loader is not needed or consulted.
   startBuiltInThemeRuntime();
@@ -146,6 +157,7 @@ export default definePlugin(() => {
         homePatch = undefined;
       }
       routerHook.removeRoute(DASHBOARD_ROUTE);
+      routerHook.removeRoute(LIBRARY_DIAGNOSTICS_ROUTE);
     },
   };
 });
