@@ -362,7 +362,7 @@ export function Dashboard() {
           <HeroBackdrop key={selected.id} game={selected}/>
           <div className="gl-scene-shade"/>
         </div>}
-        {/* A floating, self-contained navigation bar; no simulated system stats. */}
+        {/* Active tab title is separate from the floating, pill-shaped status controls. */}
         <header className="gl-header gl-library-topbar" aria-label="Library navigation">
           <div className="gl-topbar-titles">
             <span className="gl-topbar-current" title={tab.title} aria-live="polite">{tab.title}</span>
@@ -482,7 +482,6 @@ export function Dashboard() {
                   <span>All {shown.length} games</span>
                 </Focusable>}
             </Focusable>
-            <div className="gl-pagination">{shown.length} games · L1/R1 Tabs · ↑ Tabs · ← Navigation</div>
 
             {selected && <section className="gl-feature" aria-label="Selected game">
               <div className="gl-feature-content">
