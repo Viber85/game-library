@@ -51,6 +51,21 @@ test("Steam root stays transparent for volume and achievement popups",()=>{
   assert.ok(css("settings-extras.css").includes("[data-glm-settings-main]"));
 });
 
+test("QAM focused icons match library rail without a clipped outer shadow",()=>{
+  const qam=stripCssComments(css("qam.css"));
+  assert.ok(qam.includes('#QuickAccess-Menu [role="tab"]'),"Accessible tab scope");
+  assert.ok(qam.includes(".quickaccessmenu_Tab_1S76C"),"Native QAM class");
+  assert.ok(qam.includes("border-radius:12px !important"),"Rail's rounded-square shape");
+  assert.ok(qam.includes("background:linear-gradient(140deg,#185488,#083058)"),
+    "Same focused background as library rail");
+  assert.ok(qam.includes("box-shadow:inset 0 0 0 2px #63cfff,inset 4px 0 0 #4ac1ff"),
+    "Focus ring fits completely inside its tab");
+  assert.ok(qam.includes("aria-selected=\"true\""),"Selected and focused remain distinct");
+  assert.doesNotMatch(qam,/0 0 0 2px var\(--glm-accent\)/,
+    "Never draw the QAM tab border outside clipped parent");
+  assert.ok(qam.includes(".gpfocuswithin"),"QAM focus-within is supported");
+});
+
 test("Settings covers both System controls and Internet network lists",()=>{
   const anchors=[
     "gamepadpagedsettings_PagedSettingsDialog_PageContent",
