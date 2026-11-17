@@ -164,7 +164,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "8";
+const AUDIT_REVISION = "9";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -178,20 +178,38 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
   // names, URLs, values, images or game data.
   const attrs = ['data-glm-settings-root','data-glm-settings-row',
     'data-glm-settings-navitem','data-glm-settings-row-part',
-    'data-glm-settings-sidebar','data-glm-settings-main'];
+    'data-glm-settings-sidebar','data-glm-settings-main',
+    'data-glm-settings-surface'];
   try {
+    // Retain markers on stable Settings DOM nodes. Removing every marker and
+    // then re-adding it briefly reveals Valve's native gradient on navigation.
+    const previous=Array.from(document.querySelectorAll(attrs.map(a=>'['+a+']').join(',')));
+    const keep=new Map();
+    const mark=(node,attr)=>{
+      if(!node)return;
+      let marks=keep.get(node);
+      if(!marks){marks=new Set();keep.set(node,marks);}
+      marks.add(attr);
+      if(!node.hasAttribute?.(attr))node.setAttribute?.(attr,'');
+    };
+    const prune=()=>{
+      for(const node of previous){
+        const marks=keep.get(node);
+        for(const attr of attrs)
+          if(!marks?.has(attr) && node.hasAttribute?.(attr))
+            node.removeAttribute?.(attr);
+      }
+    };
     const oldRows=new Set(document.querySelectorAll('[data-glm-settings-row]'));
     const oldParts=new Set(document.querySelectorAll('[data-glm-settings-row-part]'));
-    for(const node of document.querySelectorAll(attrs.map(a=>'['+a+']').join(',')))
-      for(const attr of attrs)node.removeAttribute?.(attr);
     const root=document.querySelector('.BasicUI') ||
       document.querySelector('#GamepadUI_Full_Root');
-    if(!root)return false;
+    if(!root){prune();return false;}
     const semantic=Boolean(document.querySelector(
       '[class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]'));
     const width=window.innerWidth||document.documentElement?.clientWidth||0;
     const height=window.innerHeight||document.documentElement?.clientHeight||0;
-    if(width<500||height<270)return false;
+    if(width<500||height<270){prune();return false;}
     const left=[],right=[];
     const positions=new Map();
     const isRow=(el,kind)=>{
@@ -250,11 +268,15 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     const nav=groupRows(left),rows=groupRows(right);
     // Distinct settings categories on the left + broad field strips on the
     // right. Unlike screen-copy matching, this is language independent.
-    const match=Boolean(semantic || (nav.length>=8 && rows.length>=4));
-    if(!match)return false;
-    root.setAttribute?.('data-glm-settings-root','');
-    // Document-root marker also works when Steam mounts Settings outside .BasicUI.
-    document.documentElement?.setAttribute?.('data-glm-settings-root','');
+    // Family and similar categories can show only one control, or none.
+    // A full Steam Settings rail has 9+ distinct navigation rows, whereas
+    // Home, QAM and game details do not. This does not read page labels.
+    const match=Boolean(semantic || (nav.length>=9 && (rows.length>=1 || nav.length>=10)));
+    if(!match){prune();return false;}
+    mark(root,'data-glm-settings-root');
+    // Document root only activates Settings-scoped CSS; it is cleared as
+    // soon as the recognizable Settings rail disappears.
+    mark(document.documentElement,'data-glm-settings-root');
     const findPane=(element,minWidth,maxWidth)=>{
       // Prefer the outermost Settings pane, not the first inner scroll list.
       // Storage's games list is nested and its disk/header background sits
@@ -269,9 +291,39 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
       return pane;
     };
     const navPane=findPane(nav[0],.10,.40);
-    const mainPane=findPane(rows[0],.42,.91);
-    navPane?.setAttribute?.('data-glm-settings-sidebar','');
-    mainPane?.setAttribute?.('data-glm-settings-main','');
+    let mainPane=findPane(rows[0],.42,.91);
+    if(!mainPane && typeof document.elementsFromPoint==='function'){
+      // Sparse pages such as Family have no full-width Settings fields.
+      // Find the right pane by layout geometry, without looking at text.
+      for(const y of [height*.34,height*.53]){
+        const stack=document.elementsFromPoint(width*.61,y)||[];
+        for(const el of stack){
+          if(!el?.getBoundingClientRect || !/^(DIV|SECTION|MAIN)$/i.test(el.tagName||''))continue;
+          const b=el.getBoundingClientRect();
+          if(b.left>=width*.20 && b.width>=width*.45 && b.width<=width*.94 &&
+             b.height>=height*.46 && b.height<=height*1.10){
+            mainPane=el;break;
+          }
+        }
+        if(mainPane)break;
+      }
+    }
+    mark(navPane,'data-glm-settings-sidebar');
+    mark(mainPane,'data-glm-settings-main');
+    if(mainPane?.querySelectorAll){
+      // Flatten only large structural surfaces: NOT toggles, sliders,
+      // dropdowns, game artwork, small buttons or individual icons.
+      const shells=mainPane.querySelectorAll('[class]');
+      const limit=Math.min(shells.length,1100);
+      for(let n=0;n<limit;n++){
+        const el=shells[n];
+        if(!/^(DIV|SECTION|MAIN)$/i.test(el.tagName||'')||!el.getBoundingClientRect)continue;
+        const b=el.getBoundingClientRect();
+        if(b.left>=width*.20 && b.width>=width*.43 && b.width<=width*.94 &&
+           b.height>=height*.23 && b.height<=height*1.12)
+          mark(el,'data-glm-settings-surface');
+      }
+    }
 
     // Elements already present below the fold must receive Midnight styling
     // BEFORE the user scrolls to them. Bounding boxes still have reliable
@@ -307,7 +359,7 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
       return painted || style.backgroundImage && style.backgroundImage!=='none';
     };
     for(const row of allRows){
-      row.setAttribute?.('data-glm-settings-row','');
+      mark(row,'data-glm-settings-row');
       const b=positions.get(row);
       // Recolor only painted child strips; never the small toggle tracks,
       // Wi-Fi glyphs, SVG icons, or actual form controls.
@@ -318,11 +370,12 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
         if(c.width<Math.max(64,width*.053) || c.width>b.width*.98 ||
            c.height<b.height*.55 || c.height>b.height*1.25)continue;
         if(blueGray(child)||oldParts.has(child))
-          child.setAttribute?.('data-glm-settings-row-part','');
+          mark(child,'data-glm-settings-row-part');
       }
     }
-    for(const item of nav)item.setAttribute?.('data-glm-settings-navitem','');
-    return rows.length>0;
+    for(const item of nav)mark(item,'data-glm-settings-navitem');
+    prune();
+    return Boolean(mainPane || rows.length>0 || nav.length>=9);
   }catch{return false;}
 })()`;
 
@@ -436,7 +489,8 @@ export const THEME_AUDIT_REMOVE_SCRIPT = `(() => {
   // Remove temporary visual markers as soon as Midnight is disabled.
   const attrs=['data-glm-settings-root','data-glm-settings-row',
     'data-glm-settings-navitem','data-glm-settings-row-part',
-    'data-glm-settings-sidebar','data-glm-settings-main'];
+    'data-glm-settings-sidebar','data-glm-settings-main',
+    'data-glm-settings-surface'];
   for(const node of document.querySelectorAll(attrs.map(a=>'['+a+']').join(',')))
     for(const attr of attrs)node.removeAttribute?.(attr);
   delete window[key];
