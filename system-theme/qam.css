@@ -7,23 +7,32 @@
   background:var(--glm-bg-deep) !important;
   color:var(--glm-text) !important;
 }
+/* Match the Game Library rail's soft rectangle.
+ * The focus ring is INSET: Steam clips outer shadows at the QAM rail edge. */
 #QuickAccess-Menu [role="tab"],
 .quickaccessmenu_Tab_1S76C {
   color:var(--glm-muted) !important;
   background:transparent !important;
-  border-radius:9px !important;
-  border-left:3px solid transparent !important;
+  border-radius:12px !important;
+  border-left:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background-clip:padding-box;
 }
 #QuickAccess-Menu [role="tab"][aria-selected="true"],
 .quickaccessmenu_Tab_1S76C.quickaccessmenu_Selected_2QHMu {
   color:#e9f8ff !important;
-  background:var(--glm-panel-hover) !important;
-  border-left-color:var(--glm-accent) !important;
+  background:linear-gradient(140deg,#144873,#092b4d) !important;
+  box-shadow:inset 3px 0 0 #4ac1ff !important;
 }
-#QuickAccess-Menu [role="tab"].gpfocus,
-.quickaccessmenu_Tab_1S76C.gpfocus {
-  background:var(--glm-panel-hover) !important;
-  box-shadow:0 0 0 2px var(--glm-accent),0 0 12px rgba(24,159,255,.3) !important;
+/* A fully internal 2px cyan ring cannot be cut off by the QAM scroll rail. */
+#QuickAccess-Menu [role="tab"]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover),
+.quickaccessmenu_Tab_1S76C:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) {
+  color:#f2f9ff !important;
+  background:linear-gradient(140deg,#185488,#083058) !important;
+  border-radius:12px !important;
+  box-shadow:inset 0 0 0 2px #63cfff,inset 4px 0 0 #4ac1ff !important;
+  outline:none !important;
 }
 .quickaccessmenu_TabGroupPanel_1QO7b,
 .quickaccessmenu_TabGroupPanel_1QO7b.scrollpanel_ScrollPanel_1CXdi {
