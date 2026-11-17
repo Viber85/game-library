@@ -87,6 +87,37 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.15 — complete native Steam fallback library and correct tab
+membership:** User-submitted MSI Claw recording exposed a real regression when
+TabMaster and UnifiedDeck were disabled: the automatic fallback showed
+almost the same small set under All Games and Installed, with Favorites
+empty. Tab switching itself worked, but library indexing did not.
+
+The original reader used `allApps ?? visibleApps ?? apps`. An **empty**
+`allApps` is not null, so it silently ignored potentially populated
+`visibleApps` and `apps` (including Steam's Favorite ID Set).
+It also returned early as soon as ANY native collection supplied rows,
+thus skipping the full appStore inventory of uninstalled and other games.
+The corrected adapter unions all Steam collection representations and
+the available `GetAllApps`, `m_rgApps`, `m_rgAllApps`, `m_mapApps` and
+`m_mapAppOverview` sources, deduplicates canonical app IDs, and
+prefers real Steam app overviews over bare numeric IDs.
+Favorites and installed flags now use native collection membership as
+well as properly evaluated boolean fields. A method object such as
+`BIsInstalled` is no longer accidentally treated as `true`.
+The four built-in fallback filters now share one tested implementation.
+Switching tabs (both L1/R1 and activation) also refreshes the native
+collection snapshot immediately rather than waiting up to 15 seconds.
+
+The Auto policy from v0.4.14 stays unchanged: TabMaster tabs return
+only while TabMaster is enabled. No SteamOS theme, controller focus,
+network integration, volume/achievement overlay, or native game-launch
+code is changed. The regression suite recreates incomplete Steam
+collections, a Favorite collection where only `visibleApps` is populated,
+additional uninstalled appStore games, ID-only entries, and mixed
+Installed/Favorites/Non-Steam lists. Tests and TypeScript build pass,
+but the real library counts still require validation on the MSI Claw.
+
 **v0.4.14 — automatic tabs without a settings selector:** Tab selection
 is now permanently automatic instead of a selectable Auto/Steam/TabMaster
 preference. Removed the Library tabs dropdown from the Decky QAM panel,
