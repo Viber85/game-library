@@ -97,12 +97,52 @@ test("fallback tabs select distinct inventories, not the same first games",()=>{
     {id:5,installed:false,favorite:false,nonSteam:false},
   ];
   const idsFor=id=>defaultLibraryTabGames(id,games).map(g=>g.id);
-  assert.deepEqual(idsFor("AllGames"),[1,2,3,4,5],
-    "All Games must show uninstalled titles too");
-  assert.deepEqual(idsFor("Installed"),[1,2,4],
-    "Installed must exclude uninstalled games");
+  assert.deepEqual(idsFor("AllGames"),[1,2,3,5],
+    "Steam All Games must include uninstalled Steam titles, not Non-Steam shortcuts");
+  assert.deepEqual(idsFor("Installed"),[1,2],
+    "Steam Installed must not include Non-Steam shortcuts merely marked installed");
   assert.deepEqual(idsFor("Favorites"),[1,3],
     "Favorites must include favorited games even if not installed");
   assert.deepEqual(idsFor("NonSteam"),[4]);
   assert.equal(defaultLibraryTabGames("Epic",games),null);
+});
+
+test("real Claw native fallback counts keep 464 Steam, 10 installed, 321 Non-Steam separate",()=>{
+  const games=[
+    ...Array.from({length:464},(_,i)=>({
+      id:i+1,installed:i<10,favorite:false,nonSteam:false
+    })),
+    ...Array.from({length:321},(_,i)=>({
+      id:10000+i,installed:true,favorite:false,nonSteam:true
+    })),
+  ];
+  const native={
+    allGames:new Set(Array.from({length:464},(_,i)=>i+1)),
+    installed:new Set(Array.from({length:10},(_,i)=>i+1)),
+    favorites:new Set(),
+  };
+  const all=defaultLibraryTabGames("AllGames",games,native);
+  const installed=defaultLibraryTabGames("Installed",games,native);
+  const favorites=defaultLibraryTabGames("Favorites",games,native);
+  const nonSteam=defaultLibraryTabGames("NonSteam",games,native);
+  assert.equal(all.length,464);
+  assert.equal(installed.length,10);
+  assert.equal(favorites.length,0);
+  assert.equal(nonSteam.length,321);
+  assert.ok(installed.every(g=>!g.nonSteam));
+  assert.ok(nonSteam.every(g=>g.nonSteam));
+  assert.equal(games.filter(g=>g.installed).length,331,
+    "A raw installed flag total of 331 must NOT become Steam Installed tab");
+});
+
+test("native favorite membership is authoritative when the collection is empty",()=>{
+  const games=[
+    {id:1,installed:true,favorite:true,nonSteam:false},
+    {id:2,installed:true,favorite:false,nonSteam:false},
+  ];
+  assert.deepEqual(defaultLibraryTabGames("Favorites",games,{favorites:new Set()}),[],
+    "Do not invent favorites when Steam native favorite collection is empty");
+  assert.deepEqual(defaultLibraryTabGames("Favorites",games,{favorites:null}),[games[0]],
+    "When Steam collection is inaccessible, fall back to game overview favorites");
+  assert.deepEqual(defaultLibraryTabGames("Installed",games,{installed:new Set([2])}),[games[1]]);
 });
