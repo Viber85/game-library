@@ -39,7 +39,8 @@ export function nativeRows(value:unknown):unknown[]{
   if(!obj || typeof obj.then==="function")return [];
   // Use iteration before treating an observable collection as plain object.
   try{
-    if(typeof obj[Symbol.iterator]==="function")return Array.from(obj as Iterable<unknown>);
+    const iterable=value as Iterable<unknown>;
+    if(typeof iterable[Symbol.iterator]==="function")return Array.from(iterable);
   }catch{/* Ignore a briefly detached observable. */}
   return Object.entries(obj).map(([key,item])=>withKey(key,item));
 }
