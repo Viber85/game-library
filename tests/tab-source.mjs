@@ -25,7 +25,7 @@ test("QAM has no tab source selector or save action",()=>{
   assert.match(controls,/const getSettings = callable<\[\], \{ default_home: boolean \}>/);
   assert.match(controls,/label="Use as Steam Home"/);
   assert.match(controls,/Open Game Library Dashboard/);
-  assert.doesNotMatch(backend,/return \{"default_home":[\s\S]*?"tab_source"/);
+  assert.match(backend,/return \{"default_home": _read_preferences\(\)\.get\("default_home", True\) is True\}/);
 });
 
 test("Dashboard switches sources during use without stale selected tab",()=>{
