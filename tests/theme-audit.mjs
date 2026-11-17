@@ -247,6 +247,21 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   const right=Array.from({length:8},(_,i)=>make(321,155+i*56,655,42));
   for(const item of left)item.parentElement=sidebar;
   for(const item of right)item.parentElement=storageScroll;
+  // Steam can draw a row via a 100%-width child and deeper gradient wrapper.
+  // The older 98%-width cutoff failed to clear precisely these surfaces.
+  const paintFull=make(321,155,655,42);
+  const paintNested=make(321,155,655,42);
+  const paintDeep=make(321,155,655,42);
+  const nativeControl=make(800,155,155,35);
+  nativeControl.tagName="BUTTON";
+  nativeControl.className="gamepaddropdown_DropDownControlButton_x";
+  paintNested.children=[paintDeep,nativeControl];
+  paintFull.children=[paintNested];
+  right[0].children=[paintFull];
+  paintFull.parentElement=right[0];
+  paintNested.parentElement=paintFull;
+  paintDeep.parentElement=paintNested;
+  nativeControl.parentElement=paintNested;
   // Rows already mounted below the visible scroll viewport must not
   // wait for their first scroll event before receiving Midnight colors.
   const offscreen=[make(321,930,655,42),make(321,1090,655,42)];
@@ -255,7 +270,8 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   tinyControl.parentElement=main;
   main.querySelectorAll=(selector)=>selector==="[class]"?
     [...right,...offscreen,tinyControl]:[];
-  const nodes=[root,sidebar,main,storageScroll,...left,...right,...offscreen,tinyControl,html];
+  const nodes=[root,sidebar,main,storageScroll,...left,...right,
+    paintFull,paintNested,paintDeep,nativeControl,...offscreen,tinyControl,html];
   const doc={
     documentElement:html,
     querySelector:(selector)=>selector===".BasicUI"?root:null,
@@ -270,7 +286,10 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   };
   const run=()=>vm.runInNewContext(STEAM_SETTINGS_MARK_SCRIPT,{
     window:{innerWidth:1000,innerHeight:800},document:doc,
-    getComputedStyle:()=>({backgroundColor:"rgba(0, 0, 0, 0)",backgroundImage:"none"}),
+    getComputedStyle:(node)=>({
+      backgroundColor:node===paintDeep?"rgb(76, 160, 255)":"rgba(0, 0, 0, 0)",
+      backgroundImage:node===paintDeep?"linear-gradient(blue,navy)":"none",
+    }),
     Math,Map,Set,Array,
   });
   assert.equal(run(),true);
@@ -282,6 +301,11 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
   assert.equal(storageScroll.hasAttribute("data-glm-settings-main"),false,
     "Nested scrolling container must not replace the outer Settings pane");
   assert.equal(right.filter(n=>n.hasAttribute("data-glm-settings-row")).length,8);
+  for(const layer of [paintFull,paintNested,paintDeep])
+    assert.equal(layer.hasAttribute("data-glm-settings-row-part"),true,
+      "All full-width nested color layers must be made transparent");
+  assert.equal(nativeControl.hasAttribute("data-glm-settings-row-part"),false,
+    "Never make dropdown controls transparent");
   assert.equal(offscreen.filter(n=>n.hasAttribute("data-glm-settings-row")).length,2,
     "Pre-existing offscreen rows must be themed before scrolling");
   assert.equal(tinyControl.hasAttribute("data-glm-settings-row"),false,
