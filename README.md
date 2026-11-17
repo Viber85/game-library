@@ -87,6 +87,30 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.12 — larger game carousel and selected-game details:** The Game Library
+home dashboard now gives more prominence to both parts of the main view.
+Standard carousel posters grow from 254px to 274px tall, with a wider card
+and a slightly larger title overlay. Selected-game logo art grows from a
+72px maximum to 80px, the title can reach 40px, and the status tags,
+Playtime, HowLongToBeat, Last Played and Achievements cards are larger.
+Metrics now use a 92px card height, larger values and icons, slightly
+more spacing, plus a thicker achievement progress bar. Play/Install and
+Game Details buttons are proportionally larger and retain their existing
+high-contrast controller focus rings.
+
+The design is adjusted for SteamOS compact heights: intermediate screens
+at or below 820px use 260px posters and 88px metrics; shorter screens
+switch to 213px, 196px or 181px posters, with correspondingly smaller
+logos, text, and metric cards. This preserves the selected-game actions
+and Steam's native footer without requiring scroll. The wider bottom
+content area is still bounded so it does not overwhelm the game's hero
+artwork. The full-grid listing, TabMaster tabs, navigation, Midnight
+Settings CSS, system status pill, and achievement/volume notification
+transparency are left unchanged. Automated tests check responsive
+dimensions, all four metrics, HLTB's three columns and estimated
+vertical-space budgets; final appearance requires verification on MSI
+Claw hardware.
+
 **v0.4.11 — remove idle Settings row backgrounds at the source:** The
 v0.4.10 MSI Claw screenshot of Audio proved that broad cobalt Settings
 strips were still being painted. The root cause was conflicting older,
