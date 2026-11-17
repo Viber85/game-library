@@ -61,6 +61,9 @@ class TabMasterTests(unittest.TestCase):
             root=pathlib.Path(tmp)
             own=root / "Game Library"
             own.mkdir()
+            # Decky stores disabled_plugins in settings/loader.json; an
+            # existing TabMaster/settings.json is not enough to be active.
+            (root / "loader.json").write_text(json.dumps({"disabled_plugins":[]}))
             tabmaster=root / "TabMaster"
             tabmaster.mkdir()
             settings=tabmaster / "settings.json"
@@ -80,6 +83,57 @@ class TabMasterTests(unittest.TestCase):
                 other=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265771"))
                 self.assertFalse(other["available"])
                 self.assertEqual(other["tabs"],[])
+                # Disable TabMaster without touching its saved configuration.
+                (root / "loader.json").write_text(
+                    json.dumps({"disabled_plugins":["TabMaster","Other Plugin"]}))
+                disabled=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
+                self.assertFalse(disabled["available"])
+                self.assertEqual(disabled["tabs"],[])
+                self.assertIn("disabled",disabled["reason"].lower())
+                self.assertEqual(disabled["mode"],"auto")
+                # Enable it again and confirm the same tabs are restored.
+                (root / "loader.json").write_text(json.dumps({"disabled_plugins":[]}))
+                back=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
+                self.assertTrue(back["available"])
+                self.assertEqual([t["title"] for t in back["tabs"]],["ALL GAMES","EPIC","GOG"])
+                # Manual Steam mode intentionally ignores TabMaster config.
+                self.assertTrue(asyncio.run(Plugin().set_tab_source("steam")))
+                steam=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
+                self.assertFalse(steam["available"])
+                self.assertEqual(steam["mode"],"steam")
+                self.assertEqual(steam["tabs"],[])
+                # Manual TabMaster mode works only when the plugin is enabled.
+                self.assertTrue(asyncio.run(Plugin().set_tab_source("tabmaster")))
+                self.assertTrue(asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))["available"])
+                self.assertTrue(asyncio.run(Plugin().set_tab_source("auto")))
+
+    def test_source_preferences_default_and_missing_loader_state_fail_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=pathlib.Path(tmp)
+            own=root/"Game Library"
+            own.mkdir()
+            tabs=root/"TabMaster"
+            tabs.mkdir()
+            (tabs/"settings.json").write_text(json.dumps({"usersDict":{
+                "42":{"tabs":{"AllGames":{"title":"All Games","position":0}}}
+            }}))
+            with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
+                self.assertEqual(asyncio.run(Plugin().get_dashboard_settings())["tab_source"],"auto")
+                missing=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
+                self.assertFalse(missing["available"])
+                self.assertIn("loader",missing["reason"].lower())
+                (root/"loader.json").write_text("{oops")
+                corrupt=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
+                self.assertFalse(corrupt["available"])
+                self.assertFalse(asyncio.run(Plugin().set_tab_source("invalid")))
+                self.assertEqual(asyncio.run(Plugin().get_dashboard_settings())["tab_source"],"auto")
+                (root/"loader.json").write_text(json.dumps({"disabled_plugins":[]}))
+                self.assertTrue(asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))["available"])
+                self.assertTrue(asyncio.run(Plugin().set_tab_source("steam")))
+                self.assertEqual(asyncio.run(Plugin().get_dashboard_settings())["tab_source"],"steam")
+                self.assertTrue(asyncio.run(Plugin().set_dashboard_settings(False)))
+                self.assertEqual(asyncio.run(Plugin().get_dashboard_settings()),
+                                 {"default_home":False,"tab_source":"steam"})
 
 
 if __name__=="__main__":
