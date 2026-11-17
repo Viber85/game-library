@@ -85,7 +85,7 @@ test("All Settings categories use a flat canvas with no overlay-wide paint",()=>
   assert.ok(watcher.includes("lastFastScan=now;")&&watcher.includes("sample();"));
 });
 
-test("Option A uses transparent Settings strips with readable separators and focused fill",()=>{
+test("Option A leaves every idle strip entirely clear and keeps controller focus",()=>{
   const marker="/* v0.4.10 — transparent Settings rows (Variant A).";
   const start=settings.lastIndexOf(marker);
   assert.ok(start>settings.indexOf("/* v0.4.9"),"Variant A must override old blue rows last");
@@ -98,8 +98,10 @@ test("Option A uses transparent Settings strips with readable separators and foc
   assert.ok(clean.includes("background:transparent !important"));
   assert.ok(clean.includes("background-color:transparent !important"));
   assert.ok(clean.includes("background-image:none !important"));
-  assert.ok(clean.includes("box-shadow:inset 0 -1px 0 rgba(118,181,227,.18) !important"),
-    "Subtle inset separator uses no layout-changing border");
+  assert.ok(!clean.includes("box-shadow:inset 0 -1px 0 rgba(118,181,227,.18)"),
+    "No line/shadow should make a transparent strip visible");
+  assert.ok(clean.includes("box-shadow:none !important;"),
+    "Normal strips have no simulated separators");
   assert.match(clean,/\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within/);
   assert.ok(clean.includes("background:#163a5e !important"),
     "Focused row retains visible blue Midnight highlight");
@@ -119,6 +121,42 @@ test("Option A uses transparent Settings strips with readable separators and foc
       "All transparent overrides are scoped to a detected Settings page");
   }
   assert.doesNotMatch(clean,/#QuickAccess-Menu|#GamepadUI_Full_Root|\.gl-root/);
+});
+
+test("Every old native or hashed idle row rule is transparent at its source",()=>{
+  const rowSelector=/data-glm-settings-row|gamepaddialog_Field|gamepaddialog_HighlightOnFocus|gamepadpagedsettings_SettingsRow|gamepadsettings_SettingsRow|networksettings_Network|networksettings_Connected|wifisettings_Network|connectionsettings_Network|\[role="listbox"\]|\[role="list"\]/;
+  let checked=0;
+  for(const file of ["settings.css","settings-extras.css"]){
+    const source=stripCssComments(css(file));
+    for(const match of source.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
+      const selector=match[1],decl=match[2];
+      // The canvas has a :not([data-glm-settings-row]) guard and is
+      // deliberately a solid dark color, not a field.
+      if(!rowSelector.test(selector) ||
+         selector.includes("[data-glm-settings-main] > :where(div:not("))continue;
+      const focused=/(?:\.gpfocus|:focus-visible|:focus-within|:hover|\[aria-selected="true"\])/.test(
+        selector.replaceAll(":not(.gpfocus)","").replaceAll(":not(:hover)",""));
+      if(focused)continue;
+      checked++;
+      for(const painted of decl.matchAll(/\bbackground(?:-color)?\s*:\s*([^;]+);/g)){
+        const value=painted[1].trim();
+        assert.equal(value,"transparent !important",
+          file+" still colors an idle row: "+selector.replace(/\s+/g," ").slice(0,140));
+      }
+    }
+  }
+  assert.ok(checked>=12,"Must audit all old normal-field and marker fallback rules");
+  const css0=css("settings-extras.css");
+  for(const pseudo of [
+    "[data-glm-settings-row]::before",
+    "[data-glm-settings-row]::after",
+    "[data-glm-settings-row-part]::before",
+    "[data-glm-settings-row-part]::after",
+  ])assert.ok(css0.includes(pseudo),"Native pseudo paint still visible: "+pseudo);
+  assert.ok(css0.includes("background-color:transparent !important;"));
+  assert.ok(css("settings.css").includes("border-bottom:1px solid transparent !important;"));
+  assert.doesNotMatch(css("buttons.css"),/gamepaddialog_Field_S-_La:hover/,
+    "Idle rows should not light up under a stationary mouse cursor");
 });
 
 test("Recompiled Steam CSS is swapped without a native-color gap",()=>{
