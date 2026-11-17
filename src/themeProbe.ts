@@ -164,7 +164,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "9";
+const AUDIT_REVISION = "10";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -353,26 +353,45 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     }
     const blueGray=(el)=>{
       const style=getComputedStyle(el);
+      if(style.backgroundImage && style.backgroundImage!=='none')return true;
       const rgba=String(style.backgroundColor||'').match(/[0-9.]+/g)?.map(Number)||[];
       if(rgba.length>=4&&rgba[3]<.35)return false;
-      const painted=rgba.length>=3 && rgba[2]>=rgba[0]+8 &&
+      return rgba.length>=3 && rgba[2]>=rgba[0]+8 &&
         rgba[2]>=rgba[1]*.83 && rgba[2]>=70 &&
         !(rgba[1]>150&&rgba[2]>165);
-      return painted || style.backgroundImage && style.backgroundImage!=='none';
+    };
+    const isInteractive=(el)=>{
+      if(/^(?:BUTTON|INPUT|SELECT|TEXTAREA|SVG|LABEL)$/i.test(el.tagName||''))return true;
+      const role=el.getAttribute?.('role')||'';
+      if(/^(?:button|slider|switch|combobox|textbox|checkbox|radio|progressbar)$/i.test(role))return true;
+      const cls=typeof el.className==='string'?el.className:'';
+      return /(?:gamepaddropdown_|gamepadslider_|gamepaddialog_Toggle|gamepaddialog_Button|gamepadcheckbox_|gamepadradio_)/i.test(cls);
     };
     for(const row of allRows){
+      if(isInteractive(row))continue;
       mark(row,'data-glm-settings-row');
       const b=positions.get(row);
-      // Recolor only painted child strips; never the small toggle tracks,
-      // Wi-Fi glyphs, SVG icons, or actual form controls.
-      for(const child of Array.from(row.children||[]).slice(0,16)){
-        if(!/^(?:DIV|SECTION)$/i.test(child.tagName||'') ||
-           !child.getBoundingClientRect)continue;
-        const c=child.getBoundingClientRect();
-        if(c.width<Math.max(64,width*.053) || c.width>b.width*.98 ||
-           c.height<b.height*.55 || c.height>b.height*1.25)continue;
-        if(blueGray(child)||oldParts.has(child))
-          mark(child,'data-glm-settings-row-part');
+      if(!b)continue;
+      // A Steam row may paint a 100%-width child or GRANDCHILD. The old
+      // probe excluded children wider than 98% of the row, leaving exactly
+      // the blue strips the user sees despite a transparent outer row.
+      // Walk a small, bounded subtree and mark only broad background
+      // wrappers, never buttons, controls, slider tracks or icon glyphs.
+      const queue=Array.from(row.children||[]).slice(0,24).map(el=>({el,depth:1}));
+      let checked=0;
+      while(queue.length && checked++<96){
+        const {el,depth}=queue.shift();
+        if(!el || isInteractive(el) || !/^(?:DIV|SECTION|LI)$/i.test(el.tagName||'') ||
+           typeof el.getBoundingClientRect!=='function')continue;
+        const c=el.getBoundingClientRect();
+        const fullRowSurface=c.width>=b.width*.52 && c.width<=b.width*1.08 &&
+          c.height>=b.height*.50 && c.height<=b.height*1.16 &&
+          c.left>=b.left-10 && c.right<=b.right+10;
+        if(fullRowSurface && (blueGray(el)||oldParts.has(el)||depth<=2))
+          mark(el,'data-glm-settings-row-part');
+        if(depth<3)
+          for(const child of Array.from(el.children||[]).slice(0,24))
+            queue.push({el:child,depth:depth+1});
       }
     }
     for(const item of nav)mark(item,'data-glm-settings-navitem');
