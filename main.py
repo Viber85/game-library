@@ -66,6 +66,8 @@ def _write_preferences(settings):
     path = _settings_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(".tmp")
+    # Drop obsolete v0.4.13 manual tab-source preference on next settings save.
+    settings.pop("tab_source", None)
     temporary.write_text(json.dumps(settings), encoding="utf-8")
     os.replace(temporary, path)
 
