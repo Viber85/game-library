@@ -87,6 +87,35 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.13 — automatic library tab sources:** The default tab source is now
+**Auto**. Game Library reads Decky Loader's actual
+`settings/loader.json` `disabled_plugins` list before importing
+TabMaster tab definitions. A saved `TabMaster/settings.json` no longer
+counts as proof that TabMaster is enabled. When disabled, uninstalled
+or inaccessible, Auto falls back to the Game Library's built-in
+Steam-compatible categories (`All Games`, `Installed`, `Favorites`,
+`Non-Steam`); when re-enabled, the custom TabMaster tab definitions
+return. The dashboard rechecks every six seconds without rebooting
+or restarting Decky and resets a stale selected tab (such as Epic) to
+`All Games` when that tab disappears.
+
+QAM now exposes **Game Library → Library tabs**, with
+`Auto (recommended)`, `Steam` (force built-in core categories),
+and `TabMaster` (use its saved definitions only while enabled).
+Selection is saved alongside the existing Home and Midnight settings,
+without editing either peer plugin's preferences. A disabled TabMaster
+cannot be forced on merely by choosing TabMaster mode. Auto's fallback
+is a reliable subset of native-style Steam categories, not a literal
+runtime snapshot of Valve's entire varying tab set (e.g. Collections
+and Great On Deck are not yet mirrored in this custom dashboard).
+
+Tests simulate disabled → enabled TabMaster while its old settings
+file remains in place, missing/corrupt Decky loader state, manual modes,
+and preference preservation. The frontend test checks polling and
+clearing stale selected tab IDs. All previous theme, layout and volume
+notification transparency fixes remain untouched. Verify on the
+handheld by disabling and re-enabling TabMaster in Decky.
+
 **v0.4.12 — larger game carousel and selected-game details:** The Game Library
 home dashboard now gives more prominence to both parts of the main view.
 Standard carousel posters grow from 254px to 274px tall, with a wider card
