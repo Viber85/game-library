@@ -90,3 +90,49 @@ test("main carousel poster expansion remains responsive and grid is untouched",(
   assert.match(v8,/max-width:900px/);
   assert.doesNotMatch(v8,/\.gl-full-grid/);
 });
+
+
+test("v0.4.12 scales both carousel and selected-game detail safely",()=>{
+  const start=css.indexOf("/* v0.4.12 — enlarged dashboard carousel and hero information.");
+  assert.ok(start>=0,"New hero-and-carousel design stylesheet must exist");
+  const layout=css.slice(start);
+  for(const term of [
+    ".gl-main > .gl-strip", "height:306px", "height:274px",
+    "width:clamp(151px,13vw,208px)", "height:260px",
+    "@media (max-height:820px)", "@media (max-height:770px)",
+    "height:213px", "@media (max-height:680px)", "height:196px",
+    "@media (max-height:610px)", "height:181px",
+  ])assert.ok(layout.includes(term),"Missing responsive poster rule: "+term);
+  for(const term of [
+    ".gl-main .gl-feature-content", "width:min(960px,89%)",
+    ".gl-main .gl-feature .gl-game-logo", "max-height:80px",
+    ".gl-main .gl-feature h1", "font-size:clamp(28px,3.15vw,40px)",
+    ".gl-main .gl-feature .gl-status", "font-size:15px",
+    ".gl-main .gl-feature .gl-metrics", "height:92px",
+    ".gl-main .gl-feature .gl-hltb .gl-hltb-values",
+    "grid-template-columns:repeat(3,minmax(0,1fr))",
+    ".gl-main .gl-feature .gl-achievement-card",
+    ".gl-main .gl-feature .gl-achievement-track", "height:7px",
+    ".gl-main .gl-feature .gl-actions .gl-button",
+  ])assert.ok(layout.includes(term),"Missing enlarged game detail styling: "+term);
+  assert.ok(!layout.includes(".gl-full-grid"),"Do not enlarge full grid or alter its navigation");
+  assert.ok(!layout.includes("#QuickAccess-Menu"),"Do not change the native QAM");
+  assert.ok(!layout.includes("data-glm-settings"),"Do not touch Settings palette");
+  for(const name of [
+    "gl-game-logo","gl-status","gl-metrics","gl-metric","gl-actions",
+    "gl-hltb","gl-achievement-card",
+  ])assert.ok(ui.includes(name),"The resized region must exist: "+name);
+  // Budget each visual-height tier conservatively, including margins,
+  // buttons and padding. Keep native Steam bottom help cues unobscured.
+  const cases=[
+    {viewport:850,chrome:20+30+52+56,strip:306,detail:341},
+    {viewport:800,chrome:20+30+52+56,strip:288,detail:322},
+    {viewport:771,chrome:20+30+52+56,strip:288,detail:322},
+    {viewport:730,chrome:15+27+45+49,strip:239,detail:294},
+    {viewport:681,chrome:15+27+45+49,strip:239,detail:294},
+    {viewport:610,chrome:15+27+45+49,strip:200,detail:242},
+  ];
+  for(const c of cases)
+    assert.ok(c.viewport-c.chrome-c.strip>=c.detail,
+      "Detail panel could clip at "+c.viewport+"px viewport");
+});
