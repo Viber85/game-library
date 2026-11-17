@@ -85,6 +85,42 @@ test("All Settings categories use a flat canvas with no overlay-wide paint",()=>
   assert.ok(watcher.includes("lastFastScan=now;")&&watcher.includes("sample();"));
 });
 
+test("Option A uses transparent Settings strips with readable separators and focused fill",()=>{
+  const marker="/* v0.4.10 — transparent Settings rows (Variant A).";
+  const start=settings.lastIndexOf(marker);
+  assert.ok(start>settings.indexOf("/* v0.4.9"),"Variant A must override old blue rows last");
+  const variant=settings.slice(start);
+  const clean=stripCssComments(variant);
+  assert.ok(clean.includes("html[data-glm-settings-root] [data-glm-settings-row]"));
+  assert.ok(clean.includes("html[data-glm-settings-root] [data-glm-settings-main] [data-glm-settings-row]"),
+    "Higher-specificity fallback beats older painted content wrappers");
+  assert.ok(clean.includes(":where(:not(button)"),"Avoid focus losing to :not() specificity");
+  assert.ok(clean.includes("background:transparent !important"));
+  assert.ok(clean.includes("background-color:transparent !important"));
+  assert.ok(clean.includes("background-image:none !important"));
+  assert.ok(clean.includes("box-shadow:inset 0 -1px 0 rgba(118,181,227,.18) !important"),
+    "Subtle inset separator uses no layout-changing border");
+  assert.match(clean,/\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within/);
+  assert.ok(clean.includes("background:#163a5e !important"),
+    "Focused row retains visible blue Midnight highlight");
+  assert.ok(clean.includes("box-shadow:inset 3px 0 0 #4ac1ff !important"),
+    "Controller-focus accent is preserved");
+  assert.ok(clean.includes("background:#123452 !important"),
+    "Interactive dropdown/input/button controls keep their filled background");
+  assert.ok(clean.includes("background:#1d527d !important"),
+    "Focused controls still have a stronger filled background");
+  for(const selector of ["gamepaddialog_Field","gamepaddialog_HighlightOnFocus",
+    "networksettings_NetworkItem","networksettings_Connected",
+    "gamepadpagedsettings_SectionHeader"])
+    assert.ok(clean.includes(selector),selector);
+  for(const rule of clean.split("}")){
+    if(!rule.includes("{"))continue;
+    assert.ok(rule.split("{")[0].includes("html[data-glm-settings-root]"),
+      "All transparent overrides are scoped to a detected Settings page");
+  }
+  assert.doesNotMatch(clean,/#QuickAccess-Menu|#GamepadUI_Full_Root|\.gl-root/);
+});
+
 test("Recompiled Steam CSS is swapped without a native-color gap",()=>{
   const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
   const apply=runtime.slice(runtime.indexOf("async function applyToTab("),
