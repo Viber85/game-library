@@ -101,7 +101,15 @@ export function gamesForTab(tab: SteamTab, games: LibraryGame[]): {
   if (!tab.filters) {
     if (collectionFallback !== null)
       return {supported:true, games:games.filter(g=>collectionFallback.has(g.id))};
-    const nativeGames=defaultLibraryTabGames(tab.id,games);
+    // Prefer the exact native Steam collections over overview flags.
+    // E.g. on the MSI Claw: all-games=464, local-install=10, non-Steam=321.
+    // The old installed flag included all 321 shortcuts and overstated
+    // the Steam Installed tab as 331 titles.
+    const id=tab.id.toLowerCase();
+    const native=id==="allgames" ? {allGames:getCollectionIdSet("all-games")} :
+      id==="installed" ? {installed:getCollectionIdSet("local-install")} :
+      id==="favorites" ? {favorites:getCollectionIdSet("favorite")} : {};
+    const nativeGames=defaultLibraryTabGames(tab.id,games,native);
     return nativeGames!==null
       ? { supported:true, games:nativeGames }
       : { supported:false, games:[],
