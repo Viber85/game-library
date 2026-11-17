@@ -66,6 +66,38 @@ test("QAM focused icons match library rail without a clipped outer shadow",()=>{
   assert.ok(qam.includes(".gpfocuswithin"),"QAM focus-within is supported");
 });
 
+test("All Settings categories use a flat canvas with no overlay-wide paint",()=>{
+  const settingsCss=stripCssComments(css("settings-extras.css"));
+  assert.ok(settingsCss.includes("html[data-glm-settings-root] [data-glm-settings-surface]"),
+    "The gradient-bearing inner content layers must be flattened");
+  assert.ok(settingsCss.includes("background-image:none !important"),
+    "Settings gradient images are removed");
+  assert.ok(settingsCss.includes(
+    "html[data-glm-settings-root] :is(.BasicUI,#GamepadUI_Full_Root)[data-glm-settings-root]"),
+    "The full root is painted ONLY on verified Settings pages");
+  assert.doesNotMatch(stripCssComments(css("shared.css")),
+    /(?:#GamepadUI_Full_Root|\\.BasicUI)\\s*\\{\\s*background(?:-color)?\\s*:/);
+  const watcher=readFileSync(new URL("../src/themeProbe.ts",import.meta.url),"utf8");
+  assert.match(watcher,/data-glm-settings-surface/);
+  assert.match(watcher,/nav\\.length>=10/,"Sparse Family pages count as Settings");
+  assert.match(watcher,/const previous=Array\\.from/,"Existing themed markers are preserved");
+  assert.match(watcher,/new MutationObserver\\(\\(\\)=>\\{/);
+  assert.match(watcher,/lastFastScan=now;\\s*sample\\(\\);/);
+});
+
+test("Recompiled Steam CSS is swapped without a native-color gap",()=>{
+  const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
+  const apply=runtime.slice(runtime.indexOf("async function applyToTab("),
+    runtime.indexOf("async function syncTheme("));
+  assert.ok(apply.includes("if(!previous){"),"First install cleanup only");
+  assert.doesNotMatch(apply,/await removeKnown\\(title\\)/,
+    "Never remove a valid active sheet before inserting its replacement");
+  assert.ok(apply.indexOf("injectCssIntoTab(title,css)") <
+    apply.indexOf("removeCssFromTab(title,previous.cssId)"),
+    "Install a replacement before removing the previous CSS");
+  assert.ok(apply.includes("managedTabs.set(title,{cssId,scope,signature});"));
+});
+
 test("Settings covers both System controls and Internet network lists",()=>{
   const anchors=[
     "gamepadpagedsettings_PagedSettingsDialog_PageContent",
@@ -160,6 +192,6 @@ test("Midnight palette has high contrast for Settings and notes",()=>{
 
 test("0.4.2 forces replacement of earlier cached style revision",()=>{
   const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"48"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"49"/);
   assert.match(runtime,/CLEANUP_SCRIPT/);
 });
