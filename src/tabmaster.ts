@@ -1,4 +1,5 @@
 import { callable } from "@decky/api";
+import { defaultLibraryTabGames } from "./libraryInventory";
 import { getCollectionIdSet, getUnifideckCollectionIds, LibraryGame } from "./steam";
 
 export type TabMasterFilter = { type: string; inverted?: boolean; params?: Record<string, any> };
@@ -100,14 +101,11 @@ export function gamesForTab(tab: SteamTab, games: LibraryGame[]): {
   if (!tab.filters) {
     if (collectionFallback !== null)
       return {supported:true, games:games.filter(g=>collectionFallback.has(g.id))};
-    switch(tab.id.toLowerCase()) {
-      case "allgames": return { supported:true, games };
-      case "installed": return { supported:true, games:games.filter(g=>g.installed) };
-      case "favorites": return { supported:true, games:games.filter(g=>g.favorite) };
-      case "nonsteam": return { supported:true, games:games.filter(g=>g.nonSteam) };
-      default:
-        return { supported:false, games:[], reason:"This native Steam tab cannot be reproduced here yet." };
-    }
+    const nativeGames=defaultLibraryTabGames(tab.id,games);
+    return nativeGames!==null
+      ? { supported:true, games:nativeGames }
+      : { supported:false, games:[],
+          reason:"This native Steam tab cannot be reproduced here yet." };
   }
   const predicates = tab.filters.map(f=>matchFilter(f));
   if (predicates.some(x=>x===null)) {
