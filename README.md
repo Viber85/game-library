@@ -87,6 +87,32 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.9 — flat Settings canvases and minimal color flash:** The MSI Claw
+screenshots of Display, Downloads and Family showed a bright gradient
+behind the otherwise flat Midnight rows. The verified native Settings root,
+the outer scroll/content pane and its large painted child surfaces now
+share a single solid `#0a1b30` canvas, with field strips retaining
+`#0f2842`. The fallback recognizes categories with few or no full-width
+rows (such as Family) from the full Settings left navigation. A single
+large action button is not recolored as a field row.
+
+The native CEF watcher no longer removes and re-adds *every* existing
+`data-glm-*` marker on each scan. It keeps markers on stable elements and
+cleans up only stale ones when leaving Settings. Steam React DOM mutations
+now cause a synchronous scan at the MutationObserver microtask checkpoint,
+normally before the first browser paint of new Settings content, with
+`requestAnimationFrame` kept as a safety pass for staged layouts.
+When Steam lazy-loads new CSS modules, the runtime installs and verifies
+the new stylesheet **before** removing its previous working copy, avoiding
+a flash of the native Steam palette during reinjection.
+
+All paint overrides are limited to a detected Settings layout, keeping
+the established volume/achievement transparent overlay fix intact.
+Regressions cover sparse pages, stable styling, before-paint updates,
+native CSS hot-swaps and non-Settings cleanup. A completely zero-frame
+transition cannot be promised for every future SteamOS CEF build; the
+actual visual result still requires testing on the MSI Claw.
+
 **v0.4.8 — clear gamepad focus and larger carousel:** Based on the
 MSI Claw screenshot where `Install` looked almost identical while
 focused and on the QAM screenshot showing cropped selected-tab borders.
