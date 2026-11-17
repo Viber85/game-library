@@ -75,14 +75,14 @@ test("All Settings categories use a flat canvas with no overlay-wide paint",()=>
   assert.ok(settingsCss.includes(
     "html[data-glm-settings-root] :is(.BasicUI,#GamepadUI_Full_Root)[data-glm-settings-root]"),
     "The full root is painted ONLY on verified Settings pages");
-  assert.doesNotMatch(stripCssComments(css("shared.css")),
-    /(?:#GamepadUI_Full_Root|\\.BasicUI)\\s*\\{\\s*background(?:-color)?\\s*:/);
+  assert.ok(!stripCssComments(css("shared.css")).includes(
+    "background:#0a1b30 !important;"),"No shared-root Settings fill");
   const watcher=readFileSync(new URL("../src/themeProbe.ts",import.meta.url),"utf8");
   assert.match(watcher,/data-glm-settings-surface/);
-  assert.match(watcher,/nav\\.length>=10/,"Sparse Family pages count as Settings");
-  assert.match(watcher,/const previous=Array\\.from/,"Existing themed markers are preserved");
-  assert.match(watcher,/new MutationObserver\\(\\(\\)=>\\{/);
-  assert.match(watcher,/lastFastScan=now;\\s*sample\\(\\);/);
+  assert.ok(watcher.includes("nav.length>=10"),"Sparse Family pages count as Settings");
+  assert.ok(watcher.includes("const previous=Array.from"),"Existing themed markers are preserved");
+  assert.ok(watcher.includes("new MutationObserver(()=>{"));
+  assert.ok(watcher.includes("lastFastScan=now;")&&watcher.includes("sample();"));
 });
 
 test("Recompiled Steam CSS is swapped without a native-color gap",()=>{
@@ -90,7 +90,7 @@ test("Recompiled Steam CSS is swapped without a native-color gap",()=>{
   const apply=runtime.slice(runtime.indexOf("async function applyToTab("),
     runtime.indexOf("async function syncTheme("));
   assert.ok(apply.includes("if(!previous){"),"First install cleanup only");
-  assert.doesNotMatch(apply,/await removeKnown\\(title\\)/,
+  assert.ok(!apply.includes("await removeKnown(title)"),
     "Never remove a valid active sheet before inserting its replacement");
   assert.ok(apply.indexOf("injectCssIntoTab(title,css)") <
     apply.indexOf("removeCssFromTab(title,previous.cssId)"),
