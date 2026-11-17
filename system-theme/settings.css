@@ -52,26 +52,26 @@
   background:var(--glm-border) !important;
 }
 
-/* The bright cobalt rows seen in SteamOS System/Language/Updates.
- * Field backgrounds are applied even without focus, not only on hover. */
+/* Flat Settings design: no painted background on inactive field rows.
+ * The stronger focus selector below still highlights active controls. */
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddialog_Field_"],
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddialog_Field "],
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   .gamepaddialog_Field {
-  background:#0f2842 !important;
+  background:transparent !important;
   background-image:none !important;
   color:var(--glm-text) !important;
   border-bottom:1px solid rgba(103,171,221,.2) !important;
   border-radius:7px !important;
-}
+
 /* Some Steam releases use a field subclass without the underscore suffix. */
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddialog_HighlightOnFocus"] {
-  background:#0f2842 !important;
+  background:transparent !important;
   background-image:none !important;
-}
+
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddialog_Field"]:is(.gpfocus,.gpfocuswithin,:focus-within,:hover) {
   background:#163a5e !important;
@@ -85,13 +85,13 @@
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   .DialogControlsSectionHeader {
   color:var(--glm-text) !important;
-}
+
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddialog_FieldDescription"],
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   .DialogBodyText {
   color:var(--glm-muted) !important;
-}
+
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
   [class*="gamepaddropdown_DropDownControlButton"],
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
