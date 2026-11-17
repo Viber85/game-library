@@ -120,6 +120,43 @@ def _tabmaster_path():
     return path if path.is_file() else None
 
 
+TAB_SOURCES = ("auto", "steam", "tabmaster")
+
+
+def _tab_source():
+    """Persisted preference; Auto is the default for existing installations."""
+    value = _read_preferences().get("tab_source", "auto")
+    return value if value in TAB_SOURCES else "auto"
+
+
+def _tabmaster_enabled():
+    """Decky's loader.json is authoritative for the disabled plugin list.
+
+    Merely having TabMaster/settings.json is NOT proof that the plugin runs.
+    When the Decky state is missing or malformed, fail closed rather than
+    mistakenly treating an old TabMaster configuration as active.
+    """
+    settings_dir = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR", "")
+    if not settings_dir:
+        return False, "Decky plugin status unavailable"
+    root = pathlib.Path(settings_dir).resolve().parent
+    loader = root / "loader.json"
+    try:
+        if not loader.is_file() or loader.stat().st_size > 2_000_000:
+            return False, "Decky loader state unavailable"
+        saved = json.loads(loader.read_text(encoding="utf-8"))
+        if not isinstance(saved, dict):
+            return False, "Invalid Decky loader state"
+        disabled = saved.get("disabled_plugins", [])
+        if not isinstance(disabled, list) or not all(isinstance(name, str) for name in disabled):
+            return False, "Invalid Decky disabled plugin list"
+        if "TabMaster" in disabled:
+            return False, "TabMaster disabled in Decky Loader"
+        return True, ""
+    except (OSError, ValueError, TypeError):
+        return False, "Unable to read Decky plugin state"
+
+
 class Plugin:
     _hltb_service = None
     _protondb_service = None
@@ -137,7 +174,8 @@ class Plugin:
 
     async def get_dashboard_settings(self):
         """Enabled by default on Steam Home, with a persisted opt-out in Decky."""
-        return {"default_home": _read_preferences().get("default_home", True) is True}
+        return {"default_home": _read_preferences().get("default_home", True) is True,
+                "tab_source": _tab_source()}
 
     async def set_dashboard_settings(self, default_home: bool):
         if type(default_home) is not bool:
@@ -145,6 +183,18 @@ class Plugin:
         try:
             saved = _read_preferences()
             saved["default_home"] = default_home
+            _write_preferences(saved)
+            return True
+        except OSError:
+            return False
+
+    async def set_tab_source(self, source: str):
+        """Auto follows Decky's plugin enable/disable setting; no changes to peers."""
+        if type(source) is not str or source not in TAB_SOURCES:
+            return False
+        try:
+            saved = _read_preferences()
+            saved["tab_source"] = source
             _write_preferences(saved)
             return True
         except OSError:
@@ -236,9 +286,15 @@ class Plugin:
         Custom filters are returned to the frontend only for supported local evaluation;
         unsupported filters are not approximated as full-game collections.
         """
+        mode = _tab_source()
+        if mode == "steam":
+            return {"available": False, "reason": "Steam tabs selected", "tabs": [], "mode": mode}
+        enabled, reason = _tabmaster_enabled()
+        if not enabled:
+            return {"available": False, "reason": reason, "tabs": [], "mode": mode}
         path = _tabmaster_path()
         if not path:
-            return {"available": False, "reason": "TabMaster settings not found", "tabs": []}
+            return {"available": False, "reason": "TabMaster settings not found", "tabs": [], "mode": mode}
         if not isinstance(user_id, str) or not re.fullmatch(r"[0-9]{1,20}", user_id):
             return {"available": False, "reason": "Active Steam account not detected", "tabs": []}
         try:
