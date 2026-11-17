@@ -435,7 +435,20 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   let observing=false;
   if(typeof MutationObserver==='function' && document.documentElement) {
     try {
-      state.observer=new MutationObserver(scheduleScan);
+      // MutationObserver callbacks run at the microtask checkpoint, normally
+      // BEFORE the browser paints Steam's newly inserted Settings content.
+      // Apply palette markers immediately, then re-check on the next frame
+      // only for layouts Steam finishes asynchronously.
+      let lastFastScan=0;
+      state.observer=new MutationObserver(()=>{
+        if(window[key]!==state)return;
+        const now=Date.now();
+        if(now-lastFastScan>=32){
+          lastFastScan=now;
+          sample();
+        }
+        scheduleScan();
+      });
       state.observer.observe(document.documentElement,{
         childList:true,subtree:true
       });
