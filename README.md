@@ -87,6 +87,31 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.7 — full-height rail and independent status pill:** After the
+on-device screenshot of v0.4.6, the dashboard's entire left navigation
+now stretches from the physical screen's top edge instead of inheriting
+the root padding reserved for main content. Only the main dashboard
+content has top spacing; full-screen hero backgrounds continue uninterrupted.
+
+The selected TabMaster tab title (for example `Installed`) remains a
+large standalone heading on the left. The floating frosted-glass *pill*
+now encloses **only** the real status icons and controls on the top
+right—Search, Notifications, Wi-Fi, Bluetooth, battery, clock and the
+Steam avatar. It is sized to its contents, not a full-width header.
+Avatar lookup now checks the active account and Steam's own friend/persona
+stores in addition to the previously supported account hash; an invalid
+avatar URL falls back to the generic icon safely.
+
+Carousel posters are wider and taller, with responsive limits on smaller
+screens so the selected game's details retain room. Removed the unnecessary
+`N games · L1/R1 Tabs · ↑ Tabs · ← Navigation` line below
+the carousel; controller functionality is unchanged. All modifications
+remain scoped to the plugin dashboard, preserving Midnight styling and
+the existing volume/achievement notification transparency fix. Build and
+regression tests cover the isolated status pill, full-height sidebar,
+larger poster sizing and updated avatar handling. Validate the spacing
+and picture on the actual MSI Claw after installation.
+
 **v0.4.6 — complete floating SteamOS-style status bar:** The header keeps the
 large active TabMaster tab name on the left and now shows Search,
 Notifications, Wi-Fi, Bluetooth, battery with actual percentage and charging
