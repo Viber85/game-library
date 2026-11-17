@@ -62,7 +62,6 @@ export const DASHBOARD_CSS = String.raw`
 .gl-game.gl-selected .gl-poster { border-color:#49baff; box-shadow:0 0 0 2px #bdeaff,0 0 18px #03a7ffbb; }
 .gl-game.gl-focused { transform:translateY(-2px); }
 .gl-game.gl-focused .gl-poster { box-shadow:0 0 0 3px #fff,0 0 22px #03a7ff; }
-.gl-pagination { flex:0 0 24px; text-align:center; font-size:12px; color:#7c9ab9; }
 .gl-feature { flex:1; min-height:190px; position:relative; overflow:hidden;
   border:1px solid #1f4d7b; border-radius:17px; margin-bottom:8px; background:#061426; }
 .gl-hero { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:70% center; opacity:.95; }
@@ -182,7 +181,6 @@ export const DASHBOARD_CSS = String.raw`
 .gl-metric {background:rgba(10,27,48,.81);border:1px solid rgba(100,165,224,.23);backdrop-filter:blur(7px);}
 .gl-button {background:linear-gradient(180deg,rgba(32,61,95,.9),rgba(10,30,53,.95));border:1px solid rgba(100,166,229,.26);}
 .gl-button.gl-primary {background:linear-gradient(180deg,#e8f8ff,#a9ddff);color:#051b2f;box-shadow:0 0 14px rgba(18,169,255,.37);}
-.gl-pagination {color:#88a9ce; }
 .gl-footer { display:none; } /* Steam supplies its own Game Mode footer. */
 @media (max-height:700px) {
   .gl-root { padding-top:43px;padding-bottom:32px; }
