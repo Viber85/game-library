@@ -330,8 +330,10 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     // width, x-position and height when their y-position is off-screen.
     // Restrict this scan to the confirmed Settings content pane; do not
     // traverse the whole Steam DOM or touch artwork, icons or form inputs.
-    const allRows=[...rows];
-    if(mainPane?.querySelectorAll && rows.length){
+    // Sparse Settings pages can contain one full-width action button.
+    // Do not mistake that button for a field strip and overwrite its color.
+    const allRows=rows.length>=2?[...rows]:[];
+    if(mainPane?.querySelectorAll && rows.length>=2){
       const nominalWidth=positions.get(rows[Math.floor(rows.length/2)])?.width||width*.6;
       const candidates=mainPane.querySelectorAll('[class]');
       const limit=Math.min(candidates.length,2400);
