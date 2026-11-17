@@ -120,8 +120,11 @@ test("v0.4.12 scales both carousel and selected-game detail safely",()=>{
   assert.ok(!layout.includes("data-glm-settings"),"Do not touch Settings palette");
   for(const name of [
     "gl-game-logo","gl-status","gl-metrics","gl-metric","gl-actions",
-    "gl-hltb","gl-achievement-card",
   ])assert.ok(ui.includes(name),"The resized region must exist: "+name);
+  assert.match(ui,/<HowLongToBeatCard key=\{"hltb-"/);
+  assert.match(ui,/<AchievementsCard key=\{"achievements-"/);
+  assert.ok(layout.includes(".gl-hltb")&&layout.includes(".gl-achievement-card"),
+    "Metrics components are enlarged via their shared CSS classes");
   // Budget each visual-height tier conservatively, including margins,
   // buttons and padding. Keep native Steam bottom help cues unobscured.
   const cases=[
