@@ -797,4 +797,122 @@ export const DASHBOARD_CSS = String.raw`
 
 }
 
+
+/* v0.4.7 — full-height navigation, separate tab heading, pill status,
+ * and larger carousel posters. Dashboard-scoped only: native Steam overlay
+ * surfaces remain transparent for volume and achievement notifications. */
+.gl-root {
+  padding:0;
+}
+.gl-root .gl-sidebar {
+  align-self:stretch;
+  height:100%;
+  min-height:0;
+}
+.gl-root .gl-main {
+  padding-top:20px;
+  padding-bottom:30px;
+}
+.gl-root .gl-scene {
+  top:0;
+  bottom:0;
+}
+/* Header itself is transparent. The title sits OUTSIDE the glass pill. */
+.gl-main > .gl-header.gl-library-topbar {
+  flex:0 0 45px;
+  height:45px;
+  min-height:45px;
+  margin:0 0 7px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.gl-main .gl-topbar-titles {
+  flex:1 1 auto;
+  min-width:0;
+}
+.gl-main .gl-topbar-current {
+  font-size:clamp(23px,2.55vw,31px);
+  font-weight:790;
+  text-shadow:0 2px 10px rgba(0,0,0,.36);
+}
+/* Only the real system icons, battery, time and avatar share the pill. */
+.gl-main .gl-topbar-status {
+  width:max-content;
+  max-width:75%;
+  flex:0 0 auto;
+  padding:3px 9px;
+  gap:8px;
+  border:1px solid rgba(155,210,254,.28);
+  border-radius:999px;
+  background:linear-gradient(110deg,rgba(16,35,61,.82),rgba(12,30,54,.72));
+  box-shadow:0 6px 20px rgba(0,8,25,.25),inset 0 1px 0 rgba(218,241,255,.12);
+  backdrop-filter:blur(14px) saturate(1.13);
+  -webkit-backdrop-filter:blur(14px) saturate(1.13);
+}
+.gl-main .gl-topbar-search,
+.gl-main .gl-topbar-avatar {
+  border-radius:999px;
+}
+.gl-main .gl-topbar-avatar img {
+  border-radius:999px;
+}
+.gl-main .gl-topbar-search {
+  border-color:transparent;
+  background:rgba(42,80,121,.39);
+}
+/* Consume the space formerly used by carousel count/navigation hints. */
+.gl-main > .gl-strip {
+  height:268px;
+  padding:10px 4px 14px;
+  gap:13px;
+}
+.gl-main .gl-strip .gl-game,
+.gl-main .gl-strip .gl-view-more {
+  width:clamp(136px,11.6vw,182px);
+  flex:0 0 clamp(136px,11.6vw,182px);
+  height:238px;
+}
+.gl-main .gl-strip .gl-poster-name {
+  font-size:clamp(13px,1.15vw,16px);
+}
+@media (max-height:730px) {
+  .gl-root {padding:0;}
+  .gl-root .gl-main {padding-top:15px;padding-bottom:27px;}
+  .gl-root .gl-scene {top:0;bottom:0;}
+  .gl-main > .gl-header.gl-library-topbar {
+    flex-basis:40px;
+    height:40px;
+    min-height:40px;
+    margin-bottom:5px;
+  }
+  .gl-main .gl-topbar-current {font-size:clamp(21px,2.5vw,26px);}
+  .gl-main .gl-topbar-status {padding:2px 7px;}
+  .gl-main > .gl-strip {height:219px;padding:8px 4px 12px;}
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {height:195px;}
+}
+@media (max-height:650px) {
+  .gl-main > .gl-strip {height:197px;padding:7px 4px 10px;}
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {height:178px;}
+}
+@media (max-width:900px) {
+  .gl-main .gl-topbar-status {gap:4px;padding:2px 7px;}
+  .gl-main .gl-topbar-current {font-size:clamp(20px,2.5vw,26px);}
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {
+    width:clamp(128px,12.5vw,168px);
+    flex-basis:clamp(128px,12.5vw,168px);
+  }
+}
+
 `;
