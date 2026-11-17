@@ -1,5 +1,6 @@
 import { Navigation } from "@decky/ui";
 import { canonicalSteamAppId, isNonSteamAppId, requestSteamLaunch } from "./launchGame";
+import { nativeAppId, nativeBooleanFlag, nativeCollectionRows, nativeLibraryRows } from "./libraryInventory";
 
 export interface LibraryGame {
   id: number;
@@ -25,12 +26,6 @@ type SteamGlobals = Window & {
 };
 const globals = () => window as SteamGlobals;
 const obj = (v: unknown): AnyObject | null => v && typeof v === "object" ? v as AnyObject : null;
-const asArray = (v: any): any[] => {
-  if (Array.isArray(v)) return v;
-  if (v instanceof Map || v instanceof Set) return Array.from(v.values());
-  if (v && typeof v === "object") return Object.values(v);
-  return [];
-};
 const firstString = (...vs: unknown[]): string => vs.find(x => typeof x === "string" && x.length > 0) as string || "";
 const finite = (v: unknown) => typeof v === "number" && Number.isFinite(v) ? v : 0;
 /** Steam caches art on steamloopback.host and returns root-relative URLs. */
@@ -50,50 +45,23 @@ const pathFromAsset = (value:unknown) => artList(value)[0];
 
 function collectionRows(id: string): any[] {
   try {
-    const c = globals().collectionStore?.GetCollection?.(id);
-    return asArray(c?.allApps ?? c?.visibleApps ?? c?.apps);
+    return nativeCollectionRows(globals().collectionStore?.GetCollection?.(id));
   } catch {
     return [];
   }
 }
 
 function allRows(): any[] {
-  // Native Steam/TabMaster use collectionStore; the old adapter only read
-  // appStore.m_rgApps and returned an empty array on current SteamOS versions.
-  const ids = ["type-games", "type-nonsteam", "desk-desktop-apps", "favorite",
-    "local-install", "AllGames", "all", "all-games"];
-  const rows = ids.flatMap(collectionRows);
-  // Unifideck registers shortcuts in its user-created Steam Collections.
-  // They may not yet be included in the first hydrated built-in collection.
-  try {
-    const collections = globals().collectionStore?.userCollections;
-    if (collections?.values) {
-      for (const collection of collections.values()) {
-        if (String(collection?.displayName || "").startsWith("[Unifideck] ")) {
-          rows.push(...asArray(collection.allApps ?? collection.apps));
-        }
-      }
-    }
-  } catch (error) {
-    console.warn("[game-library] user collection snapshot unavailable", error);
-  }
-  if (rows.length) return rows;
-  const store = globals().appStore;
-  try {
-    return asArray(store?.GetAllApps?.() ?? store?.m_rgApps ??
-      store?.m_rgAllApps ?? store?.m_mapApps ?? store?.m_mapAppOverview);
-  } catch (e) {
-    console.warn("[game-library] overview fallback failed", e);
-    return [];
-  }
+  // Read allApps, visibleApps AND apps from native collections and merge them
+  // with the global appStore. Previously any non-empty collection prevented
+  // discovery of the rest of the library (especially uninstalled games).
+  return nativeLibraryRows(globals().collectionStore, globals().appStore);
 }
 
 function gameFromRow(row: unknown): LibraryGame | null {
   const appStore = globals().appStore as AnyObject | undefined;
   const candidate = obj(row);
-  const rawId = typeof row === "number" ? row
-    : candidate?.appid ?? candidate?.app_id ?? candidate?.id;
-  const id = canonicalSteamAppId(Number(rawId));
+  const id = nativeAppId(row);
   if (id === null) return null;
   const overview = obj(appStore?.GetAppOverviewByAppID?.(id)) || candidate;
   if (!overview) return null;
@@ -106,9 +74,12 @@ function gameFromRow(row: unknown): LibraryGame | null {
   const customHero = pathFromAsset(appStore?.GetCustomHeroImageURLs?.(overview));
   return {
     id, title,
-    installed: !!(overview.installed ?? overview.BIsInstalled ??
-      overview.bIsInstalled ?? overview.is_installed),
-    favorite: !!(overview.is_favorite ?? overview.favorite),
+    installed: nativeBooleanFlag(overview,
+      ["installed","bIsInstalled","BIsInstalled","is_installed"]) ??
+      nativeBooleanFlag(candidate,["installed","bIsInstalled","BIsInstalled","is_installed"]) ?? false,
+    favorite: nativeBooleanFlag(overview,
+      ["is_favorite","favorite","bIsFavorite","BIsFavorite"]) ??
+      nativeBooleanFlag(candidate,["is_favorite","favorite","bIsFavorite","BIsFavorite"]) ?? false,
     nonSteam,
     lastPlayed: finite(overview.rt_last_time_played ?? overview.rt_last_time_locally_played),
     playtimeMinutes: finite(overview.minutes_playtime_forever),
@@ -154,8 +125,7 @@ export function getCollectionIdSet(collectionId: string, collectionName?: string
   const get=(id:string) => {
     try { return cs.GetCollection?.(id) ?? null; } catch { return null; }
   };
-  const hasEntries=(collection:AnyObject) =>
-    asArray(collection.allApps ?? collection.visibleApps ?? collection.apps);
+  const hasEntries=(collection:AnyObject) => nativeCollectionRows(collection);
   const validName=typeof collectionName === "string" && collectionName.trim().length>0 &&
     collectionName.length<=160 ? collectionName.trim() : "";
   let collection:AnyObject|null = get(collectionId);
