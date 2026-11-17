@@ -296,6 +296,63 @@ test("visible Settings rows are themed by point sampling even beyond 1450 DOM no
 });
 
 
+test("sparse Family-like Settings canvas is marked without recoloring its action button",()=>{
+  const make=(x,y,w,h)=>{
+    const attrs=new Set();
+    return {
+      tagName:"DIV",className:"_steam_hash",parentElement:null,children:[],
+      setAttribute:(name)=>attrs.add(name),
+      removeAttribute:(name)=>attrs.delete(name),
+      hasAttribute:(name)=>attrs.has(name),
+      getBoundingClientRect:()=>({
+        left:x,top:y,width:w,height:h,right:x+w,bottom:y+h,
+      }),
+    };
+  };
+  let mode="settings";
+  const root=make(0,0,1000,800);root.className="BasicUI";
+  const html=make(0,0,1000,800);
+  const sidebar=make(40,40,210,720),main=make(250,40,730,720);
+  const nav=Array.from({length:11},(_,i)=>make(48,80+i*54,196,36));
+  const action=make(270,170,460,36);
+  for(const row of nav)row.parentElement=sidebar;
+  action.parentElement=main;
+  sidebar.parentElement=root;main.parentElement=root;
+  root.querySelectorAll=(key)=>key==="[class]" && mode==="settings"?
+    [...nav,action]:[];
+  main.querySelectorAll=()=>[action];
+  const nodes=[root,html,sidebar,main,...nav,action];
+  const doc={
+    documentElement:html,
+    querySelector:(key)=>key===".BasicUI"?root:null,
+    querySelectorAll:(key)=>key.startsWith("[data-glm-")?
+      nodes.filter(node=>key.split(",").some(part=>
+        node.hasAttribute(part.trim().slice(1,-1)))):[],
+    elementsFromPoint:(x,y)=>{
+      if(mode!=="settings")return [];
+      if(x>500)return [main];
+      return nav.filter(node=>{
+        const b=node.getBoundingClientRect();
+        return x>=b.left&&x<b.right&&y>=b.top&&y<b.bottom;
+      });
+    },
+  };
+  const run=()=>vm.runInNewContext(STEAM_SETTINGS_MARK_SCRIPT,{
+    document:doc,window:{innerWidth:1000,innerHeight:800},Math,Map,Set,Array,
+    getComputedStyle:()=>({backgroundColor:"rgba(0,0,0,0)",backgroundImage:"none"}),
+  });
+  assert.equal(run(),true,"Sparse Settings page is detected from real navigation");
+  assert.equal(html.hasAttribute("data-glm-settings-root"),true);
+  assert.equal(main.hasAttribute("data-glm-settings-main"),true);
+  assert.equal(action.hasAttribute("data-glm-settings-row"),false,
+    "Single action remains white/interactive rather than a dark field");
+  assert.equal(run(),true,"Stable DOM keeps the palette before scrolling");
+  mode="game";
+  assert.equal(run(),false,"Unrelated pages must not keep Settings styling");
+  assert.equal(html.hasAttribute("data-glm-settings-root"),false);
+  assert.equal(main.hasAttribute("data-glm-settings-main"),false);
+});
+
 test("fast Midnight watcher responds to Steam DOM changes before slow polling",()=>{
   let observed=null,notify=null,frame=null,frameCalls=0,scans=0;
   let disconnected=0,cancelled=0,stopped=0,fallbackMs=0;
@@ -341,9 +398,11 @@ test("fast Midnight watcher responds to Steam DOM changes before slow polling",(
   assert.equal(typeof onScroll,"function","Nested scrolling must trigger the watcher");
   onScroll(); // The same frame is shared by DOM updates and scroll movement.
   assert.equal(frameCalls,1,"DOM and scroll changes coalesce into one frame");
-  assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,1);
+  assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,2,
+    "MutationObserver recolors synchronously, before the next paint");
   frame();
-  assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,2);
+  assert.equal(parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks,3,
+    "Animation frame is only a fallback for staggered Steam layouts");
   notify(); // An update queued while Midnight is being disabled
   assert.equal(run(THEME_AUDIT_REMOVE_SCRIPT),true);
   assert.equal(disconnected,1);
