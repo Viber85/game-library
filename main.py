@@ -296,7 +296,7 @@ class Plugin:
         if not path:
             return {"available": False, "reason": "TabMaster settings not found", "tabs": [], "mode": mode}
         if not isinstance(user_id, str) or not re.fullmatch(r"[0-9]{1,20}", user_id):
-            return {"available": False, "reason": "Active Steam account not detected", "tabs": []}
+            return {"available": False, "reason": "Active Steam account not detected", "tabs": [], "mode": mode}
         try:
             if path.stat().st_size > 2_000_000:
                 raise ValueError("TabMaster settings too large")
@@ -305,7 +305,7 @@ class Plugin:
             account_id = str(int(user_id) & 0xffffffff)
             user = users.get(account_id) if isinstance(users, dict) else None
             if not isinstance(user, dict):
-                return {"available": False, "reason": "TabMaster profile not found for this Steam account", "tabs": []}
+                return {"available": False, "reason": "TabMaster profile not found for this Steam account", "tabs": [], "mode": mode}
             defs = user.get("tabs", {})
             if not isinstance(defs, dict):
                 raise ValueError("invalid tab definitions")
@@ -333,9 +333,9 @@ class Plugin:
                     "filtersMode": val.get("filtersMode", "and") if val.get("filtersMode") in ("and", "or") else "and",
                 })
             output.sort(key=lambda entry: (entry["position"], entry["title"]))
-            return {"available": True, "tabs": output[:50], "reason": ""}
+            return {"available": bool(output), "tabs": output[:50], "reason": "" if output else "TabMaster has no visible tabs", "mode": mode}
         except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
-            return {"available": False, "reason": "Unable to read TabMaster settings: " + type(exc).__name__, "tabs": []}
+            return {"available": False, "reason": "Unable to read TabMaster settings: " + type(exc).__name__, "tabs": [], "mode": mode}
 
     async def validate_github_releases(self, release_json: str):
         try:
