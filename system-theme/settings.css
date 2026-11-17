@@ -63,7 +63,7 @@
   background:transparent !important;
   background-image:none !important;
   color:var(--glm-text) !important;
-  border-bottom:1px solid rgba(103,171,221,.2) !important;
+  border-bottom:1px solid transparent !important;
   border-radius:7px !important;
 
 /* Some Steam releases use a field subclass without the underscore suffix. */
@@ -73,7 +73,7 @@
   background-image:none !important;
 
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
-  [class*="gamepaddialog_Field"]:is(.gpfocus,.gpfocuswithin,:focus-within,:hover) {
+  [class*="gamepaddialog_Field"]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible) {
   background:#163a5e !important;
   background-image:none !important;
   box-shadow:inset 2px 0 0 var(--glm-accent) !important;
