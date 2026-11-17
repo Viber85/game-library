@@ -113,7 +113,11 @@ export function LibraryDiagnostics(){
         <h2>What Game Library actually sees</h2>
         <div className="ld-stat"><span>Candidate IDs</span><strong>{report.candidateRows}</strong></div>
         <div className="ld-stat"><span>Displayed games</span><strong>{report.displayedGames}</strong></div>
-        <div className="ld-stat"><span>Installed</span><strong>{report.installed}</strong></div>
+        <div className="ld-stat"><span>Steam All Games tab</span>
+          <strong>{report.collectionSources.find(s=>s.name==="all-games")?.merged ?? "—"}</strong></div>
+        <div className="ld-stat"><span>Steam Installed tab</span>
+          <strong>{report.collectionSources.find(s=>s.name==="local-install")?.merged ?? "—"}</strong></div>
+        <div className="ld-stat"><span>Installed flags (including shortcuts)</span><strong>{report.installed}</strong></div>
         <div className="ld-stat"><span>Favorites</span><strong>{report.favorites}</strong></div>
         <div className="ld-stat"><span>Non-Steam</span><strong>{report.nonSteam}</strong></div>
         <div className="ld-stat"><span>Steam collectionStore</span><strong>{report.collectionsAvailable?"Yes":"No"}</strong></div>
