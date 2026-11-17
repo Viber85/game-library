@@ -38,3 +38,12 @@ test("Dashboard switches sources during use without stale selected tab",()=>{
   assert.match(tabs,/id:"AllGames", title:"All Games"/);
   assert.match(tabs,/id:"Installed", title:"Installed"/);
 });
+
+test("fallback Steam tab filters are wired to actual native Steam collections",()=>{
+  assert.match(tabs,/id==="allgames" \? \{allGames:getCollectionIdSet\("all-games"\)\}/);
+  assert.match(tabs,/id==="installed" \? \{installed:getCollectionIdSet\("local-install"\)\}/);
+  assert.match(tabs,/id==="favorites" \? \{favorites:getCollectionIdSet\("favorite"\)\}/);
+  assert.match(tabs,/defaultLibraryTabGames\(tab\.id,games,native\)/);
+  assert.match(tabs,/getUnifideckCollectionIds\(source\)/,
+    "Do not regress Epic and GOG custom TabMaster collection integration");
+});
