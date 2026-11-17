@@ -17,8 +17,7 @@ button.DialogButton:enabled:is(.gpfocus,:focus-visible),
 button.gamepaddialog_Button_1kn70:enabled:is(.gpfocus,:focus-visible) {
   box-shadow:inset 0 0 0 2px #c9f1ff,0 0 13px rgba(32,183,255,.5) !important;
 }
-.gamepaddialog_Field_S-_La:is(.gpfocus,.gpfocuswithin),
-.gamepaddialog_Field_S-_La:hover {
+.gamepaddialog_Field_S-_La:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   background:var(--glm-panel-hover) !important;
   border-radius:8px !important;
 }
