@@ -87,6 +87,25 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.14 — automatic tabs without a settings selector:** Tab selection
+is now permanently automatic instead of a selectable Auto/Steam/TabMaster
+preference. Removed the Library tabs dropdown from the Decky QAM panel,
+deleted the manual setter endpoint and frontend state, and removed the
+`tab_source` field from the dashboard settings API. Any `tab_source`
+value left by v0.4.13 in the saved settings file is ignored; no user
+migration or reset is required.
+
+Game Library continues checking Decky Loader's `disabled_plugins` state
+every six seconds. When TabMaster is enabled, its saved tab definitions
+are shown; when it is disabled or unavailable, the dashboard uses the
+built-in All Games / Installed / Favorites / Non-Steam categories.
+Re-enabling TabMaster restores its tabs automatically without a restart.
+TabMaster and UnifiedDeck settings are never modified. Existing Home and
+Midnight theme settings, focus/navigation, game artwork and notification
+fixes are unchanged. Automated tests verify the removal of the QAM
+selector, legacy preference immunity and enable/disable fallback. On-device
+verification still recommended.
+
 **v0.4.13 — automatic library tab sources:** The default tab source is now
 **Auto**. Game Library reads Decky Loader's actual
 `settings/loader.json` `disabled_plugins` list before importing
