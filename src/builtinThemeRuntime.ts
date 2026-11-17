@@ -57,7 +57,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "48";
+const STYLE_REVISION = "49";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -201,11 +201,15 @@ async function applyToTab(
     if(scope==="main")await ensureThemeAudit(title);
     return;
   }
-  // Remove previously injected CSS (including the incomplete older release)
-  // and replace it with the current selector and style revision.
-  await removeKnown(title);
-  try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
-  catch{/* Steam may have rebuilt the tab while we were checking. */}
+  // Never uninstall a WORKING stylesheet before its replacement is
+  // injected. Removing first caused a native-color flash whenever a Steam
+  // Settings category lazy-loaded another CSS module. Keep the old sheet
+  // active until the new sheet has been accepted and verified.
+  if(!previous){
+    // First installation / hot-reload can have orphaned prior-version CSS.
+    try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
+    catch{/* Steam may have rebuilt the tab while we were checking. */}
+  }
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
   try{
     // API typings return string, but the Decky backend may return a Promise.
@@ -226,6 +230,12 @@ async function applyToTab(
       return;
     }
     managedTabs.set(title,{cssId,scope,signature});
+    // Now that the new rules are already active, remove the old copy.
+    // A brief CSS overlap is preferable to even one unthemed frame.
+    if(previous && previous.cssId!==cssId){
+      try{await bounded(removeCssFromTab(title,previous.cssId) as unknown as Promise<void>|void);}
+      catch{/* Previous Steam document or CSS node may no longer exist. */}
+    }
     if(scope==="main")await ensureThemeAudit(title);
   }catch(e){
     // Keep the theme enabled and retry when Steam opens the menu again.
