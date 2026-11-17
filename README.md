@@ -87,6 +87,32 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.8 — clear gamepad focus and larger carousel:** Based on the
+MSI Claw screenshot where `Install` looked almost identical while
+focused and on the QAM screenshot showing cropped selected-tab borders.
+The dashboard's `Install`, `Play`, and `Game Details` buttons now
+display a strong, high-contrast 3px white focus ring plus 6px cyan
+halo and a slight 2px lift. The bright primary button has a quieter
+default glow to improve the difference between idle and focused.
+Keyboard/gamepad focus uses the existing Decky `gl-focused` class and
+`:focus-visible` without changing any focus/navigation logic.
+The reduced-motion setting disables the lift animation.
+
+Native Steam QAM tabs now mirror the Game Library rail with a rounded
+12px blue focus surface and **inset** cyan focus border. This fixes
+the visibly cropped outer shadow while leaving QAM icons, layout and
+controller behavior untouched. QAM stays scoped to actual tabs; the
+global Steam UI root remains transparent to preserve the previously
+fixed volume/achievement black flash.
+
+The main carousel's posters are approximately 6–7% larger in height
+and slightly wider (standard height 238px → 254px, reduced-height
+layouts 195px → 207px, compact 178px → 188px). The full-library
+grid and selected-game detail panel remain unchanged. Regression tests
+cover focused actions, responsive poster sizes, and QAM focus ring
+scope. As usual, the final visual acceptance must be confirmed
+on the handheld.
+
 **v0.4.7 — full-height rail and independent status pill:** After the
 on-device screenshot of v0.4.6, the dashboard's entire left navigation
 now stretches from the physical screen's top edge instead of inheriting
