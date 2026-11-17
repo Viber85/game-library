@@ -117,8 +117,11 @@ export function formatLibraryDiagnostics(r:LibraryDiagnostic):string{
       " | GetAppOverview: "+yes(r.getOverviewAvailable),
     "Candidate game IDs: "+r.candidateRows,
     "Displayed games: "+r.displayedGames+
-      " | Installed: "+r.installed+" | Favorites: "+r.favorites+
+      " | Installed flags: "+r.installed+" | Favorites: "+r.favorites+
       " | Non-Steam: "+r.nonSteam,
+    "Native Steam All Games: "+String(r.collectionSources.find(s=>s.name==="all-games")?.merged ?? "unavailable")+
+      " | Native Steam Installed: "+String(r.collectionSources.find(s=>s.name==="local-install")?.merged ?? "unavailable"),
+    "Note: installed flags may include Non-Steam shortcuts and do NOT represent the Steam Installed tab.",
     "Title sample: "+r.sampled+" candidates; "+r.sampledRowTitles+
       " row titles; "+r.sampledOverviewTitles+" overview titles; "+
       r.sampledUnresolved+" unresolved",
