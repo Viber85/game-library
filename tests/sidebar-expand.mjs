@@ -64,3 +64,29 @@ test("floating library header shows only current tab with real search and clock"
   assert.match(ui,/headerSearchRef\.current\?\.focus\(\)/);
   assert.doesNotMatch(status,/Math\.random\(\)/);
 });
+
+
+test("Install Play and Game Details have an unmistakable controller focus",()=>{
+  const v8=css.slice(css.indexOf("/* v0.4.8 — unmistakable controller focus"));
+  assert.ok(v8.length>1000,"The v0.4.8 scoped focus styles must be present");
+  assert.match(v8,/\.gl-root \.gl-feature \.gl-actions \.gl-button:is\(\.gl-focused,\.gpfocus,:focus-visible,:focus-within\)/);
+  assert.match(v8,/box-shadow:0 0 0 3px #fff,0 0 0 6px #189fff/);
+  assert.match(v8,/transform:translateY\(-2px\)/);
+  assert.match(v8,/\.gl-button\.gl-primary:not\(\.gl-focused\):not\(:focus-visible\)/);
+  assert.match(v8,/\.gl-button:not\(\.gl-primary\):is\(\.gl-focused,\.gpfocus,:focus-visible,:focus-within\)/);
+  assert.match(ui,/<Focusable className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing/);
+  assert.match(ui,/<Focusable className="gl-button" focusClassName="gl-focused" noFocusRing/);
+  assert.match(v8,/prefers-reduced-motion:reduce/);
+});
+
+test("main carousel poster expansion remains responsive and grid is untouched",()=>{
+  const v8=css.slice(css.indexOf("/* v0.4.8 — unmistakable controller focus"));
+  assert.match(v8,/\.gl-main > \.gl-strip\s*\{\s*height:285px/);
+  assert.match(v8,/height:254px/);
+  assert.match(v8,/max-height:730px/);
+  assert.match(v8,/height:207px/);
+  assert.match(v8,/max-height:650px/);
+  assert.match(v8,/height:188px/);
+  assert.match(v8,/max-width:900px/);
+  assert.doesNotMatch(v8,/\.gl-full-grid/);
+});
