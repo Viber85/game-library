@@ -149,8 +149,8 @@ export function getCollectionIdSet(collectionId: string, collectionName?: string
   }
   if(!collection)return null;
   return new Set(hasEntries(collection)
-    .map(x=>Number(typeof x==="number"?x:x?.appid))
-    .filter(x=>Number.isSafeInteger(x)&&x>0));
+    .map(nativeAppId)
+    .filter((id):id is number=>id!==null));
 }
 
 /** Map explicitly stored Epic/GOG TabMaster collections through Unifideck's
