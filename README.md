@@ -87,6 +87,36 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.11 — remove idle Settings row backgrounds at the source:** The
+v0.4.10 MSI Claw screenshot of Audio proved that broad cobalt Settings
+strips were still being painted. The root cause was conflicting older,
+higher-specificity native `gamepaddialog_Field`, list and
+`#GamepadUI_Full_Root[data-glm-settings-root]` rules that explicitly
+filled idle rows even after the later transparent override. Those original
+rules now set **transparent** backgrounds directly (including network
+and minified-class markers), instead of attempting another low-priority
+CSS overlay. The old 1px fake separator/shadow was also removed entirely,
+as requested. Only genuinely focused rows retain the blue highlight;
+unfocused mouse hover does not recolor a full row.
+
+Valve can paint a row in a nested 100%-width child or grandchild layer:
+the native CEF marker scan now walks a bounded three-level row subtree
+and marks broad painted wrappers, including full-width children the prior
+98% width cutoff excluded. It explicitly skips buttons, dropdowns,
+sliders, toggle tracks, input controls and icons. A Settings-scoped
+pseudo-element override also clears native `::before`/`::after` row
+background paints. The solid Midnight canvas remains beneath the now
+transparent rows; interactive controls keep their own filled backgrounds
+and cyan focus. The Steam volume/achievement root transparency fix,
+QAM appearance and quick stylesheet updates remain unchanged.
+
+Prior to release, automated GitHub CI passed with a CSS rule audit that
+rejects opaque inactive-row declarations and simulated DOM tests for
+nested full-width paint layers and preserved dropdown controls. These
+tests do not provide a live screenshot from the user's handheld, so final
+visual acceptance still requires an on-device check of Audio, Downloads
+and Friends & Chat.
+
 **v0.4.10 — transparent Settings rows (Variant A):** In response to
 the MSI Claw screenshots showing that flat blue Settings rows still stood
 out against the Midnight background, inactive rows and section headings
