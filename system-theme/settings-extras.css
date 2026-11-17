@@ -88,10 +88,10 @@
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
  [class*="networksettings_NetworkListItem"],[class*="networksettings_NetworkEntry"],
- [class*="wifisettings_NetworkItem"],[class*="connectionsettings_Network"]):is(.gpfocus,.gpfocuswithin,:focus-visible,:hover) {
+ [class*="wifisettings_NetworkItem"],[class*="connectionsettings_Network"]):is(.gpfocus,.gpfocuswithin,:focus-visible) {
   background-color:#163a5e !important;
   box-shadow:inset 3px 0 0 var(--glm-accent) !important;
-}
+
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="networksettings_Connected"],[class*="networksettings_CurrentNetwork"],
  [class*="wifisettings_Connected"],[class*="connectionsettings_Connected"]) {
@@ -155,18 +155,18 @@
   background:transparent !important;
   background-image:none !important;
 
-.BasicUI[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible,:hover),
-#GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible,:hover) {
+.BasicUI[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible),
+#GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible) {
   background:#163a5e !important;
   background-color:#163a5e !important;
   border-color:rgba(74,193,255,.52) !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
-}
-.BasicUI[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible,:hover) [data-glm-settings-row-part],
-#GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible,:hover) [data-glm-settings-row-part] {
+
+.BasicUI[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible) [data-glm-settings-row-part],
+#GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible) [data-glm-settings-row-part] {
   background:#163a5e !important;
   background-color:#163a5e !important;
-}
+
 .BasicUI[data-glm-settings-root] [data-glm-settings-navitem],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-navitem] {
   background-color:transparent !important;
@@ -209,15 +209,15 @@ html[data-glm-settings-root] [data-glm-settings-row-part] {
   background:transparent !important;
   background-image:none !important;
 
-html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) {
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   background:#163a5e !important;
   background-color:#163a5e !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
-}
-html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) [data-glm-settings-row-part] {
+
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) [data-glm-settings-row-part] {
   background:#163a5e !important;
   background-color:#163a5e !important;
-}
+
 html[data-glm-settings-root] [data-glm-settings-navitem] {
   background:transparent !important;
   background-color:transparent !important;
@@ -264,10 +264,10 @@ html[data-glm-settings-root] [data-glm-settings-row-part] {
   background:transparent !important;
   background-image:none !important;
 
-html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover),
-html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) [data-glm-settings-row-part] {
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) [data-glm-settings-row-part] {
   background:var(--glm-settings-focus) !important;
-}
+
 /* Storage uses contentmanagement modules, not generic Settings Field rows.
  * Preserve thumbnail art, disk bar segments, icon and controller behavior. */
 html[data-glm-settings-root] :is(
