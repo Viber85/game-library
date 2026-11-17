@@ -24,20 +24,24 @@ export function nativeAppId(row:unknown):number|null {
 
 /** Steam collections may use arrays, sets, maps, observable objects or ID sets. */
 export function nativeRows(value:unknown):unknown[]{
+  const withKey=(key:unknown,item:unknown):unknown=>{
+    const id=normalizeID(key);
+    if(id===null)return item;
+    if(item===true||item===null||item===undefined)return id;
+    const data=asObject(item);
+    if(data && nativeAppId(item)===null)return {...data,appid:id};
+    return item;
+  };
   if(Array.isArray(value))return [...value];
   if(value instanceof Set)return [...value.values()];
-  if(value instanceof Map)return [...value.entries()].map(([key,item])=>
-    (item===true||item===null||item===undefined) && normalizeID(key)!==null
-      ?key:item);
+  if(value instanceof Map)return [...value.entries()].map(([key,item])=>withKey(key,item));
   const obj=asObject(value);
   if(!obj || typeof obj.then==="function")return [];
   // Use iteration before treating an observable collection as plain object.
   try{
     if(typeof obj[Symbol.iterator]==="function")return Array.from(obj as Iterable<unknown>);
   }catch{/* Ignore a briefly detached observable. */}
-  return Object.entries(obj).map(([key,item])=>
-    (item===true||item===null||item===undefined) && normalizeID(key)!==null
-      ?key:item);
+  return Object.entries(obj).map(([key,item])=>withKey(key,item));
 }
 
 function uniqueRows(rows:unknown[]):unknown[]{
