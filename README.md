@@ -87,6 +87,38 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.17 — actual native Steam tab membership (Claw diagnostics fix):**
+The v0.4.16 on-device report gave decisive evidence: `type-games`
+contains 785 titles, `all-games` has 464 actual Steam games,
+`local-install` has 10 installed Steam titles, and 321 non-Steam
+shortcuts all carry an `installed` overview flag. Our earlier fallback
+used the overview boolean and falsely displayed 331 entries in the
+Steam **Installed** tab (321 shortcuts + 10 installed Steam games).
+It also included the 321 shortcuts in **All Games**, making the
+first A–Z carousel items look nearly identical across tabs.
+
+When TabMaster is unavailable, the built-in fallback now uses Steam's
+actual collection memberships: `all-games` for **All Games**,
+`local-install` for **Installed**, `favorite` for **Favorites**,
+and verified non-Steam shortcuts for **Non-Steam**. Expected tab counts
+from this particular device snapshot are therefore approximately
+**464 / 10 / 0 / 321**, not the old 785 / 331 / 0 / 321.
+The Favorites collection genuinely returned zero native entries in
+the supplied diagnostics; this release does not invent favorites.
+If native collections are unavailable on a different SteamOS build,
+the fallback retains separate Steam vs non-Steam filtering using app
+overviews instead of merging all shortcuts into Installed.
+
+The on-device diagnostics now distinguish native **Steam All Games**
+and **Steam Installed** counts from broader `installed` overview
+flags. Regressions recreate exactly 464 Steam games, 10 native installed,
+321 non-Steam games whose overview flags report installed, and an empty
+favorite set; they verify the four native filters and fallback behavior.
+All other Game Library layout, auto TabMaster detection, SteamOS theme,
+QAM, controller navigation, and notification transparency remain
+unchanged. CI verifies the implementation and packaging; a real
+handheld check is still required to confirm the native UI result.
+
 **v0.4.16 — on-device native library diagnostics (investigation build):**
 After v0.4.15, the user confirmed that disabling TabMaster and UnifiedDeck
 still yielded almost identical tiny game lists in All Games and Installed.
