@@ -913,4 +913,70 @@ export const DASHBOARD_CSS = String.raw`
   }
 }
 
+/* v0.4.8 — unmistakable controller focus, with a quieter idle primary.
+ * Restrict all emphasis to the Game Library action buttons, not Steam's
+ * QAM/system controls. Keep ring visible for gamepad and keyboard users. */
+.gl-root .gl-feature .gl-actions .gl-button {
+  position:relative;
+  outline:0;
+  transition:transform 140ms ease, background-color 140ms ease,
+    box-shadow 140ms ease, border-color 140ms ease;
+}
+.gl-root .gl-feature .gl-actions .gl-button.gl-primary:not(.gl-focused):not(:focus-visible) {
+  background:linear-gradient(180deg,#d9f1ff,#a9ddff);
+  box-shadow:0 3px 11px rgba(18,169,255,.15);
+}
+.gl-root .gl-feature .gl-actions .gl-button:is(.gl-focused,.gpfocus,:focus-visible,:focus-within) {
+  z-index:2;
+  transform:translateY(-2px);
+  border-color:#f3fbff;
+  box-shadow:0 0 0 3px #fff,0 0 0 6px #189fff,
+    0 0 23px rgba(30,175,255,.78);
+}
+.gl-root .gl-feature .gl-actions .gl-button.gl-primary:is(.gl-focused,.gpfocus,:focus-visible,:focus-within) {
+  background:linear-gradient(180deg,#f5fdff,#c5eeff);
+  color:#04172c;
+}
+.gl-root .gl-feature .gl-actions .gl-button:not(.gl-primary):is(.gl-focused,.gpfocus,:focus-visible,:focus-within) {
+  background:linear-gradient(180deg,#24629a,#10416c);
+  color:#fff;
+}
+@media (prefers-reduced-motion:reduce) {
+  .gl-root .gl-feature .gl-actions .gl-button {
+    transition:none;
+  }
+  .gl-root .gl-feature .gl-actions .gl-button:is(.gl-focused,.gpfocus,:focus-visible,:focus-within) {
+    transform:none;
+  }
+}
+/* Slightly larger main-carousel cards, not the full-library grid.
+ * Keep the selected game's details and bottom Game Mode footer visible. */
+.gl-main > .gl-strip {
+  height:285px;
+  padding:11px 4px 15px;
+}
+.gl-main .gl-strip .gl-game,
+.gl-main .gl-strip .gl-view-more {
+  width:clamp(145px,12.3vw,192px);
+  flex-basis:clamp(145px,12.3vw,192px);
+  height:254px;
+}
+@media (max-height:730px) {
+  .gl-main > .gl-strip {height:233px;padding:9px 4px 13px;}
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {height:207px;}
+}
+@media (max-height:650px) {
+  .gl-main > .gl-strip {height:207px;padding:7px 4px 12px;}
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {height:188px;}
+}
+@media (max-width:900px) {
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {
+    width:clamp(136px,13.2vw,180px);
+    flex-basis:clamp(136px,13.2vw,180px);
+  }
+}
+
 `;
