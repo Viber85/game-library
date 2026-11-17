@@ -132,7 +132,7 @@ function GameCard({
 
 export function Dashboard() {
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
-  const [tabInfo, setTabInfo] = useState<{available: boolean; reason: string; tabs: SteamTab[]}>({available:false,reason:"Loading TabMaster…",tabs:[]});
+  const [tabInfo, setTabInfo] = useState<{available: boolean; reason: string; tabs: SteamTab[]; mode?: string}>({available:false,reason:"Checking library tab source…",tabs:[],mode:"auto"});
   const [activeTab, setActiveTab] = useState("AllGames");
   const [sort, setSort] = useState<Sort>("alphabetical");
   const [selectedId, setSelectedId] = useState<number | undefined>();
@@ -166,10 +166,22 @@ export function Dashboard() {
       if (active) setTabInfo(result);
     };
     void refresh();
-    const timer = window.setInterval(() => { void refresh(); }, 20000);
+    // Follow Decky's enable/disable switch without a Steam or Decky restart.
+    const timer = window.setInterval(() => { void refresh(); }, 6000);
     return () => { active = false; window.clearInterval(timer); };
   }, []);
   const tabs = tabInfo.available && tabInfo.tabs.length ? tabInfo.tabs : fallbackTabs;
+  const tabIds = tabs.map(t=>t.id).join("|");
+  useEffect(()=>{
+    if(tabs.some(t=>t.id===activeTab))return;
+    // The selected TabMaster tab may disappear while a Decky plugin is
+    // disabled. Reset to Steam All Games rather than retaining stale ID.
+    setActiveTab(tabs[0]?.id ?? "AllGames");
+    setSelectedId(undefined);
+    setViewAll(false);
+    setGridLimit(60);
+    pendingGridIndex.current=null;
+  },[tabIds,activeTab]);
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
   const tabCounts = useMemo(() => new Map(tabs.map(t => {
     const result = gamesForTab(t, games);
@@ -527,7 +539,8 @@ export function Dashboard() {
           </div>
         )}
 
-        {!tabInfo.available && <div className="gl-sync-note">TabMaster: {tabInfo.reason}. Using default tabs.</div>}
+        {!tabInfo.available && tabInfo.mode==="tabmaster" &&
+          <div className="gl-sync-note">TabMaster is unavailable: {tabInfo.reason}. Showing Steam tabs.</div>}
         <footer className="gl-footer"><span>STEAM · Menu</span><span>L1 / R1 · Tabs</span><span>A Select</span><span>B Back</span><span>← Navigation</span></footer>
       </div>
     </div>
