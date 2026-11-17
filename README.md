@@ -87,6 +87,39 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.16 — on-device native library diagnostics (investigation build):**
+After v0.4.15, the user confirmed that disabling TabMaster and UnifiedDeck
+still yielded almost identical tiny game lists in All Games and Installed.
+This release **does not claim to have fixed the catalog issue**. Instead it
+provides a read-only instrument to identify what SteamOS is actually
+returning to the Game Library dashboard, before changing any more filters.
+
+Open `Decky → Game Library → Inspect Library Sources` to navigate to a
+dedicated, gamepad-friendly Steam Game Mode diagnostics screen. It samples
+the **same window** and calls the **same `getLibraryGames()` reader** as the
+Game Library dashboard. The summary shows native candidate IDs vs.
+actually displayable games, Installed / Favorites / Non-Steam counts,
+availability of `collectionStore` and `appStore`, and how many of the
+first 120 candidate IDs lack both a row title and a hydrated Steam app
+overview. The detailed report splits `allApps`, `visibleApps` and
+`apps` counts by native Steam collection and counts the exposed appStore
+inventories (`GetAllApps`, `m_rgApps`, `m_rgAllApps`, `m_mapApps`,
+`m_mapAppOverview`). The inspector never sends data to a server or
+writes diagnostic data to the filesystem; `Copy report` copies only
+aggregate counts and fixed source names, **not game titles, app IDs,
+Steam account IDs, filenames or authentication material**.
+
+Automated regression tests cover partial native inventory hydration,
+missing Steam store objects, missing overview titles, report privacy,
+and presence/cleanup of the Game Mode route and QAM entry. All
+existing TabMaster Auto selection, Steam native theme, QAM styling,
+volume/achievement transparency and game navigation remain unchanged.
+A successful CI build only verifies implementation and simulated data.
+**To investigate the real bug, run the inspector on the MSI Claw with
+TabMaster/UnifiedDeck disabled and share both overview and detailed
+counts.** The actual root cause cannot be declared until that report
+is inspected.
+
 **v0.4.15 — complete native Steam fallback library and correct tab
 membership:** User-submitted MSI Claw recording exposed a real regression when
 TabMaster and UnifiedDeck were disabled: the automatic fallback showed
