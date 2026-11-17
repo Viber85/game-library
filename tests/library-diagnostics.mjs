@@ -61,7 +61,7 @@ test("aggregate diagnostic report never exports game titles, IDs or private prof
     [{installed:true,favorite:true,nonSteam:false}],
   );
   const report=formatLibraryDiagnostics(d);
-  assert.ok(report.includes("Installed: 1"));
+  assert.ok(report.includes("Installed flags: 1"));
   assert.ok(report.includes("Favorites: 1"));
   assert.ok(!report.includes(title));
   assert.ok(!report.includes(String(id)));
