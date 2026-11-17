@@ -1081,7 +1081,20 @@ export const DASHBOARD_CSS = String.raw`
   min-width:156px;
   padding:12px 23px;
 }
-@media (max-height:730px) {
+/* Middle-height devices keep enlarged cards while reserving comfortable
+ * vertical space for the expanded game logo, title and metrics. */
+@media (max-height:820px) {
+  .gl-main > .gl-strip {height:288px;padding:10px 4px 14px;}
+  .gl-main .gl-strip .gl-game,
+  .gl-main .gl-strip .gl-view-more {height:260px;}
+  .gl-main .gl-feature .gl-game-logo {max-height:72px;margin-bottom:5px;}
+  .gl-main .gl-feature h1 {font-size:36px;}
+  .gl-main .gl-feature .gl-metrics {margin-bottom:11px;}
+  .gl-main .gl-feature .gl-metric {
+    height:88px;min-height:88px;max-height:88px;
+  }
+}
+@media (max-height:770px) {
   .gl-main > .gl-strip {
     height:239px;
     padding:9px 4px 14px;
@@ -1104,7 +1117,7 @@ export const DASHBOARD_CSS = String.raw`
   .gl-main .gl-feature .gl-achievement-card .gl-achievement-stats strong {font-size:15px;}
   .gl-main .gl-feature .gl-actions .gl-button {padding:10px 20px;}
 }
-@media (max-height:650px) {
+@media (max-height:680px) {
   .gl-main > .gl-strip {height:218px;padding:8px 4px 12px;}
   .gl-main .gl-strip .gl-game,
   .gl-main .gl-strip .gl-view-more {height:196px;}
