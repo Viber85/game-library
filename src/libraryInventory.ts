@@ -46,12 +46,24 @@ export function nativeRows(value:unknown):unknown[]{
 }
 
 function uniqueRows(rows:unknown[]):unknown[]{
-  const seen=new Set<number>();
+  const indices=new Map<number,number>();
   const unique:unknown[]=[];
+  const quality=(row:unknown):number=>{
+    const item=asObject(row);
+    if(!item)return 0;
+    return 1+(typeof item.display_name==="string"?4:0)+
+      (typeof item.name==="string"?2:0)+
+      (typeof item.installed==="boolean"?1:0);
+  };
   for(const row of rows){
     const id=nativeAppId(row);
-    if(id===null || seen.has(id))continue;
-    seen.add(id);unique.push(row);
+    if(id===null)continue;
+    const index=indices.get(id);
+    if(index!==undefined){
+      if(quality(row)>quality(unique[index]))unique[index]=row;
+      continue;
+    }
+    indices.set(id,unique.length);unique.push(row);
   }
   return unique;
 }
