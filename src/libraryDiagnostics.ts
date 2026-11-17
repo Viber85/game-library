@@ -84,10 +84,11 @@ export function collectLibraryDiagnostics(
   const nonSteam=games.filter(g=>g.nonSteam).length;
   let issue="Inspect source counts alongside the native Steam Library.";
   if(!cs&&!app)issue="Neither Steam collectionStore nor appStore is visible in this page.";
+  else if(sampled>0 && candidates.length>games.length*1.5 &&
+          sampledUnresolved>sampled/3)
+    issue="Many candidate IDs have no loaded title or app overview in this page.";
   else if(candidates.length<=15 && games.length<=15)
     issue="Only a few candidate IDs reached this page; the library source may be incomplete.";
-  else if(candidates.length>games.length*2 && sampledUnresolved>sampled/3)
-    issue="Many candidate IDs have no loaded title or app overview in this page.";
   else if(collectionSources.find(x=>x.name==="favorite")?.merged &&
           favorites===0)
     issue="Steam reports favorite collection entries, but none appear in Favorites.";
