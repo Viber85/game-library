@@ -20,6 +20,16 @@ test("Steam collections merge allApps, visibleApps and apps rather than first no
     "A native Steam Set of IDs is an actual collection, not an empty tab");
 });
 
+test("a numeric collection ID must not hide a later rich app overview",()=>{
+  const rows=nativeCollectionRows({
+    allApps:[91],
+    visibleApps:[{appid:91,display_name:"Known game",installed:false}]
+  });
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].display_name,"Known game");
+  assert.equal(rows[0].installed,false);
+});
+
 test("all games includes non-installed appStore entries even when Steam collections are partial",()=>{
   const collections={
     "type-games":{allApps:[{appid:10,installed:true}],visibleApps:[{appid:11,installed:true}]},
