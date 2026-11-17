@@ -9,11 +9,11 @@
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="gamepaddialog_Field"],[class*="gamepaddialog_Field_"],[class*="gamepaddialog_HighlightOnFocus"],
  [class*="gamepadpagedsettings_SettingsRow"],[class*="gamepadsettings_SettingsRow"]) {
-  background:transparent !important;
+  background-color:transparent !important;
   background-image:none !important;
   color:var(--glm-text) !important;
   border-color:transparent !important;
-
+}
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"]):is(.gpfocus,.gpfocuswithin,:focus-within) {
   background-color:#163a5e !important;
@@ -24,12 +24,12 @@
  :is([class*="gamepaddialog_FieldLabel"],[class*="gamepaddialog_FieldLabelValue"],[class*="gamepaddialog_FieldIcon"],
  [class*="gamepadpagedsettings_SectionTitle"],[class*="gamepadpagedsettings_SectionHeader"]) {
   color:#f2f8ff !important;
-
+}
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="gamepaddialog_FieldDescription"],[class*="gamepaddialog_FieldSubtext"],
  [class*="gamepadpagedsettings_SectionDescription"]) {
   color:#acc4dc !important;
-
+}
 
 /* All Settings categories: select/dropdown, action and secondary buttons.
  * Includes System/Internet/Storage/Bluetooth/Controller/Cloud/In Game. */
@@ -80,24 +80,24 @@
  [class*="wifisettings_NetworkItem"],[class*="wifisettings_NetworkRow"],
  [class*="connectionsettings_Network"],[class*="wirelesssettings_Network"],
  [class*="gamepadnetwork_Network"]) {
-  background:transparent !important;
+  background-color:transparent !important;
   background-image:none !important;
-  border-color:transparent !important;
+  border-bottom-color:transparent !important;
   color:#edf6ff !important;
-
+}
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
  [class*="networksettings_NetworkListItem"],[class*="networksettings_NetworkEntry"],
  [class*="wifisettings_NetworkItem"],[class*="connectionsettings_Network"]):is(.gpfocus,.gpfocuswithin,:focus-visible) {
   background-color:#163a5e !important;
   box-shadow:inset 3px 0 0 var(--glm-accent) !important;
-
+}
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="networksettings_Connected"],[class*="networksettings_CurrentNetwork"],
  [class*="wifisettings_Connected"],[class*="connectionsettings_Connected"]) {
   border-left:3px solid #54ceef !important;
-  background:transparent !important;
-
+  background-color:transparent !important;
+}
 /* Network lock and Wi-Fi signal icons; don't touch their signal fill/shape. */
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([class*="networksettings_Icon"],[class*="networksettings_Signal"],
@@ -113,8 +113,8 @@
  :is([role="listbox"] > [role="option"],[role="list"] > [role="listitem"]) {
   background:transparent !important;
   color:#edf6ff !important;
-  border-color:transparent !important;
-
+  border-bottom-color:transparent !important;
+}
 .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
  :is([role="listbox"] > [role="option"],[role="list"] > [role="listitem"]):is(.gpfocus,[aria-selected="true"],:focus-visible) {
   background:#163a5e !important;
@@ -144,29 +144,29 @@
 .BasicUI[data-glm-settings-root] [data-glm-settings-row],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row] {
   background:transparent !important;
-  background:transparent !important;
+  background-color:transparent !important;
   background-image:none !important;
   border-color:transparent !important;
   color:#eaf6ff !important;
-
+}
 .BasicUI[data-glm-settings-root] [data-glm-settings-row-part],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row-part] {
   background:transparent !important;
-  background:transparent !important;
+  background-color:transparent !important;
   background-image:none !important;
-
+}
 .BasicUI[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible),
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible) {
   background:#163a5e !important;
   background-color:#163a5e !important;
   border-color:rgba(74,193,255,.52) !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
-
+}
 .BasicUI[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible) [data-glm-settings-row-part],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-within,:focus-visible) [data-glm-settings-row-part] {
   background:#163a5e !important;
   background-color:#163a5e !important;
-
+}
 .BasicUI[data-glm-settings-root] [data-glm-settings-navitem],
 #GamepadUI_Full_Root[data-glm-settings-root] [data-glm-settings-navitem] {
   background-color:transparent !important;
@@ -199,25 +199,25 @@ html[data-glm-settings-root] [data-glm-settings-sidebar] {
 }
 html[data-glm-settings-root] [data-glm-settings-row] {
   background:transparent !important;
-  background:transparent !important;
+  background-color:transparent !important;
   background-image:none !important;
   color:#f3f8ff !important;
   border-color:transparent !important;
-
+}
 html[data-glm-settings-root] [data-glm-settings-row-part] {
   background:transparent !important;
-  background:transparent !important;
+  background-color:transparent !important;
   background-image:none !important;
-
+}
 html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   background:#163a5e !important;
   background-color:#163a5e !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
-
+}
 html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) [data-glm-settings-row-part] {
   background:#163a5e !important;
   background-color:#163a5e !important;
-
+}
 html[data-glm-settings-root] [data-glm-settings-navitem] {
   background:transparent !important;
   background-color:transparent !important;
@@ -258,16 +258,16 @@ html[data-glm-settings-root] [data-glm-settings-main],
 html[data-glm-settings-root] [data-glm-settings-main] > :where(div:not([data-glm-settings-row]):not([data-glm-settings-row-part])) {
   background:var(--glm-settings-canvas) !important;
   background-image:none !important;
-
+}
 html[data-glm-settings-root] [data-glm-settings-row],
 html[data-glm-settings-root] [data-glm-settings-row-part] {
   background:transparent !important;
   background-image:none !important;
-
+}
 html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
 html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) [data-glm-settings-row-part] {
   background:var(--glm-settings-focus) !important;
-
+}
 /* Storage uses contentmanagement modules, not generic Settings Field rows.
  * Preserve thumbnail art, disk bar segments, icon and controller behavior. */
 html[data-glm-settings-root] :is(
@@ -331,7 +331,7 @@ html[data-glm-settings-root] [data-glm-settings-row]:not(.gpfocus):not(.gpfocusw
 html[data-glm-settings-root] [data-glm-settings-row-part] {
   background:transparent !important;
   background-image:none !important;
-
+}
 
 
 /* v0.4.10 — transparent Settings rows (Variant A).
@@ -350,12 +350,12 @@ html[data-glm-settings-root] [data-glm-settings-main] [data-glm-settings-row]:wh
   border-color:transparent !important;
   border-radius:0 !important;
   box-shadow:none !important;
-
+}
 html[data-glm-settings-root] [data-glm-settings-row-part]:where(:not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Toggle"]):not([class*="gamepadslider_"])) {
   background:transparent !important;
   background-color:transparent !important;
   background-image:none !important;
-
+}
 
 /* Readable Steam field/network modules and list entries: also transparent.
  * The CSS compiler expands readable class aliases on hashed Steam builds. */
@@ -374,7 +374,7 @@ html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSetting
   background-image:none !important;
   border-bottom-color:transparent !important;
   box-shadow:none !important;
-
+}
 
 /* Sections don't need their own blue card behind the flat main canvas.
  * Preserve label colors and all spacing/geometry. */
@@ -434,4 +434,17 @@ html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSetting
   background:#1d527d !important;
   background-color:#1d527d !important;
   border-color:#4ac1ff !important;
+}
+
+
+/* v0.4.11 — some Steam clients paint row pseudo-elements, not row surfaces.
+ * Never change game, QAM or notification window backgrounds. */
+html[data-glm-settings-root] [data-glm-settings-row]::before,
+html[data-glm-settings-root] [data-glm-settings-row]::after,
+html[data-glm-settings-root] [data-glm-settings-row-part]::before,
+html[data-glm-settings-root] [data-glm-settings-row-part]::after {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
 }
