@@ -34,7 +34,7 @@ test("Dashboard switches sources during use without stale selected tab",()=>{
   assert.match(dashboard,/if\(tabs\.some\(t=>t\.id===activeTab\)\)return;/);
   assert.match(dashboard,/setActiveTab\(tabs\[0\]\?\.id \?\? "AllGames"\)/);
   assert.match(dashboard,/setSelectedId\(undefined\)/);
-  assert.match(dashboard,/tabInfo\.mode==="tabmaster"/);
+  assert.doesNotMatch(controls,/Library tabs|changeTabSource/);
   assert.match(tabs,/id:"AllGames", title:"All Games"/);
   assert.match(tabs,/id:"Installed", title:"Installed"/);
 });
