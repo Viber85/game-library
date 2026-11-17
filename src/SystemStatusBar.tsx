@@ -18,6 +18,32 @@ type SteamSupplement = { unread: number | null; avatar: string | null };
 const readSystemStatus = callable<[], DeviceStatus>("get_system_status");
 const NO_DEVICE_STATUS: DeviceStatus = { battery: null, wifi: null, bluetooth: null };
 
+/** Resolve the LOCAL Steam account's real avatar from whichever Steam UI store
+ * is available on this client build; never scan random friends' pictures. */
+function readSteamAvatar(root:any): string | null {
+  const owners=[
+    root.App?.m_CurrentUser,
+    root.friendStore?.m_FriendsUIFriendStore?.m_self?.m_persona,
+    root.friendStore?.m_FriendsUIFriendStore?.m_self,
+    root.FriendStore?.self?.m_persona,
+    root.FriendStore?.self,
+    root.SteamUIStore?.m_FriendsUIFriendStore?.m_self?.m_persona,
+  ];
+  for(const owner of owners){
+    if(!owner || typeof owner!=="object")continue;
+    const hash=owner.strAvatarHash ?? owner.m_strAvatarHash ??
+      owner.avatarhash ?? owner.avatar_hash;
+    if(typeof hash==="string" && /^[0-9a-f]{40}$/i.test(hash) && !/^0+$/.test(hash))
+      return "https://avatars.steamstatic.com/" + hash + "_medium.jpg";
+    const url=owner.avatarmedium ?? owner.avatarfull ?? owner.avatar_url ??
+      owner.m_strAvatarURL ?? owner.avatar;
+    if(typeof url==="string" &&
+      /^https:\/\/(?:avatars\.steamstatic\.com|steamcdn-a\.akamaihd\.net)\//i.test(url))
+      return url;
+  }
+  return null;
+}
+
 /** Use Steam's live UI state only when present. No invented notification count/avatar. */
 function readSteamSupplement(): SteamSupplement {
   const root = globalThis as any;
@@ -30,10 +56,8 @@ function readSteamSupplement(): SteamSupplement {
       unread = tray.filter((item:any)=>item && item.bViewed !== true && item.viewed !== true).length;
   } catch { /* Steam may not expose a notification store on this build. */ }
   try {
-    const hash = root.App?.m_CurrentUser?.strAvatarHash;
-    if (typeof hash === "string" && /^[a-f0-9]{40}$/i.test(hash) && !/^0+$/.test(hash))
-      avatar = "https://avatars.steamstatic.com/" + hash + "_medium.jpg";
-  } catch { /* Keep generic user icon instead of an invented avatar. */ }
+    avatar = readSteamAvatar(root);
+  } catch { /* Keep generic user icon if Steam's local account has no avatar. */ }
   return { unread, avatar };
 }
 
@@ -55,6 +79,7 @@ type Props = {
 export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
   const [device,setDevice] = useState<DeviceStatus>(NO_DEVICE_STATUS);
   const [steam,setSteam] = useState<SteamSupplement>(()=>readSteamSupplement());
+  const [failedAvatar,setFailedAvatar] = useState<string | null>(null);
 
   useEffect(()=>{
     let live = true;
@@ -167,7 +192,9 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
       title="Steam profile" aria-label="Open Steam profile"
       onActivate={profile} onOKActionDescription="Steam profile"
       onButtonDown={onStatusButtonDown}>
-      {steam.avatar ? <img src={steam.avatar} alt="" referrerPolicy="no-referrer"/> :
+      {steam.avatar && steam.avatar!==failedAvatar ?
+        <img src={steam.avatar} alt="" referrerPolicy="no-referrer"
+          onError={()=>setFailedAvatar(steam.avatar)}/> :
         <MdAccountCircle aria-hidden="true"/>}
     </Focusable>
   </Focusable>;
