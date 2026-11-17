@@ -6,27 +6,26 @@ const source=(path)=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const backend=source("main.py"),dashboard=source("src/Dashboard.tsx");
 const controls=source("src/index.tsx"),tabs=source("src/tabmaster.ts");
 
-test("Auto is the default and Decky disabled_plugins overrides saved TabMaster tabs",()=>{
-  assert.match(backend,/TAB_SOURCES\s*=\s*\("auto", "steam", "tabmaster"\)/);
-  assert.match(backend,/get\("tab_source", "auto"\)/);
+test("Tab source is always automatic, never an overrideable setting",()=>{
+  assert.doesNotMatch(backend,/TAB_SOURCES|def _tab_source\(/);
+  assert.doesNotMatch(backend,/async def set_tab_source\(/);
+  assert.doesNotMatch(backend,/saved\["tab_source"\]/);
+  assert.match(backend,/mode = "auto"/);
   assert.match(backend,/root\s*\/\s*"loader.json"/);
   assert.match(backend,/saved\.get\("disabled_plugins", \[\]\)/);
   assert.match(backend,/if "TabMaster" in disabled:/);
-  assert.match(backend,/mode = _tab_source\(\)/);
   assert.match(backend,/enabled, reason = _tabmaster_enabled\(\)/);
   assert.ok(backend.indexOf("enabled, reason = _tabmaster_enabled()") <
     backend.indexOf("path = _tabmaster_path()",backend.indexOf("async def get_tabmaster_tabs")),
-    "Never read stale TabMaster settings before checking the loader");
+    "Decky disabled status takes priority over stored TabMaster configuration");
 });
 
-test("QAM exposes Auto, Steam and TabMaster with persisted selection",()=>{
-  assert.match(controls,/DropdownItem label="Library tabs"/);
-  assert.match(controls,/data:"auto",label:"Auto \(recommended\)"/);
-  assert.match(controls,/data:"steam",label:"Steam"/);
-  assert.match(controls,/data:"tabmaster",label:"TabMaster"/);
-  assert.match(controls,/selectedOption=\{source\}/);
-  assert.match(controls,/saveTabSource\(next\)/);
-  assert.match(backend,/async def set_tab_source\(self, source: str\)/);
+test("QAM has no tab source selector or save action",()=>{
+  assert.doesNotMatch(controls,/DropdownItem|saveTabSource|changeTabSource|tabSource|TabSource/);
+  assert.match(controls,/const getSettings = callable<\[\], \{ default_home: boolean \}>/);
+  assert.match(controls,/label="Use as Steam Home"/);
+  assert.match(controls,/Open Game Library Dashboard/);
+  assert.doesNotMatch(backend,/return \{"default_home":[\s\S]*?"tab_source"/);
 });
 
 test("Dashboard switches sources during use without stale selected tab",()=>{
