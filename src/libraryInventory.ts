@@ -118,3 +118,17 @@ export function nativeBooleanFlag(item:unknown,keys:readonly string[]):boolean|u
   }
   return undefined;
 }
+
+/** One authoritative definition of the Steam-compatible fallback categories.
+ * The source list and the filter rules must never drift apart. */
+export function defaultLibraryTabGames<T extends {
+  installed:boolean;favorite:boolean;nonSteam:boolean;
+}>(id:string,games:T[]):T[]|null{
+  switch(id.toLowerCase()){
+    case "allgames":return games;
+    case "installed":return games.filter(g=>g.installed);
+    case "favorites":return games.filter(g=>g.favorite);
+    case "nonsteam":return games.filter(g=>g.nonSteam);
+    default:return null;
+  }
+}
