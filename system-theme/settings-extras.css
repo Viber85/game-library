@@ -342,8 +342,8 @@ html[data-glm-settings-root] [data-glm-settings-row-part] {
 
 /* Geometry markers cover SteamOS clients with completely hashed classes.
  * Keep native buttons, dropdowns, toggles and slider tracks independent. */
-html[data-glm-settings-root] [data-glm-settings-row]:not(button):not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Button"]),
-html[data-glm-settings-root] [data-glm-settings-main] [data-glm-settings-row]:not(button):not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Button"]) {
+html[data-glm-settings-root] [data-glm-settings-row]:where(:not(button):not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Button"])),
+html[data-glm-settings-root] [data-glm-settings-main] [data-glm-settings-row]:where(:not(button):not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Button"])) {
   background:transparent !important;
   background-color:transparent !important;
   background-image:none !important;
@@ -351,7 +351,7 @@ html[data-glm-settings-root] [data-glm-settings-main] [data-glm-settings-row]:no
   border-radius:0 !important;
   box-shadow:inset 0 -1px 0 rgba(118,181,227,.18) !important;
 }
-html[data-glm-settings-root] [data-glm-settings-row-part]:not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Toggle"]):not([class*="gamepadslider_"]) {
+html[data-glm-settings-root] [data-glm-settings-row-part]:where(:not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Toggle"]):not([class*="gamepadslider_"])) {
   background:transparent !important;
   background-color:transparent !important;
   background-image:none !important;
