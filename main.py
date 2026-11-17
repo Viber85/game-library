@@ -120,15 +120,6 @@ def _tabmaster_path():
     return path if path.is_file() else None
 
 
-TAB_SOURCES = ("auto", "steam", "tabmaster")
-
-
-def _tab_source():
-    """Persisted preference; Auto is the default for existing installations."""
-    value = _read_preferences().get("tab_source", "auto")
-    return value if value in TAB_SOURCES else "auto"
-
-
 def _tabmaster_enabled():
     """Decky's loader.json is authoritative for the disabled plugin list.
 
@@ -174,8 +165,7 @@ class Plugin:
 
     async def get_dashboard_settings(self):
         """Enabled by default on Steam Home, with a persisted opt-out in Decky."""
-        return {"default_home": _read_preferences().get("default_home", True) is True,
-                "tab_source": _tab_source()}
+        return {"default_home": _read_preferences().get("default_home", True) is True}
 
     async def set_dashboard_settings(self, default_home: bool):
         if type(default_home) is not bool:
@@ -183,18 +173,6 @@ class Plugin:
         try:
             saved = _read_preferences()
             saved["default_home"] = default_home
-            _write_preferences(saved)
-            return True
-        except OSError:
-            return False
-
-    async def set_tab_source(self, source: str):
-        """Auto follows Decky's plugin enable/disable setting; no changes to peers."""
-        if type(source) is not str or source not in TAB_SOURCES:
-            return False
-        try:
-            saved = _read_preferences()
-            saved["tab_source"] = source
             _write_preferences(saved)
             return True
         except OSError:
@@ -286,9 +264,9 @@ class Plugin:
         Custom filters are returned to the frontend only for supported local evaluation;
         unsupported filters are not approximated as full-game collections.
         """
-        mode = _tab_source()
-        if mode == "steam":
-            return {"available": False, "reason": "Steam tabs selected", "tabs": [], "mode": mode}
+        # Auto is built in, not a user-configurable setting. Obsolete saved
+        # "tab_source" values from v0.4.13 are deliberately ignored.
+        mode = "auto"
         enabled, reason = _tabmaster_enabled()
         if not enabled:
             return {"available": False, "reason": reason, "tabs": [], "mode": mode}
