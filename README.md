@@ -87,6 +87,28 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.10 — transparent Settings rows (Variant A):** In response to
+the MSI Claw screenshots showing that flat blue Settings rows still stood
+out against the Midnight background, inactive rows and section headings
+are now **transparent**. They inherit the existing flat
+`#0A1B30` Settings canvas instead of drawing a different blue strip.
+A subtle, layout-neutral 1px inset separator keeps long pages readable.
+Controller/keyboard-focused rows retain the full Midnight blue
+`#163A5E` highlight with a cyan left accent. Dropdowns, text inputs,
+buttons, toggles and slider controls stay filled and clearly interactive.
+Network rows receive the same transparent treatment.
+
+The override is added at the end of the native Settings stylesheet,
+scoped to a *verified* Settings DOM. It supports readable Steam CSS
+modules and class-independent DOM markers, with zero-specificity
+exceptions that prevent normal rows from overriding their own focus.
+No component sizes, navigation order, selected game artwork, QAM styles
+or Steam notification overlays are changed. The pre-paint and stable
+CSS injection improvements from v0.4.9 remain intact.
+Automated tests verify selector scope, focus override, subtle separator,
+and preservation of interactive controls; confirm the real visual
+appearance on the handheld after installing the release.
+
 **v0.4.9 — flat Settings canvases and minimal color flash:** The MSI Claw
 screenshots of Display, Downloads and Family showed a bright gradient
 behind the otherwise flat Midnight rows. The verified native Settings root,
