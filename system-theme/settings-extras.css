@@ -332,3 +332,104 @@ html[data-glm-settings-root] [data-glm-settings-row-part] {
   background:#0f2842 !important;
   background-image:none !important;
 }
+
+
+/* v0.4.10 — transparent Settings rows (Variant A).
+ * The flat Midnight canvas remains #0a1b30, while inactive field/section
+ * strips inherit it instead of creating a second blue layer. This only
+ * applies on an identified Settings page, never to game/QAM/notification
+ * overlay roots. No positional, sizing or interaction changes. */
+
+/* Geometry markers cover SteamOS clients with completely hashed classes.
+ * Keep native buttons, dropdowns, toggles and slider tracks independent. */
+html[data-glm-settings-root] [data-glm-settings-row]:not(button):not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Button"]),
+html[data-glm-settings-root] [data-glm-settings-main] [data-glm-settings-row]:not(button):not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Button"]) {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  border-color:transparent !important;
+  border-radius:0 !important;
+  box-shadow:inset 0 -1px 0 rgba(118,181,227,.18) !important;
+}
+html[data-glm-settings-root] [data-glm-settings-row-part]:not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]):not([class*="gamepaddropdown_"]):not([class*="gamepaddialog_Toggle"]):not([class*="gamepadslider_"]) {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+}
+
+/* Readable Steam field/network modules and list entries: also transparent.
+ * The CSS compiler expands readable class aliases on hashed Steam builds. */
+html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddialog_Field_"],[class*="gamepaddialog_HighlightOnFocus"],
+     [class*="gamepadpagedsettings_SettingsRow"],[class*="gamepadsettings_SettingsRow"],
+     [class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
+     [class*="networksettings_NetworkListItem"],[class*="networksettings_NetworkEntry"],
+     [class*="wifisettings_NetworkItem"],[class*="wifisettings_NetworkRow"],
+     [class*="connectionsettings_Network"],[class*="wirelesssettings_Network"],
+     [class*="gamepadnetwork_Network"],
+     [role="listbox"] > [role="option"],[role="list"] > [role="listitem"]) {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  border-bottom-color:transparent !important;
+  box-shadow:inset 0 -1px 0 rgba(118,181,227,.18) !important;
+}
+
+/* Sections don't need their own blue card behind the flat main canvas.
+ * Preserve label colors and all spacing/geometry. */
+html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepadpagedsettings_SectionHeader"],
+     [class*="gamepadpagedsettings_SectionTitle"],
+     [class*="gamepaddialog_SectionHeader"],
+     [class*="gamepaddialog_SectionTitle"]) {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+}
+
+/* Controller/keyboard focus remains deliberately visible. Use the same
+ * Midnight focused fill and a cyan inset accent as the left navigation. */
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
+html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddialog_Field_"],[class*="gamepaddialog_HighlightOnFocus"],
+     [class*="gamepadpagedsettings_SettingsRow"],[class*="gamepadsettings_SettingsRow"],
+     [class*="networksettings_NetworkItem"],[class*="networksettings_NetworkRow"],
+     [class*="networksettings_NetworkListItem"],[class*="networksettings_NetworkEntry"],
+     [class*="wifisettings_NetworkItem"],[class*="connectionsettings_Network"],
+     [role="listbox"] > [role="option"],[role="list"] > [role="listitem"])
+ :is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,[aria-selected="true"]) {
+  background:#163a5e !important;
+  background-color:#163a5e !important;
+  background-image:none !important;
+  border-color:rgba(74,193,255,.44) !important;
+  border-radius:7px !important;
+  box-shadow:inset 3px 0 0 #4ac1ff !important;
+}
+html[data-glm-settings-root] [data-glm-settings-row]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within)
+ [data-glm-settings-row-part]:not([role="button"]):not([role="combobox"]):not([role="switch"]):not([role="slider"]) {
+  background:#163a5e !important;
+  background-color:#163a5e !important;
+}
+
+/* Restore distinct interactive controls in case Steam uses a DIV with a
+ * shared field class. Never make actual buttons/input/slider tracks clear. */
+html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddropdown_DropDownControlButton"],
+     [class*="gamepadpagedsettings_DropDown"],[class*="gamepaddialog_Button"],
+     button.DialogButton,select,input:not([type="checkbox"])) {
+  background:#123452 !important;
+  background-color:#123452 !important;
+  background-image:none !important;
+  color:#f2f9ff !important;
+  border-color:rgba(99,171,226,.38) !important;
+  border-radius:8px !important;
+}
+html[data-glm-settings-root] .BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+ :is([class*="gamepaddropdown_DropDownControlButton"],
+     [class*="gamepadpagedsettings_DropDown"],[class*="gamepaddialog_Button"],
+     button.DialogButton,select,input:not([type="checkbox"]))
+ :is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+  background:#1d527d !important;
+  background-color:#1d527d !important;
+  border-color:#4ac1ff !important;
+}
