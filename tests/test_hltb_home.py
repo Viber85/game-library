@@ -83,7 +83,7 @@ class HomePreferenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             with mock.patch("main._settings_path",return_value=pathlib.Path(folder)/"settings.json"):
                 plugin=Plugin()
-                self.assertEqual(asyncio.run(plugin.get_dashboard_settings()),{"default_home":True,"tab_source":"auto"})
+                self.assertEqual(asyncio.run(plugin.get_dashboard_settings()),{"default_home":True})
                 self.assertTrue(asyncio.run(plugin.set_dashboard_settings(False)))
-                self.assertEqual(asyncio.run(plugin.get_dashboard_settings()),{"default_home":False,"tab_source":"auto"})
+                self.assertEqual(asyncio.run(plugin.get_dashboard_settings()),{"default_home":False})
                 self.assertFalse(asyncio.run(plugin.set_dashboard_settings("false")))
