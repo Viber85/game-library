@@ -299,6 +299,9 @@ export function Dashboard() {
     lastGridFocusIndex.current=0;
     const currentIndex = Math.max(0,tabs.findIndex(x => x.id === tab.id));
     const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+    // Refresh Steam's current collection snapshot on tab changes instead
+    // of displaying a 15-second-old (possibly not-yet-hydrated) snapshot.
+    setGames(getLibraryGames());
     setActiveTab(tabs[nextIndex].id);
     pendingGridIndex.current=null;
     setViewAll(false);
@@ -397,7 +400,7 @@ export function Dashboard() {
                 ref={el => { pillRefs.current[index] = el; }}
                 className={"gl-pill" + (tab.id === item.id ? " gl-active" : "")}
                 focusClassName="gl-focused" noFocusRing
-                onActivate={() => { pendingGridIndex.current=null; setActiveTab(item.id); setViewAll(false); setGridLimit(60); setSelectedId(undefined); }}
+                onActivate={() => { pendingGridIndex.current=null; setGames(getLibraryGames()); setActiveTab(item.id); setViewAll(false); setGridLimit(60); setSelectedId(undefined); }}
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
                   const b=e.detail?.button;
