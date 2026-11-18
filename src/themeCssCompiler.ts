@@ -48,6 +48,12 @@ const MODULE_ANCHORS:Record<string,readonly string[]> = {
   appdetailsmediasection:["MediaSection","MediaButton","ViewMedia"],
   appdetailsmedialibrary:["MediaLibraryButton","NoMedia","OpenMedia"],
   appdetailsnotessection:["NoteLink","NotesSection","NoteBody"],
+  // Steam's in-game Main Menu and Steam Input live in lazy-loaded CSS modules.
+  // Resolve hashes on each theme scan; these may be absent on Home/QAM.
+  mainmenuapprunning:["MainMenuAppRunning","NavigationColumn","AppColumn"],
+  controllerconfiguratorsummary:["ControllerConfiguratorSummary","ControlsListSection","BottomControlsSections"],
+  controllerconfigurator:["ControllerConfiguratorMain","TopSection","BottomSection"],
+  controllerconfiguratorchooseconfiguration:["OuterColumn","ConfigurationButton","SearchBox"],
 };
 
 function getSteamModules():AliasRegistry {
