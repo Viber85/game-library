@@ -62,3 +62,16 @@ test("Real Decky DOM and CSS are detected even if browser location never changes
   assert.equal(info?.deckyFieldRows,1);
   assert.equal(info?.deckyFieldColor,"rgb(15, 40, 66)");
 });
+
+test("Decky left rail stays navy when right pane unmounts between tabs",()=>{
+  const selector=".BasicUI .Panel:has(> .PageListColumn)";
+  const stable=css.slice(css.indexOf("/* test.19 — stable left rail"));
+  assert.ok(stable.includes(selector),"Always match the mounted rail, not right pane");
+  assert.ok(stable.includes("> .PageListColumn"));
+  assert.ok(stable.includes("background:#081425 !important"));
+  assert.ok(stable.includes("transition:none !important"));
+  assert.ok(stable.includes("animation:none !important"));
+  assert.doesNotMatch(stable,/DialogControlsSection|data-glm-decky-settings|\/decky\/settings/,
+    "Rail fallback must not depend on right-side DOM, marker or URL");
+  assert.doesNotMatch(stable,/\b(?:width|height|padding|margin|position|display|overflow|pointer-events|transform|z-index)\s*:/);
+});
