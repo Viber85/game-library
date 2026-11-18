@@ -8,9 +8,10 @@ import {
 import type { IconType } from "react-icons";
 import {
   getLibraryGames, hasLibraryStore, heroUrl, lastPlayedLabel,
-  LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates, heroCandidates, logoCandidates,
+  LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates, heroCandidates, heroFallbackCandidates, logoCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
+import {getMissingSteamArt} from "./steamGridArtwork";
 import { SystemStatusBar } from "./SystemStatusBar";
 import { fallbackTabs, gamesForTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
@@ -37,6 +38,8 @@ const consume = (e: GamepadEvent) => { e.preventDefault(); e.stopPropagation(); 
 function HeroBackdrop({game}:{game:LibraryGame}) {
   const [imageIndex,setImageIndex] = useState(0);
   const [artRevision,setArtRevision] = useState(0);
+  const [remoteHero,setRemoteHero] = useState<string|null>(null);
+  const [lookupFinished,setLookupFinished] = useState(game.nonSteam);
   // Steam may not have loaded library assets when the game first receives focus.
   // Request only the selected game's details; never prefetch the whole library.
   useEffect(() => {
@@ -51,10 +54,24 @@ function HeroBackdrop({game}:{game:LibraryGame}) {
     }
     return ()=>{live=false};
   },[game.id]);
-  const candidates = useMemo(() => heroCandidates(game),
+  const steamHeroes = useMemo(() => heroCandidates(game),
     [game.id,game.hero,game.poster,artRevision]);
-  const src = candidates[imageIndex];
-  if (!src) return null;
+  const lastResort = useMemo(()=>heroFallbackCandidates(game),
+    [game.id,game.poster]);
+  // Steam native hero first, optional SGDB hero second, and only then the
+  // normal store header/poster fallback. Existing artwork is never replaced.
+  const choices = [...steamHeroes,...(remoteHero?[remoteHero]:[]),
+    ...(lookupFinished?lastResort:[])];
+  const src=choices[imageIndex];
+  useEffect(()=>{
+    if(game.nonSteam || src || lookupFinished)return;
+    let mounted=true;
+    void getMissingSteamArt(game).then(art=>{
+      if(mounted){setRemoteHero(art.hero);setLookupFinished(true);}
+    }).catch(()=>{if(mounted)setLookupFinished(true);});
+    return ()=>{mounted=false;};
+  },[game.id,game.title,game.nonSteam,src,lookupFinished]);
+  if(!src)return null;
   return <img className="gl-hero" src={src} alt="" key={src}
     onError={() => setImageIndex(n => n+1)}/>;
 }
@@ -93,8 +110,20 @@ function GameCard({
   captureVertical?: boolean;
 }) {
   const [coverIndex,setCoverIndex] = useState(0);
+  const [remoteCover,setRemoteCover] = useState<string|null>(null);
+  const [lookupFinished,setLookupFinished] = useState(false);
   const covers = posterCandidates(game);
-  const poster = covers[coverIndex];
+  const poster = covers[coverIndex] ?? remoteCover;
+  // Only search once every native Steam cover candidate returned an image
+  // error (or there was no native cover). Off-screen Steam images are lazy.
+  useEffect(()=>{
+    if(game.nonSteam || covers[coverIndex] || lookupFinished)return;
+    let mounted=true;
+    void getMissingSteamArt(game).then(art=>{
+      if(mounted){setRemoteCover(art.cover);setLookupFinished(true);}
+    }).catch(()=>{if(mounted)setLookupFinished(true);});
+    return ()=>{mounted=false;};
+  },[game.id,game.title,game.nonSteam,covers.length,coverIndex,lookupFinished]);
   const handleDirection = (e: GamepadEvent) => {
     const b = e.detail?.button;
     if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT ||
@@ -123,7 +152,11 @@ function GameCard({
       onOptionsActionDescription="Game details"
     >
       <div className="gl-poster">
-        {poster ? <img src={poster} alt="" loading="lazy" key={poster} onError={() => setCoverIndex(n => n+1)} /> : null}
+        {poster ? <img src={poster} alt="" loading="lazy" key={poster}
+          onError={() => {
+            if(covers[coverIndex])setCoverIndex(n=>n+1);
+            else setRemoteCover(null);
+          }} /> : null}
         <span className="gl-poster-name">{game.title}</span>
         {game.installed && <MdCheckCircle className="gl-installed-indicator" aria-label="Installed" />}
       </div>
