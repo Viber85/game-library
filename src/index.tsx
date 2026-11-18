@@ -14,12 +14,13 @@ import { loadDefaultTheme } from "./themeController";
 import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
+const LIBRARY_ROUTE = "/game-library/library";
 const LIBRARY_DIAGNOSTICS_ROUTE = "/game-library/library-diagnostics";
 const HOME_ROUTE = "/library/home";
 const getSettings = callable<[], { default_home: boolean }>("get_dashboard_settings");
 const setSettings = callable<[boolean], boolean>("set_dashboard_settings");
 
-/** Home patch only: other Steam UI and game routes remain completely native. */
+/** Only Steam Home is patched; Midnight Library is an independent Decky route. */
 type HomePatch = Parameters<typeof routerHook.addPatch>[1];
 let homePatch: HomePatch | undefined;
 let defaultHome = true;
@@ -104,6 +105,14 @@ function ControlPanel() {
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem layout="below" onClick={() => {
+            Navigation.Navigate(LIBRARY_ROUTE);
+            Navigation.CloseSideMenus();
+          }}>
+            Open Midnight Library
+          </ButtonItem>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={() => {
             Navigation.Navigate(LIBRARY_DIAGNOSTICS_ROUTE);
             Navigation.CloseSideMenus();
           }}>
@@ -129,6 +138,8 @@ function ControlPanel() {
 export default definePlugin(() => {
   unloaded = false;
   routerHook.addRoute(DASHBOARD_ROUTE, Dashboard, { exact: true });
+  routerHook.addRoute(LIBRARY_ROUTE, ()=> <Dashboard initialMode="library"/>,
+    {exact:true});
   routerHook.addRoute(LIBRARY_DIAGNOSTICS_ROUTE, LibraryDiagnostics, { exact: true });
   // Tab synchronization belongs to the plugin, not the dashboard route. Decky
   // can hide/unmount Game Mode while enabling TabMaster and UnifiedDeck.
@@ -164,6 +175,7 @@ export default definePlugin(() => {
         homePatch = undefined;
       }
       routerHook.removeRoute(DASHBOARD_ROUTE);
+      routerHook.removeRoute(LIBRARY_ROUTE);
       routerHook.removeRoute(LIBRARY_DIAGNOSTICS_ROUTE);
     },
   };
