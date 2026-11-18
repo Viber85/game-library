@@ -46,8 +46,8 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const nativeRail=document.querySelector('.BasicUI .PageListColumn');
   const nativeBody=document.querySelector('.BasicUI .DialogControlsSection');
   const nativeContent=document.querySelector('.BasicUI .DialogContent');
-  const deckyObservedDom=Boolean(nativeRail && nativeBody && nativeContent);
   const railPanel=nativeRail?.closest?.('.Panel');
+  const deckyObservedDom=Boolean(nativeRail && nativeBody && nativeContent && railPanel);
   // Direct CSS paints the rail Panel with this custom property as proof
   // that the CSS :has(...) selector really matched on this Steam build.
   const deckyLiveCssMatched=deckyObservedDom&&Boolean(railPanel)&&
