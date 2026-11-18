@@ -104,6 +104,10 @@ this is a measurement correction, not a speculative visual fix. Audit watcher
 revision 19, CSS marker revision 75, and regression tests prevent stale
 instrumentation and missed newly focused rows.
 
+**v0.4.21-test.26 — native Steam/Decky Settings focus outline and glow**
+
+The reported visual issue is missing *cyan outline and blue glow* around the D-pad/left-stick focused category, not a short blue flash. The v22/v25 native focus rules reset `outline:none` and `box-shadow:none`, including more-specific Decky Settings overrides. Restore a focused-row 2px #63cfff outline and 20px blue glow on the real .Panel row inside .PageListColumn, using CEF-evidenced native structure and a final selector with enough specificity for both Settings. Only the currently controller-focused row receives the frame; selected-but-unfocused entries stay unchanged. No input event, hitbox, layout, QAM, or global panel changes. CSS revision 77; confirm visually on hardware.
+
 **v0.4.21-test.25 — native outer Settings focusable Panel paint**
 
 Test.24 reported zero detected bright-blue events even while the known controller-only flash persisted. Photos from test.23 showed the left rail itself at rgb(8,20,37), but its outer .Panel.Focusable wrapper at rgb(10,27,48). The original Settings focus CSS used .BasicUI ancestry, which might not include that outer native wrapper. Add a narrowly scoped rule to .Panel.Focusable:has(> .PageListColumn) and its decorative pseudo-elements to prevent a native gamepad highlight from temporarily repainting the wrapper. Apply to BOTH Steam Settings and Decky Settings, with no geometry, input handlers, or unrelated panel changes. A suspected cause, pending on-device test. CSS revision 76.
