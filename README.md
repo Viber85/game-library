@@ -23,6 +23,59 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Test release 0.5.6-test.1 — Midnight Library and 11 sorting criteria
+
+**Left sidebar Library** now opens `/game-library/library`, our existing
+Midnight full-cover grid, instead of sending the user directly to Steam's
+native `/library` screen. The Home carousel and View More still work as
+before, using their existing game cards, SteamGridDB artwork, TabMaster
+tabs and UnifiedDeck Epic/GOG collections. The native Steam Library remains
+one click away through **Steam Library** on the grid header; we never patch
+or replace Valve's own `/library` route.
+
+**Sort** now opens a fully D-pad, A/B and touch-navigable Midnight menu,
+with 11 requested categories and 17 selectable direction variants:
+
+- Recently Played; Alphabetical A–Z / Z–A.
+- Most Played; Least Played; Never Played.
+- Recently Added, using the Steam account's `rt_purchased_time` (where
+  populated), not an invented install date.
+- Release Date, newest/oldest, using `rt_original_release_date` with
+  `rt_steam_release_date` as an alternate when available.
+- HowLongToBeat, shortest/longest using **Main + Extras only**
+  (`comp_plus`, provided in our HLTB response as `extras`).
+- ProtonDB rating, best/lowest (`Platinum > Gold > Silver > Bronze > Borked`).
+- Achievement completion, highest/lowest percentage.
+- Game Size, smallest/largest using real Steam `size_on_disk` bytes, for
+  entries whose installed size is available.
+
+**Random is deliberately excluded.** Installed still defaults to Recently
+Played and other tabs to A–Z. A manual choice is remembered separately for
+each tab during the plugin session, even between Home and Library.
+
+Native sorting fields are read from Steam's already-loaded `CAppOverview`.
+Some non-Steam shortcuts or older games do not expose purchase dates, release
+dates, install size or achievements. Missing values appear at the end in
+**both** sort directions, rather than silently fabricating values.
+
+For HLTB, ProtonDB and missing native achievement counts, the plugin
+requests metadata only when that corresponding sort is selected, reusing
+the existing cached sources. It displays an explicit **partial sorting**
+progress counter until all games in the tab have been checked. Requests are
+queued with low concurrency (HLTB one at a time) and cancelled when leaving
+the sort; this avoids flooding Steam or external services with hundreds of
+requests for a 400+ title library.
+
+**Verified source:** Steam's documented `CAppOverview` protobuf contains
+`rt_purchased_time`, `rt_original_release_date`,
+`rt_steam_release_date`, and `size_on_disk`:
+https://docs.rs/steam-vent-proto-steam/0.5.2/source/protos/steammessages_appoverview.proto
+
+No native Steam Library replacement, no input mapping or theme-global CSS
+changes. GitHub CI covers the true sort comparators, missing-data policy,
+version wiring and Decky route lifecycle. Real D-pad layout and metadata
+availability still need confirmation on the MSI Claw.
+
 ## Test release 0.5.5-test.2 — SteamGridDB SSL certificate and API error fix
 
 The 0.5.5-test.1 API key form could show **Cannot verify key. Check your
