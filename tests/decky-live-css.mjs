@@ -15,7 +15,7 @@ test("Actual Claw DOM activates preloaded CSS, not the unavailable Decky router 
   assert.ok(live.includes(".Panel:has(.DialogControlsSection)"),"Right content has a separate Panel");
   assert.ok(live.includes('[class*="eKmEXJCm_"]'),"Observed gray Field class token");
   assert.ok(live.includes("--glm-decky-observed-layout:1"),"CSS activation proof");
-  assert.doesNotMatch(live,/data-glm-decky-settings|window\.location|\/decky\/settings/,
+  assert.doesNotMatch(live.replace(/\/\*[\s\S]*?\*\//g,""),/data-glm-decky-settings|window\.location|\/decky\/settings/,
     "Actual CSS must not wait on a route marker");
   for(const color of ["#081425","#0a1b30","#0f2842","#163a5e","#123452","#1d527d"])
     assert.ok(live.includes(color),"Missing requested Midnight color "+color);
