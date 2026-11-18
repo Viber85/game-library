@@ -16,7 +16,7 @@ trap 'rm -rf "$stage"' EXIT
 
 dest="$stage/game-library"
 mkdir -p "$dest/dist"
-cp plugin.json main.py updates.py hltb.py protondb.py system_status.py package.json README.md "$dest/"
+cp plugin.json main.py updates.py hltb.py protondb.py steamgriddb.py system_status.py package.json README.md "$dest/"
 cp -R system-theme "$dest/system-theme"
 cp dist/index.js "$dest/dist/index.js"
 
@@ -33,6 +33,7 @@ unzip -Z1 "$output" | grep -qx 'game-library/main.py'
 unzip -Z1 "$output" | grep -qx 'game-library/updates.py'
 unzip -Z1 "$output" | grep -qx 'game-library/hltb.py'
 unzip -Z1 "$output" | grep -qx 'game-library/protondb.py'
+unzip -Z1 "$output" | grep -qx 'game-library/steamgriddb.py'
 unzip -Z1 "$output" | grep -qx 'game-library/system_status.py'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/shared.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/qam.css'
