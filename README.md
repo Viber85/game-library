@@ -23,6 +23,41 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Test release 0.5.4-test.1 — Midnight game-details refresh
+
+First real-CSS test of the darker **Game Details** look from the approved
+What Remains of Edith Finch concept. This is a styling-only update. It
+adds `system-theme/game-details-midnight.css` after our older detail CSS,
+using verified Steam game-page module names sourced from Decky's
+`static-classes.ts`, Unifideck's native play-row integration and
+established Steam CSS Loader themes. Steam's runtime CSS aliases are
+resolved for the header and activity text-entry modules.
+
+- Original game artwork, title/logo and videos remain untouched. A subtle
+  dark gradient uses Steam's existing header-gradient element. The
+  cinematic sunset scene in the concept was illustrative and is **not**
+  injected as fixed artwork for other games.
+- Play bar, primary Play button, menu/controller controls, Steam Cloud,
+  game sections and activity feed receive deeper blue surfaces, subtle
+  rounded borders and cyan focus effects. No change to button actions,
+  input/focus routing, dimensions, scrolling, or game metadata.
+- **HLTB for Deck** is styled using its verified `#hltb-for-deck`,
+  `.hltb-info`, `.hltb-gametime`, `.hltb-label` and
+  `.hltb-details-btn` elements, keeping all four real HLTB data values
+  and the external Details action unchanged. Other plugins not inspected
+  are not targeted.
+- Added class/source-based regression coverage and forced theme cache
+  refresh with CSS revision 81. **On-device visual validation remains
+  necessary:** upstream Steam updates rotate/obfuscate class names and can
+  change which modules are present.
+
+### Source checks
+
+- [Decky frontend native Steam class maps](https://github.com/SteamDeckHomebrew/decky-frontend-lib/blob/main/src/utils/static-classes.ts)
+- [Unifideck native Steam App Details integration](https://github.com/mubaraknumann/unifideck/blob/staging/docs/STEAM_UI_PATCHING_REFERENCE.md)
+- [Verified native Steam game CSS selectors in a CSS Loader theme](https://github.com/AikoMidori/steam-library/blob/master/css/GamePage.css)
+- [HLTB for Deck GameStats component](https://github.com/morwy/hltb-for-deck/blob/main/src/components/GameStats/GameStats.tsx)
+
 ## Release 0.5.3 — live SteamOS clock preference
 
 Version 0.5.2 read only the persisted Steam account configuration file,
