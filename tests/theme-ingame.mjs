@@ -42,15 +42,15 @@ test("Steam Input controller summary is native while its separate editor remains
     "controllerconfigurator_CurrentConfigurationButton",
     "controllerconfiguratorchooseconfiguration_ConfigurationButton",
   ])assert.ok(css.includes(anchor),"Editable settings remain themed: "+anchor);
-  assert.doesNotMatch(css,/background:linear-gradient\\(180deg,#0a1b30/,
+  assert.doesNotMatch(css,/background:linear-gradient\(180deg,#0a1b30/,
     "The formerly themed controller overview gradient is gone");
   assert.match(css,/background:#1d527d !important;/);
   assert.match(css,/box-shadow:inset 0 0 0 2px #63cfff !important;/);
-  assert.doesNotMatch(css,/(?:#GamepadUI_Full_Root|\\.BasicUI|\\bbody\\b|\\bhtml\\b)\\s*\\{/,
+  assert.doesNotMatch(css,/(?:#GamepadUI_Full_Root|\.BasicUI|\bbody\b|\bhtml\b)\s*\{/,
     "Global roots used for transient Steam popups must not be painted");
-  assert.doesNotMatch(css,/\\b(?:position|display|visibility|z-index|pointer-events|width|height|transform|filter)\\s*:/,
+  assert.doesNotMatch(css,/\b(?:position|display|visibility|z-index|pointer-events|width|height|transform|filter)\s*:/,
     "Controller diagram, mapping and action geometry remain native");
-  assert.doesNotMatch(css,/\\b(?:img|svg|video|canvas|path)\\s*(?:\\{|\\[|:)/,
+  assert.doesNotMatch(css,/\b(?:img|svg|video|canvas|path)\s*(?:\{|\[|:)/,
     "Steam Input artwork and native glyphs are not recolored");
 });
 
