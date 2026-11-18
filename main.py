@@ -81,8 +81,12 @@ def _builtin_theme_bundle(theme_id):
         "main": (
             "shared.css", "buttons.css", "settings.css", "settings-extras.css",
             "game-details.css", "game-details-extras.css", "downloads.css", "dialogs.css",
+            "steam-input.css",
         ),
-        "overlay": ("shared.css", "buttons.css", "menus.css", "qam.css", "dialogs.css"),
+        "overlay": (
+            "shared.css", "buttons.css", "menus.css", "running-menu.css",
+            "steam-input.css", "qam.css", "dialogs.css",
+        ),
     }
     result = {}
     for scope, files in scopes.items():
