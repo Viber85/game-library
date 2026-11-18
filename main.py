@@ -324,19 +324,42 @@ class Plugin:
 
     async def set_steamgriddb_key(self, key: str):
         if type(key) is not str:
-            return {"ok": False, "reason": "Key format invalid"}
+            return {"ok": False, "code": "invalid_format", "reason": "Key format invalid"}
         try:
             provider = _load_steamgriddb()
-            token = key.strip()
-            if not provider.valid_key(token):
-                return {"ok": False, "reason": "Key format invalid"}
-            if not await asyncio.to_thread(provider.verify_key, token):
-                return {"ok": False, "reason": "SteamGridDB rejected this API key"}
+        except (OSError, RuntimeError, ValueError):
+            return {"ok": False, "code": "plugin_error",
+                    "reason": "SteamGridDB backend unavailable. Reinstall plugin"}
+        token = key.strip()
+        if not provider.valid_key(token):
+            return {"ok": False, "code": "invalid_format", "reason": "Key format invalid"}
+        explanations = {
+            "invalid_key": "SteamGridDB rejected the API key (HTTP 401). Generate a new key",
+            "access_forbidden": "SteamGridDB refused API access (HTTP 403). Check permissions or service status",
+            "rate_limited": "SteamGridDB rate limit (HTTP 429). Try again later",
+            "api_not_found": "SteamGridDB API endpoint not found (HTTP 404)",
+            "provider_unavailable": "SteamGridDB server temporarily unavailable (HTTP 5xx)",
+            "api_http_error": "SteamGridDB returned an unexpected HTTP error",
+            "ssl_certificate": "SSL certificate verification failed. Check system date/time and Decky CA trust",
+            "timeout": "SteamGridDB connection timed out",
+            "connection": "Connection to SteamGridDB was interrupted",
+            "network": "Could not reach SteamGridDB. Check the network or DNS",
+            "invalid_response": "SteamGridDB response was not valid JSON",
+            "api_rejected": "SteamGridDB API rejected the verification request",
+            "unknown": "SteamGridDB verification failed",
+        }
+        try:
+            await asyncio.to_thread(provider.verify_key, token)
             saved = await asyncio.to_thread(provider.save_key,
                                               _steamgriddb_config_dir(), token)
-            return {"ok": bool(saved), "reason": "" if saved else "Unable to save key"}
+            return {"ok": bool(saved), "code": "" if saved else "save_failed",
+                    "reason": "" if saved else "Unable to save key"}
+        except provider.KeyVerificationError as error:
+            code = error.code if error.code in explanations else "unknown"
+            return {"ok": False, "code": code, "reason": explanations[code]}
         except (OSError, RuntimeError, ValueError):
-            return {"ok": False, "reason": "Cannot verify key. Check your connection"}
+            return {"ok": False, "code": "plugin_error",
+                    "reason": "SteamGridDB verification failed inside plugin"}
 
     async def clear_steamgriddb_key(self):
         return await asyncio.to_thread(_load_steamgriddb().delete_key,
