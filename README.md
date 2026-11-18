@@ -2,7 +2,7 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
-## Features in 0.2 development previews
+## Features
 
 - **Optional Steam Home replacement (enabled by default):** intercept Steam's /library/home route after Decky loads, so Game Library is used when entering Game Mode. Disable in Quick Access to restore native Home; the default preference persists across reboots.
 - **Animated focus-expand sidebar (v0.4.0):** the icon-only rail expands from 76 px to 218 px when controller or keyboard focus enters it. Inline labels fade in, and the right dashboard moves with the flex layout (no overlay). D-pad Up/Down retains the expanded rail; D-pad Right/B returns to the last selected game and collapses the rail. The responsive narrow layout uses 66 px / 204 px, honors reduced-motion preferences, and leaves Steam's own sidebar/QAM untouched.
@@ -22,6 +22,22 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - The native SteamOS status bar owns the top of the screen: the duplicate internal header is hidden and the dashboard is inset below it; the featured art panel has no outlined card border.
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
+
+## Release 0.5.0 — native Steam Input layout overview
+
+The Steam Input controller layout overview (controller diagram, mapped button
+cards and the **Controller settings** action, as pictured for Mad Max) now
+uses Valve's default appearance instead of the Midnight palette. The
+`controllerconfiguratorsummary_*` overrides have been removed from the
+built-in stylesheet in both main Game Mode and the overlay, and the shared
+button/field rules explicitly exclude descendants of that screen. Steam's
+controller graphic, bindings, controls and navigation remain untouched.
+
+Midnight remains active on the Game Library dashboard, SteamOS and Decky
+Settings, Steam Menu, QAM, and other themed pages. The **separate editable**
+Steam Input controller configurator and layout picker retain their prior theme
+styles. This is the first non-test release after v0.4.21-test.27; the
+stylesheet marker increments to 79 to discard older injected theme CSS.
 
 ## Built-in Midnight theme (default, no CSS Loader)
 
