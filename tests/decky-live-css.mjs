@@ -5,7 +5,7 @@ import vm from "node:vm";
 import {THEME_PROBE_SCRIPT,parseThemeProbe} from "../src/themeProbe.ts";
 
 const css=readFileSync(new URL("../system-theme/decky-settings.css",import.meta.url),"utf8");
-const live=css.slice(css.indexOf("/* v0.4.21-test.18"));
+const live=css.slice(css.indexOf("/* v0.4.21-test.18"),css.indexOf("/* test.19 — stable left rail"));
 
 test("Actual Claw DOM activates preloaded CSS, not the unavailable Decky router URL",()=>{
   assert.ok(live.length>1900,"Missing test.18 native CSS block");
@@ -44,14 +44,14 @@ test("Real Decky DOM and CSS are detected even if browser location never changes
       if(q.includes(".BasicUI"))return root;
       return null;
     },
-    querySelectorAll:q=>q==="style"?[{textContent:"--game-library-midnight-active: 69;"}]:
+    querySelectorAll:q=>q==="style"?[{textContent:"--game-library-midnight-active: 70;"}]:
       q.includes("eKmEXJCm_")?[field]:[],
   };
   const data=vm.runInNewContext(THEME_PROBE_SCRIPT,{
     document,window:{location:{pathname:"/gamepadui",hash:""}},
     getComputedStyle:el=>({
       backgroundColor:"rgb(15, 40, 66)",backgroundImage:"none",
-      getPropertyValue:k=>k==="--glm-decky-observed-layout"&&el===railPanel?"1":"69"
+      getPropertyValue:k=>k==="--glm-decky-observed-layout"&&el===railPanel?"1":"70"
     }),
     Math,Date,JSON,Array,Map,Set,Boolean,String,Number
   });
@@ -61,4 +61,17 @@ test("Real Decky DOM and CSS are detected even if browser location never changes
   assert.equal(info?.deckyLiveCssMatched,true);
   assert.equal(info?.deckyFieldRows,1);
   assert.equal(info?.deckyFieldColor,"rgb(15, 40, 66)");
+});
+
+test("Decky left rail stays navy when right pane unmounts between tabs",()=>{
+  const selector=".BasicUI .Panel:has(> .PageListColumn)";
+  const stable=css.slice(css.indexOf("/* test.19 — stable left rail")).replace(/\/\*[\s\S]*?\*\//g,"");
+  assert.ok(stable.includes(selector),"Always match the mounted rail, not right pane");
+  assert.ok(stable.includes("> .PageListColumn"));
+  assert.ok(stable.includes("background:#081425 !important"));
+  assert.ok(stable.includes("transition:none !important"));
+  assert.ok(stable.includes("animation:none !important"));
+  assert.doesNotMatch(stable,/DialogControlsSection|data-glm-decky-settings|\/decky\/settings/,
+    "Rail fallback must not depend on right-side DOM, marker or URL");
+  assert.doesNotMatch(stable,/\b(?:width|height|padding|margin|position|display|overflow|pointer-events|transform|z-index)\s*:/);
 });

@@ -87,6 +87,26 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.19 — eliminate bright-blue left rail flash in Decky Settings
+(device preview):** v0.4.21-test.18 was confirmed working on the MSI
+Claw, including all four Decky Loader Settings pages and direct CSS
+matching. A short light-blue rail flash remained when changing pages.
+Cause: the original left rail rule was conditioned on the RIGHT
+`DialogControlsSection`, which Steam may briefly unmount while
+switching Decky tabs. During that interval the `:has()` prerequisite
+failed, exposing the native light-blue rail. Append a permanent,
+right-pane-independent CSS rule scoped strictly to the actual mounted
+`.BasicUI .Panel:has(> .PageListColumn)` and its direct
+`PageListColumn` child, both already observed on the device.
+Set only navy `#081425` background, remove inherited background
+images and disable temporary rail background transitions/animations.
+The right pane, item focus, selected row colors, controls, QAM,
+Power, Volume and layout are all unchanged. The fallback uses the
+same dark rail color as the existing Steam Settings theme.
+CSS marker revision **70** invalidates prior cached styling.
+Regression test verifies rail isolation from right-hand DOM; verify
+visually by switching Decky pages on the physical device.
+
 **v0.4.21-test.18 — direct Midnight CSS for observed Decky CEF DOM
 (device preview):** The actual MSI Claw test.17 CEF screenshots show
 the Decky route marker as **Not detected** while the Steam CEF theme is

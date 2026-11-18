@@ -208,3 +208,21 @@ html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
   .BasicUI .Panel:has(> .PageListColumn) {
   --glm-decky-observed-layout:1;
 }
+
+/* test.19 — stable left rail during Decky SidebarNavigation transitions.
+ * On MSI Claw test.18 the two-column selector below is correct once the
+ * page settles, but .DialogControlsSection temporarily unmounts between
+ * General / Plugins / Developer / Testing. That makes its :has() condition
+ * false and briefly restores Valve's light-blue rail.
+ * The real left rail remains mounted as Panel > PageListColumn throughout.
+ * Paint ONLY that rail independently of right content; no DOM watcher,
+ * timer, geometry or global main UI changes. The same dark color is already
+ * used by our Steam native Settings left rail. */
+.BasicUI .Panel:has(> .PageListColumn),
+.BasicUI .Panel:has(> .PageListColumn) > .PageListColumn {
+  background:#081425 !important;
+  background-color:#081425 !important;
+  background-image:none !important;
+  transition:none !important;
+  animation:none !important;
+}
