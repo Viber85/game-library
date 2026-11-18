@@ -36,7 +36,8 @@ function assertBalancedCss(source) {
 test("full Midnight theme CSS is syntactically balanced",()=>{
   for(const name of ["shared.css","settings.css","settings-extras.css",
     "game-details.css","game-details-extras.css","buttons.css",
-    "downloads.css","dialogs.css","qam.css","menus.css"])
+    "downloads.css","dialogs.css","qam.css","menus.css",
+    "running-menu.css","steam-input.css"])
     assertBalancedCss(css(name));
 });
 
@@ -266,6 +267,6 @@ test("Midnight palette has high contrast for Settings and notes",()=>{
 
 test("0.4.2 forces replacement of earlier cached style revision",()=>{
   const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"51"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"52"/);
   assert.match(runtime,/CLEANUP_SCRIPT/);
 });
