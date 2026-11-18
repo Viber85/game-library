@@ -1,3 +1,6 @@
+import {THEME_FOCUS_TRACE_SCRIPT,parseThemeFocusFrame,type ThemeFocusFrame} from "./themeFocusTrace.ts";
+export type {ThemeFocusFrame} from "./themeFocusTrace.ts";
+
 /** Read-only CEF document inspection. The string is executed inside Steam's
  * actual browser tab by Decky's executeInTab API, NOT inside the Decky plugin
  * React iframe. It reads only CSS classes and computed colors, never text,
@@ -227,12 +230,13 @@ export type ThemeAudit={
   latestGame:ThemeAuditSample|null;
   latestOther:ThemeAuditSample|null;
   recentDomEvidence:ThemeDomEvidence[];
+  focusTrace:ThemeFocusFrame[];
   sampleTicks:number;
   lastScanAt:number;
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "17";
+const AUDIT_REVISION = "18";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -575,12 +579,20 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   if (state) {
     state.observer?.disconnect?.();
     if (state.onScroll) document.removeEventListener?.('scroll',state.onScroll,true);
+    if (state.onFocus) {
+      document.removeEventListener?.('focusin',state.onFocus,true);
+      document.removeEventListener?.('focusout',state.onFocus,true);
+    }
+    if (state.focusFrameId != null && typeof cancelAnimationFrame === 'function')
+      cancelAnimationFrame(state.focusFrameId);
     if (state.frameId != null && typeof cancelAnimationFrame === 'function')
       cancelAnimationFrame(state.frameId);
     if (state.intervalId != null) clearInterval(state.intervalId);
   }
   state = { revision, intervalId: null, observer: null, frameId: null,
-    onScroll:null, latestSettings: null, latestGame: null, latestOther: null,
+    focusFrameId:null,onFocus:null,lastFocusCaptureAt:0,
+    focusTrace:[],onScroll:null,
+    latestSettings:null,latestGame:null,latestOther:null,
     recentDomEvidence:[],lastDomSurveyAt:0,sampleTicks:0,lastScanAt:0 };
   window[key] = state;
   const sample = () => {
@@ -617,6 +629,48 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       /* Steam may be rebuilding its React tree; retry on the next tick. */
     }
   };
+  // Capture the REAL gamepad focus transition rather than periodically
+  // sampling a settled Settings page. Steam's short bright-blue animation
+  // can disappear in <900ms, between normal CEF diagnostic snapshots.
+  const railSelector='.PageListColumn,[class*="gamepadpagedsettings_PagedSettingsDialog_PageListColumn"],[data-glm-settings-sidebar]';
+  const belongsToSettingsRail=(node)=>{
+    try{return !!node?.closest?.(railSelector);}catch{return false;}
+  };
+  const focusCapture=(reason)=>{
+    if(window[key]!==state)return;
+    const at=Date.now();
+    if(at-state.lastFocusCaptureAt<8)return;
+    state.lastFocusCaptureAt=at;
+    try{
+      const observation=JSON.parse(${THEME_FOCUS_TRACE_SCRIPT});
+      if(!observation?.items?.length)return;
+      const next={...observation,reason};
+      const previous=state.focusTrace[0];
+      const sign=x=>x.items.map(i=>i.role+'|'+i.layer+'|'+i.cls+'|'+i.bg+'|'+i.image+'|'+i.shadow).join(';');
+      if(previous?.reason===reason&&sign(previous)===sign(next))return;
+      state.focusTrace=[next,...state.focusTrace].slice(0,28);
+    }catch{}
+  };
+  let remainingFocusFrames=0;
+  const nextFocusFrame=()=>{
+    state.focusFrameId=null;
+    if(window[key]!==state)return;
+    focusCapture('frame');
+    remainingFocusFrames--;
+    if(remainingFocusFrames>0&&typeof requestAnimationFrame==='function')
+      state.focusFrameId=requestAnimationFrame(nextFocusFrame);
+  };
+  const traceFocus=(reason)=>{
+    focusCapture(reason); // same task / first native controller focus paint
+    remainingFocusFrames=5;
+    if(state.focusFrameId==null && typeof requestAnimationFrame==='function')
+      state.focusFrameId=requestAnimationFrame(nextFocusFrame);
+  };
+  state.onFocus=(event)=>{
+    if(belongsToSettingsRail(event?.target))traceFocus(event.type==='focusout'?'focusout':'focusin');
+  };
+  document.addEventListener?.('focusin',state.onFocus,true);
+  document.addEventListener?.('focusout',state.onFocus,true);
   // Steam reuses mounted Settings rows and often changes class, style and
   // aria state WITHOUT inserting nodes. Track these native changes too so
   // the gray flash does not wait for the 5-second safety scan. Our own
@@ -642,8 +696,14 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       // Apply palette markers immediately, then re-check on the next frame
       // only for layouts Steam finishes asynchronously.
       let lastFastScan=0;
-      state.observer=new MutationObserver(()=>{
+      state.observer=new MutationObserver((records)=>{
         if(window[key]!==state)return;
+        // React may update focus classes/ARIA without firing DOM focusin.
+        // Collect the immediate computed paint and five next frames.
+        if(Array.isArray(records)&&records.some(entry=>
+          (entry.type==='attributes' || entry.type==='childList') &&
+          belongsToSettingsRail(entry.target)))
+          traceFocus('mutation');
         const now=Date.now();
         if(now-lastFastScan>=32){
           lastFastScan=now;
@@ -689,6 +749,7 @@ export const THEME_AUDIT_READ_SCRIPT = `(() => {
     latestGame: state?.latestGame || null,
     latestOther: state?.latestOther || null,
     recentDomEvidence:state?.recentDomEvidence || [],
+    focusTrace:state?.focusTrace || [],
     sampleTicks: state?.sampleTicks || 0,
     lastScanAt: state?.lastScanAt || 0
   });
@@ -700,6 +761,12 @@ export const THEME_AUDIT_REMOVE_SCRIPT = `(() => {
   if (state) {
     state.observer?.disconnect?.();
     if(state.onScroll)document.removeEventListener?.('scroll',state.onScroll,true);
+    if(state.onFocus){
+      document.removeEventListener?.('focusin',state.onFocus,true);
+      document.removeEventListener?.('focusout',state.onFocus,true);
+    }
+    if(state.focusFrameId!=null && typeof cancelAnimationFrame==='function')
+      cancelAnimationFrame(state.focusFrameId);
     if(state.frameId!=null && typeof cancelAnimationFrame==='function')
       cancelAnimationFrame(state.frameId);
     if(state.intervalId!=null)clearInterval(state.intervalId);
@@ -739,6 +806,11 @@ export function parseThemeAudit(value:unknown):ThemeAudit|null {
     recentDomEvidence:Array.isArray(obj.recentDomEvidence)?
       obj.recentDomEvidence.slice(0,8).flatMap(entry=>{
         const parsed=parseThemeDomEvidence(entry);
+        return parsed?[parsed]:[];
+      }):[],
+    focusTrace:Array.isArray(obj.focusTrace)?
+      obj.focusTrace.slice(0,28).flatMap(entry=>{
+        const parsed=parseThemeFocusFrame(entry);
         return parsed?[parsed]:[];
       }):[],
     sampleTicks: Number.isSafeInteger(obj.sampleTicks) ? Math.max(0,Number(obj.sampleTicks)) : 0,

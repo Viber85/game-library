@@ -87,6 +87,33 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.23 — controller focus transition CEF diagnostic
+(device diagnostic):** The user confirmed the brief brighter-blue flash
+persists in BOTH Steam Settings and Decky Settings using the D-pad or
+left analog, but NOT on touchscreen. Prior CSS-only attempts could not
+identify the actual painted layer. Existing CEF color observations
+sampled every 900ms, missing this short transition. Add a bounded,
+event-driven **focus trace** to the existing main Steam CEF watcher:
+listen to native focusin/focusout and class/style/aria mutations inside
+the verified Settings `PageListColumn`, immediately record computed
+background color/image category, shadow, animation name, transition
+duration and CSS class for focused row, parents, relevant hit-test
+layers, plus their `::before` and `::after` pseudo-elements. Then
+capture five subsequent animation frames to catch transient colors.
+Retain at most 28 recent snapshots in volatile CEF memory. Read them
+using the existing **Read CEF diagnostics (no reload)**, without
+resetting the theme. The Appearance panel displays the latest frames
+and offers **Copy gamepad focus transition trace**. The trace does not
+read text, input values, network names, URLs or game/plugin names;
+only bounded class names and computed paint metadata. No changes
+to existing CSS, Steam/Decky focus colors, QAM, Power, Volume,
+controller handling or layout in this diagnostic build.
+Watcher revision **18** and marker revision **74** install the tracer.
+Tests cover pseudo-layer sampling, privacy, mutation/animation-frame
+capture, cleanup and packaging. Once real MSI Claw focus transition
+frames are captured we can make a targeted fix based on measured
+elements rather than issuing another speculative CSS patch.
+
 **v0.4.21-test.22 — shared native Steam/Decky Settings gamepad focus
 (device preview):** User determined the original left navigation flash
 occurs only when using D-pad or left analog to move through menu items;
