@@ -50,6 +50,8 @@ const MODULE_ANCHORS:Record<string,readonly string[]> = {
   appdetailsnotessection:["NoteLink","NotesSection","NoteBody"],
   // Steam's in-game Main Menu and Steam Input live in lazy-loaded CSS modules.
   // Resolve hashes on each theme scan; these may be absent on Home/QAM.
+  mainmenu:["MainMenu","Item","ItemLabel"],
+  quickaccessmenu:["Tabs","Tab","TabContentColumn"],
   mainmenuapprunning:["MainMenuAppRunning","NavigationColumn","AppColumn"],
   controllerconfiguratorsummary:["ControllerConfiguratorSummary","ControlsListSection","BottomControlsSections"],
   controllerconfigurator:["ControllerConfiguratorMain","TopSection","BottomSection"],
