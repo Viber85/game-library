@@ -46,7 +46,13 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/volume.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/power-menu.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings-focus.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings-special.css'
-unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq '[data-glm-settings-page="customization"]'
+# No brittle Steam route gate: the watcher identifies real painted Settings surfaces.
+unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq '[data-glm-settings-special-row]'
+if unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq '[data-glm-settings-page='; then
+  echo "Special Settings cards must not depend on Steam's route URL" >&2
+  exit 1
+fi
+unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq '[role="radio"]'
 unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq 'background:#163a5e !important'
 unzip -p "$output" 'game-library/main.py' | grep -Fq '"settings-special.css", "settings-focus.css"'
 unzip -p "$output" 'game-library/system-theme/settings-focus.css' | grep -Fq '[data-glm-settings-row]'
