@@ -323,11 +323,20 @@ class Plugin:
             return {"enabled": False, "has_key": False}
 
     async def set_steamgriddb_key(self, key: str):
-        if type(key) is not str or not _load_steamgriddb().valid_key(key.strip()):
+        if type(key) is not str:
             return {"ok": False, "reason": "Key format invalid"}
-        saved = await asyncio.to_thread(_load_steamgriddb().save_key,
-                                          _steamgriddb_config_dir(), key.strip())
-        return {"ok": bool(saved), "reason": "" if saved else "Unable to save key"}
+        try:
+            provider = _load_steamgriddb()
+            token = key.strip()
+            if not provider.valid_key(token):
+                return {"ok": False, "reason": "Key format invalid"}
+            if not await asyncio.to_thread(provider.verify_key, token):
+                return {"ok": False, "reason": "SteamGridDB rejected this API key"}
+            saved = await asyncio.to_thread(provider.save_key,
+                                              _steamgriddb_config_dir(), token)
+            return {"ok": bool(saved), "reason": "" if saved else "Unable to save key"}
+        except (OSError, RuntimeError, ValueError):
+            return {"ok": False, "reason": "Cannot verify key. Check your connection"}
 
     async def clear_steamgriddb_key(self):
         return await asyncio.to_thread(_load_steamgriddb().delete_key,
