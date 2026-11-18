@@ -10,6 +10,8 @@ export type ThemeProbe={
   settingsRoots:number;
   fieldRows:number;
   networkRows:number;
+  specialSettingsRows:number;
+  specialSettingsRowColor:string;
   gameRoots:number;
   gameSections:number;
   fieldColor:string;
@@ -31,6 +33,8 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const settings = '[class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"],[class*="pagedsettings_PagedSettingsDialog_PageContent"],[data-glm-settings-root]';
   const fields = '[class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"],[data-glm-settings-row]';
   const networks = '[class*="networksettings_"],[class*="wifisettings_"],[class*="connectionsettings_"],[class*="wirelesssettings_"]';
+  // A count and computed color only — never read any network names or file labels.
+  const specialRow=document.querySelector('[data-glm-settings-special-row]');
   const games = '[class*="appdetails_Container"],[class*="appdetails_ScrollContainer"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]';
   const sections = '[class*="appdetailssection_"],[class*="appdetailsnotessection_"],[class*="appdetailsmediasection_"]';
   // First locate the actual native Settings root, then inspect a row inside
@@ -95,6 +99,8 @@ export const THEME_PROBE_SCRIPT=`(() => {
     settingsRoots: count(settings),
     fieldRows: count(fields),
     networkRows: count(networks),
+    specialSettingsRows: count('[data-glm-settings-special-row]'),
+    specialSettingsRowColor: specialRow?getComputedStyle(specialRow).backgroundColor:'',
     gameRoots: count(games),
     gameSections: count(sections),
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
@@ -120,6 +126,9 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     settingsRoots:integer(obj.settingsRoots),
     fieldRows:integer(obj.fieldRows),
     networkRows:integer(obj.networkRows),
+    specialSettingsRows:integer(obj.specialSettingsRows),
+    specialSettingsRowColor:typeof obj.specialSettingsRowColor==='string'?
+      obj.specialSettingsRowColor.slice(0,60):'',
     gameRoots:integer(obj.gameRoots),
     gameSections:integer(obj.gameSections),
     fieldColor:typeof obj.fieldColor==="string"?obj.fieldColor.slice(0,60):"",
@@ -164,7 +173,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "11";
+const AUDIT_REVISION = "12";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
