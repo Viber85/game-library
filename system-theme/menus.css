@@ -8,19 +8,43 @@
   color:var(--glm-text) !important;
 }
 #MainNavMenuContainer {border-right:1px solid var(--glm-border) !important;}
-#MainNavMenuContainer [role="menuitem"] {
+/* Keep 12px breathing room on both sides of each Steam-menu item.
+ * Without this gutter, Steam clips the glowing outline against the left
+ * scroll panel, leaving only its narrow blue selection strip visible. */
+#MainNavMenuContainer :is([role="menuitem"],
+  .mainmenu_Item_2w9Tp,
+  [class*="mainmenu_Item_"]) {
+  box-sizing:border-box !important;
+  margin-inline:12px !important;
+  width:calc(100% - 24px) !important;
+  border:0 !important;
+  border-radius:12px !important;
   background:transparent !important;
   color:var(--glm-text) !important;
-  border-left:3px solid transparent !important;
-  border-radius:7px !important;
+  box-shadow:none !important;
+  outline:none !important;
+  background-clip:padding-box;
 }
-#MainNavMenuContainer [role="menuitem"]:is(.gpfocus,.gpfocuswithin),
-#MainNavMenuContainer [role="menuitem"][aria-selected="true"] {
-  background:linear-gradient(90deg,#174875,#112b4a) !important;
-  border-left-color:var(--glm-accent) !important;
-  color:#fff !important;
-  box-shadow:inset 0 0 0 1px rgba(75,193,255,.42),
-    0 0 13px rgba(32,164,255,.26) !important;
+/* The current page may retain its unobtrusive active marker. Selection
+ * alone must not look as if it has gamepad focus. */
+#MainNavMenuContainer :is([role="menuitem"],
+  .mainmenu_Item_2w9Tp,
+  [class*="mainmenu_Item_"]):is([aria-selected="true"],.mainmenu_Active_10bq5) {
+  background:rgba(30,78,120,.32) !important;
+  box-shadow:none !important;
+}
+/* Controller/keyboard focus: same cyan ring plus soft blue halo as the
+ * Game Library rail. Inset ring remains visible on narrow SteamOS screens. */
+#MainNavMenuContainer :is([role="menuitem"],
+  .mainmenu_Item_2w9Tp,
+  [class*="mainmenu_Item_"]):is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+  background:linear-gradient(140deg,#185488,#083058) !important;
+  color:#f3f8ff !important;
+  box-shadow:inset 0 0 0 2px #63cfff,
+    inset 0 0 9px rgba(58,195,255,.32),
+    0 0 15px rgba(3,157,255,.70) !important;
+  outline:none !important;
+  animation:none !important;
 }
 .mainmenuapprunning_NavigationMenuItem_1G0K4.mainmenuapprunning_Active_1jG8i>div:first-child {
   background:var(--glm-accent) !important;
