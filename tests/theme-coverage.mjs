@@ -52,19 +52,29 @@ test("Steam root stays transparent for volume and achievement popups",()=>{
   assert.ok(css("settings-extras.css").includes("[data-glm-settings-main]"));
 });
 
-test("QAM focused icons match library rail without a clipped outer shadow",()=>{
+test("QAM focuses native rail icons inside a wider protected gutter",()=>{
   const qam=stripCssComments(css("qam.css"));
-  assert.ok(qam.includes('#QuickAccess-Menu [role="tab"]'),"Accessible tab scope");
-  assert.ok(qam.includes(".quickaccessmenu_Tab_1S76C"),"Native QAM class");
-  assert.ok(qam.includes("border-radius:12px !important"),"Rail's rounded-square shape");
+  assert.ok(qam.includes("#QuickAccess-Menu :is(.quickaccessmenu_Tabs_3Ag1w"),
+    "Theme only the native QAM icon rail, not tab controls inside Decky plugins");
+  assert.ok(qam.includes("width:86px !important"),"Icon column extends to 86px");
+  assert.ok(qam.includes("min-width:86px !important"),"Rail cannot collapse around icons");
+  assert.ok(qam.includes("flex:0 0 86px !important"),"Rail reserves its own width");
+  assert.ok(qam.includes("padding-inline:8px !important"),"Give edge halos room");
+  assert.ok(qam.includes("margin-inline:6px !important"),"Keep the glow inside the icon column");
+  assert.ok(qam.includes("width:calc(100% - 12px) !important"),
+    "Each tab stays inside available width instead of overflowing");
+  assert.ok(qam.includes("border-radius:12px !important"),"Match library rail corners");
   assert.ok(qam.includes("background:linear-gradient(140deg,#185488,#083058)"),
-    "Same focused background as library rail");
-  assert.ok(qam.includes("box-shadow:inset 0 0 0 2px #63cfff,inset 4px 0 0 #4ac1ff"),
-    "Focus ring fits completely inside its tab");
-  assert.ok(qam.includes("aria-selected=\"true\""),"Selected and focused remain distinct");
-  assert.doesNotMatch(qam,/0 0 0 2px var\(--glm-accent\)/,
-    "Never draw the QAM tab border outside clipped parent");
-  assert.ok(qam.includes(".gpfocuswithin"),"QAM focus-within is supported");
+    "Focused background matches library navigation");
+  assert.ok(qam.includes("box-shadow:inset 0 0 0 2px #63cfff,"),
+    "Cyan border stays visible even if a parent clips the halo");
+  assert.ok(qam.includes("0 0 12px rgba(3,157,255,.68)"),
+    "Add a softer outer glow like Game Library");
+  assert.ok(qam.includes("aria-selected=\"true\""),"Active and focused are separate");
+  assert.ok(qam.includes(".gpfocuswithin"),"Steam gamepad focus-within supported");
+  assert.doesNotMatch(qam,/:hover/, "Idle cursor hover must not mimic controller focus");
+  assert.doesNotMatch(qam,/#GamepadUI_Full_Root[^\n]*\s*\{/,
+    "Never paint a full-screen CEF background behind game notifications");
 });
 
 test("All Settings categories use a flat canvas with no overlay-wide paint",()=>{
