@@ -9,7 +9,7 @@
     "test:navigation": "node --test tests/grid-navigation.mjs tests/tab-source.mjs tests/library-inventory.mjs tests/library-diagnostics.mjs tests/tab-source-refresh.mjs",
     "test:launch": "node --test tests/launch-game.mjs",
     "test:achievements": "node --test tests/achievements.mjs",
-    "test:theme": "node --test tests/theme-tabs.mjs",
+    "test:theme": "node --test tests/theme-tabs.mjs tests/theme-ingame.mjs",
     "test:css-aliases": "node --test tests/theme-css-aliases.mjs",
     "test:sidebar": "node --test tests/sidebar-expand.mjs tests/card-focus.mjs tests/running-game.mjs",
     "test:coverage": "node --test tests/theme-coverage.mjs",
