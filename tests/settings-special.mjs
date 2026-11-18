@@ -1,50 +1,52 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
-import {
-  STEAM_SETTINGS_MARK_SCRIPT,THEME_AUDIT_REMOVE_SCRIPT
-} from "../src/themeProbe.ts";
+import {STEAM_SETTINGS_MARK_SCRIPT,THEME_AUDIT_REMOVE_SCRIPT}
+  from "../src/themeProbe.ts";
 
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const css=read("system-theme/settings-special.css").replace(/\/\*[\s\S]*?\*\//g,"");
 const bundle=read("main.py");
 
-test("Wi-Fi networks, Keyboard layouts and Customization cards have native-sized Midnight fills",()=>{
-  for(const page of ["internet","keyboard","customization"]){
-    assert.ok(css.includes('[data-glm-settings-page="'+page+'"]'),page);
-    assert.ok(STEAM_SETTINGS_MARK_SCRIPT.includes("'"+page+"'"),page+" route marker");
-  }
-  assert.match(css,/background:#0f2842 !important;/,"Idle rows are deep blue");
-  assert.match(css,/background:#163a5e !important;/,"Focused rows are lighter blue");
-  assert.match(css,/animation-name:none !important;/,"Native Steam focus animation cannot repaint gray");
-  for(const key of ["data-glm-settings-special-row","data-glm-settings-special-part"])
-    assert.ok(css.includes(key),key);
+test("Midnight rows now have no brittle route gate and no-outline blue focus",()=>{
+  assert.match(css,/html\[data-glm-settings-root\]/);
+  assert.match(css,/data-glm-settings-main/);
+  assert.match(css,/data-glm-settings-special-row/);
+  assert.doesNotMatch(css,/data-glm-settings-page/,
+    "The old route-specific CSS gate is the primary reason all three screens stayed gray");
+  assert.match(css,/background:#0f2842 !important;/,"Dark navy idle card");
+  assert.match(css,/background:#163a5e !important;/,"Lighter blue selected card");
+  assert.match(css,/animation-name:none !important;/,
+    "Prevent native Steam focus animation repainting gray over blue");
+  assert.match(css,/gamepaddialog_Field/,"Fallback for readable/minified native Field module");
+  assert.match(css,/:not\(:has\(/,"Interactive toggles and sliders must remain unchanged");
+  assert.match(css,/\[role="radio"\]/,"Keyboard layout rows included");
+  assert.doesNotMatch(css,/#QuickAccess-Menu|#GamepadUI_Full_Root|\.BasicUIContextMenu/);
   for(const [,selector,decl] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
-    assert.match(selector,/html\[data-glm-settings-root\]/);
-    assert.match(selector,/data-glm-settings-page/);
+    assert.match(selector,/data-glm-settings-root|gamepadpagedsettings_PagedSettingsDialog_PageContent/,
+      "Every rule must be scoped to the Steam Settings page");
     assert.doesNotMatch(decl,/\b(?:width|height|margin|padding|transform|position|display|visibility|pointer-events|z-index|overflow|border-width|border-style|filter|opacity)\s*:/,
-      "Do not change Steam layout, focus order, or preview images");
+      "Never change Steam geometry, controls, artwork, or input");
   }
-  assert.doesNotMatch(css,/#QuickAccess-Menu|#GamepadUI_Full_Root|\.BasicUIContextMenu|:root\s*\{/);
-  assert.doesNotMatch(css,/box-shadow:inset|border:[0-9]+px/,"No glow or focus ring");
+  assert.doesNotMatch(css,/box-shadow:inset|border:[0-9]+px/,"No glow or focus outline");
 });
 
-test("Visual-only watcher marks wide focusables, never switches/sliders or private strings",()=>{
+test("Visual watcher finds broad painted gray surfaces with no route or role",()=>{
   const source=STEAM_SETTINGS_MARK_SCRIPT;
-  assert.match(source,/getBoundingClientRect/);
-  assert.match(source,/role==='radio'/);
-  assert.match(source,/hasControl/);
-  assert.match(source,/data-glm-settings-page/);
-  assert.match(source,/data-glm-settings-special-row/);
-  assert.match(source,/data-glm-settings-special-part/);
-  assert.match(source,/settingsPage && mainPane\?\.querySelectorAll/);
+  for(const needle of [
+    "mainPane?.querySelectorAll","graySurface","data-glm-settings-special-row",
+    "data-glm-settings-special-part","getComputedStyle",
+    "getBoundingClientRect","hasControl"
+  ])assert.ok(source.includes(needle),needle);
+  assert.match(source,/\[class\],\[role="button"\],\[role="radio"\]/);
+  assert.doesNotMatch(source,/if\(settingsPage && mainPane\?\.querySelectorAll\)/);
+  assert.match(source,/url\\\(/,"Avoid painting media thumbnails and CSS background assets");
   assert.doesNotMatch(source,/\.innerText|\.textContent|networkName|\bssid\b|localStorage|sessionStorage|\.value\b/i);
   assert.match(THEME_AUDIT_REMOVE_SCRIPT,/data-glm-settings-special-row/);
   assert.match(THEME_AUDIT_REMOVE_SCRIPT,/data-glm-settings-special-part/);
-  assert.match(THEME_AUDIT_REMOVE_SCRIPT,/data-glm-settings-page/);
 });
 
-test("Special styling loads only in Steam main, before no-outline focus patch",()=>{
+test("Special styling is main-window-only, loaded before Settings focus cleanup",()=>{
   const main=bundle.slice(bundle.indexOf('"main": ('),bundle.indexOf('"overlay": ('));
   const overlay=bundle.slice(bundle.indexOf('"overlay": ('),bundle.indexOf('    result = {}'));
   assert.match(main,/"settings-special.css"/);
@@ -81,7 +83,7 @@ test("Settings special row markers update across routes and disappear on exit",a
     const node=el(58,70+i*45,195,37);node.parentElement=side;return node;
   });
   const rows=Array.from({length:5},(_,i)=>{
-    const node=el(327,170+i*85,620,51,i===0?"radio":"button");
+    const node=el(327,170+i*85,620,51,i===3?"":i===0?"radio":"button");
     node.parentElement=main;return node;
   });
   const part=el(330,170,610,49);part.parentElement=rows[0];
@@ -117,6 +119,8 @@ test("Settings special row markers update across routes and disappear on exit",a
   assert.equal(run(),true);
   assert.equal(html.getAttribute("data-glm-settings-page"),"internet");
   assert.equal(rows[0].hasAttribute("data-glm-settings-special-row"),true);
+  assert.equal(rows[3].hasAttribute("data-glm-settings-special-row"),true,
+    "Native Customization movie cards may be ordinary unlabeled DIVs");
   assert.equal(part.hasAttribute("data-glm-settings-special-part"),true);
   assert.equal(toggle.hasAttribute("data-glm-settings-special-row"),false,
     "A full-width row with a functional switch must not be recolored");
@@ -126,6 +130,12 @@ test("Settings special row markers update across routes and disappear on exit",a
   window.location.pathname="/settings/customization";
   assert.equal(run(),true);
   assert.equal(html.getAttribute("data-glm-settings-page"),"customization");
+  window.location.pathname="/unrelated-steam-route";
+  assert.equal(run(),true,"Settings geometry must win even if Steam routes are unconventional");
+  assert.equal(rows[0].hasAttribute("data-glm-settings-special-row"),true,
+    "No category-specific route is required to theme native gray Settings rows");
+  assert.equal(html.hasAttribute("data-glm-settings-page"),false,
+    "Unknown path has no category marker but the theme still applies");
   visible=false;window.location.pathname="/library/home";
   assert.equal(run(),false);
   assert.equal(html.hasAttribute("data-glm-settings-page"),false);
