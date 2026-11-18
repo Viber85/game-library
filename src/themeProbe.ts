@@ -173,7 +173,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "13";
+const AUDIT_REVISION = "14";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -189,7 +189,8 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     'data-glm-settings-navitem','data-glm-settings-row-part',
     'data-glm-settings-sidebar','data-glm-settings-main',
     'data-glm-settings-surface','data-glm-settings-page',
-    'data-glm-settings-special-row','data-glm-settings-special-part'];
+    'data-glm-settings-special-row','data-glm-settings-special-part',
+    'data-glm-decky-settings'];
   try {
     // Retain markers on stable Settings DOM nodes. Removing every marker and
     // then re-adding it briefly reveals Valve's native gradient on navigation.
@@ -285,8 +286,17 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     // Family and similar categories can show only one control, or none.
     // A full Steam Settings rail has 9+ distinct navigation rows, whereas
     // Home, QAM and game details do not. This does not read page labels.
-    const match=Boolean(semantic || (nav.length>=9 && (rows.length>=1 || nav.length>=10)));
+    // Decky Loader's Settings are the native four-tab SidebarNavigation
+    // (General, Plugins, Developer, Testing). Steam Settings uses 9+ tabs.
+    // Rendered DOM geometry, NOT a slow delayed URL poll, drives the match.
+    const deckyRoute=/\\/decky\\/settings(?:\\/|$|[?#])/i.test(
+      String(window.location?.pathname||'')+String(window.location?.hash||''));
+    const deckySettings=nav.length>=3 && nav.length<=5 && rows.length>=2 &&
+      (nav.length===4 || deckyRoute);
+    const match=Boolean(semantic || deckySettings ||
+      (nav.length>=9 && (rows.length>=1 || nav.length>=10)));
     if(!match){prune();return false;}
+    if(deckySettings)mark(document.documentElement,'data-glm-decky-settings');
     mark(root,'data-glm-settings-root');
     // Document root only activates Settings-scoped CSS; it is cleared as
     // soon as the recognizable Settings rail disappears.
@@ -485,7 +495,7 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
       }
     }
     prune();
-    return Boolean(mainPane || rows.length>0 || nav.length>=9);
+    return Boolean(mainPane || rows.length>0 || nav.length>=9 || deckySettings);
   }catch{return false;}
 })()`;
 
@@ -617,7 +627,8 @@ export const THEME_AUDIT_REMOVE_SCRIPT = `(() => {
     'data-glm-settings-navitem','data-glm-settings-row-part',
     'data-glm-settings-sidebar','data-glm-settings-main',
     'data-glm-settings-surface','data-glm-settings-page',
-    'data-glm-settings-special-row','data-glm-settings-special-part'];
+    'data-glm-settings-special-row','data-glm-settings-special-part',
+    'data-glm-decky-settings'];
   for(const node of document.querySelectorAll(attrs.map(a=>'['+a+']').join(',')))
     for(const attr of attrs)node.removeAttribute?.(attr);
   delete window[key];

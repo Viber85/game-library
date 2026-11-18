@@ -26,13 +26,16 @@ class NativeSteamScreenThemeTests(unittest.TestCase):
         self.assertIn("BasicUIContextMenu", bundle["css"]["main"])
         self.assertIn('[role="menuitem"]', bundle["css"]["main"])
         self.assertIn("data-glm-settings-root", (main.BASE / "system-theme" / "settings-focus.css").read_text(encoding="utf-8"))
-        self.assertTrue(bundle["css"]["main"].rstrip().endswith("border-color:transparent !important;\n}"))
+        self.assertIn("border-color:transparent !important;", bundle["css"]["main"])
+        self.assertTrue(bundle["css"]["main"].rstrip().endswith("color:#a6bed8 !important;\n}"))
         self.assertNotIn("settings-focus", bundle["css"]["overlay"])
         self.assertIn("data-glm-settings-special-row", bundle["css"]["main"])
         self.assertNotIn("data-glm-settings-special-row", bundle["css"]["overlay"])
+        self.assertIn("data-glm-decky-settings", bundle["css"]["main"])
+        self.assertNotIn("data-glm-decky-settings", bundle["css"]["overlay"])
 
     def test_bundled_source_files_exist_and_are_small(self):
-        for filename in ("running-menu.css", "steam-input.css", "volume.css", "power-menu.css", "settings-focus.css", "settings-special.css"):
+        for filename in ("running-menu.css", "steam-input.css", "volume.css", "power-menu.css", "settings-focus.css", "settings-special.css", "decky-settings.css"):
             path = main.BASE / "system-theme" / filename
             self.assertTrue(path.is_file(), filename)
             self.assertLess(path.stat().st_size, 100_000)

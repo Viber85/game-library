@@ -83,6 +83,7 @@ def _builtin_theme_bundle(theme_id):
             "game-details.css", "game-details-extras.css", "downloads.css", "dialogs.css",
             "steam-input.css", "volume.css", "power-menu.css",
             "settings-special.css", "settings-focus.css",
+            "decky-settings.css",
         ),
         "overlay": (
             "shared.css", "buttons.css", "menus.css", "running-menu.css",
