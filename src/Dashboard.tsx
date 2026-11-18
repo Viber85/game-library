@@ -15,7 +15,8 @@ import {getMissingSteamArt,subscribeArtworkSettingsChanged} from "./steamGridArt
 import { SystemStatusBar } from "./SystemStatusBar";
 import { fallbackTabs, gamesForTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
-import {sortForTab, type HomeSort} from "./homeSort";
+import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
+import {getSortData,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
@@ -24,6 +25,9 @@ import { readRunningGame, resumeRunningGame, type RunningGame } from "./runningG
 
 type Sort = HomeSort;
 const INITIAL_GAME_COUNT = 15;
+const LIBRARY_ROUTE = "/game-library/library";
+let lastSelectedLibraryTab="AllGames";
+const rememberedSorts:Record<string,Sort>={};
 
 interface RailAction {
   id: string;
@@ -225,15 +229,22 @@ function RunningGameLabel({title,expanded}:{title:string;expanded:boolean}) {
   </span>;
 }
 
-export function Dashboard() {
+export function Dashboard({initialMode="home"}:
+  {initialMode?:"home"|"library"}={}) {
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
   const [runningGame,setRunningGame]=useState<RunningGame|null>(()=>
     readRunningGame((window as any).SteamUIStore,(window as any).appStore));
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
-  const [activeTab, setActiveTab] = useState("AllGames");
-  const [tabSorts, setTabSorts] = useState<Record<string,Sort>>({});
+  const [activeTab, setActiveTab] = useState(()=>
+    initialMode==="library"?lastSelectedLibraryTab:"AllGames");
+  useEffect(()=>{lastSelectedLibraryTab=activeTab;},[activeTab]);
+  const [tabSorts, setTabSorts] = useState<Record<string,Sort>>(
+    ()=>({...rememberedSorts}));
+  const [sortOpen,setSortOpen]=useState(false);
+  const sortMenuRefs=useRef<Array<HTMLDivElement|null>>([]);
+  const [metaRevision,setMetaRevision]=useState(0);
   const [selectedId, setSelectedId] = useState<number | undefined>();
-  const [viewAll,setViewAll] = useState(false);
+  const [viewAll,setViewAll] = useState(initialMode==="library");
   const [gridLimit,setGridLimit] = useState(60);
   const [time,setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -288,7 +299,7 @@ export function Dashboard() {
     setGames(getLibraryGames());
     setActiveTab(tabInfo.tabs[0]?.id ?? "AllGames");
     setSelectedId(undefined);
-    setViewAll(false);
+    setViewAll(initialMode==="library");
     setGridLimit(60);
     pendingGridIndex.current=null;
   },[tabInfo.available]);
@@ -300,20 +311,30 @@ export function Dashboard() {
     // disabled. Reset to Steam All Games rather than retaining stale ID.
     setActiveTab(tabs[0]?.id ?? "AllGames");
     setSelectedId(undefined);
-    setViewAll(false);
+    setViewAll(initialMode==="library");
     setGridLimit(60);
     pendingGridIndex.current=null;
   },[tabIds,activeTab]);
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
   const sort = sortForTab(tab,tabSorts);
+  const sortKind=externalSortKind(sort);
   const tabCounts = useMemo(() => new Map(tabs.map(t => {
     const result = gamesForTab(t, games);
     return [t.id, result.supported ? result.games.length : null] as const;
   })), [tabs, games]);
   const tabResult = useMemo(() => gamesForTab(tab, games), [tab, games]);
-  const shown = useMemo(() => [...tabResult.games].sort(sort === "recent"
-    ? (a,b) => b.lastPlayed - a.lastPlayed || a.title.localeCompare(b.title)
-    : (a,b) => a.title.localeCompare(b.title)), [tabResult.games,sort]);
+  const shown=useMemo(()=>sortGames(tabResult.games,sort,getSortData()),
+    [tabResult.games,sort,metaRevision]);
+  const metaProgress=sortKind?
+    sortMetadataProgress(sortKind,tabResult.games):null;
+  // Native Steam refreshes its overviews every 15s. A fresh array with the
+  // same games must NOT cancel an in-flight HLTB search and start it over.
+  const metadataQueryIds=tabResult.games.map(g=>g.id+":"+g.title).join("|");
+  useEffect(()=>{
+    if(!sortKind||!tabResult.supported||!tabResult.games.length)return;
+    return startSortMetadata(sortKind,tabResult.games,()=>
+      setMetaRevision(revision=>revision+1));
+  },[sortKind,tab.id,metadataQueryIds,tabResult.supported]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
   const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
   const visibleGridGames = shown.slice(0,gridLimit);
@@ -329,7 +350,7 @@ export function Dashboard() {
       }
     }] : []),
     { id: "home", label: "Home", icon: MdHome, go: () => Navigation.Navigate("/library/home") },
-    { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate("/library") },
+    { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate(LIBRARY_ROUTE) },
     { id: "store", label: "Store", icon: MdShoppingCart, go: () => Navigation.NavigateToSteamWeb("https://store.steampowered.com/") },
     { id: "downloads", label: "Downloads", icon: MdDownload, go: () => Navigation.Navigate("/library/downloads") },
     { id: "settings", label: "Settings", icon: MdSettings, go: () => Navigation.Navigate("/settings") },
@@ -429,6 +450,42 @@ export function Dashboard() {
     setViewAll(false);
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
+  const exitGrid=()=>{
+    if(initialMode==="library")Navigation.Navigate("/library/home");
+    else closeGrid();
+  };
+  const showSortMenu=()=>{setSortOpen(true);};
+  const closeSortMenu=()=>{
+    setSortOpen(false);
+    window.requestAnimationFrame(()=>sortRef.current?.focus());
+  };
+  const chooseSort=(id:Sort)=>{
+    rememberedSorts[tab.id]=id;
+    setTabSorts(previous=>({...previous,[tab.id]:id}));
+    pendingGridIndex.current=null;
+    lastGridFocusIndex.current=0;
+    setSelectedId(undefined);
+    closeSortMenu();
+  };
+  const focusSortItem=(index:number)=>{
+    const target=Math.max(0,Math.min(SORT_OPTIONS.length-1,index));
+    const element=sortMenuRefs.current[target];
+    element?.focus();
+    element?.scrollIntoView({block:"nearest"});
+  };
+  useEffect(()=>{
+    if(!sortOpen)return;
+    const selectedIndex=Math.max(0,SORT_OPTIONS.findIndex(x=>x.id===sort));
+    const frame=window.requestAnimationFrame(()=>focusSortItem(selectedIndex));
+    return ()=>window.cancelAnimationFrame(frame);
+  },[sortOpen]);
+  const autoFocusedLibrary=useRef(false);
+  useEffect(()=>{
+    if(initialMode!=="library"||!shown.length||autoFocusedLibrary.current)return;
+    autoFocusedLibrary.current=true;
+    const frame=window.requestAnimationFrame(()=>focusGrid(0));
+    return ()=>window.cancelAnimationFrame(frame);
+  },[initialMode,shown.length]);
   const focusPill = (index:number) => {
     setRailExpanded(false);
     const target = pillRefs.current[Math.max(0,Math.min(tabs.length - 1,index))];
@@ -446,7 +503,8 @@ export function Dashboard() {
     setGames(getLibraryGames());
     setActiveTab(tabs[nextIndex].id);
     pendingGridIndex.current=null;
-    setViewAll(false);
+    setViewAll(initialMode==="library");
+    setSortOpen(false);
     setGridLimit(60);
     setSelectedId(undefined);
     // Focus target after React applies the new selected tab and game list.
@@ -551,7 +609,7 @@ export function Dashboard() {
                 ref={el => { pillRefs.current[index] = el; }}
                 className={"gl-pill" + (tab.id === item.id ? " gl-active" : "")}
                 focusClassName="gl-focused" noFocusRing
-                onActivate={() => { pendingGridIndex.current=null; setGames(getLibraryGames()); setActiveTab(item.id); setViewAll(false); setGridLimit(60); setSelectedId(undefined); }}
+                onActivate={() => { pendingGridIndex.current=null; setGames(getLibraryGames()); setActiveTab(item.id); setViewAll(initialMode==="library"); setSortOpen(false); setGridLimit(60); setSelectedId(undefined); }}
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
                   const b=e.detail?.button;
@@ -568,29 +626,65 @@ export function Dashboard() {
             ))}
           </Focusable>
           <Focusable ref={sortRef} className="gl-sort" focusClassName="gl-focused" noFocusRing
-            onActivate={() => setTabSorts(previous=>({...previous,
-              [tab.id]:sort === "recent" ? "alphabetical" : "recent"
-            }))}
+            onActivate={showSortMenu}
             onButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
               if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);focusPill(tabs.length-1);}
-              else if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);goToGame();}
+              else if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);showSortMenu();}
             }}
-            onOKActionDescription="Sort games">
-            <MdAccessTime /> {sort === "recent" ? "Recent" : "A–Z"}
+            onOKActionDescription="Choose sorting">
+            <MdAccessTime /> {sortLabel(sort)}
           </Focusable>
+          {sortOpen && <Focusable className="gl-sort-menu" flow-children="column"
+            aria-label="Sort games">
+            <div className="gl-sort-menu-title">SORT GAMES</div>
+            {SORT_OPTIONS.map((option,index)=><Focusable
+              key={option.id}
+              ref={el=>{sortMenuRefs.current[index]=el;}}
+              className={"gl-sort-option"+(sort===option.id?" gl-sort-selected":"")}
+              focusClassName="gl-focused"
+              noFocusRing
+              onActivate={()=>chooseSort(option.id)}
+              onCancelButton={closeSortMenu}
+              onOKActionDescription={option.label}
+              onButtonDown={(e:GamepadEvent)=>{
+                const button=e.detail?.button;
+                if(button===GamepadButton.DIR_UP){consume(e);focusSortItem(index-1);}
+                else if(button===GamepadButton.DIR_DOWN){consume(e);focusSortItem(index+1);}
+                else if(button===GamepadButton.DIR_LEFT){consume(e);closeSortMenu();}
+              }}>
+              <span>{option.label}</span>
+              {sort===option.id&&<MdCheckCircle aria-hidden="true"/>}
+            </Focusable>)}
+            <div className="gl-sort-menu-hint">A Select · B Close · No Random</div>
+          </Focusable>}
         </nav>
+        {metaProgress && metaProgress.done<metaProgress.total &&
+          <div className="gl-sort-progress" role="status">
+            Loading {sortKind==="hltb"?"HLTB Main + Extras":
+              sortKind==="proton"?"ProtonDB":"achievement"} data:
+            {" "}{metaProgress.done}/{metaProgress.total} · partial order, missing data last
+          </div>}
 
         {shown.length > 0 ? (
           viewAll ? (
             <section className="gl-grid-page" aria-label={"All games: "+tab.title}>
               <div className="gl-grid-heading">
-                <div><h2>{tab.title}</h2><span>{shown.length} games · Full library</span></div>
-                <Focusable className="gl-grid-back" noFocusRing focusClassName="gl-focused"
-                  onActivate={closeGrid} onCancelButton={closeGrid}
-                  onOKActionDescription="Back to games">
-                  <MdArrowBack/> Back to carousel
-                </Focusable>
+                <div><h2>{initialMode==="library"?"Library · "+tab.title:tab.title}</h2>
+                  <span>{shown.length} games · Midnight Library</span></div>
+                <div className="gl-grid-header-actions">
+                  {initialMode==="library"&&<Focusable
+                    className="gl-grid-back gl-native-library" noFocusRing focusClassName="gl-focused"
+                    onActivate={()=>Navigation.Navigate("/library")}
+                    onOKActionDescription="Open original Steam library">
+                    Steam Library
+                  </Focusable>}
+                  <Focusable className="gl-grid-back" noFocusRing focusClassName="gl-focused"
+                    onActivate={exitGrid} onCancelButton={exitGrid}
+                    onOKActionDescription={initialMode==="library"?"Return Home":"Back to games"}>
+                    <MdArrowBack/> {initialMode==="library"?"Home":"Back to carousel"}
+                  </Focusable>
+                </div>
               </div>
               <div className="gl-full-grid-scroll">
                 <div className="gl-full-grid" ref={fullGridLayoutRef}>
@@ -603,14 +697,14 @@ export function Dashboard() {
                       }}
                       activate={()=>openDetails(game)}
                       captureVertical
-                      onCancel={closeGrid}
+                      onCancel={exitGrid}
                       onMove={button=>moveInGrid(index,button)}
                       cardRef={el=>{fullGridRefs.current[index]=el;}}
                     />
                   ))}
                 </div>
               </div>
-              <div className="gl-grid-hint">← First column: Menu · → / B: Return · L1/R1 Tabs</div>
+              <div className="gl-grid-hint">← First column: Menu · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs · Sort: Select</div>
             </section>
           ) : (
           <>
