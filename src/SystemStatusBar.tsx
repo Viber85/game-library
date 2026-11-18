@@ -8,6 +8,7 @@ import {
   MdSearch, MdWifi, MdWifiOff,
 } from "react-icons/md";
 import { getActiveUserId } from "./steam";
+import {readLiveSteamClockPreference} from "./steamClock";
 
 type Battery = { percent: number; charging: boolean | null; plugged: boolean | null };
 type Wifi = { enabled: boolean | null; connected: boolean | null; signal: number | null };
@@ -82,9 +83,11 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
   const [device,setDevice] = useState<DeviceStatus>(NO_DEVICE_STATUS);
   const [steam,setSteam] = useState<SteamSupplement>(()=>readSteamSupplement());
   const [failedAvatar,setFailedAvatar] = useState<string | null>(null);
-  // SteamOS' per-account b24HourClock preference, not the browser's locale.
-  // null means Steam hasn't exposed its setting yet: keep the old fallback.
-  const [hour24,setHour24] = useState<boolean|null>(null);
+  // Prefer Steam's live Game Mode setting over the potentially stale VDF file.
+  const [liveClock,setLiveClock] = useState<boolean|null>(()=>
+    readLiveSteamClockPreference(globalThis));
+  const [savedClock,setSavedClock] = useState<boolean|null>(null);
+  const hour24=liveClock??savedClock;
 
   useEffect(()=>{
     let live = true;
@@ -121,13 +124,13 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
       const current=getActiveUserId();
       if(current!==account){
         account=current;
-        setHour24(null);
+        setSavedClock(null);
       }
       if(!/^\d{1,10}$/.test(current) || pending)return;
       pending=true;
       void readSteamClockFormat(current).then(response=>{
         if(active && account===current && typeof response?.hour24==="boolean")
-          setHour24(response.hour24);
+          setSavedClock(response.hour24);
       }).catch(()=>{
         // No guessed Steam setting: fall back to the previous locale clock.
       }).finally(()=>{pending=false;});
@@ -141,6 +144,24 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
       active=false;
       window.clearInterval(timer);
       window.removeEventListener("focus",refresh);
+    };
+  },[]);
+
+  useEffect(()=>{
+    // Read the same m_FriendSettings object SteamOS Settings uses.
+    // Changes to the 24-hour toggle are reflected without restarting Decky.
+    const refreshLiveClock=()=>{
+      const next=readLiveSteamClockPreference(globalThis);
+      setLiveClock(previous=>previous===next?previous:next);
+    };
+    refreshLiveClock();
+    const clockTimer=window.setInterval(refreshLiveClock,2000);
+    window.addEventListener("focus",refreshLiveClock);
+    document.addEventListener("visibilitychange",refreshLiveClock);
+    return ()=>{
+      window.clearInterval(clockTimer);
+      window.removeEventListener("focus",refreshLiveClock);
+      document.removeEventListener("visibilitychange",refreshLiveClock);
     };
   },[]);
 
@@ -221,7 +242,12 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
         (battery?.charging ? " gl-battery-charging" : "")}>{batteryIcon(battery)}</span>
       {battery && <span className="gl-topbar-battery-percent">{battery.percent}%</span>}
     </Focusable>
-    <time className="gl-topbar-clock" dateTime={time.toISOString()}>
+    <time className="gl-topbar-clock" dateTime={time.toISOString()}
+      title={liveClock!==null
+        ? "Clock format: SteamOS live setting"
+        : savedClock!==null
+          ? "Clock format: Steam saved setting"
+          : "Clock format: system locale (Steam setting unavailable)"}>
       {time.toLocaleTimeString([],hour24===null
         ? {hour:"2-digit",minute:"2-digit"}
         : hour24
