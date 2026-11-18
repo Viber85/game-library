@@ -42,6 +42,11 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings-extras.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/game-details-extras.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/running-menu.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/steam-input.css'
+unzip -Z1 "$output" | grep -qx 'game-library/system-theme/volume.css'
+unzip -Z1 "$output" | grep -qx 'game-library/system-theme/power-menu.css'
+unzip -p "$output" 'game-library/system-theme/volume.css' | grep -Fq 'audio_VolumePopin_2iUUM'
+unzip -p "$output" 'game-library/system-theme/power-menu.css' | grep -Fq 'gamepadcontextmenu_Focused_X813r'
+unzip -p "$output" 'game-library/system-theme/power-menu.css' | grep -Fq 'box-shadow:inset 0 0 0 2px #63cfff'
 # Ensure the ZIP contains THIS version's corrected native selector targets,
 # not just a valid file with stale v0.4.21-test.2 CSS.
 unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'inset:10px 12px !important'

@@ -19,9 +19,13 @@ class NativeSteamScreenThemeTests(unittest.TestCase):
                       bundle["css"]["overlay"])
         self.assertIn("background:#163a5e", bundle["css"]["overlay"])
         self.assertIn("--glm-bg-deep", bundle["css"]["main"])
+        self.assertIn("audio_VolumePopin", bundle["css"]["main"])
+        self.assertIn("audio_VolumePopin", bundle["css"]["overlay"])
+        self.assertIn("gamepadcontextmenu_Focused", bundle["css"]["overlay"])
+        self.assertNotIn("gamepadcontextmenu_Focused", bundle["css"]["main"])
 
     def test_bundled_source_files_exist_and_are_small(self):
-        for filename in ("running-menu.css", "steam-input.css"):
+        for filename in ("running-menu.css", "steam-input.css", "volume.css", "power-menu.css"):
             path = main.BASE / "system-theme" / filename
             self.assertTrue(path.is_file(), filename)
             self.assertLess(path.stat().st_size, 100_000)

@@ -1,0 +1,35 @@
+/* Midnight native Steam volume notification. Target the visible audio
+ * pop-in ONLY; never paint .BasicUI, #GamepadUI_Full_Root or the
+ * transparent CEF overlay around a game. Keep native volume controls,
+ * slider dimensions, fade timing and visibility untouched. */
+:is(.audio_VolumePopin_2iUUM,[class*="audio_VolumePopin_"]) {
+  background:linear-gradient(155deg,#0e2542,#050f22) !important;
+  color:var(--glm-text) !important;
+  border:1px solid rgba(99,207,255,.48) !important;
+  border-radius:14px !important;
+  box-shadow:0 0 20px rgba(3,157,255,.42),
+    0 10px 28px rgba(0,0,0,.45) !important;
+}
+/* Volume level and device label share the dashboard's readable text. */
+:is(.audio_VolumePopin_2iUUM,[class*="audio_VolumePopin_"])
+  :is(.audio_VolumeSliderLabel_262HY,
+    [class*="audio_VolumeSliderLabel_"]) {
+  color:var(--glm-text) !important;
+}
+/* The same blue-on-navy accent follows the NATIVE slider value. */
+:is(.audio_VolumePopin_2iUUM,[class*="audio_VolumePopin_"])
+  :is(.gamepadslider_SliderTrack_Mq25N,
+    [class*="gamepadslider_SliderTrack_"]) {
+  --left-track-color:#4ac1ff !important;
+}
+:is(.audio_VolumePopin_2iUUM,[class*="audio_VolumePopin_"])
+  :is(.gamepadslider_SliderTrackDark_3UIUD,
+    [class*="gamepadslider_SliderTrackDark_"]) {
+  background:#102944 !important;
+}
+:is(.audio_VolumePopin_2iUUM,[class*="audio_VolumePopin_"])
+  :is(.gamepadslider_SliderTrackActive_2o57v,
+    [class*="gamepadslider_SliderTrackActive_"]) {
+  background:#4ac1ff !important;
+  box-shadow:0 0 10px rgba(3,157,255,.58) !important;
+}
