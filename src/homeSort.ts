@@ -64,9 +64,11 @@ export function sortGames(games:readonly LibraryGame[],mode:HomeSort,
     switch(mode){
       case "recent":return positive(game.lastPlayed);
       case "most-played":case "least-played":
-        return Number.isFinite(game.playtimeMinutes)&&game.playtimeMinutes>=0?
-          game.playtimeMinutes:null;
-      case "never-played":return game.playtimeMinutes===0&&game.lastPlayed===0?1:0;
+        return game.playtimeKnown!==false&&Number.isFinite(game.playtimeMinutes)&&
+          game.playtimeMinutes>=0?game.playtimeMinutes:null;
+      case "never-played":
+        return game.playtimeKnown===false?null:
+          game.playtimeMinutes===0&&game.lastPlayed===0?1:0;
       case "recently-added":return positive(game.addedAt);
       case "release-new":case "release-old":return positive(game.releaseDate);
       case "size-small":case "size-large":return positive(game.sizeBytes);
