@@ -87,6 +87,43 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.1 — Midnight styling for Steam running-game menu and
+Steam Input controller layout (device preview):** This test release extends
+Game Library's built-in Midnight CSS to two native SteamOS screens shown
+while playing a game:
+
+- **Steam button / running game menu:** The left navigation, game-action
+  column and focusable items use the same Midnight navy surfaces, bright
+  text and cyan focus accent as the Game Library sidebar. The vivid blue
+  game-action panel becomes a dark blue gradient. Steam's running-game
+  artwork, existing actions (Resume Game, Controller Settings, Achievements,
+  Exit Game) and their controller navigation remain native.
+- **Steam Input layout overview and configurator:** The page background,
+  control labels, current-layout selection and action buttons adopt the
+  Midnight palette. The controller diagram, SVG/button glyphs, mappings,
+  controls' position and Steam Input behavior are untouched.
+
+New `system-theme/running-menu.css` is bundled **only** into native
+Steam's in-game-menu overlay scope; `system-theme/steam-input.css` is
+bundled into **both** Game Mode and menu overlay scopes so either way of
+opening the controller layout can be themed. Both stylesheets target
+specific Steam UI component classes, never `.BasicUI`, the full
+Steam/CEF root or transient volume/achievement surfaces. Hash/minified
+CSS class-name aliases are resolved when those Steam UI modules load.
+The hot-reload style marker is bumped to **52**, ensuring new CSS
+replaces the prior version without a native-color flash.
+
+The tests check CSS syntax/scoping, alias replacement, backend bundle
+membership, non-invasive gamepad/controller layout, and ZIP inclusion
+of both files; all existing Steam menu, TabMaster, QAM, library/navigation
+and notification protections are retained. This is an explicitly
+**on-device test build**: Valve may change native selectors between
+SteamOS versions. In the first validation pass, open a game's Steam
+button menu and Controller Settings → View Layout, then inspect the
+menu's center panel, the controller-layout background and focus colors.
+Do not treat a passing CI build as confirmation that both visual screens
+are styled on the MSI Claw yet.
+
 **v0.4.20 — live running-game shortcut at the top of the sidebar:** When
 Steam Game Mode reports a running game through `SteamUIStore.RunningApps`,
 Game Library inserts its game-art icon and title as the **first** sidebar
