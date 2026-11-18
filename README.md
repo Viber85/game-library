@@ -87,6 +87,18 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.4 — one Steam menu focus border (device preview):**
+The MSI Claw screenshot of v0.4.21-test.3 confirmed the Steam menu focus
+frame now fits correctly, but revealed **two overlapping cyan outlines** on
+the focused row. This release removes the native row's inset
+`box-shadow` ring and its extra halo, leaving the existing **single
+`::after` cyan border** (2 px, inset 4 px vertically / 8 px horizontally)
+and its restrained glow intact. All menu row dimensions, labels, icons,
+focus logic and background remain unchanged. QAM styles are untouched.
+Native stylesheet revision **55** clears cached earlier CSS. Regression
+tests and packaged-ZIP checks ensure the double ring does not return.
+On-device visual confirmation is still required.
+
 **v0.4.21-test.3 — repaired Steam menu focus clipping and QAM focus detection
 (device preview):** The v0.4.21-test.2 MSI Claw photographs showed two
 remaining issues: the native Steam button menu only displayed the left

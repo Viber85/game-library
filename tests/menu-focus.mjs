@@ -18,8 +18,14 @@ test("Steam main menu's real clickable class is independently targeted",()=>{
   assert.match(menu,/width:calc\(100% - 28px\) !important;/);
   assert.match(menu,/position:relative !important;/);
   assert.match(menu,/border-radius:12px !important;/);
-  assert.match(menu,/box-shadow:inset 0 0 0 2px #63cfff,/);
-  assert.match(menu,/inset 0 0 0 5px rgba\(48,174,255,\.22\)/);
+  const focused=[...menu.matchAll(/:is\(\s*\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)(?:::after)?\s*\{([^}]*)\}/g)];
+  assert.equal(focused.length,2,"Expected a focused row and one decorative focus frame");
+  assert.match(focused[0][1],/box-shadow:none !important;/,
+    "Focused row must not draw an extra outer cyan ring");
+  assert.doesNotMatch(focused[0][1],/inset 0 0 0 2px|inset 0 0 0 5px|border:2px/,
+    "Only ::after owns the cyan border");
+  assert.match(focused[1][1],/border:2px solid #63cfff !important;/,
+    "The original inset cyan frame must survive unchanged");
   assert.match(menu,/inset:4px 8px !important;/,
     "Entire upper/lower/right/left focus frame must be inside row boundaries");
   assert.match(menu,/border:2px solid #63cfff !important;/);
