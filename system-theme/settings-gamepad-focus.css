@@ -112,3 +112,32 @@
   transition:none !important;
   animation:none !important;
 }
+
+/* test.26 — restore the missing *visible* controller focus treatment.
+ * Prior test.22 focus resets set outline:none and box-shadow:none on the
+ * native sidebar row, while Decky Settings adds a more specific reset.
+ * That removed the intended cyan frame/glow; there was no color flash.
+ *
+ * test.23 CEF screenshots identify the actual category as a .Panel inside
+ * .PageListColumn. Keep the outer rail and nonfocused category unchanged.
+ * The :has(...) prefix supplies enough specificity to win over Decky's
+ * source-specific outline:none, without requiring its right pane or route.
+ * Also handle a focusable DIRECT child when Steam assigns gpfocus to that
+ * child rather than to its Panel row. No layout/focus/event changes. */
+html:has(.BasicUI .PageListColumn .Panel)
+  .BasicUI .PageListColumn .Panel:is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
+html:has(.BasicUI .PageListColumn .Panel)
+  .BasicUI .PageListColumn .Panel:has(> :is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)) {
+  background:#163a5e !important;
+  background-color:#163a5e !important;
+  color:#f3f8ff !important;
+  border-radius:8px !important;
+  outline:2px solid #63cfff !important;
+  outline-offset:-2px !important;
+  box-shadow:0 0 20px rgba(3,157,255,.72),
+    inset 0 0 7px rgba(3,157,255,.20) !important;
+  transition:none !important;
+  animation:none !important;
+}
