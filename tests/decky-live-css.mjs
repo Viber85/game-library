@@ -5,7 +5,7 @@ import vm from "node:vm";
 import {THEME_PROBE_SCRIPT,parseThemeProbe} from "../src/themeProbe.ts";
 
 const css=readFileSync(new URL("../system-theme/decky-settings.css",import.meta.url),"utf8");
-const live=css.slice(css.indexOf("/* v0.4.21-test.18"),css.indexOf("/* test.19 — stable left rail"));
+const live=css.slice(css.indexOf("/* v0.4.21-test.18"));
 
 test("Actual Claw DOM activates preloaded CSS, not the unavailable Decky router URL",()=>{
   assert.ok(live.length>1900,"Missing test.18 native CSS block");
@@ -44,14 +44,14 @@ test("Real Decky DOM and CSS are detected even if browser location never changes
       if(q.includes(".BasicUI"))return root;
       return null;
     },
-    querySelectorAll:q=>q==="style"?[{textContent:"--game-library-midnight-active: 70;"}]:
+    querySelectorAll:q=>q==="style"?[{textContent:"--game-library-midnight-active: 72;"}]:
       q.includes("eKmEXJCm_")?[field]:[],
   };
   const data=vm.runInNewContext(THEME_PROBE_SCRIPT,{
     document,window:{location:{pathname:"/gamepadui",hash:""}},
     getComputedStyle:el=>({
       backgroundColor:"rgb(15, 40, 66)",backgroundImage:"none",
-      getPropertyValue:k=>k==="--glm-decky-observed-layout"&&el===railPanel?"1":"70"
+      getPropertyValue:k=>k==="--glm-decky-observed-layout"&&el===railPanel?"1":"72"
     }),
     Math,Date,JSON,Array,Map,Set,Boolean,String,Number
   });
@@ -63,31 +63,14 @@ test("Real Decky DOM and CSS are detected even if browser location never changes
   assert.equal(info?.deckyFieldColor,"rgb(15, 40, 66)");
 });
 
-test("Decky left rail stays navy when right pane unmounts between tabs",()=>{
-  const selector=".BasicUI .Panel:has(> .PageListColumn)";
-  const stable=css.slice(css.indexOf("/* test.19 — stable left rail")).replace(/\/\*[\s\S]*?\*\//g,"");
-  assert.ok(stable.includes(selector),"Always match the mounted rail, not right pane");
-  assert.ok(stable.includes("> .PageListColumn"));
-  assert.ok(stable.includes("background:#081425 !important"));
-  assert.ok(stable.includes("transition:none !important"));
-  assert.ok(stable.includes("animation:none !important"));
-  assert.doesNotMatch(stable,/DialogControlsSection|data-glm-decky-settings|\/decky\/settings/,
-    "Rail fallback must not depend on right-side DOM, marker or URL");
-  assert.doesNotMatch(stable,/\b(?:width|height|padding|margin|position|display|overflow|pointer-events|transform|z-index)\s*:/);
-});
-
-test("selected Decky nav tab retains midnight focus when RIGHT pane temporarily disappears",()=>{
-  const section=css.slice(css.indexOf("/* test.20 — prevent native"));
-  const plain=section.replace(/\/\*[\s\S]*?\*\//g,"");
-  assert.match(plain,/\.Panel:has\(> \.PageListColumn\) > \.PageListColumn/);
-  assert.match(plain,/\.gpfocuswithin/);
-  assert.match(plain,/\[aria-selected="true"\]/);
-  assert.match(plain,/\.Panel:has\(/,"Retain the parent row when its inner child is focused");
-  assert.match(plain,/background:#163a5e !important;/);
-  assert.match(plain,/background-image:none !important;/);
-  assert.match(plain,/transition:none !important;/);
-  assert.match(plain,/animation:none !important;/);
-  assert.doesNotMatch(plain,/DialogControlsSection|data-glm-decky-settings|\/decky\/settings/,
-    "No right-side DOM, route marker, or timer prerequisite for selected tab");
-  assert.doesNotMatch(plain,/\b(?:width|height|margin|padding|transform|position|overflow|display|pointer-events|z-index)\s*:/);
+test("Regression: preserve v18 working CSS; never apply Decky rail overrides to all Steam Settings",()=>{
+  assert.doesNotMatch(css,/test\.19 —|test\.20 —/);
+  assert.doesNotMatch(css,/^\.BasicUI \.Panel:has\(> \.PageListColumn\)/m,
+    "Unscoped rail rules affect Valve Settings as well as Decky");
+  assert.doesNotMatch(css,/^\.BasicUI \.Panel:has\(> \.PageListColumn\) > \.PageListColumn/m);
+  assert.ok(css.includes(
+    "html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)"),
+    "Retain working live v18 CSS that activates on actual Decky Settings");
+  assert.ok(css.includes('[class*="eKmEXJCm_"]'),
+    "Retain the actual Claw native card class observed in v18");
 });
