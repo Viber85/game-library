@@ -1,53 +1,54 @@
-/* Midnight row fills for three Settings subsections only.
- * SteamOS Internet networks, Keyboard layouts and Customization movies
- * use wide interactive cards outside generic Field skin coverage.
- * Only a verified Settings route receives the markers below. */
-html[data-glm-settings-root]:is(
-  [data-glm-settings-page="internet"],
-  [data-glm-settings-page="keyboard"],
-  [data-glm-settings-page="customization"])
-  [data-glm-settings-main] [data-glm-settings-special-row] {
+/* Midnight v0.4.21-test.13: native Settings gray surfaces.
+ * The previous version only applied when the native Steam URL included
+ * /settings/internet, /keyboard or /customization. Steam's running client
+ * can use a different internal route, leaving ZERO CSS matches.
+ *
+ * Instead the existing visual Settings watcher confirms the TWO-COLUMN
+ * Settings layout and marks broad opaque gray card surfaces. Do not rely
+ * on internal URLs, class names, labels, SSIDs or filenames.
+ * This can fill similar gaps in any Settings category, as intended.
+ * No sizes, controls, icon art, media, focus navigation or QAM changes. */
+
+/* Settings-only base for broad gray cards/rows. Mirrors original Field
+ * paint specificity, including Steam's :not(...):not(...):not(...) rule,
+ * so a previous generic transparency rule cannot win over this fill. */
+html[data-glm-settings-root] [data-glm-settings-main]
+  [data-glm-settings-special-row]:not(.gpfocus):not(.gpfocuswithin):not(:focus-within):not(:focus-visible) {
   background:#0f2842 !important;
   background-color:#0f2842 !important;
   background-image:none !important;
   color:#f3f8ff !important;
-  outline:none !important;
   border-color:transparent !important;
   box-shadow:none !important;
+  outline:none !important;
 }
-/* A broad child can supply the native gray fill. Only such decorative
- * backdrops are marked; thumbnails and preview imagery are never marked. */
-html[data-glm-settings-root]:is(
-  [data-glm-settings-page="internet"],
-  [data-glm-settings-page="keyboard"],
-  [data-glm-settings-page="customization"])
+/* The parent may have a broad gray fill child. Reset ONLY the marked
+ * flat backdrop; thumbnails, videos, icons and progress tracks are
+ * never marked and remain as Steam renders them. */
+html[data-glm-settings-root] [data-glm-settings-main]
   [data-glm-settings-special-row] [data-glm-settings-special-part] {
   background:transparent !important;
   background-color:transparent !important;
   background-image:none !important;
   box-shadow:none !important;
 }
-/* Steam's forwards focus animation otherwise repaints a gray row.
- * Keep the blue selection, no border or glow, and native hit geometry. */
-html[data-glm-settings-root]:is(
-  [data-glm-settings-page="internet"],
-  [data-glm-settings-page="keyboard"],
-  [data-glm-settings-page="customization"])
-  [data-glm-settings-main] [data-glm-settings-special-row]:is(
+/* Existing Settings focus rule: lighter blue, without glow/outline.
+ * Steam's original forwards animation otherwise repaints the row gray. */
+html[data-glm-settings-root] [data-glm-settings-main]
+  [data-glm-settings-special-row]:is(
     .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
     [aria-selected="true"],[aria-checked="true"]) {
   background:#163a5e !important;
   background-color:#163a5e !important;
   background-image:none !important;
-  outline:none !important;
+  color:#f3f8ff !important;
   border-color:transparent !important;
   box-shadow:none !important;
+  outline:none !important;
   animation-name:none !important;
 }
-html[data-glm-settings-root]:is(
-  [data-glm-settings-page="internet"],
-  [data-glm-settings-page="keyboard"],
-  [data-glm-settings-page="customization"])
+/* Do not let a focused card's full-width gray inner layer obscure blue. */
+html[data-glm-settings-root] [data-glm-settings-main]
   [data-glm-settings-special-row]:is(
     .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)
   [data-glm-settings-special-part] {
@@ -55,4 +56,36 @@ html[data-glm-settings-root]:is(
   background-color:transparent !important;
   background-image:none !important;
   box-shadow:none !important;
+}
+
+/* Direct class-based fallback for builds where a Settings page is rendered
+ * before the visual watcher identifies its geometry. Steam's shared
+ * Field+Clickable covers Wi-Fi networks and Customization movie rows,
+ * while Field[role=radio] is the active Keyboard layout.
+ * The :not(:has(...)) exclusion protects actual toggles, sliders and
+ * text inputs. Scope to actual Settings PageContent, never the game. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_Field"]:is(
+    [role="radio"],
+    [role="button"][class*="gamepaddialog_Clickable"]):not(:has(
+      [role="switch"],[role="checkbox"],[role="slider"],
+      [class*="gamepaddialog_Toggle"],[class*="gamepadslider_"],
+      input,select,textarea)) {
+  background-color:#0f2842 !important;
+  background-image:none !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  [class*="gamepaddialog_Field"]:is(
+    [role="radio"],
+    [role="button"][class*="gamepaddialog_Clickable"]):not(:has(
+      [role="switch"],[role="checkbox"],[role="slider"],
+      [class*="gamepaddialog_Toggle"],[class*="gamepadslider_"],
+      input,select,textarea)):is(
+      .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+      [aria-selected="true"],[aria-checked="true"]) {
+  background-color:#163a5e !important;
+  animation-name:none !important;
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
 }

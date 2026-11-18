@@ -10,6 +10,8 @@ export type ThemeProbe={
   settingsRoots:number;
   fieldRows:number;
   networkRows:number;
+  specialSettingsRows:number;
+  specialSettingsRowColor:string;
   gameRoots:number;
   gameSections:number;
   fieldColor:string;
@@ -31,6 +33,8 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const settings = '[class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"],[class*="pagedsettings_PagedSettingsDialog_PageContent"],[data-glm-settings-root]';
   const fields = '[class*="gamepaddialog_Field"],[class*="gamepaddialog_HighlightOnFocus"],[data-glm-settings-row]';
   const networks = '[class*="networksettings_"],[class*="wifisettings_"],[class*="connectionsettings_"],[class*="wirelesssettings_"]';
+  // A count and computed color only — never read any network names or file labels.
+  const specialRow=document.querySelector('[data-glm-settings-special-row]');
   const games = '[class*="appdetails_Container"],[class*="appdetails_ScrollContainer"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]';
   const sections = '[class*="appdetailssection_"],[class*="appdetailsnotessection_"],[class*="appdetailsmediasection_"]';
   // First locate the actual native Settings root, then inspect a row inside
@@ -95,6 +99,8 @@ export const THEME_PROBE_SCRIPT=`(() => {
     settingsRoots: count(settings),
     fieldRows: count(fields),
     networkRows: count(networks),
+    specialSettingsRows: count('[data-glm-settings-special-row]'),
+    specialSettingsRowColor: specialRow?getComputedStyle(specialRow).backgroundColor:'',
     gameRoots: count(games),
     gameSections: count(sections),
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
@@ -120,6 +126,9 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     settingsRoots:integer(obj.settingsRoots),
     fieldRows:integer(obj.fieldRows),
     networkRows:integer(obj.networkRows),
+    specialSettingsRows:integer(obj.specialSettingsRows),
+    specialSettingsRowColor:typeof obj.specialSettingsRowColor==='string'?
+      obj.specialSettingsRowColor.slice(0,60):'',
     gameRoots:integer(obj.gameRoots),
     gameSections:integer(obj.gameSections),
     fieldColor:typeof obj.fieldColor==="string"?obj.fieldColor.slice(0,60):"",
@@ -164,7 +173,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "11";
+const AUDIT_REVISION = "12";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -409,30 +418,48 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
       }
     }
     for(const item of nav)mark(item,'data-glm-settings-navitem');
-    // Old generic marker excludes interactive rows. Tag wide native
-    // clickable/radio cards on these three pages, never small controls.
-    if(settingsPage && mainPane?.querySelectorAll){
-      const list=mainPane.querySelectorAll(
-        '[role="button"],[role="radio"],[role="option"],.Focusable');
-      const limit=Math.min(list.length,2100);
+    // Steam's category URL and CSS module names vary by client build.
+    // Discover ACTUAL broad gray Settings backgrounds by visual geometry
+    // and computed paint within the verified right pane. Unlike the old
+    // scanner, neither a /settings/<category> route nor role=button/radio
+    // is required (movie card backdrops can be plain DIVs).
+    if(mainPane?.querySelectorAll){
+      const candidates=mainPane.querySelectorAll('[class],[role="button"],[role="radio"]');
+      const limit=Math.min(candidates.length,2600);
+      const graySurface=(el)=>{
+        const style=getComputedStyle(el);
+        const image=String(style.backgroundImage||'none');
+        // A game/preview asset can use background-image: url(...) and
+        // must NEVER be blanked by our row color.
+        if(/url\\(|image-set\\(/i.test(image))return false;
+        const rgba=String(style.backgroundColor||'').match(/[0-9.]+/g)?.map(Number)||[];
+        if(rgba.length<3 || (rgba.length>=4 && rgba[3]<.25))return false;
+        const [r,g,b]=rgba;
+        // Native Steam Field/row gray has a blue-gray cast, unlike our
+        // dark #0a1b30 Settings canvas (red channel 10) or dark #0f2842
+        // filled cards (red 15). Re-style only still-unconverted rows.
+        return r>=25 && b>=r+4 && g>=r-10 && b>=g-10 &&
+          !(g>180 && b>185);
+      };
       for(let i=0;i<limit;i++){
-        const el=list[i];
-        if(!el?.getBoundingClientRect || !/^(DIV|BUTTON|LI|SECTION)$/i.test(el.tagName||''))continue;
-        const role=el.getAttribute?.('role')||'';
-        if(!(['button','option'].includes(role) || role==='radio' ||
-            el.classList?.contains?.('Focusable')))continue;
+        const el=candidates[i];
+        if(!el?.getBoundingClientRect ||
+            !/^(DIV|LI|SECTION)$/i.test(el.tagName||''))continue;
         const b=el.getBoundingClientRect();
-        if(b.width<width*.40 || b.width>width*.88 ||
-           b.left<width*.22 || b.right>width*1.07 ||
-           b.height<32 || b.height>175)continue;
+        if(b.width<width*.38 || b.width>width*.90 ||
+           b.left<width*.20 || b.right>width*1.07 ||
+           b.height<30 || b.height>185)continue;
+        // Do not paint switches, text fields or slider rows just because
+        // their outer field happens to be broad. Their state colors matter.
         const hasControl=Boolean(el.querySelector?.(
           '[role="switch"],[role="checkbox"],[role="slider"],'+
           '[class*="gamepaddialog_Toggle"],[class*="gamepadslider_"],'+
           'input,select,textarea'));
-        if(hasControl)continue;
+        if(hasControl || !graySurface(el))continue;
         mark(el,'data-glm-settings-special-row');
-        // Clear only broad gray background children, not thumbnail artwork,
-        // video previews, SVGs or active input/switch/slider layers.
+        // Broad gray decorative descendants may sit over the focused
+        // row. Remove only their flat backgrounds, never picture/video
+        // or SVG/thumb layers.
         const parts=el.querySelectorAll?.('div,section,li')||[];
         for(let j=0;j<Math.min(parts.length,80);j++){
           const part=parts[j];
@@ -440,9 +467,8 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
           const rect=part.getBoundingClientRect();
           if(rect.width<b.width*.68 || rect.width>b.width*1.06 ||
              rect.height<b.height*.56 || rect.height>b.height*1.12)continue;
-          const style=getComputedStyle(part);
-          if(style.backgroundImage && style.backgroundImage!=='none')continue;
-          if(blueGray(part))mark(part,'data-glm-settings-special-part');
+          if(graySurface(part))
+            mark(part,'data-glm-settings-special-part');
         }
       }
     }

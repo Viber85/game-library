@@ -87,6 +87,27 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.13 — gray Settings surfaces detected by paint, not route
+(device preview):** The v0.4.21-test.12 MSI Claw report confirmed
+that all three target rows stayed unchanged. The prior implementation
+required a specific `/settings/<category>` browser path AND a
+`role=button/radio` focusable. Real Steam clients may use different
+routes or plain DIV card surfaces, leaving no matches despite passing
+synthetic tests. The new Settings watcher detects **broad, opaque
+gray-blue surfaces in the verified Settings content pane** without
+requiring a category URL or focusable role. Toggling, sliders, inputs,
+artwork and background-image URLs are excluded. A native
+Field+Clickable/Field+radio fallback covers named Steam CSS modules.
+Retains dark navy idle fill, lighter blue focus, no cyan outlines or
+glow, and protects controller actions, QAM, Power, Volume and the Steam
+menu. Existing Settings focus CSS remains last. A live diagnostics
+counter and computed background color for matched Settings rows are
+shown by `Reapply theme & diagnose` in Game Library Appearance,
+allowing real-device verification rather than relying only on CI.
+Watcher revision **12**, CSS revision **64** and new no-route tests
+prevent reuse of stale scripts. On-device appearance remains to be
+confirmed.
+
 **v0.4.21-test.12 — Internet, Keyboard and Customization special rows
 (device preview):** Three MSI Claw screenshots showed that Wi-Fi network
 entries, the Keyboard layout row and Customization movie cards retained

@@ -33,6 +33,8 @@ export type ThemeDiagnostics={
   settingsRoots:number;
   settingsFields:number;
   networkRows:number;
+  specialSettingsRows:number;
+  specialSettingsRowColor:string;
   gameRoots:number;
   gameSections:number;
   computedFieldColor:string;
@@ -57,7 +59,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "63";
+const STYLE_REVISION = "64";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -327,6 +329,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       applied:false,
       themeMarker:"",
       cssSheets:0,settingsRoots:0,settingsFields:0,networkRows:0,
+      specialSettingsRows:0,specialSettingsRowColor:"",
       gameRoots:0,gameSections:0,computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
       colorSamples:[],surfaceElements:0,detectedRoute:"other",
@@ -382,7 +385,10 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       detectedVisibleUI:probe.visibleUI,applied,
       themeMarker:probe.marker,cssSheets:probe.sheets,
       settingsRoots:inspected.settingsRoots,settingsFields:inspected.fieldRows,
-      networkRows:inspected.networkRows,gameRoots:inspected.gameRoots,
+      networkRows:inspected.networkRows,
+      specialSettingsRows:inspected.specialSettingsRows,
+      specialSettingsRowColor:inspected.specialSettingsRowColor,
+      gameRoots:inspected.gameRoots,
       gameSections:inspected.gameSections,computedFieldColor:inspected.fieldColor,
       computedRootColor:inspected.rootColor,sampleClasses:inspected.sampleClasses,
       colorSamples:inspected.colorSamples,surfaceElements:inspected.surfaceElements,
