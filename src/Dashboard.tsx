@@ -79,7 +79,7 @@ function GameLogo({game}:{game:LibraryGame}) {
 }
 
 function GameCard({
-  game, index, selected, onSelect, onMove, cardRef, activate, onCancel, captureVertical=false,
+  game, index, onSelect, onMove, cardRef, activate, onCancel, captureVertical=false,
 }: {
   game: LibraryGame;
   index: number;
