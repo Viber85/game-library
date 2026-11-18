@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
-import {STEAM_SETTINGS_MARK_SCRIPT,THEME_AUDIT_REMOVE_SCRIPT}
+import {STEAM_SETTINGS_MARK_SCRIPT,THEME_AUDIT_INSTALL_SCRIPT,THEME_AUDIT_REMOVE_SCRIPT}
   from "../src/themeProbe.ts";
 
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
@@ -43,7 +43,7 @@ test("Visual watcher finds broad painted gray surfaces with no route or role",()
     "Do not drop a painted row after its computed color turns navy");
   assert.match(source,/oldSpecial\.has\(el\)/);
   assert.match(source,/oldSpecialParts\.has\(part\)/);
-  assert.match(source,/attributeFilter:\['class','style','aria-selected','aria-checked'\]/,
+  assert.match(THEME_AUDIT_INSTALL_SCRIPT,/attributeFilter:\['class','style','aria-selected','aria-checked'\]/,
     "Native class/selection updates must not wait for 5-second polling");
   assert.doesNotMatch(source,/if\(settingsPage && mainPane\?\.querySelectorAll\)/);
   assert.match(source,/url\\\(/,"Avoid painting media thumbnails and CSS background assets");
