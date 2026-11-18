@@ -1,0 +1,79 @@
+/* Game Library Midnight test.22 — common native Steam/Decky Settings
+ * controller navigation.  MSI Claw showed that touch does not flash,
+ * whereas D-pad/left stick navigation briefly restores Valve's bright
+ * focus layer in BOTH Settings pages.
+ *
+ * Both use Steam's real .PageListColumn + .Panel + .Focusable DOM.
+ * Use exactly that native left SETTINGS rail, in the MAIN Steam CEF tab.
+ * Do not require the right DialogControlsSection (unmounts on tab switch),
+ * Decky router URL, theme watcher markers or a polling timer.
+ *
+ * Unlike the broken test.19/20, style the entire controller focus stack:
+ * sidebar, row, focused child, and native focus pseudo layers together.
+ * Nothing here targets the main content, sliders, QAM or global .Panel. */
+
+/* Stable deep-blue backdrop even while Steam replaces the right pane. */
+.BasicUI .Panel:has(> .PageListColumn),
+.BasicUI .Panel:has(> .PageListColumn) > .PageListColumn {
+  background:#081425 !important;
+  background-color:#081425 !important;
+  background-image:none !important;
+}
+
+/* Remove native background-color / highlight animation on both incoming
+ * and outgoing focus rows. No size, transform or input changes. */
+.BasicUI .PageListColumn :is(
+  .Panel,.Focusable,[class*="PageListItem"],[role="tab"],[role="button"]) {
+  transition-duration:0ms !important;
+  animation-duration:0ms !important;
+}
+.BasicUI .PageListColumn :is(
+  .Panel,.Focusable,[class*="PageListItem"],[role="tab"],[role="button"])::before,
+.BasicUI .PageListColumn :is(
+  .Panel,.Focusable,[class*="PageListItem"],[role="tab"],[role="button"])::after {
+  transition:none !important;
+  animation:none !important;
+}
+
+/* One focused/selected fill for BOTH Steam Settings and Decky Settings.
+ * Steam may put gpfocus on the row, on its Focusable child or on a child
+ * nested directly in a Panel. Include all three without matching
+ * ancestors outside the left PageListColumn. */
+.BasicUI .PageListColumn :is(
+  .Panel,.Focusable,[class*="PageListItem"],[role="tab"],[role="button"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+    [aria-selected="true"],[aria-current="page"],
+    [class*="Active"],[class*="Selected"]),
+.BasicUI .PageListColumn .Panel:has(> :is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+    [aria-selected="true"],[aria-current="page"])) {
+  background:#163a5e !important;
+  background-color:#163a5e !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+  border-color:transparent !important;
+  outline:none !important;
+  box-shadow:none !important;
+  transition:none !important;
+  animation:none !important;
+}
+
+/* Steam's controller-only focus outline can also be painted on
+ * ::before/::after ABOVE the row. Hide only those highlight backgrounds
+ * on focused nav elements; don't touch native SVG icons or hitboxes. */
+.BasicUI .PageListColumn :is(
+  .Panel,.Focusable,[class*="PageListItem"],[role="tab"],[role="button"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+    [aria-selected="true"],[aria-current="page"])::before,
+.BasicUI .PageListColumn :is(
+  .Panel,.Focusable,[class*="PageListItem"],[role="tab"],[role="button"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+    [aria-selected="true"],[aria-current="page"])::after {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  outline:none !important;
+  transition:none !important;
+  animation:none !important;
+}
