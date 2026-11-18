@@ -27,10 +27,32 @@ test("native running-game panel is themed, never the entire Steam CEF overlay",(
   assert.doesNotMatch(css,/\b(?:background|border|color)\s*:\s*[^;]*\b(?:red|magenta)\b/i);
   assert.doesNotMatch(css,/(?:#GamepadUI_Full_Root|\.BasicUI|\bbody\b|\bhtml\b)\s*\{/,
     "No painting global Steam/volume/achievement overlay surfaces");
-  assert.doesNotMatch(css,/\b(?:position|display|visibility|z-index|pointer-events|width|height|transform)\s*:/,
-    "Never move/hide Steam's buttons or change their focus order");
+  assert.doesNotMatch(css,/\b(?:position|display|visibility|z-index|pointer-events|height|transform|overflow)\s*:/,
+    "Never move/hide native panels, hitboxes, Steam scroll mask, or focus handling");
   assert.doesNotMatch(css,/\b(?:img|svg|video|canvas)\s*(?:\{|\[|:)/,
     "Do not filter/replace native Steam and Non-Steam game artwork");
+});
+
+test("0.5.1 keeps the complete in-game cyan outline and glow within native scroll bounds",()=>{
+  const css=cleanup(menu);
+  const nav=css.slice(css.indexOf("/* 0.5.1:"),css.indexOf("/* Keep the original game logo"));
+  assert.match(nav,/mainmenuapprunning_NavigationBox/,
+    "Never target unrelated Game Mode lists");
+  assert.match(nav,/mainmenuapprunning_NavigationMenuItem/,
+    "Focus treatment belongs to an individual navigation row");
+  assert.match(nav,/margin:8px 22px !important;/,
+    "Reserve horizontal room for the 20px bloom without changing the Steam ScrollMask");
+  assert.match(nav,/width:calc\(100% - 44px\) !important;/);
+  assert.match(nav,/box-sizing:border-box !important;/);
+  assert.match(nav,/outline:2px solid #63cfff !important;/);
+  assert.match(nav,/outline-offset:-2px !important;/);
+  assert.match(nav,/box-shadow:0 0 20px rgba\(3,157,255,\.72\),/);
+  for(const state of [".gpfocus",".gpfocuswithin",":focus-visible",":focus-within"])
+    assert.ok(nav.includes(state),"Native controller/keyboard focus must be visible: "+state);
+  assert.doesNotMatch(nav,/ScrollMask|FocusedColumn|NavigationColumn|\b(?:overflow|padding|transform|position|z-index|pointer-events)\s*:/,
+    "Never disable the Steam scroll mask or repaint/outline the whole column");
+  assert.doesNotMatch(nav,/\b(?:outline|box-shadow)\s*:[^;]*none\s*!important/,
+    "Do not erase the actual focused row glow again");
 });
 
 test("Steam Input controller summary is native while its separate editor remains themed",()=>{
