@@ -148,7 +148,8 @@ def _builtin_theme_bundle(theme_id):
     scopes = {
         "main": (
             "shared.css", "buttons.css", "settings.css", "settings-extras.css",
-            "game-details.css", "game-details-extras.css", "downloads.css", "dialogs.css",
+            "game-details.css", "game-details-extras.css", "game-details-midnight.css",
+            "downloads.css", "dialogs.css",
             "steam-input.css", "volume.css", "power-menu.css",
             "settings-special.css", "settings-focus.css",
             "decky-settings.css",
