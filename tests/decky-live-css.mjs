@@ -75,3 +75,19 @@ test("Decky left rail stays navy when right pane unmounts between tabs",()=>{
     "Rail fallback must not depend on right-side DOM, marker or URL");
   assert.doesNotMatch(stable,/\b(?:width|height|padding|margin|position|display|overflow|pointer-events|transform|z-index)\s*:/);
 });
+
+test("selected Decky nav tab retains midnight focus when RIGHT pane temporarily disappears",()=>{
+  const section=css.slice(css.indexOf("/* test.20 — prevent native"));
+  const plain=section.replace(/\/\*[\s\S]*?\*\//g,"");
+  assert.match(plain,/\.Panel:has\(> \.PageListColumn\) > \.PageListColumn/);
+  assert.match(plain,/\.gpfocuswithin/);
+  assert.match(plain,/\[aria-selected="true"\]/);
+  assert.match(plain,/\.Panel:has\(/,"Retain the parent row when its inner child is focused");
+  assert.match(plain,/background:#163a5e !important;/);
+  assert.match(plain,/background-image:none !important;/);
+  assert.match(plain,/transition:none !important;/);
+  assert.match(plain,/animation:none !important;/);
+  assert.doesNotMatch(plain,/DialogControlsSection|data-glm-decky-settings|\/decky\/settings/,
+    "No right-side DOM, route marker, or timer prerequisite for selected tab");
+  assert.doesNotMatch(plain,/\b(?:width|height|margin|padding|transform|position|overflow|display|pointer-events|z-index)\s*:/);
+});
