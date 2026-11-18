@@ -64,11 +64,13 @@
 .BasicUI .PageListColumn :is(
   .Panel,.Focusable,[class*="PageListItem"],[role="tab"],[role="button"]):is(
     .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
-    [aria-selected="true"],[aria-current="page"])::before,
+    [aria-selected="true"],[aria-current="page"],
+    [class*="Active"],[class*="Selected"])::before,
 .BasicUI .PageListColumn :is(
   .Panel,.Focusable,[class*="PageListItem"],[role="tab"],[role="button"]):is(
     .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
-    [aria-selected="true"],[aria-current="page"])::after {
+    [aria-selected="true"],[aria-current="page"],
+    [class*="Active"],[class*="Selected"])::after {
   background:transparent !important;
   background-color:transparent !important;
   background-image:none !important;
