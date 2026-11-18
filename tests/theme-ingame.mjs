@@ -35,7 +35,8 @@ test("native running-game panel is themed, never the entire Steam CEF overlay",(
 
 test("0.5.1 keeps the complete in-game cyan outline and glow within native scroll bounds",()=>{
   const css=cleanup(menu);
-  const nav=css.slice(css.indexOf("/* 0.5.1:"),css.indexOf("/* Keep the original game logo"));
+  const nav=css.slice(css.indexOf(":is(.mainmenuapprunning_NavigationBox_36vNU"),
+    css.lastIndexOf(":is(.mainmenuapprunning_AppColumn_3FAI9"));
   assert.match(nav,/mainmenuapprunning_NavigationBox/,
     "Never target unrelated Game Mode lists");
   assert.match(nav,/mainmenuapprunning_NavigationMenuItem/,
