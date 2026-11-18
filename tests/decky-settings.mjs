@@ -37,11 +37,20 @@ test("Decky 3.3.1 actually uses Steam SidebarNavigation, Field, DialogButton and
   for(const color of ["#0a1b30","#081425","#0f2842","#163a5e","#123452","#1d527d"])
     assert.ok(css.includes(color),"Missing Midnight palette "+color);
   for(const [,selector,body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
-    assert.match(selector,/html\[data-glm-decky-settings\]/,
-      "Do not recolor native Steam Settings or QAM");
+    assert.match(selector,
+      /html\\[data-glm-decky-settings\\]|html:has\\(\\.BasicUI \\.PageListColumn\\):has\\(\\.BasicUI \\.DialogControlsSection\\)/,
+      "Every Decky selector must be scoped to a route marker or OBSERVED Steam DOM signature");
     assert.doesNotMatch(body,/(?:^|[;\n])\s*(?:width|height|margin|padding|position|display|visibility|overflow|transform|pointer-events|z-index)\s*:/);
   }
-  assert.doesNotMatch(css,/box-shadow:inset|border:[0-9]+px/,"No Settings cyan focus ring");
+  assert.match(css,/\\.Panel:has\\(> \\.PageListColumn\\)/,
+    "Observed rail is in a separate native Steam .Panel");
+  assert.match(css,/\\.Panel:has\\(\\.DialogControlsSection\\)/,
+    "Observed right-side content is in its own native Steam .Panel");
+  assert.match(css,/\\[class\\*="eKmEXJCm_"\\]/,
+    "Use the exact actual gray field class family from test.17 device screenshots");
+  assert.match(css,/--glm-decky-observed-layout:1/,
+    "Enable computed-CSS proof of native direct selectors");
+    assert.doesNotMatch(css,/box-shadow:inset|border:[0-9]+px/,"No Settings cyan focus ring");
 });
 
 test("Actual minified Steam CSS aliases cover all Decky UI structural components",()=>{
