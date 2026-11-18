@@ -15,7 +15,8 @@ import {getMissingSteamArt,subscribeArtworkSettingsChanged} from "./steamGridArt
 import { SystemStatusBar } from "./SystemStatusBar";
 import { fallbackTabs, gamesForTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
-import {sortForTab, type HomeSort} from "./homeSort";
+import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
+import {getSortData,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
@@ -24,6 +25,9 @@ import { readRunningGame, resumeRunningGame, type RunningGame } from "./runningG
 
 type Sort = HomeSort;
 const INITIAL_GAME_COUNT = 15;
+const LIBRARY_ROUTE = "/game-library/library";
+let lastSelectedLibraryTab="AllGames";
+const rememberedSorts:Record<string,Sort>={};
 
 interface RailAction {
   id: string;
@@ -225,15 +229,22 @@ function RunningGameLabel({title,expanded}:{title:string;expanded:boolean}) {
   </span>;
 }
 
-export function Dashboard() {
+export function Dashboard({initialMode="home"}:
+  {initialMode?:"home"|"library"}={}) {
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
   const [runningGame,setRunningGame]=useState<RunningGame|null>(()=>
     readRunningGame((window as any).SteamUIStore,(window as any).appStore));
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
-  const [activeTab, setActiveTab] = useState("AllGames");
-  const [tabSorts, setTabSorts] = useState<Record<string,Sort>>({});
+  const [activeTab, setActiveTab] = useState(()=>
+    initialMode==="library"?lastSelectedLibraryTab:"AllGames");
+  useEffect(()=>{lastSelectedLibraryTab=activeTab;},[activeTab]);
+  const [tabSorts, setTabSorts] = useState<Record<string,Sort>>(
+    ()=>({...rememberedSorts}));
+  const [sortOpen,setSortOpen]=useState(false);
+  const sortMenuRefs=useRef<Array<HTMLDivElement|null>>([]);
+  const [metaRevision,setMetaRevision]=useState(0);
   const [selectedId, setSelectedId] = useState<number | undefined>();
-  const [viewAll,setViewAll] = useState(false);
+  const [viewAll,setViewAll] = useState(initialMode==="library");
   const [gridLimit,setGridLimit] = useState(60);
   const [time,setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -306,14 +317,21 @@ export function Dashboard() {
   },[tabIds,activeTab]);
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
   const sort = sortForTab(tab,tabSorts);
+  const sortKind=externalSortKind(sort);
   const tabCounts = useMemo(() => new Map(tabs.map(t => {
     const result = gamesForTab(t, games);
     return [t.id, result.supported ? result.games.length : null] as const;
   })), [tabs, games]);
   const tabResult = useMemo(() => gamesForTab(tab, games), [tab, games]);
-  const shown = useMemo(() => [...tabResult.games].sort(sort === "recent"
-    ? (a,b) => b.lastPlayed - a.lastPlayed || a.title.localeCompare(b.title)
-    : (a,b) => a.title.localeCompare(b.title)), [tabResult.games,sort]);
+  const shown=useMemo(()=>sortGames(tabResult.games,sort,getSortData()),
+    [tabResult.games,sort,metaRevision]);
+  const metaProgress=sortKind?
+    sortMetadataProgress(sortKind,tabResult.games):null;
+  useEffect(()=>{
+    if(!sortKind||!tabResult.supported||!tabResult.games.length)return;
+    return startSortMetadata(sortKind,tabResult.games,()=>
+      setMetaRevision(revision=>revision+1));
+  },[sortKind,tab.id,tabResult.games,tabResult.supported]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
   const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
   const visibleGridGames = shown.slice(0,gridLimit);
@@ -329,7 +347,7 @@ export function Dashboard() {
       }
     }] : []),
     { id: "home", label: "Home", icon: MdHome, go: () => Navigation.Navigate("/library/home") },
-    { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate("/library") },
+    { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate(LIBRARY_ROUTE) },
     { id: "store", label: "Store", icon: MdShoppingCart, go: () => Navigation.NavigateToSteamWeb("https://store.steampowered.com/") },
     { id: "downloads", label: "Downloads", icon: MdDownload, go: () => Navigation.Navigate("/library/downloads") },
     { id: "settings", label: "Settings", icon: MdSettings, go: () => Navigation.Navigate("/settings") },
