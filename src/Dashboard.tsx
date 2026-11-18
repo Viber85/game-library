@@ -623,29 +623,65 @@ export function Dashboard({initialMode="home"}:
             ))}
           </Focusable>
           <Focusable ref={sortRef} className="gl-sort" focusClassName="gl-focused" noFocusRing
-            onActivate={() => setTabSorts(previous=>({...previous,
-              [tab.id]:sort === "recent" ? "alphabetical" : "recent"
-            }))}
+            onActivate={showSortMenu}
             onButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
               if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);focusPill(tabs.length-1);}
-              else if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);goToGame();}
+              else if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);showSortMenu();}
             }}
-            onOKActionDescription="Sort games">
-            <MdAccessTime /> {sort === "recent" ? "Recent" : "A–Z"}
+            onOKActionDescription="Choose sorting">
+            <MdAccessTime /> {sortLabel(sort)}
           </Focusable>
+          {sortOpen && <Focusable className="gl-sort-menu" flow-children="column"
+            aria-label="Sort games">
+            <div className="gl-sort-menu-title">SORT GAMES</div>
+            {SORT_OPTIONS.map((option,index)=><Focusable
+              key={option.id}
+              ref={el=>{sortMenuRefs.current[index]=el;}}
+              className={"gl-sort-option"+(sort===option.id?" gl-sort-selected":"")}
+              focusClassName="gl-focused"
+              noFocusRing
+              onActivate={()=>chooseSort(option.id)}
+              onCancelButton={closeSortMenu}
+              onOKActionDescription={option.label}
+              onButtonDown={(e:GamepadEvent)=>{
+                const button=e.detail?.button;
+                if(button===GamepadButton.DIR_UP){consume(e);focusSortItem(index-1);}
+                else if(button===GamepadButton.DIR_DOWN){consume(e);focusSortItem(index+1);}
+                else if(button===GamepadButton.DIR_LEFT){consume(e);closeSortMenu();}
+              }}>
+              <span>{option.label}</span>
+              {sort===option.id&&<MdCheckCircle aria-hidden="true"/>}
+            </Focusable>)}
+            <div className="gl-sort-menu-hint">A Select · B Close · No Random</div>
+          </Focusable>}
         </nav>
+        {metaProgress && metaProgress.done<metaProgress.total &&
+          <div className="gl-sort-progress" role="status">
+            Loading {sortKind==="hltb"?"HLTB Main + Extras":
+              sortKind==="proton"?"ProtonDB":"achievement"} data:
+            {" "}{metaProgress.done}/{metaProgress.total} · partial order, missing data last
+          </div>}
 
         {shown.length > 0 ? (
           viewAll ? (
             <section className="gl-grid-page" aria-label={"All games: "+tab.title}>
               <div className="gl-grid-heading">
-                <div><h2>{tab.title}</h2><span>{shown.length} games · Full library</span></div>
-                <Focusable className="gl-grid-back" noFocusRing focusClassName="gl-focused"
-                  onActivate={closeGrid} onCancelButton={closeGrid}
-                  onOKActionDescription="Back to games">
-                  <MdArrowBack/> Back to carousel
-                </Focusable>
+                <div><h2>{initialMode==="library"?"Library · "+tab.title:tab.title}</h2>
+                  <span>{shown.length} games · Midnight Library</span></div>
+                <div className="gl-grid-header-actions">
+                  {initialMode==="library"&&<Focusable
+                    className="gl-grid-back gl-native-library" noFocusRing focusClassName="gl-focused"
+                    onActivate={()=>Navigation.Navigate("/library")}
+                    onOKActionDescription="Open original Steam library">
+                    Steam Library
+                  </Focusable>}
+                  <Focusable className="gl-grid-back" noFocusRing focusClassName="gl-focused"
+                    onActivate={exitGrid} onCancelButton={exitGrid}
+                    onOKActionDescription={initialMode==="library"?"Return Home":"Back to games"}>
+                    <MdArrowBack/> {initialMode==="library"?"Home":"Back to carousel"}
+                  </Focusable>
+                </div>
               </div>
               <div className="gl-full-grid-scroll">
                 <div className="gl-full-grid" ref={fullGridLayoutRef}>
@@ -658,14 +694,14 @@ export function Dashboard({initialMode="home"}:
                       }}
                       activate={()=>openDetails(game)}
                       captureVertical
-                      onCancel={closeGrid}
+                      onCancel={exitGrid}
                       onMove={button=>moveInGrid(index,button)}
                       cardRef={el=>{fullGridRefs.current[index]=el;}}
                     />
                   ))}
                 </div>
               </div>
-              <div className="gl-grid-hint">← First column: Menu · → / B: Return · L1/R1 Tabs</div>
+              <div className="gl-grid-hint">← First column: Menu · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs · Sort: Select</div>
             </section>
           ) : (
           <>
