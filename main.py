@@ -82,7 +82,7 @@ def _builtin_theme_bundle(theme_id):
             "shared.css", "buttons.css", "settings.css", "settings-extras.css",
             "game-details.css", "game-details-extras.css", "downloads.css", "dialogs.css",
             "steam-input.css", "volume.css", "power-menu.css",
-            "settings-focus.css",
+            "settings-special.css", "settings-focus.css",
         ),
         "overlay": (
             "shared.css", "buttons.css", "menus.css", "running-menu.css",

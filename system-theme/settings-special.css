@@ -1,0 +1,58 @@
+/* Midnight row fills for three Settings subsections only.
+ * SteamOS Internet networks, Keyboard layouts and Customization movies
+ * use wide interactive cards outside generic Field skin coverage.
+ * Only a verified Settings route receives the markers below. */
+html[data-glm-settings-root]:is(
+  [data-glm-settings-page="internet"],
+  [data-glm-settings-page="keyboard"],
+  [data-glm-settings-page="customization"])
+  [data-glm-settings-main] [data-glm-settings-special-row] {
+  background:#0f2842 !important;
+  background-color:#0f2842 !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+  outline:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+/* A broad child can supply the native gray fill. Only such decorative
+ * backdrops are marked; thumbnails and preview imagery are never marked. */
+html[data-glm-settings-root]:is(
+  [data-glm-settings-page="internet"],
+  [data-glm-settings-page="keyboard"],
+  [data-glm-settings-page="customization"])
+  [data-glm-settings-special-row] [data-glm-settings-special-part] {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+/* Steam's forwards focus animation otherwise repaints a gray row.
+ * Keep the blue selection, no border or glow, and native hit geometry. */
+html[data-glm-settings-root]:is(
+  [data-glm-settings-page="internet"],
+  [data-glm-settings-page="keyboard"],
+  [data-glm-settings-page="customization"])
+  [data-glm-settings-main] [data-glm-settings-special-row]:is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+    [aria-selected="true"],[aria-checked="true"]) {
+  background:#163a5e !important;
+  background-color:#163a5e !important;
+  background-image:none !important;
+  outline:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+  animation-name:none !important;
+}
+html[data-glm-settings-root]:is(
+  [data-glm-settings-page="internet"],
+  [data-glm-settings-page="keyboard"],
+  [data-glm-settings-page="customization"])
+  [data-glm-settings-special-row]:is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)
+  [data-glm-settings-special-part] {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}

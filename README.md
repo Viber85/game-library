@@ -87,6 +87,24 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.12 — Internet, Keyboard and Customization special rows
+(device preview):** Three MSI Claw screenshots showed that Wi-Fi network
+entries, the Keyboard layout row and Customization movie cards retained
+native gray backgrounds even after Settings focus changes. Steam
+renders these as wide actionable Field/radio/card surfaces, frequently
+outside the generic Settings row markers. A conservative watcher now
+identifies only those three Settings routes after verifying the native
+two-column Settings layout. It marks wide interactive rows in the
+content pane, skipping toggles, sliders and inputs, and optionally
+marks full-row gray child backdrops (never media or preview imagery).
+The new main-window-only `settings-special.css` paints deep navy
+idle rows (#0f2842) and light-blue focus (#163a5e) WITHOUT a border
+or glow, preventing Valve's gray focus animation from overriding it.
+Steam controls, thumbnails, navigation geometry, QAM, Power, Volume
+and game pages stay untouched. Watcher revision 11 and native style
+revision 63 invalidate older cached styles; regression/ZIP tests check
+the integration. Visual behavior still needs confirmation on Claw.
+
 **v0.4.21-test.11 — focus without outlines throughout Settings
 (device preview):** The MSI Claw Display/Brightness screenshot shows the
 desired bright blue focused row but an unnecessary cyan outline.
