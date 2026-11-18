@@ -35,11 +35,14 @@ export function SteamGridDBPanel(){
     if(busy||!draft.trim())return;
     setBusy(true);setError("");setNotice("");
     void saveKey(draft.trim()).then(async answer=>{
-      if(!answer.ok)throw new Error(answer.reason||"Unable to save API key");
+      if(!answer.ok){
+        setError(answer.reason||"Unable to verify this SteamGridDB API key.");
+        return;
+      }
       setDraft("");
       await update();
       setNotice("Key saved locally. Missing Steam covers and heroes will be filled automatically.");
-    }).catch(()=>setError("Unable to save key. Check its format and retry."))
+    }).catch(()=>setError("Could not contact SteamGridDB to verify the API key."))
       .finally(()=>setBusy(false));
   };
   const remove=()=>{
