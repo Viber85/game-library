@@ -49,11 +49,18 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings-special.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/decky-settings.css'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'data-glm-decky-settings'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)'
-unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq '.BasicUI .Panel:has(> .PageListColumn)'
-unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq '.PageListColumn .Panel:has('
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'background:#163a5e !important'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'transition:none !important'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq '[class*="eKmEXJCm_"]'
+# Regression guard: v19/v20 unscoped rail rules affected ALL Steam Settings.
+if unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Eq '^\.BasicUI \.Panel:has\(> \.PageListColumn\)'; then
+  echo "Unscoped Decky rail rule detected; aborting package" >&2
+  exit 1
+fi
+if unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'test.20 — prevent native'; then
+  echo "v20 flashing focus override leaked into package" >&2
+  exit 1
+fi
 unzip -p "$output" 'game-library/dist/index.js' | grep -Fq 'deckyLiveCssMatched'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'gamepadpagedsettings_PagedSettingsDialog_PageContent'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'gamepaddialog_Field_'

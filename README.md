@@ -87,6 +87,24 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.21 — emergency revert of Decky left-rail CSS regressions
+(device rollback):** On MSI Claw, v0.4.21-test.19 and test.20 failed to
+remove the Decky left navigation flash and caused the same issue on the
+native Steam Settings page. Root cause: both releases appended
+`.BasicUI .Panel:has(> .PageListColumn)` selectors WITHOUT the
+right-pane check that had kept the known-good v0.4.21-test.18 rules
+restricted to Decky's two-column Settings layout. Native Steam Settings
+also has a PageListColumn, so those additional rules can affect Steam
+Settings and its selected items, causing a global regression.
+This release restores **system-theme/decky-settings.css byte-for-byte
+from the previously confirmed functional v0.4.21-test.18**. It removes
+both v19 and v20 unscoped overrides; all other features and diagnostics
+remain. No new CSS modifications or guesses. CSS revision **72**
+forces new injection; automated tests and packaged ZIP checks now
+explicitly forbid unscoped native rail rules. The v18 short-lived left
+rail flash may return; fix that only after capturing which exact element
+changes state during the transition, without risking global Steam UI.
+
 **v0.4.21-test.20 — stabilize active left navigation item, not only the rail
 (device preview):** MSI Claw reports that the brief brighter-blue
 flash persisted in test.19. Source review found that test.19 only
