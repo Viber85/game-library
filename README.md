@@ -87,6 +87,35 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.16 — Decky 3.3.1 verified route & native Steam components
+(device preview):** The previous test.15 had no effect on MSI Claw.
+Inspection of exact Decky v3.3.1 sources shows
+`frontend/src/plugin-loader.tsx` registers `/decky/settings`,
+`frontend/src/components/settings/index.tsx` renders
+`@decky/ui SidebarNavigation`, and General, Plugins, Developer,
+Testing use Steam-sourced `DialogBody`, `Field`, `DialogButton`,
+`Toggle` and `Dropdown`. `ReorderableList` is composed of native
+`Field` elements in `@decky/ui` v4.16.4; the class
+`reorderablelist_Entry` assumed in test.15 did not exist.
+`SidebarNavigation` is resolved dynamically from the installed
+Steam webpack, so actual page classes are Steam CSS modules, not
+owned by Decky. Replace the unverified four-sidebar-row *geometry
+gate* with direct recognition of Decky's confirmed registered route,
+including its child pages and History hash form, even while content
+is lazy loading. Main-window `decky-settings.css` now targets
+native Steam PagedSettingsDialog side rail, content, nav entries,
+and specifically Steam Field (not FieldLabel) and DialogButton
+components, with the existing webpack class-alias compiler.
+Midnight palette remains navy idle `#0f2842`, lighter blue focus
+`#163a5e`, dark blue rail and buttons, no cyan outlines or glow.
+QAM, native Steam Settings, Power and Volume are not changed.
+Theme diagnostics now expose whether the Decky route is detected,
+the count of native Field matches and their computed background color.
+Stylesheet revision **67** and watcher revision **15** replace old code.
+Regression tests verify an empty Decky page before components mount,
+all four Decky routes, false-positive routes and CSS aliases.
+Real visual result on MSI Claw still requires confirmation.
+
 **v0.4.21-test.15 — Midnight Decky Loader Settings in all four tabs
 (device preview):** Decky Loader General, Plugins, Developer and Testing
 use the shared @decky/ui SidebarNavigation with **four** categories;
