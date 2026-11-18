@@ -124,12 +124,19 @@
  * source-specific outline:none, without requiring its right pane or route.
  * Also handle a focusable DIRECT child when Steam assigns gpfocus to that
  * child rather than to its Panel row. No layout/focus/event changes. */
+/* test.27: A wrapper Panel gets .gpfocuswithin whenever one of its
+ * category rows is focused. Test.26 unintentionally outlined that entire
+ * list AND the actual category. A wrapper with another focused Panel below
+ * it is not the category: only the deepest matching row gets the outline.
+ * This does NOT change the width, background or keyboard/controller focus. */
 html:has(.BasicUI .PageListColumn .Panel)
   .BasicUI .PageListColumn .Panel:is(
-    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within):not(:has(
+      .Panel:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within))),
 html:has(.BasicUI .PageListColumn .Panel)
   .BasicUI .PageListColumn .Panel:has(> :is(
-    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)) {
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)):not(:has(
+      .Panel:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within))) {
   background:#163a5e !important;
   background-color:#163a5e !important;
   color:#f3f8ff !important;

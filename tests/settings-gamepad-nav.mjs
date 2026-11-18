@@ -96,3 +96,20 @@ test("Actual focused Settings category has a 2px cyan outline and 20px glow in b
   const main=backend.slice(backend.indexOf('"main": ('),backend.indexOf('"overlay": ('));
   assert.ok(main.indexOf('"settings-gamepad-focus.css"')>main.indexOf('"decky-settings.css"'));
 });
+
+test("A focused category has one cyan ring; the enclosing list cannot inherit it",()=>{
+  const last=css.slice(css.indexOf("/* test.27"));
+  assert.ok(last.length>250,"Narrow category-only focus CSS must exist");
+  assert.match(last,/\.PageListColumn \.Panel:is\(/);
+  assert.match(last,/\.PageListColumn \.Panel:has\(> :is\(/);
+  assert.equal((last.match(/:not\(:has\(/g)||[]).length,2,
+    "Both category-focus selectors must reject a wrapper with a focused inner Panel");
+  assert.match(last,/\.Panel:is\(\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)/,
+    "Only ancestors containing another focused row are excluded");
+  assert.match(last,/outline:2px solid #63cfff !important;/);
+  assert.match(last,/box-shadow:0 0 20px rgba\(3,157,255,\.72\)/);
+  assert.doesNotMatch(last,/(?:\[aria-selected="true"\]|\[class\*="Active"\]|:hover|:active\b)/,
+    "Do not confuse selected or hovered rows with controller focus");
+  assert.doesNotMatch(last,/\.PageListColumn\s*\{|\.Panel\s*\{/,
+    "Must never draw a frame on the full Settings rail or generic Panels");
+});
