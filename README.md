@@ -23,6 +23,21 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Release 0.5.3 — live SteamOS clock preference
+
+Version 0.5.2 read only the persisted Steam account configuration file,
+which did not always track the value currently selected in SteamOS.
+The Home clock now prioritizes Steam's **live FriendSettings** preference
+`settingsStore.m_FriendSettings.b24HourClock`; older Game Mode builds can
+use the corresponding friendStore chat setting. These are the same settings
+used by Steam's own 24-hour clock option. Live state is rechecked every
+two seconds and on return to Home. The localconfig.vdf reader remains as a
+fallback; no settings are changed. The clock's hover title identifies its
+source to help diagnose client variations.
+
+Installed continues to default to Recently Played; other tabs and all
+existing Midnight CSS are unchanged.
+
 ## Release 0.5.2 — SteamOS clock and Installed sorting on Home
 
 - **SteamOS clock preference:** The Game Library Home clock now reads the logged-in
