@@ -83,7 +83,6 @@ function GameCard({
 }: {
   game: LibraryGame;
   index: number;
-  selected: boolean;
   onSelect: () => void;
   onMove: (button: GamepadButton) => void;
   cardRef?: React.Ref<HTMLDivElement>;
@@ -108,7 +107,7 @@ function GameCard({
   return (
     <Focusable
       ref={cardRef}
-      className={"gl-game" + (selected ? " gl-selected" : "")}
+      className="gl-game"
       focusClassName="gl-focused"
       noFocusRing
       preferredFocus={!captureVertical && index === 0}
@@ -455,7 +454,6 @@ export function Dashboard() {
                 <div className="gl-full-grid" ref={fullGridLayoutRef}>
                   {visibleGridGames.map((game,index)=>(
                     <GameCard key={game.id} game={game} index={index}
-                      selected={game.id===selected?.id}
                       onSelect={()=>{
                         setSelectedId(game.id);
                         if(index>=gridLimit-12 && gridLimit<shown.length)
@@ -480,7 +478,6 @@ export function Dashboard() {
                   key={game.id}
                   game={game}
                   index={index}
-                  selected={game.id === selected?.id}
                   onSelect={() => setSelectedId(game.id)}
                   onMove={button=>{
                     if(button===GamepadButton.DIR_LEFT)index===0?focusRail(railIndex):goToGame(index-1);
