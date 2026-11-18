@@ -299,7 +299,7 @@ export function Dashboard({initialMode="home"}:
     setGames(getLibraryGames());
     setActiveTab(tabInfo.tabs[0]?.id ?? "AllGames");
     setSelectedId(undefined);
-    setViewAll(false);
+    setViewAll(initialMode==="library");
     setGridLimit(60);
     pendingGridIndex.current=null;
   },[tabInfo.available]);
@@ -311,7 +311,7 @@ export function Dashboard({initialMode="home"}:
     // disabled. Reset to Steam All Games rather than retaining stale ID.
     setActiveTab(tabs[0]?.id ?? "AllGames");
     setSelectedId(undefined);
-    setViewAll(false);
+    setViewAll(initialMode==="library");
     setGridLimit(60);
     pendingGridIndex.current=null;
   },[tabIds,activeTab]);
@@ -447,6 +447,42 @@ export function Dashboard({initialMode="home"}:
     setViewAll(false);
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
+  const exitGrid=()=>{
+    if(initialMode==="library")Navigation.Navigate("/library/home");
+    else closeGrid();
+  };
+  const showSortMenu=()=>{setSortOpen(true);};
+  const closeSortMenu=()=>{
+    setSortOpen(false);
+    window.requestAnimationFrame(()=>sortRef.current?.focus());
+  };
+  const chooseSort=(id:Sort)=>{
+    rememberedSorts[tab.id]=id;
+    setTabSorts(previous=>({...previous,[tab.id]:id}));
+    pendingGridIndex.current=null;
+    lastGridFocusIndex.current=0;
+    setSelectedId(undefined);
+    closeSortMenu();
+  };
+  const focusSortItem=(index:number)=>{
+    const target=Math.max(0,Math.min(SORT_OPTIONS.length-1,index));
+    const element=sortMenuRefs.current[target];
+    element?.focus();
+    element?.scrollIntoView({block:"nearest"});
+  };
+  useEffect(()=>{
+    if(!sortOpen)return;
+    const selectedIndex=Math.max(0,SORT_OPTIONS.findIndex(x=>x.id===sort));
+    const frame=window.requestAnimationFrame(()=>focusSortItem(selectedIndex));
+    return ()=>window.cancelAnimationFrame(frame);
+  },[sortOpen]);
+  const autoFocusedLibrary=useRef(false);
+  useEffect(()=>{
+    if(initialMode!=="library"||!shown.length||autoFocusedLibrary.current)return;
+    autoFocusedLibrary.current=true;
+    const frame=window.requestAnimationFrame(()=>focusGrid(0));
+    return ()=>window.cancelAnimationFrame(frame);
+  },[initialMode,shown.length]);
   const focusPill = (index:number) => {
     setRailExpanded(false);
     const target = pillRefs.current[Math.max(0,Math.min(tabs.length - 1,index))];
@@ -464,7 +500,8 @@ export function Dashboard({initialMode="home"}:
     setGames(getLibraryGames());
     setActiveTab(tabs[nextIndex].id);
     pendingGridIndex.current=null;
-    setViewAll(false);
+    setViewAll(initialMode==="library");
+    setSortOpen(false);
     setGridLimit(60);
     setSelectedId(undefined);
     // Focus target after React applies the new selected tab and game list.
@@ -569,7 +606,7 @@ export function Dashboard({initialMode="home"}:
                 ref={el => { pillRefs.current[index] = el; }}
                 className={"gl-pill" + (tab.id === item.id ? " gl-active" : "")}
                 focusClassName="gl-focused" noFocusRing
-                onActivate={() => { pendingGridIndex.current=null; setGames(getLibraryGames()); setActiveTab(item.id); setViewAll(false); setGridLimit(60); setSelectedId(undefined); }}
+                onActivate={() => { pendingGridIndex.current=null; setGames(getLibraryGames()); setActiveTab(item.id); setViewAll(initialMode==="library"); setSortOpen(false); setGridLimit(60); setSelectedId(undefined); }}
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
                   const b=e.detail?.button;
