@@ -5,7 +5,8 @@ import {readFileSync} from "node:fs";
 const css=readFileSync(new URL("../src/theme.ts",import.meta.url),"utf8");
 const dashboard=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
 
-const rules=(selector)=>[...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+const cleanCSS=css.replace(/\/\*[\s\S]*?\*\//g,"");
+const rules=(selector)=>[...cleanCSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
   .filter(([,head])=>head.trim()===selector)
   .map(([,head,body])=>body);
 const lastRule=(selector)=>{
