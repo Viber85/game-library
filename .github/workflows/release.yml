@@ -58,6 +58,7 @@ jobs:
           if [[ "$VERSION" == *"-"* ]]; then PREVIEW=(--prerelease); fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG}" \
-            --notes "Game Library v0.5.3: Fix Home clock not honoring 12h/24h SteamOS setting after v0.5.2. Prefer the active Steam Game Mode settingsStore.m_FriendSettings.b24HourClock (with older friendStore chat-settings fallback) over any local VDF file or browser locale. Recheck live preference every 2 seconds and when Home regains focus. Only fall back to saved account setting and locale when Steam has not exposed the live setting. Clock title identifies data source for diagnosis. The Installed tab still starts in Recently Played; no CSS, Steam Input, Decky, sorting, layout, or controller changes. Includes live Steam settings regression tests." \
+            --prerelease \
+            --notes "Game Library v0.5.4-test.1: first source-verified test of the approved Midnight Steam Game Details concept. Add a separately scoped CSS layer for Steam game header gradient, Play section, cyan Play focus, rounded secondary buttons, Steam Cloud, Activity and verified HLTB for Deck elements. Preserves actual Steam artwork, game logo, HLTB stats, user posts, controller inputs, page geometry and navigation. Uses genuine Steam/Decky class keys resolved through runtime webpack module aliases; no fake placeholders, hardcoded game-specific values, image injection or DOM replacement. The mockup's cinematic artwork remains a visual reference only; native artwork depends on each game. Tested by GitHub CI and requires visual confirmation on MSI Claw. Cache style revision 81." \
             --target "$GITHUB_SHA" \
             "${PREVIEW[@]}"
