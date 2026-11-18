@@ -66,6 +66,26 @@ class SteamGridDBTests(unittest.TestCase):
             self.assertTrue(steamgriddb.delete_key(tmp))
             self.assertIsNone(steamgriddb.read_key(tmp))
 
+    def test_live_key_verification_and_no_invalid_credential_persistence(self):
+        token = "D" * 32
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(main, "_load_steamgriddb", return_value=steamgriddb), \
+                 mock.patch.object(main, "_steamgriddb_config_dir", return_value=pathlib.Path(tmp)), \
+                 mock.patch.object(steamgriddb, "fetch_json", return_value={"success": True}):
+                response = asyncio.run(main.Plugin().set_steamgriddb_key(token))
+                self.assertTrue(response["ok"])
+                self.assertEqual(steamgriddb.read_key(tmp), token)
+            steamgriddb.delete_key(tmp)
+            error = urllib.error.HTTPError("https://www.steamgriddb.com/api/v2",
+                                          401, "Unauthorized", None, None)
+            with mock.patch.object(main, "_load_steamgriddb", return_value=steamgriddb), \
+                 mock.patch.object(main, "_steamgriddb_config_dir", return_value=pathlib.Path(tmp)), \
+                 mock.patch.object(steamgriddb, "fetch_json", side_effect=error):
+                response = asyncio.run(main.Plugin().set_steamgriddb_key(token))
+                self.assertFalse(response["ok"])
+                self.assertNotIn(token, repr(response))
+                self.assertIsNone(steamgriddb.read_key(tmp))
+
     def test_positive_and_negative_results_cached_without_requery(self):
         with tempfile.TemporaryDirectory() as tmp:
             service = steamgriddb.ArtworkService(pathlib.Path(tmp) / "cache.json")
