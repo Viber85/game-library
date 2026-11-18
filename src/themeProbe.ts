@@ -173,7 +173,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "14";
+const AUDIT_REVISION = "15";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -225,6 +225,21 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     const width=window.innerWidth||document.documentElement?.clientWidth||0;
     const height=window.innerHeight||document.documentElement?.clientHeight||0;
     if(width<500||height<270){prune();return false;}
+    // Decky Loader v3.3.1 registers its Settings route at /decky/settings
+    // in frontend/src/plugin-loader.tsx. @decky/ui resolves
+    // SidebarNavigation directly from Steam's webpack bundle, so DOM
+    // row counts or CSS classes cannot identify this route reliably.
+    // Use the actual router path, including child paths and hash routing.
+    const path=String(window.location?.pathname||'').toLowerCase();
+    const rawHash=String(window.location?.hash||'').toLowerCase();
+    const hash=rawHash.startsWith('#')?rawHash.slice(1):rawHash;
+    const isDeckySettingsRoute=value=>value.startsWith('/decky/settings') &&
+      ['', '/', '?', '#'].includes(value.charAt('/decky/settings'.length));
+    if(isDeckySettingsRoute(path)||isDeckySettingsRoute(hash)){
+      mark(document.documentElement,'data-glm-decky-settings');
+      prune();
+      return true; // Preloaded CSS applies before Steam's next paint.
+    }
     const left=[],right=[];
     const positions=new Map();
     const isRow=(el,kind)=>{
@@ -286,17 +301,11 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     // Family and similar categories can show only one control, or none.
     // A full Steam Settings rail has 9+ distinct navigation rows, whereas
     // Home, QAM and game details do not. This does not read page labels.
-    // Decky Loader's Settings are the native four-tab SidebarNavigation
-    // (General, Plugins, Developer, Testing). Steam Settings uses 9+ tabs.
-    // Rendered DOM geometry, NOT a slow delayed URL poll, drives the match.
-    const deckyRoute=/\\/decky\\/settings(?:\\/|$|[?#])/i.test(
-      String(window.location?.pathname||'')+String(window.location?.hash||''));
-    const deckySettings=nav.length>=3 && nav.length<=5 && rows.length>=2 &&
-      (nav.length===4 || deckyRoute);
-    const match=Boolean(semantic || deckySettings ||
+    // Steam-native Settings still uses the 9+ category geometry; Decky
+    // is handled above using its authoritative registered route.
+    const match=Boolean(semantic ||
       (nav.length>=9 && (rows.length>=1 || nav.length>=10)));
     if(!match){prune();return false;}
-    if(deckySettings)mark(document.documentElement,'data-glm-decky-settings');
     mark(root,'data-glm-settings-root');
     // Document root only activates Settings-scoped CSS; it is cleared as
     // soon as the recognizable Settings rail disappears.
@@ -495,7 +504,7 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
       }
     }
     prune();
-    return Boolean(mainPane || rows.length>0 || nav.length>=9 || deckySettings);
+    return Boolean(mainPane || rows.length>0 || nav.length>=9);
   }catch{return false;}
 })()`;
 
