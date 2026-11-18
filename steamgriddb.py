@@ -25,9 +25,9 @@ MAX_CACHE_ENTRIES = 1500
 def normalize_title(title):
     if not isinstance(title, str):
         return ""
-    value = unicodedata.normalize("NFKC", title).casefold()
-    # Trademark / copyright signs are not relevant to title identity.
-    value = re.sub(r"[™®©]", "", value)
+    # Remove symbols before NFKC, which otherwise expands ™ into the text TM.
+    value = re.sub(r"[™®©]", "", title)
+    value = unicodedata.normalize("NFKC", value).casefold()
     return re.sub(r"[^a-z0-9]+", "", value)
 
 
