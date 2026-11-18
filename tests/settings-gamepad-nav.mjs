@@ -75,3 +75,24 @@ test("Observed outer native Focusable rail wrapper cannot flash a lighter focus 
   assert.match(css,/rgb\(10,27,48\)/);
   assert.match(css,/rgb\(8,20,37\)/);
 });
+
+test("Actual focused Settings category has a 2px cyan outline and 20px glow in both native Settings UIs",()=>{
+  const focus=css.slice(css.indexOf("/* test.26"));
+  assert.match(focus,/html:has\(\.BasicUI \.PageListColumn \.Panel\)/,
+    "Real left navigation DOM, independent of Decky router and right pane");
+  assert.match(focus,/\.PageListColumn \.Panel:is\(/);
+  assert.match(focus,/\.PageListColumn \.Panel:has\(> :is\(/);
+  for(const name of [".gpfocus",".gpfocuswithin",":focus-visible",":focus-within"])
+    assert.ok(focus.includes(name),"Covers controller/keyboard focus "+name);
+  assert.match(focus,/outline:2px solid #63cfff !important;/);
+  assert.match(focus,/outline-offset:-2px !important;/);
+  assert.match(focus,/box-shadow:0 0 20px rgba\(3,157,255,\.72\)/);
+  assert.doesNotMatch(focus,/\[aria-selected="true"\]|\[class\*="Active"\]/,
+    "Focus ring follows the controller, not every merely selected row");
+  assert.doesNotMatch(focus,/DialogControlsSection|DialogContent|data-glm-|\/decky\/settings/,
+    "No right-panel or route dependence");
+  assert.match(decky,/box-shadow:none !important;/,
+    "Retains old Decky reset: final rule must be more specific and load later");
+  const main=backend.slice(backend.indexOf('"main": ('),backend.indexOf('"overlay": ('));
+  assert.ok(main.indexOf('"settings-gamepad-focus.css"')>main.indexOf('"decky-settings.css"'));
+});
