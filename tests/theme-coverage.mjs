@@ -87,7 +87,7 @@ test("All Settings categories use a flat canvas with no overlay-wide paint",()=>
   assert.match(watcher,/data-glm-settings-surface/);
   assert.ok(watcher.includes("nav.length>=10"),"Sparse Family pages count as Settings");
   assert.ok(watcher.includes("const previous=Array.from"),"Existing themed markers are preserved");
-  assert.ok(watcher.includes("new MutationObserver(()=>{"));
+  assert.ok(watcher.includes("new MutationObserver((records)=>{"));
   assert.ok(watcher.includes("lastFastScan=now;")&&watcher.includes("sample();"));
   assert.match(watcher,/attributeFilter:\['class','style','aria-selected','aria-checked'\]/,
     "Native changes in reused Settings rows must trigger an immediate repaint");
