@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
@@ -18,6 +18,7 @@ import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
 import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
+import { readRunningGame, resumeRunningGame, type RunningGame } from "./runningGame";
 
 type Sort = "recent" | "alphabetical";
 const INITIAL_GAME_COUNT = 15;
@@ -129,8 +130,61 @@ function GameCard({
   );
 }
 
+
+/** Use the same Steam artwork lookup as our non-Steam-compatible game cards.
+ * A missing image becomes a generic game icon rather than a broken image. */
+function RunningGameIcon({game}:{game:LibraryGame|undefined}) {
+  const [imageIndex,setImageIndex]=useState(0);
+  useEffect(()=>setImageIndex(0),[game?.id]);
+  const images=game?posterCandidates(game):[];
+  const src=images[imageIndex];
+  return src ? <img className="gl-running-art" src={src} alt=""
+    onError={()=>setImageIndex(value=>value+1)}/>
+    : <MdVideogameAsset className="gl-rail-icon" aria-hidden="true"/>;
+}
+
+/** Marquee activates only for an actually truncated title. A long title
+ * remains legible in controller focus and never shifts other rail items. */
+function RunningGameLabel({title,expanded}:{title:string;expanded:boolean}) {
+  const viewport=useRef<HTMLSpanElement>(null);
+  const content=useRef<HTMLSpanElement>(null);
+  const [overflow,setOverflow]=useState(0);
+  useEffect(()=>{
+    if(!expanded){setOverflow(0);return;}
+    const measure=()=>{
+      if(!viewport.current||!content.current)return;
+      const pixels=Math.ceil(content.current.scrollWidth-viewport.current.clientWidth);
+      setOverflow(pixels>3?pixels:0);
+    };
+    const frame=window.requestAnimationFrame(measure);
+    let resize:ResizeObserver|undefined;
+    if(typeof ResizeObserver!=="undefined"){
+      resize=new ResizeObserver(measure);
+      if(viewport.current)resize.observe(viewport.current);
+      if(content.current)resize.observe(content.current);
+    }
+    return ()=>{
+      window.cancelAnimationFrame(frame);
+      resize?.disconnect();
+    };
+  },[title,expanded]);
+  const style=overflow>0
+    ? {"--gl-marquee-distance":overflow+"px"} as CSSProperties
+    : undefined;
+  return <span className="gl-rail-label gl-running-label">
+    <span className="gl-running-title-viewport" ref={viewport}>
+      <span ref={content} style={style}
+        className={"gl-running-title"+(overflow>0?" gl-marquee-active":"")}>
+        {title}
+      </span>
+    </span>
+  </span>;
+}
+
 export function Dashboard() {
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
+  const [runningGame,setRunningGame]=useState<RunningGame|null>(()=>
+    readRunningGame((window as any).SteamUIStore,(window as any).appStore));
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
   const [activeTab, setActiveTab] = useState("AllGames");
   const [sort, setSort] = useState<Sort>("alphabetical");
@@ -150,7 +204,20 @@ export function Dashboard() {
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
+  const lastRailId=useRef("home");
   const [railExpanded, setRailExpanded] = useState(false);
+
+  useEffect(()=>{
+    const refresh=()=>{
+      const next=readRunningGame((window as any).SteamUIStore,(window as any).appStore);
+      setRunningGame(previous=>previous?.id===next?.id&&previous?.title===next?.title
+        ? previous:next);
+    };
+    refresh();
+    const check=window.setInterval(refresh,1600);
+    window.addEventListener("focus",refresh);
+    return ()=>{window.clearInterval(check);window.removeEventListener("focus",refresh);};
+  },[]);
 
   useEffect(() => {
     const refresh = window.setInterval(() => setGames(getLibraryGames()), 15000);
@@ -208,6 +275,14 @@ export function Dashboard() {
   // Hero images are resolved on selection to honor custom SteamGridDB artwork.
 
   const railActions: RailAction[] = [
+    ...(runningGame ? [{
+      id:"running",label:runningGame.title,icon:MdVideogameAsset,
+      go:()=>{
+        const ok=resumeRunningGame(runningGame,(window as any).SteamUIStore,
+          ()=>Navigation.Navigate("/apprunning"));
+        if(!ok)setRunningGame(null); // stale item; never try RunGame.
+      }
+    }] : []),
     { id: "home", label: "Home", icon: MdHome, go: () => Navigation.Navigate("/library/home") },
     { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate("/library") },
     { id: "store", label: "Store", icon: MdShoppingCart, go: () => Navigation.NavigateToSteamWeb("https://store.steampowered.com/") },
@@ -216,9 +291,20 @@ export function Dashboard() {
     { id: "power", label: "Power", icon: MdPowerSettingsNew, go: () => Navigation.OpenPowerMenu() },
   ];
 
+  // Inserting/removing the transient first item must not silently remap
+  // the previously focused Home/Library/Settings icon to another action.
+  useEffect(()=>{
+    const index=railActions.findIndex(action=>action.id===lastRailId.current);
+    if(index>=0){setRailIndex(index);return;}
+    lastRailId.current="home";
+    setRailIndex(0);
+    if(railExpanded)window.requestAnimationFrame(()=>railRefs.current[0]?.focus());
+  },[runningGame?.id]);
+
   const focusRail = (index: number) => {
     const target = (index + railActions.length) % railActions.length;
     setRailIndex(target);
+    lastRailId.current=railActions[target].id;
     setRailExpanded(true);
     railRefs.current[target]?.focus();
   };
@@ -357,10 +443,14 @@ export function Dashboard() {
               <Focusable
                 key={action.id}
                 ref={el => { railRefs.current[index] = el; }}
-                className="gl-rail-item"
+                className={"gl-rail-item"+(action.id==="running"?" gl-running-item":"")}
                 focusClassName="gl-focused"
                 noFocusRing
-                onGamepadFocus={() => { setRailIndex(index); setRailExpanded(true); }}
+                onGamepadFocus={() => {
+                  lastRailId.current=action.id;
+                  setRailIndex(index);
+                  setRailExpanded(true);
+                }}
                 onActivate={action.go}
                 onOKActionDescription={action.label}
                 onButtonDown={(e: GamepadEvent) => {
@@ -375,8 +465,13 @@ export function Dashboard() {
                 title={action.label}
                 aria-label={action.label}
               >
-                <Icon className="gl-rail-icon" />
-                <span className="gl-rail-label">{action.label}</span>
+                {action.id==="running"
+                  ? <RunningGameIcon key={runningGame?.id} game={games.find(g=>g.id===runningGame?.id)}/>
+                  : <Icon className="gl-rail-icon" />}
+                {action.id==="running"
+                  ? <RunningGameLabel title={action.label} expanded={railExpanded}/>
+                  : <span className="gl-rail-label">{action.label}</span>}
+                {action.id==="running"&&<span className="gl-running-indicator" aria-hidden="true"/>}
               </Focusable>
             );
           })}
