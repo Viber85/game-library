@@ -13,11 +13,20 @@ const queryArt=callable<[number,string,boolean],ArtworkReply>("steamgriddb_art")
 const inFlight=new Map<string,Promise<ArtworkReply>>();
 const results=new Map<string,{value:ArtworkReply;until:number}>();
 const empty:ArtworkReply={status:"unavailable",cover:null,hero:null};
+const settingsListeners=new Set<()=>void>();
+
+/** Components retry previously missing images when the key/toggle changes. */
+export function subscribeArtworkSettingsChanged(listener:()=>void):()=>void{
+  settingsListeners.add(listener);
+  return ()=>{settingsListeners.delete(listener);};
+}
+
 
 /** Prevent repeated 404s and duplicate lookups from many concurrently rendered cards. */
 export function clearArtworkLookupCache(){
   inFlight.clear();
   results.clear();
+  for(const listener of settingsListeners)listener();
 }
 
 export function getMissingSteamArt(game:LibraryGame):Promise<ArtworkReply>{
