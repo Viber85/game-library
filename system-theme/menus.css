@@ -1,51 +1,75 @@
-/* Steam button left menu + app running menu overlay. */
+/* Steam button native menu. Only touch Steam's menu items, never the
+ * CEF root, notifications, controller input or Game Library navigation.
+ *
+ * Steam uses .mainmenu_Item on the focusable element, which can be
+ * OUTSIDE #MainNavMenuContainer in current SteamOS. Do not make that
+ * ID the sole ancestor for the focus selector.
+ */
 #MainNavMenuContainer,
+.mainmenu_Menu_23IDi,
+.mainmenu_MainMenu_3m2bS,
 .mainmenuapprunning_NavigationMenu_1zXgP,
 .mainmenuapprunning_AppColumn_3FAI9,
-.mainmenu_MainMenu_3m2bS,
 .mainmenuapprunning_FocusedColumn_lz9Db {
   background:linear-gradient(180deg,#091b31,#030c1d) !important;
   color:var(--glm-text) !important;
 }
 #MainNavMenuContainer {border-right:1px solid var(--glm-border) !important;}
-/* Keep 12px breathing room on both sides of each Steam-menu item.
- * Without this gutter, Steam clips the glowing outline against the left
- * scroll panel, leaving only its narrow blue selection strip visible. */
-#MainNavMenuContainer :is([role="menuitem"],
-  .mainmenu_Item_2w9Tp,
-  [class*="mainmenu_Item_"]) {
+/* Add vertical room around entire row and side gutters. Width and margins
+ * are paired so a focused item cannot extend beyond its navigation column. */
+:is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
+  #MainNavMenuContainer [role="menuitem"]) {
   box-sizing:border-box !important;
-  margin-inline:12px !important;
-  width:calc(100% - 24px) !important;
+  position:relative !important;
+  margin:6px 14px !important;
+  width:calc(100% - 28px) !important;
   border:0 !important;
   border-radius:12px !important;
+  outline:0 !important;
   background:transparent !important;
   color:var(--glm-text) !important;
   box-shadow:none !important;
-  outline:none !important;
-  background-clip:padding-box;
 }
-/* The current page may retain its unobtrusive active marker. Selection
- * alone must not look as if it has gamepad focus. */
-#MainNavMenuContainer :is([role="menuitem"],
-  .mainmenu_Item_2w9Tp,
-  [class*="mainmenu_Item_"]):is([aria-selected="true"],.mainmenu_Active_10bq5) {
+/* Active page is not necessarily the controller-focused menu item. */
+:is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
+  #MainNavMenuContainer [role="menuitem"]):is(
+    .mainmenu_Active_10bq5,[aria-selected="true"]):not(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   background:rgba(30,78,120,.32) !important;
   box-shadow:none !important;
 }
-/* Controller/keyboard focus: same cyan ring plus soft blue halo as the
- * Game Library rail. Inset ring remains visible on narrow SteamOS screens. */
-#MainNavMenuContainer :is([role="menuitem"],
-  .mainmenu_Item_2w9Tp,
-  [class*="mainmenu_Item_"]):is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+/* Directly target actual focused Steam menu rows, regardless of their
+ * parent. The cyan ring and glow are INSET, so neither the horizontal
+ * nor the top/bottom edges can be clipped by Steam's scroll mask. */
+:is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
+  #MainNavMenuContainer [role="menuitem"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   background:linear-gradient(140deg,#185488,#083058) !important;
   color:#f3f8ff !important;
+  border-radius:12px !important;
   box-shadow:inset 0 0 0 2px #63cfff,
-    inset 0 0 9px rgba(58,195,255,.32),
-    0 0 15px rgba(3,157,255,.70) !important;
+    inset 0 0 0 5px rgba(48,174,255,.22),
+    inset 0 0 13px rgba(3,157,255,.46) !important;
   outline:none !important;
   animation:none !important;
 }
+/* Reserve a few pixels inside the real Steam menu row for a complete
+ * round-cornered focus frame. ::after is pointer-transparent and inset
+ * on all four sides; unlike an external outline it survives overflow
+ * clipping from Steam's viewport. */
+:is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
+  #MainNavMenuContainer [role="menuitem"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)::after {
+  content:"" !important;
+  position:absolute !important;
+  inset:4px 8px !important;
+  border:2px solid #63cfff !important;
+  border-radius:10px !important;
+  box-shadow:0 0 8px rgba(3,157,255,.42),
+    inset 0 0 7px rgba(3,157,255,.20) !important;
+  pointer-events:none !important;
+}
+/* The running-game menu's native active dot is retained. */
 .mainmenuapprunning_NavigationMenuItem_1G0K4.mainmenuapprunning_Active_1jG8i>div:first-child {
   background:var(--glm-accent) !important;
 }
