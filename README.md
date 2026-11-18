@@ -87,6 +87,25 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.14 — remove delayed gray flash in Settings
+(device preview):** The native gray rows in test.13 correctly turn
+Midnight navy, but can stay gray for several seconds after opening a
+Settings category. The watcher previously observed only inserted DOM
+children. Steam often REUSES existing rows and changes their
+`class`, `style`, `aria-selected` or `aria-checked` attributes;
+those updates had to wait for the five-second fallback scan. Now they
+trigger the same fast pre-paint scan, coalesced per animation frame.
+Our own `data-glm-*` attributes are excluded to prevent a mutation
+feedback loop. Also keep previously recognized Settings row/background
+markers when native gray has already been recolored navy/transparent,
+otherwise the next scan could prune a valid row and cause a flash.
+Retained rows are still screened for geometry, controls and image
+backgrounds. No changes to row dimensions, controller behavior, QAM,
+Power, Volume or main Steam menu. Watcher revision **13** and CSS
+revision **65** clear stale code. Regression tests now simulate
+successive scans after applying Midnight, plus class/style mutations.
+Device-level visual timing remains to be confirmed.
+
 **v0.4.21-test.13 — gray Settings surfaces detected by paint, not route
 (device preview):** The v0.4.21-test.12 MSI Claw report confirmed
 that all three target rows stayed unchanged. The prior implementation

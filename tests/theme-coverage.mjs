@@ -89,6 +89,8 @@ test("All Settings categories use a flat canvas with no overlay-wide paint",()=>
   assert.ok(watcher.includes("const previous=Array.from"),"Existing themed markers are preserved");
   assert.ok(watcher.includes("new MutationObserver(()=>{"));
   assert.ok(watcher.includes("lastFastScan=now;")&&watcher.includes("sample();"));
+  assert.match(watcher,/attributeFilter:\['class','style','aria-selected','aria-checked'\]/,
+    "Native changes in reused Settings rows must trigger an immediate repaint");
 });
 
 test("Option A leaves every idle strip entirely clear and keeps controller focus",()=>{
@@ -272,6 +274,6 @@ test("Midnight palette has high contrast for Settings and notes",()=>{
 
 test("0.4.2 forces replacement of earlier cached style revision",()=>{
   const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"64"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"65"/);
   assert.match(runtime,/CLEANUP_SCRIPT/);
 });

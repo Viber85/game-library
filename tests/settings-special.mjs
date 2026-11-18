@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
-import {STEAM_SETTINGS_MARK_SCRIPT,THEME_AUDIT_REMOVE_SCRIPT}
+import {STEAM_SETTINGS_MARK_SCRIPT,THEME_AUDIT_INSTALL_SCRIPT,THEME_AUDIT_REMOVE_SCRIPT}
   from "../src/themeProbe.ts";
 
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
@@ -39,6 +39,12 @@ test("Visual watcher finds broad painted gray surfaces with no route or role",()
     "getBoundingClientRect","hasControl"
   ])assert.ok(source.includes(needle),needle);
   assert.match(source,/\[class\],\[role="button"\],\[role="radio"\]/);
+  assert.match(source,/const oldSpecial=new Set\(/,
+    "Do not drop a painted row after its computed color turns navy");
+  assert.match(source,/oldSpecial\.has\(el\)/);
+  assert.match(source,/oldSpecialParts\.has\(part\)/);
+  assert.match(THEME_AUDIT_INSTALL_SCRIPT,/attributeFilter:\['class','style','aria-selected','aria-checked'\]/,
+    "Native class/selection updates must not wait for 5-second polling");
   assert.doesNotMatch(source,/if\(settingsPage && mainPane\?\.querySelectorAll\)/);
   assert.match(source,/url\\\(/,"Avoid painting media thumbnails and CSS background assets");
   assert.doesNotMatch(source,/\.innerText|\.textContent|networkName|\bssid\b|localStorage|sessionStorage|\.value\b/i);
@@ -112,7 +118,11 @@ test("Settings special row markers update across routes and disappear on exit",a
     location:{pathname:"/settings/internet",hash:""}};
   const run=()=>vm.runInNewContext(STEAM_SETTINGS_MARK_SCRIPT,{
     document,window,getComputedStyle:node=>({
-      backgroundColor:node===part?"rgb(60,78,112)":"rgb(52,68,100)",
+      // After CSS paints the row, getComputedStyle returns OUR navy, not
+      // Steam's gray. The next watcher scan must retain the marker.
+      backgroundColor:node.hasAttribute("data-glm-settings-special-row")?
+        "rgb(15, 40, 66)":node.hasAttribute("data-glm-settings-special-part")?
+        "rgba(0, 0, 0, 0)":node===part?"rgb(60,78,112)":"rgb(52,68,100)",
       backgroundImage:"none",
     }),Math,Array,Map,Set,String,Boolean,
   });
@@ -122,6 +132,11 @@ test("Settings special row markers update across routes and disappear on exit",a
   assert.equal(rows[3].hasAttribute("data-glm-settings-special-row"),true,
     "Native Customization movie cards may be ordinary unlabeled DIVs");
   assert.equal(part.hasAttribute("data-glm-settings-special-part"),true);
+  assert.equal(run(),true,"Re-scanning an already colored Settings view must work");
+  assert.equal(rows[0].hasAttribute("data-glm-settings-special-row"),true,
+    "Do not remove the marked row just because CSS has recolored it navy");
+  assert.equal(part.hasAttribute("data-glm-settings-special-part"),true,
+    "Do not remove a marked flat child when CSS made it transparent");
   assert.equal(toggle.hasAttribute("data-glm-settings-special-row"),false,
     "A full-width row with a functional switch must not be recolored");
   window.location.pathname="/settings/keyboard";

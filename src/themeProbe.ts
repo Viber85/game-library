@@ -173,7 +173,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "12";
+const AUDIT_REVISION = "13";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -212,6 +212,10 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     };
     const oldRows=new Set(document.querySelectorAll('[data-glm-settings-row]'));
     const oldParts=new Set(document.querySelectorAll('[data-glm-settings-row-part]'));
+    // Computed gray becomes Midnight navy after our CSS applies. A row
+    // that is still valid must keep its marker rather than flashing gray.
+    const oldSpecial=new Set(document.querySelectorAll('[data-glm-settings-special-row]'));
+    const oldSpecialParts=new Set(document.querySelectorAll('[data-glm-settings-special-part]'));
     const root=document.querySelector('.BasicUI') ||
       document.querySelector('#GamepadUI_Full_Root');
     if(!root){prune();return false;}
@@ -455,7 +459,12 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
           '[role="switch"],[role="checkbox"],[role="slider"],'+
           '[class*="gamepaddialog_Toggle"],[class*="gamepadslider_"],'+
           'input,select,textarea'));
-        if(hasControl || !graySurface(el))continue;
+        // Retain a previously styled card while its size and position remain
+        // valid; our navy paint no longer passes the graySurface test.
+        const currentImage=String(getComputedStyle(el).backgroundImage||'none');
+        const inlineImage=String(el.style?.backgroundImage||'');
+        if(hasControl || /url\\(|image-set\\(/i.test(currentImage+' '+inlineImage) ||
+           (!oldSpecial.has(el) && !graySurface(el)))continue;
         mark(el,'data-glm-settings-special-row');
         // Broad gray decorative descendants may sit over the focused
         // row. Remove only their flat backgrounds, never picture/video
@@ -467,7 +476,10 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
           const rect=part.getBoundingClientRect();
           if(rect.width<b.width*.68 || rect.width>b.width*1.06 ||
              rect.height<b.height*.56 || rect.height>b.height*1.12)continue;
-          if(graySurface(part))
+          const image=String(getComputedStyle(part).backgroundImage||'none')+' '+
+            String(part.style?.backgroundImage||'');
+          if(!/url\\(|image-set\\(/i.test(image) &&
+             (oldSpecialParts.has(part) || graySurface(part)))
             mark(part,'data-glm-settings-special-part');
         }
       }
@@ -514,10 +526,11 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       /* Steam may be rebuilding its React tree; retry on the next tick. */
     }
   };
-  // Steam builds its Settings DOM in stages. Observe structural additions
-  // and coalesce them into one scan on the next frame instead of waiting
-  // for the 1.8-second polling interval. Only childList is observed:
-  // our own data-glm-* marker attribute changes NEVER trigger this watcher.
+  // Steam reuses mounted Settings rows and often changes class, style and
+  // aria state WITHOUT inserting nodes. Track these native changes too so
+  // the gray flash does not wait for the 5-second safety scan. Our own
+  // data-glm-* markers are excluded to avoid observer feedback loops.
+  // Rapid changes are coalesced into one scan per animation frame.
   const scheduleScan=()=>{
     if(window[key]!==state || state.frameId!=null)return;
     if(typeof requestAnimationFrame!=='function') {
@@ -548,7 +561,9 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
         scheduleScan();
       });
       state.observer.observe(document.documentElement,{
-        childList:true,subtree:true
+        childList:true,subtree:true,
+        attributes:true,
+        attributeFilter:['class','style','aria-selected','aria-checked']
       });
       observing=true;
     }catch{
