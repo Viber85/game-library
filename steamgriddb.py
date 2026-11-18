@@ -242,10 +242,12 @@ class ArtworkService:
                 if game_id is None:
                     result = {"status": "no_match", "cover": None, "hero": None}
                 else:
+                    # SteamGridDB's published portrait and hero dimensions.
+                    # Without filters, a page can be dominated by wide grids.
                     grids = fetch_json("grids/game/" + str(game_id) +
-                        "?types=static&nsfw=false&humor=false&epilepsy=false", api_key)
+                        "?dimensions=600x900,342x482,660x930&types=static&nsfw=false&humor=false&epilepsy=false", api_key)
                     heroes = fetch_json("heroes/game/" + str(game_id) +
-                        "?types=static&nsfw=false&humor=false&epilepsy=false", api_key)
+                        "?dimensions=1920x620,1600x650,3840x1240&types=static&nsfw=false&humor=false&epilepsy=false", api_key)
                     cover = choose_art(grids, "cover")
                     hero = choose_art(heroes, "hero")
                     result = {"status": "ok" if cover or hero else "unavailable",
