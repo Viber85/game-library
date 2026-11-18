@@ -87,6 +87,29 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.20 — live running-game shortcut at the top of the sidebar:** When
+Steam Game Mode reports a running game through `SteamUIStore.RunningApps`,
+Game Library inserts its game-art icon and title as the **first** sidebar
+entry, before Home. The indicator disappears automatically when the game
+exits. The shortcut resumes the already-running session via Steam's
+`SetRunningApp` and `NavigateToRunningApp`; it **never launches** a new
+instance. Both normal Steam app IDs and signed/unsigned 32-bit Non-Steam
+shortcut IDs (including Epic/GOG shortcuts) are supported. When artwork is
+available in the existing library catalog, the sidebar reuses its Steam
+artwork; a controller icon is the fallback.
+
+When the left rail expands, the title appears beside the icon; titles
+longer than the available width run a gentle left-scrolling news-ticker
+animation with pauses at both ends. Short titles remain stationary and
+the animation honors the SteamOS reduced-motion preference. An in-session
+detector checks every 1.6 seconds and again on Steam focus return.
+The sidebar preserves logical controller focus if a running game appears
+or disappears. Regression tests cover Steam games, Non-Steam shortcuts
+with negative signed IDs, running state transitions, stale actions, safe
+resume without relaunch, first-position rail ordering, ticker overflow,
+and cleanup. The on-device SteamOS behavior still needs validation on
+the MSI Claw (particularly Epic/GOG shortcuts).
+
 **v0.4.19 — focus-only game cover highlights:** The main horizontal
 carousel and the full-page game grid previously kept the blue outline
 and glow around the *selected* game's poster even after controller
