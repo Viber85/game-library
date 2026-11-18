@@ -1,5 +1,5 @@
-import {THEME_FOCUS_TRACE_SCRIPT,parseThemeFocusFrame,type ThemeFocusFrame} from "./themeFocusTrace";
-export type {ThemeFocusFrame} from "./themeFocusTrace";
+import {THEME_FOCUS_TRACE_SCRIPT,parseThemeFocusFrame,type ThemeFocusFrame} from "./themeFocusTrace.ts";
+export type {ThemeFocusFrame} from "./themeFocusTrace.ts";
 
 /** Read-only CEF document inspection. The string is executed inside Steam's
  * actual browser tab by Decky's executeInTab API, NOT inside the Decky plugin
