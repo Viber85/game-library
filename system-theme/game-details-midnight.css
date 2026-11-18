@@ -1,0 +1,195 @@
+/* Game Library v0.5.4-test.1 — game details Midnight visual refinement.
+ *
+ * Verified Steam class modules:
+ *   SteamDeckHomebrew/decky-frontend-lib src/utils/static-classes.ts
+ *   sharedappdetailsheader: TopCapsule, TopGradient, TitleSection
+ *   basicappdetailssectionstyler: AppDetailsRoot, PlaySection, ActionRow
+ *   appdetailsplaysection: PlayBar, CloudStatusRow, MenuButton, LastPlayed,
+ *      Playtime, PlayBarDetailLabel, RightControls
+ *   appactionbutton: Green, PlayButtonContainer, ButtonChild, ButtonText
+ *   appdetails: ScrollContainer, Container
+ * Verified community Steam CSS theme classes:
+ *   appdetailsoverview_ColumnContainer, appdetailssection_Highlight,
+ *   appdetailscommunityfeed_CommunityItem, appactivityday_Event,
+ *   posttextentry_PostTextEntryArea
+ * Verified HLTB for Deck markup: GameStats.tsx, #hltb-for-deck .hltb-info
+ *   with .hltb-gametime, .hltb-label and .hltb-details-btn.
+ *
+ * This is a CSS-only visual treatment: do not replace game banner art,
+ * game data, HLTB values, Steam actions, focus events or the Steam layout.
+ * Modules unavailable in one Steam client simply do not match.
+ */
+
+/* Real Steam game-details root, not GamepadUI/BasicUI overlay roots. */
+.BasicUI :is([class*="appdetails_Container"],
+  [class*="basicappdetailssectionstyler_AppDetailsRoot"]) {
+  background-color:#020815 !important;
+  color:#f3f8ff !important;
+}
+
+/* Layer a restrained cinematic dark gradient over Valve's actual game art.
+ * Do not change the HeaderBackgroundImage, ImgContainer, SVGTitle or images. */
+.BasicUI [class*="sharedappdetailsheader_TopGradient"] {
+  background:linear-gradient(90deg,rgba(2,8,21,.84) 0%,
+    rgba(3,15,30,.40) 37%,rgba(2,8,21,0) 75%) !important;
+}
+.BasicUI [class*="sharedappdetailsheader_TitleSection"] {
+  background:transparent !important;
+  color:#f3f8ff !important;
+}
+
+/* Actual PlaySection and PlayBar surfaces — Midnight deep navy panel. */
+.BasicUI [class*="basicappdetailssectionstyler_PlaySection"],
+.BasicUI [class*="appdetailsplaysection_PlayBar"] {
+  background:linear-gradient(110deg,rgba(3,16,32,.96),
+    rgba(9,33,55,.93)) !important;
+  border:1px solid rgba(86,156,209,.24) !important;
+  border-radius:12px !important;
+  box-shadow:0 9px 20px rgba(0,0,0,.22) !important;
+  color:#f3f8ff !important;
+}
+.BasicUI [class*="appdetailsplaysection_StickyHeader"] {
+  background:rgba(2,12,25,.96) !important;
+  border-bottom:1px solid rgba(86,156,209,.25) !important;
+}
+.BasicUI [class*="appdetailsplaysection_LastPlayed"],
+.BasicUI [class*="appdetailsplaysection_Playtime"],
+.BasicUI [class*="appdetailsplaysection_PlayBarDetailLabel"] {
+  color:#eaf6ff !important;
+}
+.BasicUI [class*="appdetailsplaysection_PlayBarLabel"] {
+  color:#a8c8e1 !important;
+}
+
+/* Verified Steam Play action classes. Green is native play/launch context,
+ * so do NOT style Stop, Delete, error/disabled or arbitrary DialogButtons. */
+.BasicUI [class*="appactionbutton_Green"]
+  [class*="appactionbutton_ButtonChild"],
+.BasicUI [class*="appactionbutton_PlayButtonContainer"]
+  [class*="appactionbutton_Green"] {
+  background:linear-gradient(120deg,#55eaff,#05c6dc) !important;
+  color:#051628 !important;
+  border:1px solid #8cf5ff !important;
+  border-radius:12px !important;
+  box-shadow:0 0 12px rgba(0,202,245,.34) !important;
+}
+.BasicUI [class*="appactionbutton_Green"]
+  [class*="appactionbutton_ButtonText"] {
+  color:#041726 !important;
+}
+.BasicUI [class*="appactionbutton_Green"]:is(.gpfocus,.gpfocuswithin,:focus-visible)
+  [class*="appactionbutton_ButtonChild"],
+.BasicUI [class*="appactionbutton_Green"]
+  [class*="appactionbutton_ButtonChild"]:is(.gpfocus,:focus-visible) {
+  outline:2px solid #c3faff !important;
+  outline-offset:-2px !important;
+  box-shadow:0 0 20px rgba(3,206,255,.74),
+    inset 0 0 7px rgba(235,255,255,.5) !important;
+}
+
+/* Native controller-settings and secondary menu buttons alongside Play. */
+.BasicUI [class*="appdetailsplaysection_MenuButton"],
+.BasicUI [class*="appdetailsplaysection_ControllerConfigButton"] {
+  background:linear-gradient(160deg,#102d48,#071c31) !important;
+  border:1px solid rgba(91,173,228,.38) !important;
+  border-radius:10px !important;
+  color:#e6f8ff !important;
+}
+.BasicUI [class*="appdetailsplaysection_MenuButton"]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible),
+.BasicUI [class*="appdetailsplaysection_ControllerConfigButton"]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible) {
+  outline:2px solid #63cfff !important;
+  outline-offset:-2px !important;
+  background:#163a5e !important;
+  box-shadow:0 0 16px rgba(3,157,255,.65) !important;
+}
+
+/* Cloud status is native data, not a manually authored label. */
+.BasicUI [class*="appdetailsplaysection_CloudStatusRow"] {
+  background:transparent !important;
+  color:#b9d2e6 !important;
+  border-color:rgba(102,184,226,.23) !important;
+}
+.BasicUI [class*="appdetailsplaysection_CloudStatusLabel"] {
+  color:#cbddea !important;
+}
+
+/* Rounded Midnight surfaces for native sections, cards, and activity. */
+.BasicUI [class*="appdetailssection_AppDetailsSectionContainer"],
+.BasicUI [class*="appdetailssection_Highlight"] {
+  background:linear-gradient(160deg,#0b2238,#07172b) !important;
+  border:1px solid rgba(89,158,211,.27) !important;
+  border-radius:12px !important;
+  color:#f3f8ff !important;
+}
+.BasicUI [class*="appdetailsactivitysection_ActivityFeedContainer"] {
+  background:#071c32 !important;
+  border:1px solid rgba(89,158,211,.20) !important;
+  border-radius:12px !important;
+  color:#e8f3ff !important;
+}
+.BasicUI [class*="appdetailscommunityfeed_CommunityItem"],
+.BasicUI [class*="appactivityday_Event"],
+.BasicUI [class*="appactivityday_EventBody"] {
+  background:linear-gradient(110deg,#0c2942,#0b2038) !important;
+  border:1px solid rgba(84,163,219,.22) !important;
+  border-radius:9px !important;
+  color:#ebf6ff !important;
+}
+.BasicUI [class*="appdetailscommunityfeed_CommunityItem"]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible),
+.BasicUI [class*="appactivityday_Event"]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible) {
+  outline:2px solid #63cfff !important;
+  outline-offset:-2px !important;
+  box-shadow:0 0 14px rgba(3,157,255,.4) !important;
+}
+
+/* Verified Steam community activity text entry; preserve actual input. */
+.BasicUI [class*="appdetails_Container"]
+  [class*="posttextentry_PostTextEntryArea"] {
+  background:#102d48 !important;
+  border:1px solid rgba(94,161,212,.23) !important;
+  border-radius:9px !important;
+  color:#f3f8ff !important;
+}
+
+/* Only the actual tab controls, when Steam exposes WAI-ARIA tab roles. */
+.BasicUI [class*="appdetails_Container"] [role="tab"] {
+  background:#0a233a !important;
+  border:1px solid rgba(88,161,215,.22) !important;
+  border-radius:999px !important;
+  color:#c5d7e9 !important;
+}
+.BasicUI [class*="appdetails_Container"] [role="tab"]:is(
+  [aria-selected="true"],.gpfocus,.gpfocuswithin,:focus-visible) {
+  background:linear-gradient(115deg,#14415b,#096077) !important;
+  border-color:#34d7f4 !important;
+  color:#f3fbff !important;
+  box-shadow:0 0 14px rgba(3,206,255,.43) !important;
+}
+
+/* HLTB for Deck renders its own independent React row.
+ * These names are verified in morwy/hltb-for-deck GameStats.tsx.
+ * Never inject, change or hardcode the 4 third-party values. */
+.BasicUI #hltb-for-deck :is(.hltb-info,.hltb-info-absolute) {
+  background:rgba(4,22,40,.91) !important;
+  border:1px solid rgba(81,158,215,.24) !important;
+  border-radius:12px !important;
+  color:#f3f8ff !important;
+}
+.BasicUI #hltb-for-deck .hltb-gametime {color:#f3faff !important;}
+.BasicUI #hltb-for-deck .hltb-label {color:#b6d0e4 !important;}
+.BasicUI #hltb-for-deck .hltb-details-btn {
+  color:#82efff !important;
+  border:1px solid #20d4ed !important;
+  background:rgba(3,38,57,.65) !important;
+  border-radius:999px !important;
+}
+.BasicUI #hltb-for-deck .hltb-details-btn:is(.gpfocus,:focus-visible) {
+  background:#163a5e !important;
+  outline:2px solid #63cfff !important;
+  outline-offset:-2px !important;
+  box-shadow:0 0 12px rgba(3,157,255,.5) !important;
+}
