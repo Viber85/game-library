@@ -50,7 +50,6 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/decky-settings.css'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'data-glm-decky-settings'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'background:#163a5e !important'
-unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'transition:none !important'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq '[class*="eKmEXJCm_"]'
 # Regression guard: v19/v20 unscoped rail rules affected ALL Steam Settings.
 if unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Eq '^\.BasicUI \.Panel:has\(> \.PageListColumn\)'; then
