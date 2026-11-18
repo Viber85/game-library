@@ -38,7 +38,7 @@ test("Decky 3.3.1 actually uses Steam SidebarNavigation, Field, DialogButton and
     assert.ok(css.includes(color),"Missing Midnight palette "+color);
   for(const [,selector,body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
     assert.match(selector,
-      /html\[data-glm-decky-settings\]|html:has\(\.BasicUI \.PageListColumn\):has\(\.BasicUI \.DialogControlsSection\)/,
+      /html\[data-glm-decky-settings\]|html:has\(\.BasicUI \.PageListColumn\):has\(\.BasicUI \.DialogControlsSection\)|\.BasicUI \.Panel:has\(> \.PageListColumn\)/,
       "Every selector must be scoped to a route or the actual Decky DOM layout");
     assert.doesNotMatch(body,/(?:^|[;\n])\s*(?:width|height|margin|padding|position|display|visibility|overflow|transform|pointer-events|z-index)\s*:/);
   }

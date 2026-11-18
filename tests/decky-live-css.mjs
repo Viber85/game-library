@@ -5,7 +5,7 @@ import vm from "node:vm";
 import {THEME_PROBE_SCRIPT,parseThemeProbe} from "../src/themeProbe.ts";
 
 const css=readFileSync(new URL("../system-theme/decky-settings.css",import.meta.url),"utf8");
-const live=css.slice(css.indexOf("/* v0.4.21-test.18"));
+const live=css.slice(css.indexOf("/* v0.4.21-test.18"),css.indexOf("/* test.19 — stable left rail"));
 
 test("Actual Claw DOM activates preloaded CSS, not the unavailable Decky router URL",()=>{
   assert.ok(live.length>1900,"Missing test.18 native CSS block");
@@ -44,14 +44,14 @@ test("Real Decky DOM and CSS are detected even if browser location never changes
       if(q.includes(".BasicUI"))return root;
       return null;
     },
-    querySelectorAll:q=>q==="style"?[{textContent:"--game-library-midnight-active: 69;"}]:
+    querySelectorAll:q=>q==="style"?[{textContent:"--game-library-midnight-active: 70;"}]:
       q.includes("eKmEXJCm_")?[field]:[],
   };
   const data=vm.runInNewContext(THEME_PROBE_SCRIPT,{
     document,window:{location:{pathname:"/gamepadui",hash:""}},
     getComputedStyle:el=>({
       backgroundColor:"rgb(15, 40, 66)",backgroundImage:"none",
-      getPropertyValue:k=>k==="--glm-decky-observed-layout"&&el===railPanel?"1":"69"
+      getPropertyValue:k=>k==="--glm-decky-observed-layout"&&el===railPanel?"1":"70"
     }),
     Math,Date,JSON,Array,Map,Set,Boolean,String,Number
   });
@@ -65,7 +65,7 @@ test("Real Decky DOM and CSS are detected even if browser location never changes
 
 test("Decky left rail stays navy when right pane unmounts between tabs",()=>{
   const selector=".BasicUI .Panel:has(> .PageListColumn)";
-  const stable=css.slice(css.indexOf("/* test.19 — stable left rail"));
+  const stable=css.slice(css.indexOf("/* test.19 — stable left rail")).replace(/\/\*[\s\S]*?\*\//g,"");
   assert.ok(stable.includes(selector),"Always match the mounted rail, not right pane");
   assert.ok(stable.includes("> .PageListColumn"));
   assert.ok(stable.includes("background:#081425 !important"));
