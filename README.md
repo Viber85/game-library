@@ -87,6 +87,42 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.2 — visible Steam menu and QAM controller-focus halos
+(device preview):** Based on photographs from the MSI Claw, the original
+Steam button's left menu highlighted the focused item with a flat blue
+bar and a partly clipped cyan left edge, whereas our Game Library
+sidebar showed a complete cyan outline and soft glow. The QAM icon
+column was likewise too narrow for a visible focus halo.
+
+This test build keeps Steam's original navigation and layout, but
+adds **12 px horizontal gutters** around each native Steam menu item
+(`#MainNavMenuContainer`, including Steam's `mainmenu_Item`
+class) to make the complete **2 px inset cyan ring** plus external
+glow visible. The item width is calculated to remain inside its
+original panel. Controller and keyboard focus alone triggers this
+highlight; an active/selected menu page without focus retains a subtle
+background and no halo. Pointer hover by itself is not treated as
+controller focus.
+
+The native QAM **icon rail** (`quickaccessmenu_Tabs`) is expanded to
+**86 px** with 8 px inner padding; icons use a 6 px side margin and
+a width computed from available space so the cyan border and subtle
+outside glow fit without cutting off the edges. The width change is
+limited to the QAM icon rail, not the Quick Access root or Decky plugin
+content panels. Focused icons use a 2 px inset cyan outline and
+soft blue halo. Selected-but-unfocused QAM tabs keep the existing
+narrow indicator without a persistent ring.
+
+New `tests/menu-focus.mjs` regressions validate actual Steam main-menu
+selectors, focus versus selection, QAM column geometry, non-invasive
+scoping and retention of the transparent Game Mode/CEF overlay root.
+Existing built-in theme CSS, controller input, TabMaster, launching and
+Decky QAM tests still run. The native Steam CSS injection revision
+increases from **52 to 53** to replace old cached styles safely.
+**Visual confirmation remains required on the MSI Claw** — test the
+Steam-button menu and Decky QAM with the controller, including checking
+that cyan shadows are not clipped near the panel boundaries.
+
 **v0.4.21-test.1 — Midnight styling for Steam running-game menu and
 Steam Input controller layout (device preview):** This test release extends
 Game Library's built-in Midnight CSS to two native SteamOS screens shown
