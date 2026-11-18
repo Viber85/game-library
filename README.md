@@ -87,6 +87,19 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.11 — focus without outlines throughout Settings
+(device preview):** The MSI Claw Display/Brightness screenshot shows the
+desired bright blue focused row but an unnecessary cyan outline.
+New `settings-focus.css` loads LAST only in Steam's main window and
+removes focus outline, border stroke and box-shadow from native Settings
+field strips, left navigation, networks, list rows, storage and focused
+Settings buttons/dropdowns. It leaves the **existing brighter blue
+focus fill completely unchanged**. Slider/toggle tracks, geometry and
+controller input are untouched, as are the repaired QAM, main Steam
+menu, Power and Volume. CSS revision 62 refreshes cached native CSS.
+Regression tests check main-only scope, hash aliases, existing blue
+fills and ZIP integrity. MSI Claw visual confirmation remains required.
+
 **v0.4.21-test.10 — fix Power focus in Steam's real main window
 (device preview):** The MSI Claw screenshot from test.9 still showed a
 native orange Power highlight. Root cause: Steam renders the Power popup
