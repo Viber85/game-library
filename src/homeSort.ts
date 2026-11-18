@@ -7,7 +7,7 @@ export type HomeSort = "recent" | "alphabetical";
 export type HomeSortTab = { id: string; title: string };
 
 export function defaultSortForTab(tab: HomeSortTab): HomeSort {
-  const normalize = (value:string)=>value.trim().toLowerCase().replace(/[\\s_-]+/g,"");
+  const normalize = (value:string)=>value.trim().toLowerCase().replace(/[\s_-]+/g,"");
   return normalize(tab.id)==="installed" || normalize(tab.title)==="installed"
     ? "recent" : "alphabetical";
 }
