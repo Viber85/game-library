@@ -217,10 +217,16 @@ export function heroCandidates(game: LibraryGame): string[] {
   if (!game.nonSteam) {
     add("https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/library_hero.jpg");
   }
-  add(game.poster);
-  if (!game.nonSteam) {
-    add("https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/header.jpg");
-  }
+  return [...new Set(candidates)];
+}
+/** Only after the true Steam hero and optional SteamGridDB hero have failed,
+ * try poster art / Steam store header. A valid poster should not hide a
+ * missing high-resolution hero from SteamGridDB. */
+export function heroFallbackCandidates(game:LibraryGame):string[] {
+  const candidates:string[]=[...artList(game.poster)];
+  if(!game.nonSteam)
+    candidates.push("https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+
+      game.id+"/header.jpg");
   return [...new Set(candidates)];
 }
 /** Steam's configured logo for this game, including SteamGridDB custom images. */
