@@ -79,21 +79,29 @@ class BuiltInThemeTests(unittest.TestCase):
         self.assertNotIn("quickaccessmenu_Menu", css["main"])
         for content in css.values():
             self.assertLess(len(content), 100000)
-        # A purely decorative ::after focus ring must NOT capture controller
-        # or mouse input. The pointer-events:none rule is safe only on that
-        # precisely scoped Steam menu pseudo-element, never any real controls.
+        # Both decorative inset layers must ignore pointer events, while
+        # native Steam menu rows, Game Mode and the rest of QAM remain
+        # interactive. Do not allow pointer-events:none on actual controls.
         import re
         self.assertNotIn("pointer-events:none", css["main"].replace(" ", ""))
-        for selector, declarations in re.findall(
-            r"([^{}]+)\\{([^{}]*)\\}", css["overlay"]
-        ):
-            if "pointer-events" not in declarations:
-                continue
+        owners = [
+            (selector, declarations)
+            for selector, declarations in re.findall(
+                r"([^{}]+)\{([^{}]*)\}", css["overlay"]
+            )
+            if re.search(r"pointer-events\s*:\s*none", declarations)
+        ]
+        self.assertEqual(len(owners), 2, "Only the inset fill/frame can ignore pointer events")
+        for selector, declarations in owners:
             self.assertIn("mainmenu_Item", selector)
-            self.assertIn("::after", selector)
-            self.assertRegex(declarations, r"pointer-events\\s*:\\s*none")
+            self.assertTrue(
+                "::before" in selector or "::after" in selector,
+                "Never disable hit testing on a native Steam menu row"
+            )
         self.assertEqual(
-            css["overlay"].replace(" ", "").count("pointer-events:none"), 1
+            {pseudo for pseudo in ("::before", "::after")
+             if any(pseudo in selector for selector, _ in owners)},
+            {"::before", "::after"},
         )
         self.assertFalse(asyncio.run(obj.get_builtin_theme("../../other"))["ok"])
 
