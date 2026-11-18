@@ -78,6 +78,9 @@ export function BuiltinThemePanel(){
           :"No active page snapshot"}</div>
         <div>Settings page / rows: {diagnostics.settingsRoots} / {diagnostics.settingsFields}</div>
         <div>Network entries: {diagnostics.networkRows}</div>
+        <div>Midnight special Settings rows: {diagnostics.specialSettingsRows}</div>
+        {diagnostics.specialSettingsRowColor&&
+          <div>Special row actual fill: {diagnostics.specialSettingsRowColor}</div>}
         <div>Game page / sections: {diagnostics.gameRoots} / {diagnostics.gameSections}</div>
         {diagnostics.computedFieldColor&&
           <div>Actual row background: {diagnostics.computedFieldColor}</div>}
