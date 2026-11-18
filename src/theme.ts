@@ -52,14 +52,13 @@ export const DASHBOARD_CSS = String.raw`
   border-radius:12px; padding:0; transition:transform .15s; overflow:visible;
   outline:none; }
 .gl-poster { position:relative; width:100%; height:100%; overflow:hidden; border-radius:12px;
-  background:linear-gradient(135deg,#19416d,#071527); border:2px solid #264967; }
+  background:linear-gradient(135deg,#19416d,#071527); border:0;box-shadow:none; }
 .gl-poster img { display:block; width:100%; height:100%; object-fit:cover; }
 .gl-poster::after { content:""; position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(0deg,rgba(1,5,12,.96),transparent 55%); }
 .gl-poster-name { position:absolute; bottom:14px; left:10px; right:10px; z-index:1;
   font-size:14px; font-weight:800; line-height:1.18; text-shadow:0 1px 5px black; }
 .gl-installed-indicator { position:absolute; right:7px; bottom:4px; font-size:20px; z-index:2; }
-.gl-game.gl-selected .gl-poster { border-color:#49baff; box-shadow:0 0 0 2px #bdeaff,0 0 18px #03a7ffbb; }
 .gl-game.gl-focused { transform:translateY(-2px); }
 .gl-game.gl-focused .gl-poster { box-shadow:0 0 0 3px #fff,0 0 22px #03a7ff; }
 .gl-feature { flex:1; min-height:190px; position:relative; overflow:hidden;
@@ -154,8 +153,7 @@ export const DASHBOARD_CSS = String.raw`
 }
 .gl-pill.gl-focused,.gl-sort.gl-focused { box-shadow:0 0 0 2px #e0faff,0 0 18px #28a9ff; }
 .gl-strip { gap:13px; }
-.gl-poster {border:1px solid rgba(108,181,251,.19);background:linear-gradient(135deg,#14335a,#06101f);}
-.gl-game.gl-selected .gl-poster {border-color:#89d9ff;box-shadow:0 0 0 2px #9adbff,0 0 22px #0099ffb0;}
+.gl-poster {border:0;box-shadow:none;background:linear-gradient(135deg,#14335a,#06101f);}
 .gl-feature {
   border:0;
   border-radius:0;
@@ -299,15 +297,15 @@ export const DASHBOARD_CSS = String.raw`
 /* Fifteen recent game tiles followed by a keyboard/controller-focusable CTA. */
 .gl-view-more {
   width:clamp(112px,10vw,168px);height:197px;flex:0 0 clamp(112px,10vw,168px);
-  border-radius:12px;border:1px solid rgba(109,190,255,.42);
+  border-radius:12px;border:0;
   background:linear-gradient(145deg,#173a64,#07172d 85%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:10px;color:#e4f6ff;outline:none;box-shadow:inset 0 0 16px #03274877;
+  gap:10px;color:#e4f6ff;outline:none;box-shadow:none;
 }
 .gl-view-more svg {color:#6bcfff;}
 .gl-view-more strong {font-size:16px;font-weight:750;white-space:nowrap;}
 .gl-view-more span {font-size:12px;color:#afcfe5;}
-.gl-view-more.gl-focused,.gl-view-more:hover {
+.gl-view-more.gl-focused {
   background:linear-gradient(145deg,#2265a4,#0b2b52);
   box-shadow:0 0 0 3px #e9faff,0 0 22px #26b9ff;
 }
