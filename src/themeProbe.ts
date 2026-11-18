@@ -12,6 +12,9 @@ export type ThemeProbe={
   networkRows:number;
   specialSettingsRows:number;
   specialSettingsRowColor:string;
+  deckySettingsActive:boolean;
+  deckyFieldRows:number;
+  deckyFieldColor:string;
   gameRoots:number;
   gameSections:number;
   fieldColor:string;
@@ -35,6 +38,9 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const networks = '[class*="networksettings_"],[class*="wifisettings_"],[class*="connectionsettings_"],[class*="wirelesssettings_"]';
   // A count and computed color only — never read any network names or file labels.
   const specialRow=document.querySelector('[data-glm-settings-special-row]');
+  const deckySettingsActive=Boolean(document.documentElement?.hasAttribute?.('data-glm-decky-settings'));
+  const deckyFields='[class*="gamepaddialog_Field_"],[class~="gamepaddialog_Field"]';
+  const deckyField=deckySettingsActive?document.querySelector(deckyFields):null;
   const games = '[class*="appdetails_Container"],[class*="appdetails_ScrollContainer"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]';
   const sections = '[class*="appdetailssection_"],[class*="appdetailsnotessection_"],[class*="appdetailsmediasection_"]';
   // First locate the actual native Settings root, then inspect a row inside
@@ -101,6 +107,9 @@ export const THEME_PROBE_SCRIPT=`(() => {
     networkRows: count(networks),
     specialSettingsRows: count('[data-glm-settings-special-row]'),
     specialSettingsRowColor: specialRow?getComputedStyle(specialRow).backgroundColor:'',
+    deckySettingsActive,
+    deckyFieldRows: deckySettingsActive?count(deckyFields):0,
+    deckyFieldColor: deckyField?getComputedStyle(deckyField).backgroundColor:'',
     gameRoots: count(games),
     gameSections: count(sections),
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
@@ -129,6 +138,9 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     specialSettingsRows:integer(obj.specialSettingsRows),
     specialSettingsRowColor:typeof obj.specialSettingsRowColor==='string'?
       obj.specialSettingsRowColor.slice(0,60):'',
+    deckySettingsActive:obj.deckySettingsActive===true,
+    deckyFieldRows:integer(obj.deckyFieldRows),
+    deckyFieldColor:typeof obj.deckyFieldColor==='string'?obj.deckyFieldColor.slice(0,60):'',
     gameRoots:integer(obj.gameRoots),
     gameSections:integer(obj.gameSections),
     fieldColor:typeof obj.fieldColor==="string"?obj.fieldColor.slice(0,60):"",
@@ -535,7 +547,8 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       state.lastScanAt=at;
       if (probe.routeKind === 'other' && probe.surfaceElements >= 4)
         state.latestOther = {at,probe};
-      if (probe.settingsRoots > 0 || probe.fieldRows > 0 && probe.networkRows > 0 ||
+      if (probe.deckySettingsActive || probe.settingsRoots > 0 ||
+          probe.fieldRows > 0 && probe.networkRows > 0 ||
           probe.routeKind === 'settings' && probe.surfaceElements >= 3)
         state.latestSettings = { at, probe };
       if (probe.gameRoots > 0 || probe.gameSections > 0 ||
