@@ -79,7 +79,22 @@ class BuiltInThemeTests(unittest.TestCase):
         self.assertNotIn("quickaccessmenu_Menu", css["main"])
         for content in css.values():
             self.assertLess(len(content), 100000)
-            self.assertNotIn("pointer-events:none", content.replace(" ", ""))
+        # A purely decorative ::after focus ring must NOT capture controller
+        # or mouse input. The pointer-events:none rule is safe only on that
+        # precisely scoped Steam menu pseudo-element, never any real controls.
+        import re
+        self.assertNotIn("pointer-events:none", css["main"].replace(" ", ""))
+        for selector, declarations in re.findall(
+            r"([^{}]+)\\{([^{}]*)\\}", css["overlay"]
+        ):
+            if "pointer-events" not in declarations:
+                continue
+            self.assertIn("mainmenu_Item", selector)
+            self.assertIn("::after", selector)
+            self.assertRegex(declarations, r"pointer-events\\s*:\\s*none")
+        self.assertEqual(
+            css["overlay"].replace(" ", "").count("pointer-events:none"), 1
+        )
         self.assertFalse(asyncio.run(obj.get_builtin_theme("../../other"))["ok"])
 
 
