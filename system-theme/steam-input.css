@@ -1,65 +1,12 @@
-/* Game Library Midnight — Steam Input Controller Layout and Configurator.
- * Narrowly targets Steam Input's own summary/configurator components in both
- * main Game Mode and Steam's in-game menu. Native input bindings, controller
- * illustration, SVG glyphs, coordinates, focus semantics and actions untouched.
- */
-
-/* Layout overview screen (the controller diagram in the screenshot). */
-:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
-  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"]) {
-  background:linear-gradient(180deg,#0a1b30 0%,#081b30 65%,#061427 100%) !important;
-  color:var(--glm-text) !important;
-}
-:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
-  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
-  :is(.controllerconfiguratorsummary_ControlsListSection_nnOTT,
-      [class*="controllerconfiguratorsummary_ControlsListSection"],
-      .controllerconfiguratorsummary_BottomControlsSections_2H5S6,
-      [class*="controllerconfiguratorsummary_BottomControlsSections"]) {
-  background:transparent !important;
-}
-:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
-  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
-  :is(.controllerconfiguratorsummary_Title_12Taa,
-      [class*="controllerconfiguratorsummary_Title"],
-      .controllerconfiguratorsummary_StandardControl_pywHI,
-      [class*="controllerconfiguratorsummary_StandardControl"],
-      .controllerconfiguratorsummary_ActivatorText_2BHzj,
-      [class*="controllerconfiguratorsummary_ActivatorText"],
-      [class*="controllerconfiguratorsummary_TitleLabel"]) {
-  color:var(--glm-text) !important;
-}
-:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
-  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
-  :is([class*="controllerconfiguratorsummary_SecondaryLabel"],
-      [class*="controllerconfiguratorsummary_Description"],
-      [class*="controllerconfiguratorsummary_SubTitle"]) {
-  color:var(--glm-muted) !important;
-}
-/* Existing "Controller settings" and other native action buttons. */
-:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
-  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
-  :is(.controllerconfiguratorsummary_ConfigButton_1T2Rs,
-      [class*="controllerconfiguratorsummary_ConfigButton"],
-      .controllerconfiguratorsummary_DirectAccessButton_QAVEl,
-      [class*="controllerconfiguratorsummary_DirectAccessButton"]) {
-  background:#123452 !important;
-  color:var(--glm-text) !important;
-  border:1px solid var(--glm-border) !important;
-  border-radius:9px !important;
-}
-:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
-  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
-  :is(.controllerconfiguratorsummary_ConfigButton_1T2Rs,
-      [class*="controllerconfiguratorsummary_ConfigButton"],
-      .controllerconfiguratorsummary_DirectAccessButton_QAVEl,
-      [class*="controllerconfiguratorsummary_DirectAccessButton"]):is(
-        .gpfocus,.gpfocuswithin,:focus-visible) {
-  background:#1d527d !important;
-  color:#f3f8ff !important;
-  box-shadow:inset 0 0 0 2px #63cfff !important;
-}
-
+/* Game Library Midnight — Steam Input controller editor only.
+ * The read-only controller layout SUMMARY (Steam Input's diagram with
+ * left/right bumper, trackpad, D-pad and face button assignment cards)
+ * intentionally uses Valve's native colors, backgrounds, labels and focus.
+ * Do not add selectors for controllerconfiguratorsummary_* here.
+ *
+ * Preserve the existing theming of the separate editable Steam Input
+ * configurator and layout picker; neither bindings nor navigation change. */
+ 
 /* Steam Input's editable controller configuration pages. */
 :is(.controllerconfigurator_ControllerConfiguratorMain_APY6j,
   [class*="controllerconfigurator_ControllerConfiguratorMain"]) {

@@ -33,28 +33,45 @@ test("native running-game panel is themed, never the entire Steam CEF overlay",(
     "Do not filter/replace native Steam and Non-Steam game artwork");
 });
 
-test("Steam Input summary and editable configurator use palette without changing mappings",()=>{
+test("Steam Input controller summary is native while its separate editor remains themed",()=>{
   const css=cleanup(input);
+  assert.doesNotMatch(css,/controllerconfiguratorsummary_/,
+    "The pictured layout overview must not receive any direct Midnight paint");
   for(const anchor of [
-    "controllerconfiguratorsummary_ControllerConfiguratorSummary",
-    "controllerconfiguratorsummary_ControlsListSection",
-    "controllerconfiguratorsummary_StandardControl",
-    "controllerconfiguratorsummary_ConfigButton",
-    "controllerconfiguratorsummary_DirectAccessButton",
     "controllerconfigurator_ControllerConfiguratorMain",
     "controllerconfigurator_CurrentConfigurationButton",
     "controllerconfiguratorchooseconfiguration_ConfigurationButton",
-  ])assert.ok(css.includes(anchor),anchor);
-  assert.match(css,/background:linear-gradient\(180deg,#0a1b30/);
+  ])assert.ok(css.includes(anchor),"Editable settings remain themed: "+anchor);
+  assert.doesNotMatch(css,/background:linear-gradient\(180deg,#0a1b30/,
+    "The formerly themed controller overview gradient is gone");
   assert.match(css,/background:#1d527d !important;/);
   assert.match(css,/box-shadow:inset 0 0 0 2px #63cfff !important;/);
   assert.doesNotMatch(css,/(?:#GamepadUI_Full_Root|\.BasicUI|\bbody\b|\bhtml\b)\s*\{/,
     "Global roots used for transient Steam popups must not be painted");
   assert.doesNotMatch(css,/\b(?:position|display|visibility|z-index|pointer-events|width|height|transform|filter)\s*:/,
-    "The controller diagram, mapping, button layout, and UI geometry remain native");
+    "Controller diagram, mapping and action geometry remain native");
   assert.doesNotMatch(css,/\b(?:img|svg|video|canvas|path)\s*(?:\{|\[|:)/,
-    "Steam Input button glyphs and images must not be recolored");
+    "Steam Input artwork and native glyphs are not recolored");
 });
+
+test("Shared buttons/fields opt out of Midnight inside native Steam Input overview",()=>{
+  const css=cleanup(file("system-theme/buttons.css"));
+  const optOut=':not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *))';
+  for(const name of [
+    "button.DialogButton","button.gamepaddialog_Button_1kn70",
+    ".gamepaddialog_Field_S-_La",".gamepaddialog_FieldLabel_3b0U-",
+    ".gamepaddialog_FieldDescription_2OJfk"
+  ])assert.ok(css.includes(name+optOut),
+    "Native Steam Input overview must not inherit generic Midnight "+name);
+  const compiled=expandThemeClassAliases(css,{
+    controllerconfiguratorsummary:{ControllerConfiguratorSummary:"_steamInputHash123"}
+  });
+  assert.ok(compiled.includes('[class~="_steamInputHash123"]'),
+    "Steam's minified controller summary root is excluded too");
+  assert.ok(css.includes("button.DialogButton"),
+    "Other SteamOS pages retain their existing themed controls");
+});
+
 
 test("Steam Input is bundled into both main/overlay; running menu only into overlay",()=>{
   const before=bundle.indexOf('"main": (');
@@ -85,7 +102,7 @@ test("Steam's changing CSS class names are resolved through the same alias compi
   assert.ok(expanded.includes('[class~="_abc123xyz"]'));
   assert.ok(expanded.includes('[class~="_def456abc"]'));
   assert.ok(expanded.includes('var(--glm-text)'));
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"78"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"79"/);
 });
 
 test("native CSS source is syntactically balanced and leaves all selector brackets paired",()=>{

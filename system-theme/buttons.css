@@ -1,42 +1,46 @@
+/* These shared Steam buttons/fields are themed everywhere EXCEPT inside
+ * Steam Input's read-only ControllerConfiguratorSummary. That screen uses
+ * Valve's unmodified visual styling even while Midnight is active in other
+ * Game Mode pages. The exclusion expands to live CSS module aliases. */
 /* Shared action buttons and focused/selected controller surfaces. */
-button.DialogButton,
-button.gamepaddialog_Button_1kn70,
-.gamepaddialog_Button_1kn70.DialogButton {
+button.DialogButton:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)),
+button.gamepaddialog_Button_1kn70:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)),
+.gamepaddialog_Button_1kn70.DialogButton:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)) {
   background:linear-gradient(180deg,#143454,#0b213b) !important;
   color:var(--glm-text) !important;
   border:1px solid var(--glm-border) !important;
   border-radius:9px !important;
 }
-button.DialogButton.Primary,
-button.gamepaddialog_Button_1kn70.DialogButton.Primary {
+button.DialogButton:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)).Primary,
+button.gamepaddialog_Button_1kn70:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)).DialogButton.Primary {
   background:linear-gradient(180deg,#e8f7ff,#acdfff) !important;
   color:var(--glm-primary-ink) !important;
   border-color:#83d9ff !important;
 }
-button.DialogButton:enabled:is(.gpfocus,:focus-visible),
-button.gamepaddialog_Button_1kn70:enabled:is(.gpfocus,:focus-visible) {
+button.DialogButton:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)):enabled:is(.gpfocus,:focus-visible),
+button.gamepaddialog_Button_1kn70:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)):enabled:is(.gpfocus,:focus-visible) {
   box-shadow:inset 0 0 0 2px #c9f1ff,0 0 13px rgba(32,183,255,.5) !important;
 }
-.gamepaddialog_Field_S-_La:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+.gamepaddialog_Field_S-_La:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)):is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   background:var(--glm-panel-hover) !important;
   border-radius:8px !important;
 }
-.gamepaddialog_FieldLabel_3b0U-,
-.gamepaddialog_FieldIcon_1sC68 {color:var(--glm-text) !important;}
-.gamepaddialog_FieldDescription_2OJfk,
-.gamepaddialog_LabelFieldValue_5Mylh {color:var(--glm-muted) !important;}
-.gamepaddialog_On_3ld7T>.gamepaddialog_ToggleRail_2JtC3,
-.gamepaddialog_Field_S-_La.gpfocuswithin .gamepaddialog_On_3ld7T>.gamepaddialog_ToggleRail_2JtC3,
-.gamepadslider_SliderTrackActive_2o57v {background:var(--glm-accent) !important;}
-.gamepaddialog_ToggleRail_2JtC3 {background:#37506b !important;}
-.DialogTextInputBase, input.DialogInput {
+.gamepaddialog_FieldLabel_3b0U-:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)),
+.gamepaddialog_FieldIcon_1sC68:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)) {color:var(--glm-text) !important;}
+.gamepaddialog_FieldDescription_2OJfk:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)),
+.gamepaddialog_LabelFieldValue_5Mylh:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)) {color:var(--glm-muted) !important;}
+.gamepaddialog_On_3ld7T:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *))>.gamepaddialog_ToggleRail_2JtC3:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)),
+.gamepaddialog_Field_S-_La:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)).gpfocuswithin .gamepaddialog_On_3ld7T:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *))>.gamepaddialog_ToggleRail_2JtC3:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)),
+.gamepadslider_SliderTrackActive_2o57v:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)) {background:var(--glm-accent) !important;}
+.gamepaddialog_ToggleRail_2JtC3:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)) {background:#37506b !important;}
+.DialogTextInputBase:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)), input.DialogInput:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)) {
   background:var(--glm-panel) !important;
   color:var(--glm-text) !important;
   border:1px solid var(--glm-border) !important;
 }
-.DialogTextInputBase:focus,input.DialogInput:focus {
+.DialogTextInputBase:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)):focus,input.DialogInput:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)):focus {
   border-color:var(--glm-accent) !important;
   box-shadow:inset 0 0 0 1px var(--glm-accent) !important;
 }
 /* Preserve Valve's red for truly destructive actions. */
-button.DialogButton.Destructive {border-color:var(--glm-danger) !important;}
+button.DialogButton:not(:is([class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"] *)).Destructive {border-color:var(--glm-danger) !important;}
