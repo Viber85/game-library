@@ -79,6 +79,10 @@ export function BuiltinThemePanel(){
         <div>Settings page / rows: {diagnostics.settingsRoots} / {diagnostics.settingsFields}</div>
         <div>Network entries: {diagnostics.networkRows}</div>
         <div>Midnight special Settings rows: {diagnostics.specialSettingsRows}</div>
+        <div>Decky 3.3.1 Settings route: {diagnostics.deckySettingsActive?"Detected":"Not detected"}</div>
+        <div>Decky native Field matches: {diagnostics.deckyFieldRows}</div>
+        {diagnostics.deckyFieldColor&&
+          <div>Decky actual Field color: {diagnostics.deckyFieldColor}</div>}
         {diagnostics.specialSettingsRowColor&&
           <div>Special row actual fill: {diagnostics.specialSettingsRowColor}</div>}
         <div>Game page / sections: {diagnostics.gameRoots} / {diagnostics.gameSections}</div>
