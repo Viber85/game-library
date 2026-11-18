@@ -95,7 +95,6 @@ export function readRunningGame(
 export function resumeRunningGame(
   target:RunningGame,
   steam:RunningSteamStore|null|undefined,
-  appStore:OverviewStore|null|undefined,
   navigateFallback?:()=>void,
 ):boolean {
   if(!steam)return false;
