@@ -1,0 +1,71 @@
+/* Game Library Midnight — in-game Steam button menu.
+ * Targets ONLY the Steam menu shown while a game is running.
+ * Preserve Valve's game art, layout geometry, focus order and actions.
+ * Do not paint the full CEF/BasicUI root (volume/achievement overlay).
+ */
+
+/* Stable readable class names are retained alongside runtime class aliases. */
+:is(.mainmenuapprunning_MainMenuAppRunning_1wiEs,
+  [class*="mainmenuapprunning_MainMenuAppRunning"]) {
+  background:linear-gradient(180deg,#071527,#030c1a) !important;
+  color:var(--glm-text) !important;
+}
+/* Left navigation and central running-game action panel. */
+:is(.mainmenuapprunning_NavigationColumn_27FEg,
+  [class*="mainmenuapprunning_NavigationColumn"]) {
+  background:#081425 !important;
+  color:var(--glm-text) !important;
+  border-color:var(--glm-border) !important;
+}
+:is(.mainmenuapprunning_AppColumn_3FAI9,
+  [class*="mainmenuapprunning_AppColumn"]) {
+  background:linear-gradient(180deg,#102a47 0%,#0a1b30 72%,#081425 100%) !important;
+  color:var(--glm-text) !important;
+  border-color:var(--glm-border) !important;
+}
+:is(.mainmenuapprunning_ScrollMask_322FV,
+  [class*="mainmenuapprunning_ScrollMask"]) {
+  background:transparent !important;
+}
+:is(.mainmenuapprunning_AppColumn_3FAI9,
+  [class*="mainmenuapprunning_AppColumn"]):is(
+    .mainmenuapprunning_FocusedColumn_lz9Db,
+    [class*="mainmenuapprunning_FocusedColumn"]) {
+  background:linear-gradient(180deg,#123452 0%,#0c2440 68%,#081425 100%) !important;
+}
+
+/* Items default to a clean transparent surface. Focus is the only highlight,
+ * rather than a permanently glowing game card or a painted stationary cursor. */
+:is(.mainmenuapprunning_NavigationBox_36vNU,
+  [class*="mainmenuapprunning_NavigationBox"])
+  :is(.mainmenuapprunning_NavigationMenuItem_1G0K4,
+    [class*="mainmenuapprunning_NavigationMenuItem"]) {
+  color:var(--glm-text) !important;
+  border-radius:9px !important;
+}
+:is(.mainmenuapprunning_NavigationBox_36vNU,
+  [class*="mainmenuapprunning_NavigationBox"])
+  :is(.mainmenuapprunning_NavigationMenuItem_1G0K4,
+    [class*="mainmenuapprunning_NavigationMenuItem"]):is(
+      .gpfocus,.gpfocuswithin,:focus-visible) {
+  background:#163a5e !important;
+  color:#f3f8ff !important;
+  box-shadow:inset 3px 0 0 #4ac1ff,inset 0 0 0 1px rgba(99,207,255,.5) !important;
+  animation:none !important;
+}
+/* Keep the original game logo unfiltered; headings and action labels remain
+ * readable against the dark middle column. */
+:is(.mainmenuapprunning_AppColumn_3FAI9,
+  [class*="mainmenuapprunning_AppColumn"])
+  :is([class*="mainmenuapprunning_AppTitle"],
+      [class*="mainmenuapprunning_Header"],
+      [class*="mainmenuapprunning_SectionTitle"],
+      [class*="gamepadtabbedpage_TabTitle"]) {
+  color:var(--glm-text) !important;
+}
+:is(.mainmenuapprunning_AppColumn_3FAI9,
+  [class*="mainmenuapprunning_AppColumn"])
+  :is([class*="gamepaddialog_FieldDescription"],
+      [class*="mainmenuapprunning_SubTitle"]) {
+  color:var(--glm-muted) !important;
+}
