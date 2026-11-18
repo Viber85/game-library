@@ -8,6 +8,7 @@ import json
 import os
 import pathlib
 import re
+import ssl
 import tempfile
 import threading
 import time
@@ -15,6 +16,55 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+
+# Decky Loader supplies a trusted CA context. Plain urllib has no access to
+# that bundle on some SteamOS builds and raises CERTIFICATE_VERIFY_FAILED.
+try:
+    from helpers import get_ssl_context as _decky_ssl_context
+except ImportError:
+    _decky_ssl_context = None
+
+
+def _ssl_context():
+    if _decky_ssl_context is not None:
+        return _decky_ssl_context()
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return ssl.create_default_context()
+
+
+class KeyVerificationError(Exception):
+    """Safe classification; never include credentials, request headers or URLs."""
+
+    def __init__(self, code):
+        self.code = code
+        super().__init__(code)
+
+
+def _classify_verify_error(error):
+    if isinstance(error, urllib.error.HTTPError):
+        return ("invalid_key" if error.code == 401 else
+                "access_forbidden" if error.code == 403 else
+                "rate_limited" if error.code == 429 else
+                "api_not_found" if error.code == 404 else
+                "provider_unavailable" if 500 <= error.code <= 599 else
+                "api_http_error")
+    if isinstance(error, (urllib.error.URLError, ssl.SSLError, OSError)):
+        reason = getattr(error, "reason", error)
+        if "CERTIFICATE_VERIFY_FAILED" in str(reason).upper() or \
+                isinstance(reason, ssl.SSLCertVerificationError):
+            return "ssl_certificate"
+        if isinstance(reason, (TimeoutError,)) or "timed out" in str(reason).lower():
+            return "timeout"
+        if isinstance(reason, (ConnectionRefusedError, ConnectionResetError)):
+            return "connection"
+        return "network"
+    if isinstance(error, (json.JSONDecodeError, UnicodeDecodeError)):
+        return "invalid_response"
+    return "unknown"
+
 
 API_BASE = "https://www.steamgriddb.com/api/v2/"
 POSITIVE_TTL = 30 * 86400
@@ -116,8 +166,11 @@ def fetch_json(endpoint, api_key):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, req, fp, code, msg, headers, newurl):
             return None
-    opener = urllib.request.build_opener(NoRedirect)
-    with opener.open(request, timeout=8) as reply:
+    # Preserve Decky's trusted SSL context while disallowing any bearer-token
+    # redirect. Both handlers are needed for the real plugin sandbox.
+    opener = urllib.request.build_opener(
+        NoRedirect, urllib.request.HTTPSHandler(context=_ssl_context()))
+    with opener.open(request, timeout=12) as reply:
         if urllib.parse.urlsplit(reply.geturl()).hostname != "www.steamgriddb.com":
             raise ValueError("Unexpected provider redirect")
         data = reply.read(2_000_001)
@@ -127,16 +180,25 @@ def fetch_json(endpoint, api_key):
 
 
 def verify_key(api_key):
-    """Only persist credentials accepted by the SteamGridDB API itself."""
+    """Verify via official v2 API, return safe errors distinguishable by Decky."""
     if not valid_key(api_key):
-        return False
+        raise KeyVerificationError("invalid_format")
     try:
         response = fetch_json("search/autocomplete/Portal", api_key)
-        return isinstance(response, dict) and response.get("success") is True
-    except urllib.error.HTTPError as error:
-        if error.code in (401, 403):
-            return False
-        raise
+    except (urllib.error.HTTPError, urllib.error.URLError,
+            ssl.SSLError, OSError) as error:
+        raise KeyVerificationError(_classify_verify_error(error)) from None
+    except (ValueError, UnicodeError, TypeError) as error:
+        raise KeyVerificationError("invalid_response") from None
+    if not isinstance(response, dict):
+        raise KeyVerificationError("invalid_response")
+    if response.get("success") is not True:
+        errors = response.get("errors", [])
+        if isinstance(errors, list) and any(
+            isinstance(x, str) and "key" in x.lower() for x in errors):
+            raise KeyVerificationError("invalid_key")
+        raise KeyVerificationError("api_rejected")
+    return True
 
 
 def key_path(settings_dir):

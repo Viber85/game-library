@@ -33,8 +33,13 @@ export function SteamGridDBPanel(){
   };
   const save=()=>{
     if(busy||!draft.trim())return;
+    // Steam's Decky TextField does not reliably mask the focused value on all
+    // client builds. Clear it immediately when Save is pressed, including if
+    // verification fails, so a secret is not left visible in the QAM.
+    const submitted=draft.trim();
+    setDraft("");
     setBusy(true);setError("");setNotice("");
-    void saveKey(draft.trim()).then(async answer=>{
+    void saveKey(submitted).then(async answer=>{
       if(!answer.ok){
         setError(answer.reason||"Unable to verify this SteamGridDB API key.");
         return;
@@ -42,7 +47,7 @@ export function SteamGridDBPanel(){
       setDraft("");
       await update();
       setNotice("Key saved locally. Missing Steam covers and heroes will be filled automatically.");
-    }).catch(()=>setError("Could not contact SteamGridDB to verify the API key."))
+    }).catch(()=>setError("SteamGridDB verification request failed. See the plugin error status."))
       .finally(()=>setBusy(false));
   };
   const remove=()=>{
