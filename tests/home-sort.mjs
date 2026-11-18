@@ -29,8 +29,10 @@ test("Dashboard keeps per-tab sort controls connected to the actual game order",
   const dashboard=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
   assert.match(dashboard,/sortForTab\(tab,tabSorts\)/);
   assert.match(dashboard,/setTabSorts\(previous=>\(\{\.\.\.previous,/);
-  assert.match(dashboard,/b\.lastPlayed - a\.lastPlayed/);
-  assert.match(dashboard,/a\.title\.localeCompare\(b\.title\)/);
+  assert.match(dashboard,/sortGames\(tabResult\.games,sort,getSortData\(\)\)/);
+  const sorter=readFileSync(new URL("../src/homeSort.ts",import.meta.url),"utf8");
+  assert.match(sorter,/case "recent":return positive\(game\.lastPlayed\)/);
+  assert.match(sorter,/a\.title\.localeCompare\(b\.title/);
   assert.doesNotMatch(dashboard,/useState<Sort>\("alphabetical"\)/,
     "A single global A-Z initial state would wrongly reset Installed to alphabetical");
 });
