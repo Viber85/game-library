@@ -42,7 +42,8 @@ test("controller focus gives the poster its existing high contrast ring",()=>{
 });
 
 test("View More tile has no idle/hover glow, only a real focus ring",()=>{
-  const tile=lastRule(".gl-view-more");
+  const tile=rules(".gl-view-more").find(body=>body.includes("background:linear-gradient(145deg,"));
+  assert.ok(tile,"The main View More tile background rule must exist");
   assert.match(tile,/border:0;/);
   assert.match(tile,/box-shadow:none;/);
   assert.doesNotMatch(css,/\.gl-view-more\.gl-focused,\.gl-view-more:hover\s*\{/,
