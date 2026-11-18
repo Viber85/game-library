@@ -23,6 +23,31 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Test release 0.5.5-test.2 — SteamGridDB SSL certificate and API error fix
+
+The 0.5.5-test.1 API key form could show **Cannot verify key. Check your
+connection** even for a valid key on SteamOS. Python's ordinary urllib HTTPS
+transport was not using Decky Loader's trusted CA bundle. The provider now
+uses `helpers.get_ssl_context()` from the real Decky Loader runtime
+(`SteamDeckHomebrew/decky-loader/backend/decky_loader/helpers.py`) in its
+explicit HTTPS opener while still blocking bearer-token redirects. Outside
+Decky it tries certifi, then Python's platform trust store; HTTPS certificate
+verification remains **enabled**.
+
+Instead of masking every failure as a generic connection problem, the backend
+now safely classifies invalid API keys (HTTP 401), forbidden API access
+(403), throttling (429), temporary service errors (5xx), invalid API response,
+network errors, timeouts and certificate failures. The entered key is removed
+from the input immediately after **Save**, so it cannot remain visibly printed
+in the Decky panel following a failed verification attempt.
+
+The API key is still never included in diagnostic responses, logs, package
+files or cache, and the original existing Steam artwork remains unchanged.
+Tests cover Decky's SSL context and all error classifications. This release
+still requires confirming actual API key verification on the user's SteamOS
+build; if it fails again, report the new **error code/message only**, never
+the API key.
+
 ## Test release 0.5.5-test.1 — SteamGridDB missing-cover and hero fallback
 
 In the Game Library **Steam** tab (Steam games, not Epic/GOG shortcuts),
