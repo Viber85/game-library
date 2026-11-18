@@ -13,6 +13,8 @@ export type ThemeProbe={
   specialSettingsRows:number;
   specialSettingsRowColor:string;
   deckySettingsActive:boolean;
+  deckyObservedDom:boolean;
+  deckyLiveCssMatched:boolean;
   deckyFieldRows:number;
   deckyFieldColor:string;
   gameRoots:number;
@@ -38,8 +40,21 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const networks = '[class*="networksettings_"],[class*="wifisettings_"],[class*="connectionsettings_"],[class*="wirelesssettings_"]';
   // A count and computed color only — never read any network names or file labels.
   const specialRow=document.querySelector('[data-glm-settings-special-row]');
-  const deckySettingsActive=Boolean(document.documentElement?.hasAttribute?.('data-glm-decky-settings'));
-  const deckyFields='[class*="gamepaddialog_Field_"],[class~="gamepaddialog_Field"]';
+  // test.17 on-device CEF evidence: native Decky Settings uses the actual
+  // unminified .PageListColumn + .DialogControlsSection + .DialogContent,
+  // while the browser location did NOT expose /decky/settings.
+  const nativeRail=document.querySelector('.BasicUI .PageListColumn');
+  const nativeBody=document.querySelector('.BasicUI .DialogControlsSection');
+  const nativeContent=document.querySelector('.BasicUI .DialogContent');
+  const railPanel=nativeRail?.closest?.('.Panel');
+  const deckyObservedDom=Boolean(nativeRail && nativeBody && nativeContent && railPanel);
+  // Direct CSS paints the rail Panel with this custom property as proof
+  // that the CSS :has(...) selector really matched on this Steam build.
+  const deckyLiveCssMatched=deckyObservedDom&&Boolean(railPanel)&&
+    getComputedStyle(railPanel).getPropertyValue('--glm-decky-observed-layout').trim()==='1';
+  const deckySettingsActive=Boolean(document.documentElement?.hasAttribute?.('data-glm-decky-settings') ||
+    deckyObservedDom);
+  const deckyFields='[class*="eKmEXJCm_"],[class*="gamepaddialog_Field_"],[class~="gamepaddialog_Field"]';
   const deckyField=deckySettingsActive?document.querySelector(deckyFields):null;
   const games = '[class*="appdetails_Container"],[class*="appdetails_ScrollContainer"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]';
   const sections = '[class*="appdetailssection_"],[class*="appdetailsnotessection_"],[class*="appdetailsmediasection_"]';
@@ -108,6 +123,8 @@ export const THEME_PROBE_SCRIPT=`(() => {
     specialSettingsRows: count('[data-glm-settings-special-row]'),
     specialSettingsRowColor: specialRow?getComputedStyle(specialRow).backgroundColor:'',
     deckySettingsActive,
+    deckyObservedDom,
+    deckyLiveCssMatched,
     deckyFieldRows: deckySettingsActive?count(deckyFields):0,
     deckyFieldColor: deckyField?getComputedStyle(deckyField).backgroundColor:'',
     gameRoots: count(games),
@@ -139,6 +156,8 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     specialSettingsRowColor:typeof obj.specialSettingsRowColor==='string'?
       obj.specialSettingsRowColor.slice(0,60):'',
     deckySettingsActive:obj.deckySettingsActive===true,
+    deckyObservedDom:obj.deckyObservedDom===true,
+    deckyLiveCssMatched:obj.deckyLiveCssMatched===true,
     deckyFieldRows:integer(obj.deckyFieldRows),
     deckyFieldColor:typeof obj.deckyFieldColor==='string'?obj.deckyFieldColor.slice(0,60):'',
     gameRoots:integer(obj.gameRoots),
@@ -213,7 +232,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "16";
+const AUDIT_REVISION = "17";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a

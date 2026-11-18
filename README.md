@@ -87,6 +87,30 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.18 — direct Midnight CSS for observed Decky CEF DOM
+(device preview):** The actual MSI Claw test.17 CEF screenshots show
+the Decky route marker as **Not detected** while the Steam CEF theme is
+loaded. The native Decky rail is `PageListColumn` inside a `Panel`,
+originally `rgb(43,45,51)`; the right `DialogControlsSection` is
+inside a SEPARATE Panel, and repeatedly painted gray Field wrappers
+carry a class beginning `_eKmEXJCm_`, `rgb(35,38,46)`. Rather than
+wait for an inaccessible React Router URL, preloaded CSS now directly
+matches the live two-column layout with
+`html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)`.
+It applies immediately as native DOM is mounted, without the old
+multi-second polling marker. New native-only colors: navy sidebar
+#081425, content #0a1b30, unfocused cards #0f2842, focused #163a5e,
+buttons #123452/#1d527d; no outlines, glows or input geometry changes.
+Original install/reinstall, toggles and Developer/Testing controls
+retain functionality. Diagnostics separately show whether actual
+Decky DOM is observed and whether the CSS rule set computed
+`--glm-decky-observed-layout:1` on the rail Panel, so it is no
+longer enough to merely verify that CSS was injected. Watcher revision
+**17** and stylesheet marker revision **69** ensure a fresh load.
+Tests reference the exact field class and two Panel structure from
+the device evidence. Other menus and native Steam Settings untouched.
+Appearance and responsiveness still require MSI Claw validation.
+
 **v0.4.21-test.17 — actual Steam CEF class/color diagnostics
 (device diagnostic):** Decky Settings was unchanged despite earlier CSS
 tests. This release intentionally does NOT add new visual rules.

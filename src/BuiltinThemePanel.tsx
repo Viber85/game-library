@@ -79,7 +79,9 @@ export function BuiltinThemePanel(){
         <div>Settings page / rows: {diagnostics.settingsRoots} / {diagnostics.settingsFields}</div>
         <div>Network entries: {diagnostics.networkRows}</div>
         <div>Midnight special Settings rows: {diagnostics.specialSettingsRows}</div>
-        <div>Decky 3.3.1 Settings route: {diagnostics.deckySettingsActive?"Detected":"Not detected"}</div>
+        <div>Decky Settings: {diagnostics.deckySettingsActive?"Detected":"Not detected"} (route or live DOM)</div>
+        <div>Live Decky PageListColumn/Field layout: {diagnostics.deckyObservedDom?"Detected":"Not detected"}</div>
+        <div>Direct Midnight CSS rule: {diagnostics.deckyLiveCssMatched?"Matched":"Not matched"}</div>
         <div>Decky native Field matches: {diagnostics.deckyFieldRows}</div>
         <div>Real CEF snapshots: {diagnostics.domEvidence.length}</div>
         {diagnostics.domEvidence.slice(0,4).map((capture,i)=>

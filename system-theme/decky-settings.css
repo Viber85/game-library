@@ -98,3 +98,113 @@ html[data-glm-decky-settings] .BasicUI
   :is(.DialogBodyText,[class*="gamepaddialog_FieldDescription"]) {
   color:#a6bed8 !important;
 }
+
+/* v0.4.21-test.18 — OBSERVED MSI Claw Steam CEF, not inferred Decky paths.
+ *
+ * test.17 actual DOM evidence:
+ *   rail:    .PageListColumn, parent .Panel, rgb(43,45,51)
+ *   content: .DialogContent, .DialogControlsSection,
+ *            ._eKmEXJCm_lgme24Fp_HWt, rgb(35,38,46)
+ *   focus / transition surface: rgb(26,28,33)
+ *
+ * In Steam's React Router the browser URL can remain unchanged; all
+ * html[data-glm-decky-settings] rules above then match NOTHING. These
+ * additional rules are live CSS relational selectors — the DOM itself
+ * activates them before paint, without an asynchronous polling marker.
+ * Restrict to an active two-column SidebarNavigation + DialogControlsSection
+ * inside Steam's main .BasicUI; never style another native popup or QAM.
+ * Keep selectors scoped to the actual Panel containing the rail/content,
+ * since the left and right columns are SEPARATE .Panel elements. */
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(> .PageListColumn),
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .PageListColumn {
+  background:#081425 !important;
+  background-color:#081425 !important;
+  background-image:none !important;
+  color:#a6bed8 !important;
+}
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(.DialogControlsSection),
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(.DialogControlsSection) :is(
+    .DialogContent,.DialogContentTransition,.DialogControlsSection) {
+  background:#0a1b30 !important;
+  background-color:#0a1b30 !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+}
+/* Actual gray painted Steam Field wrapper from test.17. This is the
+ * direct class that earlier gamepaddialog_Field_ selectors missed.
+ * Scope to the right-hand Panel so library cards and controls outside
+ * Decky Settings cannot be recolored. */
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(.DialogControlsSection)
+  .DialogControlsSection :is(
+    [class*="eKmEXJCm_"],[class*="gamepaddialog_Field_"]) {
+  background:#0f2842 !important;
+  background-color:#0f2842 !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+  outline:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(.DialogControlsSection)
+  .DialogControlsSection :is(
+    [class*="eKmEXJCm_"],[class*="gamepaddialog_Field_"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+    [aria-selected="true"]),
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(.DialogControlsSection)
+  .DialogControlsSection :is(
+    [class*="eKmEXJCm_"],[class*="gamepaddialog_Field_"]):has(
+    .gpfocus,.gpfocuswithin,:focus-visible) {
+  background:#163a5e !important;
+  background-color:#163a5e !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+  outline:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+  animation-name:none !important;
+}
+/* Native sidebar focus; preserve existing row dimensions and icons. */
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .PageListColumn :is(
+    .gpfocus,.gpfocuswithin,[aria-selected="true"],[aria-current="page"],
+    [class*="Active"],[class*="Selected"]) {
+  background:#163a5e !important;
+  background-color:#163a5e !important;
+  color:#f3f8ff !important;
+  outline:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+/* Steam DialogButtons and Dropdowns in all four Decky pages. */
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(.DialogControlsSection)
+  :is(button.DialogButton,[class*="gamepaddropdown_DropDownControlButton_"]) {
+  background:#123452 !important;
+  background-color:#123452 !important;
+  color:#f3f8ff !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(.DialogControlsSection)
+  :is(button.DialogButton,[class*="gamepaddropdown_DropDownControlButton_"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+  background:#1d527d !important;
+  background-color:#1d527d !important;
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+}
+/* Read-only proof that CSS matched an ACTUAL live Decky-like Panel.
+ * Diagnostics can read the computed custom property, independent of URL. */
+html:has(.BasicUI .PageListColumn):has(.BasicUI .DialogControlsSection)
+  .BasicUI .Panel:has(> .PageListColumn) {
+  --glm-decky-observed-layout:1;
+}

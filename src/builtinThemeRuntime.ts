@@ -37,6 +37,8 @@ export type ThemeDiagnostics={
   specialSettingsRows:number;
   specialSettingsRowColor:string;
   deckySettingsActive:boolean;
+  deckyObservedDom:boolean;
+  deckyLiveCssMatched:boolean;
   deckyFieldRows:number;
   deckyFieldColor:string;
   gameRoots:number;
@@ -63,7 +65,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "68";
+const STYLE_REVISION = "69";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -334,7 +336,8 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       themeMarker:"",
       cssSheets:0,settingsRoots:0,settingsFields:0,networkRows:0,
       domEvidence:[],specialSettingsRows:0,specialSettingsRowColor:"",
-      deckySettingsActive:false,deckyFieldRows:0,deckyFieldColor:"",
+      deckySettingsActive:false,deckyObservedDom:false,deckyLiveCssMatched:false,
+      deckyFieldRows:0,deckyFieldColor:"",
       gameRoots:0,gameSections:0,computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
       colorSamples:[],surfaceElements:0,detectedRoute:"other",
@@ -395,6 +398,8 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       specialSettingsRows:inspected.specialSettingsRows,
       specialSettingsRowColor:inspected.specialSettingsRowColor,
       deckySettingsActive:inspected.deckySettingsActive,
+      deckyObservedDom:inspected.deckyObservedDom,
+      deckyLiveCssMatched:inspected.deckyLiveCssMatched,
       deckyFieldRows:inspected.deckyFieldRows,
       deckyFieldColor:inspected.deckyFieldColor,
       gameRoots:inspected.gameRoots,
