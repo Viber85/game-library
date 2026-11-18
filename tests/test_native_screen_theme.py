@@ -11,9 +11,10 @@ class NativeSteamScreenThemeTests(unittest.TestCase):
         self.assertNotIn("mainmenuapprunning_AppColumn", bundle["css"]["main"])
         # Steam Input's pictured read-only overview keeps Valve's original
         # colors; only the separate binding editor continues to use Midnight.
-        import re
         summary_css = (main.BASE / "system-theme" / "steam-input.css").read_text(encoding="utf-8")
-        paint_rules = re.sub(r"/\\*[\\s\\S]*?\\*/", "", summary_css)
+        paint_rules = summary_css.split(
+            "/* Steam Input's editable controller configuration pages. */", 1
+        )[1]
         self.assertNotIn("controllerconfiguratorsummary_", paint_rules)
         for surface in ("main", "overlay"):
             # The shared DialogButton CSS opts out inside the native overview.
