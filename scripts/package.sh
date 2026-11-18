@@ -44,7 +44,11 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/running-menu.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/steam-input.css'
 # Ensure the ZIP contains THIS version's corrected native selector targets,
 # not just a valid file with stale v0.4.21-test.2 CSS.
-unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'inset:4px 8px !important'
+unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'inset:10px 12px !important'
+unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'margin:12px 22px !important'
+unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'width:calc(100% - 44px) !important'
+unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'min-height:76px !important'
+unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'overflow:visible !important'
 # Native Steam row must be transparent; only its inset ::before has blue fill.
 unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'isolation:isolate !important'
 unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'z-index:-1 !important'

@@ -14,8 +14,11 @@ const bundle=read("main.py");
 test("Steam main menu's real clickable class is independently targeted",()=>{
   assert.match(menu,/:is\(\.mainmenu_Item_2w9Tp,\[class\*="mainmenu_Item_"\],/);
   assert.match(menu,/#MainNavMenuContainer \[role="menuitem"\]/);
-  assert.match(menu,/margin:6px 14px !important;/);
-  assert.match(menu,/width:calc\(100% - 28px\) !important;/);
+  assert.match(menu,/margin:12px 22px !important;/);
+  assert.match(menu,/width:calc\(100% - 44px\) !important;/);
+  assert.match(menu,/min-height:76px !important;/);
+  assert.doesNotMatch(menu,/margin:6px 14px !important;/,
+    "Old narrow Steam gutters clipped the 20px cyan glow");
   assert.match(menu,/position:relative !important;/);
   assert.match(menu,/border-radius:12px !important;/);
   const focused=[...menu.matchAll(/:is\(\s*\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)(?:::before|::after)?\s*\{([^}]*)\}/g)];
@@ -27,10 +30,12 @@ test("Steam main menu's real clickable class is independently targeted",()=>{
     "Focused row must not draw another border or glow");
   assert.match(row,/isolation:isolate !important;/,
     "The inset fill must stack behind icon and label without changing focus order");
+  assert.match(row,/overflow:visible !important;/,
+    "The focused row must not crop its own 20px glow");
   assert.doesNotMatch(row,/inset 0 0 0 2px|inset 0 0 0 5px|border:2px|z-index:/,
     "Only ::after owns the cyan stroke; row layout/focus order stay untouched");
-  assert.match(fill,/inset:4px 8px !important;/,
-    "Blue fill must be contained by the inset cyan frame");
+  assert.match(fill,/inset:10px 12px !important;/,
+    "Blue fill must be contained by the inset cyan frame with safe glow clearance");
   assert.match(fill,/border-radius:10px !important;/);
   assert.match(fill,/background:linear-gradient\(140deg,#185488,#083058\) !important;/,
     "Keep the same blue gradient only WITHIN the frame");
@@ -41,7 +46,7 @@ test("Steam main menu's real clickable class is independently targeted",()=>{
     "Fill must not introduce a second ring or glow");
   assert.match(frame,/border:2px solid #63cfff !important;/,
     "The original inset cyan frame must survive unchanged");
-  assert.match(frame,/inset:4px 8px !important;/,
+  assert.match(frame,/inset:10px 12px !important;/,
     "Fill and frame need exactly the same geometry");
   // The in-menu frame owns exactly the same broad cyan glow as Game Library's
   // left rail, while its single border and current row padding are unchanged.
@@ -51,8 +56,13 @@ test("Steam main menu's real clickable class is independently targeted",()=>{
     "Do not regress to the too-subtle native menu glow");
   assert.match(read("src/theme.ts"),/box-shadow:inset 0 0 0 2px #63cfff,0 0 20px rgba\(3,157,255,\.72\)/,
     "Native menu glow must stay aligned to Game Library sidebar styling");
-  assert.match(menu,/inset:4px 8px !important;/,
-    "Entire upper/lower/right/left focus frame must be inside row boundaries");
+  assert.match(menu,/inset:10px 12px !important;/,
+    "Single focus frame must have clearance for its 20px glow");
+  // Minimum clearance between frame edge and native menu viewport:
+  // 12px margin + 10px inset vertically, 22px + 12px horizontally.
+  const [verticalClearance,horizontalClearance]=[12+10,22+12];
+  assert.ok(verticalClearance>=20 && horizontalClearance>=30,
+    "No sharp cuts at Steam's menu scroll-mask boundaries");
   assert.match(menu,/border:2px solid #63cfff !important;/);
   assert.match(menu,/pointer-events:none !important;/,
     "Purely visual focus frame cannot block Steam menu controls");

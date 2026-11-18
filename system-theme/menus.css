@@ -15,14 +15,15 @@
   color:var(--glm-text) !important;
 }
 #MainNavMenuContainer {border-right:1px solid var(--glm-border) !important;}
-/* Add vertical room around entire row and side gutters. Width and margins
- * are paired so a focused item cannot extend beyond its navigation column. */
+/* Provide clearance for the native Steam menu's single 20px cyan glow.
+ * Row width is reduced by the exact amount of its horizontal gutters. */
 :is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
   #MainNavMenuContainer [role="menuitem"]) {
   box-sizing:border-box !important;
   position:relative !important;
-  margin:6px 14px !important;
-  width:calc(100% - 28px) !important;
+  margin:12px 22px !important;
+  width:calc(100% - 44px) !important;
+  min-height:76px !important;
   border:0 !important;
   border-radius:12px !important;
   outline:0 !important;
@@ -50,32 +51,31 @@
   box-shadow:none !important;
   outline:none !important;
   isolation:isolate !important;
+  overflow:visible !important;
   animation:none !important;
 }
-/* Blue fill is strictly confined INSIDE the visible frame. Negative stacking
- * within the isolated focused row puts it behind Steam's icon and label.
- * Both decorative layers share the same inset and rounded corners. */
+/* The inset fill stays behind native icons/labels, with no blue outside.
+ * Both decoration layers have 10px/12px internal breathing room plus
+ * 12px/22px outer gutters to let the 20px bloom fade before scroll edges. */
 :is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
   #MainNavMenuContainer [role="menuitem"]):is(
     .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)::before {
   content:"" !important;
   position:absolute !important;
-  inset:4px 8px !important;
+  inset:10px 12px !important;
   border-radius:10px !important;
   background:linear-gradient(140deg,#185488,#083058) !important;
   z-index:-1 !important;
   pointer-events:none !important;
 }
-/* Reserve a few pixels inside the Steam menu row for the one cyan frame.
- * Match Game Library's left rail 20px focus glow (not a second stroke).
- * ::after stays pointer-transparent and inset on all four sides so the
- * actual border survives Steam's scroll viewport clipping. */
+/* Preserve the single 2px frame and the sidebar-matched 20px glow.
+ * Clear gutters and overflow-safe focus rows avoid hard rectangular cuts. */
 :is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
   #MainNavMenuContainer [role="menuitem"]):is(
     .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)::after {
   content:"" !important;
   position:absolute !important;
-  inset:4px 8px !important;
+  inset:10px 12px !important;
   border:2px solid #63cfff !important;
   border-radius:10px !important;
   box-shadow:0 0 20px rgba(3,157,255,.72),
