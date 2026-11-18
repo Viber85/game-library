@@ -23,6 +23,22 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Release 0.5.2 — SteamOS clock and Installed sorting on Home
+
+- **SteamOS clock preference:** The Game Library Home clock now reads the logged-in
+  Steam user's real `b24HourClock` option from Steam's own
+  `userdata/<account>/config/localconfig.vdf` FriendsUIJSON settings.
+  24-hour mode shows 00–23h (for example 20:30); 12-hour mode shows AM/PM.
+  The read is strictly account-scoped and read-only, refreshed on Home focus
+  and approximately every 15 seconds. If Steam has not made its setting
+  available yet, the previous locale-based clock remains a fallback.
+- **Installed default:** The Installed tab now defaults to **Recently Played**
+  (newest Steam last-played timestamp first). All other tabs continue
+  defaulting to **A–Z**. A manual switch between Recent and A–Z is remembered
+  independently for each tab during the current Home session.
+- Steam Input's native overview and the accepted Midnight Settings focus
+  design remain unchanged. No themes or controller bindings were modified.
+
 ## Release 0.5.1 — in-game Steam menu focus outline
 
 The secondary Steam button menu displayed while a game is running now uses
