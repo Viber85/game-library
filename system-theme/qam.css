@@ -7,15 +7,33 @@
   background:var(--glm-bg-deep) !important;
   color:var(--glm-text) !important;
 }
-/* Match the Game Library rail's soft rectangle.
- * The focus ring is INSET: Steam clips outer shadows at the QAM rail edge. */
+/* The native QAM icon column is too narrow for an external focus halo.
+ * Widen only the TAB RAIL by ~16px, not the entire QAM or its plugin panels.
+ * A 10px inner gutter on either side gives the cyan border/glow room to show
+ * while preserving the scrollable icon list and Steam's controller focus. */
+#QuickAccess-Menu :is(.quickaccessmenu_Tabs_3Ag1w,
+  [class*="quickaccessmenu_Tabs_"]) {
+  box-sizing:border-box !important;
+  width:86px !important;
+  min-width:86px !important;
+  flex:0 0 86px !important;
+  padding-inline:8px !important;
+}
+/* Match Game Library's rounded-square focus without a permanent ring.
+ * Keep the tab inside its padded rail; the inner cyan ring survives even
+ * if a parent clips the outer soft blue glow. */
 #QuickAccess-Menu [role="tab"],
 .quickaccessmenu_Tab_1S76C {
+  box-sizing:border-box !important;
+  width:calc(100% - 12px) !important;
+  min-width:0 !important;
+  margin-inline:6px !important;
+  margin-block:3px !important;
   color:var(--glm-muted) !important;
   background:transparent !important;
+  border:0 !important;
   border-radius:12px !important;
-  border-left:0 !important;
-  outline:0 !important;
+  outline:none !important;
   box-shadow:none !important;
   background-clip:padding-box;
 }
@@ -25,13 +43,16 @@
   background:linear-gradient(140deg,#144873,#092b4d) !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
 }
-/* A fully internal 2px cyan ring cannot be cut off by the QAM scroll rail. */
-#QuickAccess-Menu [role="tab"]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover),
-.quickaccessmenu_Tab_1S76C:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within,:hover) {
+/* Focus only, not mouse hover: visible full border plus ambient cyan glow
+ * like the library rail, with no giant clipped shadow. */
+#QuickAccess-Menu [role="tab"]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
+.quickaccessmenu_Tab_1S76C:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   color:#f2f9ff !important;
   background:linear-gradient(140deg,#185488,#083058) !important;
   border-radius:12px !important;
-  box-shadow:inset 0 0 0 2px #63cfff,inset 4px 0 0 #4ac1ff !important;
+  box-shadow:inset 0 0 0 2px #63cfff,
+    inset 0 0 8px rgba(42,192,255,.35),
+    0 0 12px rgba(3,157,255,.68) !important;
   outline:none !important;
 }
 .quickaccessmenu_TabGroupPanel_1QO7b,
