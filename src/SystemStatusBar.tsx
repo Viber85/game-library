@@ -16,6 +16,8 @@ type DeviceStatus = { battery: Battery | null; wifi: Wifi | null; bluetooth: Blu
 type SteamSupplement = { unread: number | null; avatar: string | null };
 
 const readSystemStatus = callable<[], DeviceStatus>("get_system_status");
+const readSteamClockFormat =
+  callable<[string],{hour24:boolean|null}>("get_steam_clock_format");
 const NO_DEVICE_STATUS: DeviceStatus = { battery: null, wifi: null, bluetooth: null };
 
 /** Resolve the LOCAL Steam account's real avatar from whichever Steam UI store
@@ -80,6 +82,9 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
   const [device,setDevice] = useState<DeviceStatus>(NO_DEVICE_STATUS);
   const [steam,setSteam] = useState<SteamSupplement>(()=>readSteamSupplement());
   const [failedAvatar,setFailedAvatar] = useState<string | null>(null);
+  // SteamOS' per-account b24HourClock preference, not the browser's locale.
+  // null means Steam hasn't exposed its setting yet: keep the old fallback.
+  const [hour24,setHour24] = useState<boolean|null>(null);
 
   useEffect(()=>{
     let live = true;
@@ -105,6 +110,37 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
       live=false;
       window.clearInterval(deviceTimer);
       window.clearInterval(steamTimer);
+    };
+  },[]);
+
+  useEffect(()=>{
+    let active=true;
+    let pending=false;
+    let account="";
+    const refresh=()=>{
+      const current=getActiveUserId();
+      if(current!==account){
+        account=current;
+        setHour24(null);
+      }
+      if(!/^\d{1,10}$/.test(current) || pending)return;
+      pending=true;
+      void readSteamClockFormat(current).then(response=>{
+        if(active && account===current && typeof response?.hour24==="boolean")
+          setHour24(response.hour24);
+      }).catch(()=>{
+        // No guessed Steam setting: fall back to the previous locale clock.
+      }).finally(()=>{pending=false;});
+    };
+    refresh();
+    // Picking 12h/24h in native Steam Settings updates the Home clock
+    // without a plugin restart; also re-read immediately on returning Home.
+    const timer=window.setInterval(refresh,15000);
+    window.addEventListener("focus",refresh);
+    return ()=>{
+      active=false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus",refresh);
     };
   },[]);
 
@@ -186,7 +222,11 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
       {battery && <span className="gl-topbar-battery-percent">{battery.percent}%</span>}
     </Focusable>
     <time className="gl-topbar-clock" dateTime={time.toISOString()}>
-      {time.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
+      {time.toLocaleTimeString([],hour24===null
+        ? {hour:"2-digit",minute:"2-digit"}
+        : hour24
+          ? {hour:"2-digit",minute:"2-digit",hourCycle:"h23"}
+          : {hour:"numeric",minute:"2-digit",hour12:true})}
     </time>
     <Focusable className="gl-topbar-avatar" noFocusRing focusClassName="gl-focused"
       title="Steam profile" aria-label="Open Steam profile"

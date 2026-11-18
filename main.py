@@ -48,6 +48,74 @@ def _load_system_status():
     return module
 
 
+
+def _steam_clock_value(value):
+    """Decode only Steam's explicit user preference, never infer it from locale."""
+    if type(value) is bool:
+        return value
+    if type(value) is int and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str) and value.strip().lower() in ("true", "false", "1", "0"):
+        return value.strip().lower() in ("true", "1")
+    return None
+
+
+def _steam_clock_setting_from_vdf(contents):
+    """FriendsUIJSON is Steam's 24-hour toggle in the active user's localconfig.vdf."""
+    # VDF contains an escaped JSON string. Parse this setting specifically,
+    # rather than treating the whole (possibly large) localconfig as JSON.
+    match = re.search(r'"FriendsUIJSON"\s*"((?:\\.|[^"\\])*)"', contents, re.I)
+    if match:
+        try:
+            decoded = json.loads('"' + match.group(1) + '"')
+            settings = json.loads(decoded)
+            if isinstance(settings, dict):
+                return _steam_clock_value(settings.get("b24HourClock"))
+        except (ValueError, TypeError):
+            pass
+    # Older Steam clients store this field directly as a VDF key.
+    match = re.search(r'"b24HourClock"\s*"(true|false|1|0)"', contents, re.I)
+    return _steam_clock_value(match.group(1)) if match else None
+
+
+def _steam_clock_config_paths(account_id):
+    """Only known Steam userdata paths for the requested numeric Steam account32."""
+    homes = [pathlib.Path.home()]
+    try:
+        # Decky may run as root while Steam runs under /home/deck, /home/bazzite
+        # or another non-root account. Never browse arbitrary user files.
+        homes.extend(home for home in list(pathlib.Path("/home").iterdir())[:32]
+                     if home.is_dir() and not home.is_symlink())
+    except OSError:
+        pass
+    seen = set()
+    for home in homes:
+        for root in (home / ".local/share/Steam",
+                     home / ".steam/steam",
+                     home / ".var/app/com.valvesoftware.Steam/.local/share/Steam"):
+            path = root / "userdata" / account_id / "config/localconfig.vdf"
+            if str(path) not in seen:
+                seen.add(str(path))
+                yield path
+
+
+def _get_steam_clock_format(account_id):
+    if not isinstance(account_id, str) or not re.fullmatch(r"[0-9]{1,10}", account_id):
+        return None
+    if int(account_id) <= 0:
+        return None
+    for path in _steam_clock_config_paths(account_id):
+        try:
+            if not path.is_file() or path.is_symlink() or path.stat().st_size > 8_000_000:
+                continue
+            value = _steam_clock_setting_from_vdf(path.read_text(encoding="utf-8", errors="replace"))
+            if value is not None:
+                return value
+        except OSError:
+            continue
+    return None
+
+
 def _settings_path():
     directory = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR")
     return pathlib.Path(directory) / "game_library.json" if directory else BASE / ".game_library_settings.json"
@@ -165,6 +233,14 @@ class Plugin:
 
     async def _main(self):
         pass
+
+    async def get_steam_clock_format(self, account_id: str = ""):
+        """Read the same 12/24-hour preference used by SteamOS, never change it."""
+        try:
+            hour24 = await asyncio.to_thread(_get_steam_clock_format, account_id)
+            return {"hour24": hour24}
+        except (OSError, ValueError, TypeError):
+            return {"hour24": None}
 
     async def get_system_status(self):
         """Read-only hardware status. Unknown values remain None."""

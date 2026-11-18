@@ -14,13 +14,14 @@ import { DASHBOARD_CSS } from "./theme";
 import { SystemStatusBar } from "./SystemStatusBar";
 import { fallbackTabs, gamesForTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
+import {sortForTab, type HomeSort} from "./homeSort";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
 import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
 import { readRunningGame, resumeRunningGame, type RunningGame } from "./runningGame";
 
-type Sort = "recent" | "alphabetical";
+type Sort = HomeSort;
 const INITIAL_GAME_COUNT = 15;
 
 interface RailAction {
@@ -187,7 +188,7 @@ export function Dashboard() {
     readRunningGame((window as any).SteamUIStore,(window as any).appStore));
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
   const [activeTab, setActiveTab] = useState("AllGames");
-  const [sort, setSort] = useState<Sort>("alphabetical");
+  const [tabSorts, setTabSorts] = useState<Record<string,Sort>>({});
   const [selectedId, setSelectedId] = useState<number | undefined>();
   const [viewAll,setViewAll] = useState(false);
   const [gridLimit,setGridLimit] = useState(60);
@@ -261,6 +262,7 @@ export function Dashboard() {
     pendingGridIndex.current=null;
   },[tabIds,activeTab]);
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
+  const sort = sortForTab(tab,tabSorts);
   const tabCounts = useMemo(() => new Map(tabs.map(t => {
     const result = gamesForTab(t, games);
     return [t.id, result.supported ? result.games.length : null] as const;
@@ -523,7 +525,9 @@ export function Dashboard() {
             ))}
           </Focusable>
           <Focusable ref={sortRef} className="gl-sort" focusClassName="gl-focused" noFocusRing
-            onActivate={() => setSort((s) => s === "recent" ? "alphabetical" : "recent")}
+            onActivate={() => setTabSorts(previous=>({...previous,
+              [tab.id]:sort === "recent" ? "alphabetical" : "recent"
+            }))}
             onButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
               if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);focusPill(tabs.length-1);}
