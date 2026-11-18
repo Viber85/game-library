@@ -87,6 +87,30 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.19 — focus-only game cover highlights:** The main horizontal
+carousel and the full-page game grid previously kept the blue outline
+and glow around the *selected* game's poster even after controller
+focus moved elsewhere. That happened because the renderer attached a
+persistent `gl-selected` class whenever a game's details were shown,
+and the Midnight CSS styled that class like a focus state.
+
+The card's game-selection state is now independent of visual focus:
+neither the selected poster nor ordinary inactive posters have a
+border or glow. The existing white/cyan ring and slight lift apply
+only when Decky's `gl-focused` class is present on the game card.
+The `View More` tile also loses its permanent border, inset glow,
+and focus-like mouse hover effect; its ring appears only with actual
+controller/keyboard focus. Hero logo, selected-game information,
+Play/Install actions, card sizes, grid navigation, TabMaster Auto
+restoration, and Midnight SteamOS themes remain unchanged.
+
+A new `tests/card-focus.mjs` regression suite checks that no
+`gl-selected` styling survives, that both poster base rules and
+the View More tile are borderless and glow-free, and that the
+controller focus ring remains visible. GitHub CI checks these rules
+together with the full build and other existing regression tests.
+The on-device appearance still needs visual confirmation.
+
 **v0.4.18 — automatic TabMaster restoration without reloading Game Library:**
 The user verified that v0.4.17's native Steam fallback counts were correct,
 but turning TabMaster and UnifiedDeck back on did not restore the saved custom
