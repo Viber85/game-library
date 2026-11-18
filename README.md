@@ -87,6 +87,23 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.24 — preserve the elusive blue gamepad flash (diagnostic):**
+MSI Claw screenshots from test.23 prove that the Midnight CSS is applied
+(rail rgb(8,20,37), selected focus rgb(22,58,94), native Fields rgb(15,40,66)).
+Yet the first five printed focus frames show only settled navy colors, so
+the cause of the visible brighter-blue animation is still **not identified**.
+Test.23 sorted selections by DOM order and could sample an older selected row
+before the new D-pad target, and retained only the latest 28 frames.
+Test.24 prioritizes the actual focused node, checks up to 96 native sidebar
+descendants and their ::before/::after paints for a transient brighter blue,
+then preserves up to eight distinct brighter-blue frames separately from the
+rolling trace. Appearance now exposes concise highlight class/color entries
+and a dedicated copy action, allowing phone photos to be useful even when
+clipboard copying is unavailable. No CSS focus color change is shipped here:
+this is a measurement correction, not a speculative visual fix. Audit watcher
+revision 19, CSS marker revision 75, and regression tests prevent stale
+instrumentation and missed newly focused rows.
+
 **v0.4.21-test.23 — controller focus transition CEF diagnostic
 (device diagnostic):** The user confirmed the brief brighter-blue flash
 persists in BOTH Steam Settings and Decky Settings using the D-pad or
