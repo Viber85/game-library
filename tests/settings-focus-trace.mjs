@@ -82,3 +82,48 @@ test("CEF watcher collects controller focus mutations plus subsequent animation 
   assert.match(panel,/Read CEF diagnostics \(no reload\)/);
   assert.doesNotMatch(panel,/refreshBuiltinTheme\(\)\.then/);
 });
+
+test("Transient bright focus is found even if older selected row occurs first",()=>{
+  const rail={className:"PageListColumn",parentElement:null,
+    classList:{contains:()=>false},
+    contains:e=>e===rail||e===old||e===active||e===highlight,
+    querySelectorAll:selector=>selector==="*"?
+      [old,active,highlight]:[old,active],
+    getBoundingClientRect:()=>({left:1,top:1,width:220,height:540})
+  };
+  const old={className:"Panel selected",parentElement:rail,firstElementChild:null,
+    classList:{contains:()=>false},matches:()=>false};
+  const active={className:"Focusable gpfocus",parentElement:rail,firstElementChild:null,
+    classList:{contains:c=>c==="gpfocus"},matches:()=>true,
+    getBoundingClientRect:()=>({left:2,top:80,width:210,height:40})};
+  const highlight={className:"NativeControllerHighlight",parentElement:active,
+    firstElementChild:null,classList:{contains:()=>false},matches:()=>false};
+  const document={querySelectorAll:()=>[rail],activeElement:active,
+    elementsFromPoint:()=>[highlight,active,rail]};
+  const value=vm.runInNewContext(THEME_FOCUS_TRACE_SCRIPT,{
+    document,Date,JSON,Set,Array,
+    getComputedStyle:(e,pseudo)=>({
+      backgroundColor:e===highlight&&pseudo===null?"rgb(55, 122, 194)":
+        e===rail?"rgb(8, 20, 37)":e===active?"rgb(22, 58, 94)":"rgba(0, 0, 0, 0)",
+      backgroundImage:"none",boxShadow:"none",transitionDuration:"0s",animationName:"none"
+    })
+  });
+  const frame=parseThemeFocusFrame(JSON.parse(value));
+  assert.ok(frame);
+  assert.ok(frame.items.some(x=>x.role==="bright"&&
+    x.cls.includes("NativeControllerHighlight")&&x.bg==="rgb(55, 122, 194)"),
+    "A brighter paint descendant must not be discarded behind settled selections");
+  assert.ok(frame.items.some(x=>x.role==="active"&&x.cls.includes("gpfocus")),
+    "New controller focus is prioritized over an older selected navigation row");
+});
+
+test("Rare bright-blue frames survive normal frames and remain visible in Appearance",()=>{
+  const content=THEME_AUDIT_INSTALL_SCRIPT;
+  assert.match(content,/focusAnomalies:\[\]/);
+  assert.match(content,/state\.focusAnomalies=\[next,\.\.\.state\.focusAnomalies\]\.slice\(0,8\)/);
+  assert.match(THEME_AUDIT_READ_SCRIPT,/focusAnomalies:state\?\.focusAnomalies/);
+  const panel=readFileSync(new URL("../src/BuiltinThemePanel.tsx",import.meta.url),"utf8");
+  assert.match(panel,/Preserved brighter-blue gamepad paint/);
+  assert.match(panel,/Copy preserved bright-blue focus evidence/);
+  assert.match(content,/for\(const layer of \[null,'::before','::after'\]\)/);
+});
