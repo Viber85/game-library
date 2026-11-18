@@ -87,6 +87,33 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.22 — shared native Steam/Decky Settings gamepad focus
+(device preview):** User determined the original left navigation flash
+occurs only when using D-pad or left analog to move through menu items;
+touch navigation is stable. The issue affects BOTH Decky Loader
+Settings and ordinary Steam Settings, which use Steam's common
+`PageListColumn` / `Panel` / `Focusable` controller navigation.
+Earlier test.19/20 attempted to patch Decky only and did not cover
+the focus overlay, leaving Steam Settings inconsistent. This release
+adds a new **shared, main-only stylesheet loaded last**:
+`settings-gamepad-focus.css`. It explicitly scopes all rules to the
+native Settings left rail and focuses its rows/Focusable children,
+including Steam `.gpfocus`, `.gpfocuswithin`, `:focus-visible`,
+selected/current attributes, and native focus pseudo-layers
+`::before` / `::after`. The rail stays `#081425`, focused/selected
+rows use `#163a5e`, native bright-blue pseudo backgrounds are
+suppressed, and focus transitions/animations are disabled on the
+navigation items only, not the right pane. CSS is immediately present
+in Steam's main CEF, so it does not wait for `DialogControlsSection`
+or any URL/DOM marker to paint. Gamepad layout, icons, input handlers,
+touch interactions, QAM, Power, Volume, and all content rows retain
+their existing behavior. CSS revision **73** forces re-injection.
+The verified v18 Decky CSS remains unchanged and the test.21
+package guard against accidental additions to Decky CSS stays in
+place. A new native Steam/Decky Settings rail regression suite and
+package guards enforce targeting and cascade order. On-device
+controller focus behavior still needs verification.
+
 **v0.4.21-test.21 — emergency revert of Decky left-rail CSS regressions
 (device rollback):** On MSI Claw, v0.4.21-test.19 and test.20 failed to
 remove the Decky left navigation flash and caused the same issue on the
