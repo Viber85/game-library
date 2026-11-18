@@ -34,9 +34,12 @@ class NativeSteamScreenThemeTests(unittest.TestCase):
         self.assertNotIn("data-glm-settings-special-row", bundle["css"]["overlay"])
         self.assertIn("data-glm-decky-settings", bundle["css"]["main"])
         self.assertNotIn("data-glm-decky-settings", bundle["css"]["overlay"])
+        self.assertIn(".BasicUI .PageListColumn :is(", bundle["css"]["main"])
+        self.assertIn("background:#163a5e !important;", bundle["css"]["main"])
+        self.assertNotIn("settings-gamepad-focus", bundle["css"]["overlay"])
 
     def test_bundled_source_files_exist_and_are_small(self):
-        for filename in ("running-menu.css", "steam-input.css", "volume.css", "power-menu.css", "settings-focus.css", "settings-special.css", "decky-settings.css"):
+        for filename in ("running-menu.css", "steam-input.css", "volume.css", "power-menu.css", "settings-focus.css", "settings-special.css", "decky-settings.css", "settings-gamepad-focus.css"):
             path = main.BASE / "system-theme" / filename
             self.assertTrue(path.is_file(), filename)
             self.assertLess(path.stat().st_size, 100_000)
