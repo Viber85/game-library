@@ -1160,4 +1160,68 @@ export const DASHBOARD_CSS = String.raw`
   }
 }
 
+
+/* v0.4.20 — running game shortcut, visually consistent with focus-expand rail.
+ * The green dot is status only; the focus outline is unchanged. A long game
+ * title scrolls inside its own label and can never move the navigation icons. */
+.gl-root .gl-rail-item.gl-running-item {
+  position:relative;
+}
+.gl-root .gl-running-art {
+  display:block;
+  flex:0 0 27px;
+  width:27px;
+  height:27px;
+  border-radius:6px;
+  object-fit:cover;
+  box-shadow:none;
+}
+.gl-root .gl-running-indicator {
+  position:absolute;
+  pointer-events:none;
+  width:8px;
+  height:8px;
+  left:34px;
+  top:7px;
+  border-radius:50%;
+  background:#46dfac;
+  border:1px solid #0b2a31;
+}
+.gl-root .gl-rail-item.gl-running-item .gl-running-label {
+  flex:1 1 0;
+  min-width:0;
+}
+.gl-root.gl-nav-expanded .gl-rail-item.gl-running-item .gl-running-label {
+  max-width:150px;
+}
+.gl-root .gl-running-title-viewport {
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow:hidden;
+}
+.gl-root .gl-running-title {
+  display:inline-block;
+  width:max-content;
+  max-width:none;
+  white-space:nowrap;
+  transform:translateX(0);
+}
+.gl-root.gl-nav-expanded .gl-running-title.gl-marquee-active {
+  animation:gl-running-title-news 8s ease-in-out infinite;
+}
+@keyframes gl-running-title-news {
+  0%,15%,100% { transform:translateX(0); }
+  47%,69% { transform:translateX(calc(-1 * var(--gl-marquee-distance))); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .gl-root .gl-running-title.gl-marquee-active {
+    animation:none !important;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+}
+
 `;
