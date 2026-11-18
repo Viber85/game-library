@@ -1,0 +1,119 @@
+/* Game Library Midnight — Steam Input Controller Layout and Configurator.
+ * Narrowly targets Steam Input's own summary/configurator components in both
+ * main Game Mode and Steam's in-game menu. Native input bindings, controller
+ * illustration, SVG glyphs, coordinates, focus semantics and actions untouched.
+ */
+
+/* Layout overview screen (the controller diagram in the screenshot). */
+:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
+  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"]) {
+  background:linear-gradient(180deg,#0a1b30 0%,#081b30 65%,#061427 100%) !important;
+  color:var(--glm-text) !important;
+}
+:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
+  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
+  :is(.controllerconfiguratorsummary_ControlsListSection_nnOTT,
+      [class*="controllerconfiguratorsummary_ControlsListSection"],
+      .controllerconfiguratorsummary_BottomControlsSections_2H5S6,
+      [class*="controllerconfiguratorsummary_BottomControlsSections"]) {
+  background:transparent !important;
+}
+:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
+  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
+  :is(.controllerconfiguratorsummary_Title_12Taa,
+      [class*="controllerconfiguratorsummary_Title"],
+      .controllerconfiguratorsummary_StandardControl_pywHI,
+      [class*="controllerconfiguratorsummary_StandardControl"],
+      .controllerconfiguratorsummary_ActivatorText_2BHzj,
+      [class*="controllerconfiguratorsummary_ActivatorText"],
+      [class*="controllerconfiguratorsummary_TitleLabel"]) {
+  color:var(--glm-text) !important;
+}
+:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
+  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
+  :is([class*="controllerconfiguratorsummary_SecondaryLabel"],
+      [class*="controllerconfiguratorsummary_Description"],
+      [class*="controllerconfiguratorsummary_SubTitle"]) {
+  color:var(--glm-muted) !important;
+}
+/* Existing "Controller settings" and other native action buttons. */
+:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
+  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
+  :is(.controllerconfiguratorsummary_ConfigButton_1T2Rs,
+      [class*="controllerconfiguratorsummary_ConfigButton"],
+      .controllerconfiguratorsummary_DirectAccessButton_QAVEl,
+      [class*="controllerconfiguratorsummary_DirectAccessButton"]) {
+  background:#123452 !important;
+  color:var(--glm-text) !important;
+  border:1px solid var(--glm-border) !important;
+  border-radius:9px !important;
+}
+:is(.controllerconfiguratorsummary_ControllerConfiguratorSummary_3TvBV,
+  [class*="controllerconfiguratorsummary_ControllerConfiguratorSummary"])
+  :is(.controllerconfiguratorsummary_ConfigButton_1T2Rs,
+      [class*="controllerconfiguratorsummary_ConfigButton"],
+      .controllerconfiguratorsummary_DirectAccessButton_QAVEl,
+      [class*="controllerconfiguratorsummary_DirectAccessButton"]):is(
+        .gpfocus,.gpfocuswithin,:focus-visible) {
+  background:#1d527d !important;
+  color:#f3f8ff !important;
+  box-shadow:inset 0 0 0 2px #63cfff !important;
+}
+
+/* Steam Input's editable controller configuration pages. */
+:is(.controllerconfigurator_ControllerConfiguratorMain_APY6j,
+  [class*="controllerconfigurator_ControllerConfiguratorMain"]) {
+  background:#0a1b30 !important;
+  color:var(--glm-text) !important;
+}
+:is(.controllerconfigurator_ControllerConfiguratorMain_APY6j,
+  [class*="controllerconfigurator_ControllerConfiguratorMain"])
+  :is(.controllerconfigurator_TopSection_20sN9,
+      [class*="controllerconfigurator_TopSection"],
+      .controllerconfigurator_BottomSection_3RsRf,
+      [class*="controllerconfigurator_BottomSection"]) {
+  background:transparent !important;
+}
+:is(.controllerconfigurator_ControllerConfiguratorMain_APY6j,
+  [class*="controllerconfigurator_ControllerConfiguratorMain"])
+  :is(.controllerconfigurator_TopSectionHeader_1a_D6,
+      [class*="controllerconfigurator_TopSectionHeader"],
+      .controllerconfigurator_QuickSettingsHeader_3gVR5,
+      [class*="controllerconfigurator_QuickSettingsHeader"],
+      [class*="controllerconfigurator_CurrentConfigurationButton"]) {
+  color:var(--glm-text) !important;
+}
+:is(.controllerconfigurator_ControllerConfiguratorMain_APY6j,
+  [class*="controllerconfigurator_ControllerConfiguratorMain"])
+  :is(.controllerconfigurator_CurrentConfigurationButton_3lO3w,
+      [class*="controllerconfigurator_CurrentConfigurationButton"]) {
+  background:#123452 !important;
+  border-radius:9px !important;
+  border:1px solid var(--glm-border) !important;
+}
+:is(.controllerconfigurator_ControllerConfiguratorMain_APY6j,
+  [class*="controllerconfigurator_ControllerConfiguratorMain"])
+  :is(.controllerconfigurator_CurrentConfigurationButton_3lO3w,
+      [class*="controllerconfigurator_CurrentConfigurationButton"]):is(
+        .gpfocus,.gpfocuswithin,:focus-visible) {
+  background:#1d527d !important;
+  box-shadow:inset 0 0 0 2px #63cfff !important;
+}
+/* Select-a-layout dialog: native cards, not game art or button glyphs. */
+:is(.controllerconfiguratorchooseconfiguration_OuterColumn_1Udh1,
+  [class*="controllerconfiguratorchooseconfiguration_OuterColumn"])
+  :is(.controllerconfiguratorchooseconfiguration_ConfigurationButton_2luCN,
+      [class*="controllerconfiguratorchooseconfiguration_ConfigurationButton"]) {
+  background:#102944 !important;
+  color:var(--glm-text) !important;
+  border-radius:10px !important;
+  border-color:var(--glm-border) !important;
+}
+:is(.controllerconfiguratorchooseconfiguration_OuterColumn_1Udh1,
+  [class*="controllerconfiguratorchooseconfiguration_OuterColumn"])
+  :is(.controllerconfiguratorchooseconfiguration_ConfigurationButton_2luCN,
+      [class*="controllerconfiguratorchooseconfiguration_ConfigurationButton"]):is(
+        .gpfocus,.gpfocuswithin,:focus-visible) {
+  background:#1d527d !important;
+  box-shadow:inset 0 0 0 2px #63cfff !important;
+}
