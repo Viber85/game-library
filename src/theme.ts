@@ -1224,4 +1224,65 @@ export const DASHBOARD_CSS = String.raw`
   }
 }
 
+
+/* v0.5.6 — Midnight Library: D-pad/touch 11-criterion sort menu.
+ * Only our .gl-root is affected; native Steam Library remains intact. */
+.gl-root .gl-filterbar {position:relative;z-index:6;overflow:visible;}
+.gl-root .gl-sort-menu {
+  position:absolute;z-index:100;right:4px;top:calc(100% - 4px);
+  width:min(440px,calc(100vw - 110px));
+  max-height:calc(100vh - 150px);
+  display:flex;flex-direction:column;gap:3px;
+  overflow-y:auto;overflow-x:hidden;
+  background:linear-gradient(160deg,rgba(7,25,45,.98),rgba(3,12,27,.99));
+  border:1px solid rgba(99,207,255,.55);
+  border-radius:16px;padding:12px;
+  box-shadow:0 20px 55px rgba(0,0,0,.67),0 0 22px rgba(3,157,255,.18);
+  overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#326d97 #08172a;
+}
+.gl-root .gl-sort-menu-title {
+  color:#bdeeff;font-size:12px;font-weight:800;
+  letter-spacing:.12em;padding:6px 12px 9px;
+}
+.gl-root .gl-sort-option {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;min-height:40px;padding:9px 11px;flex-shrink:0;
+  border-radius:10px;cursor:pointer;background:rgba(17,43,68,.64);
+  color:#d7eafa;border:1px solid transparent;
+  font-weight:650;font-size:13px;line-height:1.3;
+}
+.gl-root .gl-sort-option svg {color:#69dbf6;flex-shrink:0;font-size:18px;}
+.gl-root .gl-sort-option.gl-sort-selected {
+  border-color:rgba(99,207,255,.42);background:#133c58;color:#f5fcff;
+}
+.gl-root .gl-sort-option.gl-focused,
+.gl-root .gl-sort-option:focus-visible {
+  background:#17577a;color:#fff;border-color:#63cfff;
+  outline:2px solid #63cfff;outline-offset:-2px;
+  box-shadow:0 0 17px rgba(3,157,255,.58);
+}
+.gl-root .gl-sort-menu-hint {
+  font-size:11px;color:#aec7df;padding:8px 12px 2px;text-align:center;
+}
+.gl-root .gl-sort-progress {
+  position:absolute;z-index:3;bottom:35px;right:18px;
+  max-width:52%;padding:7px 11px;border-radius:9px;
+  color:#def3ff;background:rgba(4,19,37,.94);
+  border:1px solid rgba(82,179,232,.38);
+  font-size:11px;pointer-events:none;
+}
+.gl-root .gl-grid-header-actions {
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  flex-shrink:0;
+}
+.gl-root .gl-grid-header-actions .gl-grid-back {font-size:12px;padding:9px 11px;}
+.gl-root .gl-grid-header-actions .gl-native-library {
+  border-color:rgba(72,164,209,.35);background:rgba(11,39,65,.78);
+}
+@media (max-width:860px) {
+  .gl-root .gl-grid-header-actions {gap:5px;}
+  .gl-root .gl-grid-header-actions .gl-grid-back {font-size:11px;padding:7px 8px;}
+  .gl-root .gl-sort-menu {max-height:calc(100vh - 120px);}
+  .gl-root .gl-sort-option {font-size:12px;min-height:35px;padding:7px 9px;}
+}
 `;
