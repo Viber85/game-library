@@ -1,0 +1,74 @@
+/* Settings-only focused-row cleanup (v0.4.21-test.11).
+ * Existing light-blue selected/focused backgrounds remain unchanged.
+ * No global Steam window, layout, controller, or slider overrides. */
+
+/* Fallback for hashed Steam modules marked by the Settings watcher. */
+html[data-glm-settings-root] [data-glm-settings-row]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
+html[data-glm-settings-root] [data-glm-settings-row]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)
+  [data-glm-settings-row-part] {
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+}
+html[data-glm-settings-root] [data-glm-settings-navitem]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+  [aria-selected="true"],[aria-current="page"]) {
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+}
+
+/* Exact Settings field/network/list rows before the watcher marks them. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  :is([class*="gamepaddialog_Field"],
+      [class*="gamepaddialog_HighlightOnFocus"],
+      [class*="gamepadpagedsettings_SettingsRow"],
+      [class*="gamepadsettings_SettingsRow"],
+      [class*="networksettings_NetworkItem"],
+      [class*="networksettings_NetworkRow"],
+      [class*="networksettings_NetworkListItem"],
+      [class*="networksettings_NetworkEntry"],
+      [class*="wifisettings_NetworkItem"],
+      [class*="wifisettings_NetworkRow"],
+      [class*="connectionsettings_Network"],
+      [role="listbox"] > [role="option"],
+      [role="list"] > [role="listitem"]):is(
+        .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+        [aria-selected="true"]) {
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+}
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageListItem"]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+  [aria-selected="true"],[class*="gamepadpagedsettings_Active"]) {
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+}
+
+/* Only focused controls: preserve their existing blue fills and borders'
+ * dimensions, removing only the visible focus outline/extra stroke. */
+.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"]
+  :is([class*="gamepaddropdown_DropDownControlButton"],
+      [class*="gamepadpagedsettings_DropDown"],
+      [class*="gamepaddialog_Button"],
+      button.DialogButton,select):is(
+        .gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+}
+
+/* Storage has distinct Steam module classes. */
+html[data-glm-settings-root]
+  :is([class*="contentmanagement_InstallFolder"],
+      [class*="contentmanagement_AppBody"]):is(
+        .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+        [class*="contentmanagement_IsSelected"]) {
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+}

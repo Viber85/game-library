@@ -85,7 +85,7 @@ test("Steam's changing CSS class names are resolved through the same alias compi
   assert.ok(expanded.includes('[class~="_abc123xyz"]'));
   assert.ok(expanded.includes('[class~="_def456abc"]'));
   assert.ok(expanded.includes('var(--glm-text)'));
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"61"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"62"/);
 });
 
 test("native CSS source is syntactically balanced and leaves all selector brackets paired",()=>{
