@@ -25,7 +25,7 @@ class NativeSteamScreenThemeTests(unittest.TestCase):
         self.assertIn("gamepadcontextmenu_Focused", bundle["css"]["main"])
         self.assertIn("BasicUIContextMenu", bundle["css"]["main"])
         self.assertIn('[role="menuitem"]', bundle["css"]["main"])
-        self.assertIn("settings-focus", (main.BASE / "system-theme" / "settings-focus.css").read_text(encoding="utf-8"))
+        self.assertIn("data-glm-settings-root", (main.BASE / "system-theme" / "settings-focus.css").read_text(encoding="utf-8"))
         self.assertTrue(bundle["css"]["main"].rstrip().endswith("border-color:transparent !important;\n}"))
         self.assertNotIn("settings-focus", bundle["css"]["overlay"])
 
