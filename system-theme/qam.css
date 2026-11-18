@@ -22,8 +22,9 @@
 /* Match Game Library's rounded-square focus without a permanent ring.
  * Keep the tab inside its padded rail; the inner cyan ring survives even
  * if a parent clips the outer soft blue glow. */
-#QuickAccess-Menu [role="tab"],
-.quickaccessmenu_Tab_1S76C {
+#QuickAccess-Menu :is(.quickaccessmenu_Tabs_3Ag1w,
+  [class*="quickaccessmenu_Tabs_"]) :is([role="tab"],
+  .quickaccessmenu_Tab_1S76C,[class*="quickaccessmenu_Tab_"]) {
   box-sizing:border-box !important;
   width:calc(100% - 12px) !important;
   min-width:0 !important;
@@ -37,16 +38,20 @@
   box-shadow:none !important;
   background-clip:padding-box;
 }
-#QuickAccess-Menu [role="tab"][aria-selected="true"],
-.quickaccessmenu_Tab_1S76C.quickaccessmenu_Selected_2QHMu {
+#QuickAccess-Menu :is(.quickaccessmenu_Tabs_3Ag1w,
+  [class*="quickaccessmenu_Tabs_"])
+  :is([role="tab"],.quickaccessmenu_Tab_1S76C,[class*="quickaccessmenu_Tab_"])
+  :is([aria-selected="true"],.quickaccessmenu_Selected_2QHMu) {
   color:#e9f8ff !important;
   background:linear-gradient(140deg,#144873,#092b4d) !important;
   box-shadow:inset 3px 0 0 #4ac1ff !important;
 }
 /* Focus only, not mouse hover: visible full border plus ambient cyan glow
  * like the library rail, with no giant clipped shadow. */
-#QuickAccess-Menu [role="tab"]:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within),
-.quickaccessmenu_Tab_1S76C:is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+#QuickAccess-Menu :is(.quickaccessmenu_Tabs_3Ag1w,
+  [class*="quickaccessmenu_Tabs_"])
+  :is([role="tab"],.quickaccessmenu_Tab_1S76C,[class*="quickaccessmenu_Tab_"])
+  :is(.gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   color:#f2f9ff !important;
   background:linear-gradient(140deg,#185488,#083058) !important;
   border-radius:12px !important;
