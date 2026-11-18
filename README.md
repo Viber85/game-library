@@ -87,6 +87,54 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.3 — repaired Steam menu focus clipping and QAM focus detection
+(device preview):** The v0.4.21-test.2 MSI Claw photographs showed two
+remaining issues: the native Steam button menu only displayed the left
+portion of the focus rectangle, cutting off the top/bottom/right sides;
+and QAM's Performance icon reverted to a default blue selected square
+with no Midnight ring.
+
+**Native Steam menu:** Target `.mainmenu_Item` directly rather than
+requiring `#MainNavMenuContainer` as its ancestor; SteamOS may mount
+the actual focusable rows elsewhere in its menu tree. Each row now
+has **6 px vertical / 14 px horizontal margins** and a width that
+accounts for the horizontal margin. The focused row gains a fully
+*inset* cyan ring and a decorative, pointer-transparent
+`::after` focus outline inset **4 px vertically and 8 px
+horizontally**, preserving rounded corners without relying on an
+external shadow that the Steam scroll viewport clips. Nonfocused active
+pages keep their subdued background and no halo.
+
+**Quick Access Menu:** Target the actual Steam
+`.quickaccessmenu_Tab` icon directly, including when it is mounted
+outside the expected `#QuickAccess-Menu .Tabs` ancestry. Widen both
+the parent `.quickaccessmenu_Tabs` rail to **86 px** and the inner
+`.quickaccessmenu_TabContentColumn` list to **74 px**, with contained
+padding/margins. Both the **currently selected** section (even while
+focus is inside its Performance/Decky panel) and an actually focused
+icon show the cyan ring; the focused state has a brighter glow.
+The CSS does not change the full QAM width or any plugin content-panel
+geometry.
+
+**Steam class name resolution:** The CSS alias expander now correctly
+maps selector fragments with a terminal underscore, e.g.
+`[class*="quickaccessmenu_Tab_"]`, to Steam's actual minified
+`Tab` class, without accidentally targeting `TabContentColumn`.
+This was an independent reason the QAM styling could fail on the
+current client. The native CSS injection revision increases to **54**
+so cached v0.4.21-test.2 styling is replaced.
+
+Additional automated tests specifically validate Steam/QAM direct
+class targets, clipped-edge-inset focus geometry, both native QAM
+layout columns, selected-vs-focused QAM appearance, safe hash aliases,
+and pointer transparency exclusively on the *decorative* Steam focus
+pseudo-element. Packaging now inspects the actual ZIP contents for
+the new native CSS fixes. All existing SteamOS volume/achievement
+transparency, TabMaster/UnifiedDeck, game launch, layout, controller
+input and prior theme tests remain active. A successful CI run **does
+not prove the final on-device visual result**; please compare the
+native Steam button menu and QAM on your MSI Claw.
+
 **v0.4.21-test.2 — visible Steam menu and QAM controller-focus halos
 (device preview):** Based on photographs from the MSI Claw, the original
 Steam button's left menu highlighted the focused item with a flat blue
