@@ -40,7 +40,9 @@ test("Home clock reads the live SteamOS account preference instead of forcing br
   const status=readFileSync(new URL("../src/SystemStatusBar.tsx",import.meta.url),"utf8");
   assert.match(status,/get_steam_clock_format/);
   assert.match(status,/getActiveUserId\(\)/);
-  assert.match(status,/setHour24\(response\.hour24\)/);
+  assert.match(status,/setSavedClock\(response\.hour24\)/);
+  assert.match(status,/readLiveSteamClockPreference\(globalThis\)/);
+  assert.match(status,/liveClock\?\?savedClock/);
   assert.match(status,/hourCycle:"h23"/);
   assert.match(status,/hour12:true/);
   assert.match(status,/window\.setInterval\(refresh,15000\)/);
