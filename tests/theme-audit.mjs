@@ -413,12 +413,17 @@ test("fast Midnight watcher responds to Steam DOM changes before slow polling",(
   assert.equal(observed?.node,document.documentElement);
   assert.equal(observed?.options.childList,true);
   assert.equal(observed?.options.subtree,true);
-  assert.equal(observed?.options.attributes,undefined,
-    "Our own theme marker attribute writes must not reschedule scans");
+  assert.equal(observed?.options.attributes,true,
+    "Native Settings updates can reuse rows and change only class/style");
+  assert.deepEqual(Array.from(observed?.options.attributeFilter||[]),
+    ["class","style","aria-selected","aria-checked"],
+    "Our data-glm-* markers must NOT be watched or cause recursive scans");
   assert.equal(fallbackMs,5000,"Periodic scan is only a slow fallback");
   scans=parseThemeAudit(run(THEME_AUDIT_READ_SCRIPT)).sampleTicks;
   assert.equal(scans,1,"Initial synchronous scan still runs");
-  notify();notify();notify(); // Many Steam React insertions in the same frame
+  notify([{type:"attributes",attributeName:"class"}]);
+  notify([{type:"attributes",attributeName:"style"}]);
+  notify([{type:"childList"}]); // React can reuse or insert Settings rows
   assert.equal(typeof onScroll,"function","Nested scrolling must trigger the watcher");
   onScroll(); // The same frame is shared by DOM updates and scroll movement.
   assert.equal(frameCalls,1,"DOM and scroll changes coalesce into one frame");

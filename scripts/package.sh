@@ -53,6 +53,9 @@ if unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -F
   exit 1
 fi
 unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq '[role="radio"]'
+# Verify the installable JS contains an immediate native row-state observer.
+unzip -p "$output" 'game-library/dist/index.js' | grep -Fq 'aria-selected'
+unzip -p "$output" 'game-library/dist/index.js' | grep -Fq 'data-glm-settings-special-row'
 unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq 'background:#163a5e !important'
 unzip -p "$output" 'game-library/main.py' | grep -Fq '"settings-special.css", "settings-focus.css"'
 unzip -p "$output" 'game-library/system-theme/settings-focus.css' | grep -Fq '[data-glm-settings-row]'
