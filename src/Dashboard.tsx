@@ -327,11 +327,14 @@ export function Dashboard({initialMode="home"}:
     [tabResult.games,sort,metaRevision]);
   const metaProgress=sortKind?
     sortMetadataProgress(sortKind,tabResult.games):null;
+  // Native Steam refreshes its overviews every 15s. A fresh array with the
+  // same games must NOT cancel an in-flight HLTB search and start it over.
+  const metadataQueryIds=tabResult.games.map(g=>g.id+":"+g.title).join("|");
   useEffect(()=>{
     if(!sortKind||!tabResult.supported||!tabResult.games.length)return;
     return startSortMetadata(sortKind,tabResult.games,()=>
       setMetaRevision(revision=>revision+1));
-  },[sortKind,tab.id,tabResult.games,tabResult.supported]);
+  },[sortKind,tab.id,metadataQueryIds,tabResult.supported]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
   const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
   const visibleGridGames = shown.slice(0,gridLimit);
