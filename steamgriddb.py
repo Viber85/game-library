@@ -112,13 +112,31 @@ def fetch_json(endpoint, api_key):
         "Accept": "application/json",
         "User-Agent": "GameLibrary-SteamOS/0.5",
     })
-    with urllib.request.urlopen(request, timeout=8) as reply:
+    # A third-party redirect must never receive the bearer key.
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+    opener = urllib.request.build_opener(NoRedirect)
+    with opener.open(request, timeout=8) as reply:
         if urllib.parse.urlsplit(reply.geturl()).hostname != "www.steamgriddb.com":
             raise ValueError("Unexpected provider redirect")
         data = reply.read(2_000_001)
         if len(data) > 2_000_000:
             raise ValueError("Provider response too large")
         return json.loads(data.decode("utf-8"))
+
+
+def verify_key(api_key):
+    """Only persist credentials accepted by the SteamGridDB API itself."""
+    if not valid_key(api_key):
+        return False
+    try:
+        response = fetch_json("search/autocomplete/Portal", api_key)
+        return isinstance(response, dict) and response.get("success") is True
+    except urllib.error.HTTPError as error:
+        if error.code in (401, 403):
+            return False
+        raise
 
 
 def key_path(settings_dir):
