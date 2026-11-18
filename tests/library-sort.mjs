@@ -43,6 +43,16 @@ test("Basic, playtime, and never-played sorting uses actual Steam timestamps",()
   assert.deepEqual(names(sortGames(games,"never-played",data)),["C","A","B"]);
 });
 
+test("No game with absent Steam playtime is falsely classified as Never Played",()=>{
+  const unknown=game(4,"Unknown",{playtimeMinutes:0,playtimeKnown:false});
+  const never=game(5,"Never",{playtimeMinutes:0,playtimeKnown:true,lastPlayed:0});
+  const played=game(6,"Played",{playtimeMinutes:20,playtimeKnown:true,lastPlayed:100});
+  assert.deepEqual(names(sortGames([unknown,played,never],"never-played")),
+    ["Never","Played","Unknown"]);
+  assert.deepEqual(names(sortGames([unknown,played,never],"least-played")),
+    ["Never","Played","Unknown"]);
+});
+
 test("Added, native release date, and real size-on-disk sort without inventing unknowns",()=>{
   assert.deepEqual(names(sortGames(games,"recently-added",data)),["B","A","C"]);
   assert.deepEqual(names(sortGames(games,"release-new",data)),["B","A","C"]);
