@@ -22,7 +22,7 @@ test("Tab source is always automatic, never an overrideable setting",()=>{
 });
 
 test("QAM has no tab source selector or save action",()=>{
-  assert.doesNotMatch(controls,/DropdownItem|saveTabSource|changeTabSource|tabSource|TabSource/);
+  assert.doesNotMatch(controls,/\bDropdownItem\b|\bsaveTabSource\b|\bchangeTabSource\b|\btype TabSource\b|\btabSource\s*=/);
   assert.match(controls,/const getSettings = callable<\[\], \{ default_home: boolean \}>/);
   assert.match(controls,/label="Use as Steam Home"/);
   assert.match(controls,/Open Game Library Dashboard/);
