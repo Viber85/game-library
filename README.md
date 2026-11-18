@@ -6,7 +6,7 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 
 - **Optional Steam Home replacement (enabled by default):** intercept Steam's /library/home route after Decky loads, so Game Library is used when entering Game Mode. Disable in Quick Access to restore native Home; the default preference persists across reboots.
 - **Animated focus-expand sidebar (v0.4.0):** the icon-only rail expands from 76 px to 218 px when controller or keyboard focus enters it. Inline labels fade in, and the right dashboard moves with the flex layout (no overlay). D-pad Up/Down retains the expanded rail; D-pad Right/B returns to the last selected game and collapses the rail. The responsive narrow layout uses 66 px / 204 px, honors reduced-motion preferences, and leaves Steam's own sidebar/QAM untouched.
-- **Alphabetical by default:** All library tabs and View More start in A–Z order. Users can switch to Recent using the existing sort pill.
+- **Per-tab sort:** Installed starts at Recently Played. Other library tabs start A–Z; each tab remembers its manually selected sort during the current session.
 - **Correct Play / Install state:** only games marked as installed show Play. Uninstalled Steam games and Unifideck/non-Steam shortcuts show Install, which opens the game's native Steam/Unifideck details for its proper install workflow. The plugin never attempts to launch an uninstalled shortcut.
 - **View More:** Each library tab initially displays just 15 portrait cards followed by a View More tile. The tile opens a scrollable full-library grid, with matching art/selection styling, controller navigation and B to return. The grid renders 60 items at a time and extends as the user browses. Navigation uses the actual rendered CSS columns: D-pad Left enters the permanent sidebar only from the first card in a row; pressing Right or B on the sidebar returns to the exact previously focused grid card. Up/Down follows visual rows without random skipping. A future batch keeps the pending focus until mounted.
 - Explicit D-pad Up/Down movement on the rail, Right/B back to the games.
@@ -22,6 +22,46 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - The native SteamOS status bar owns the top of the screen: the duplicate internal header is hidden and the dashboard is inset below it; the featured art panel has no outlined card border.
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
+
+## Test release 0.5.5-test.1 — SteamGridDB missing-cover and hero fallback
+
+In the Game Library **Steam** tab (Steam games, not Epic/GOG shortcuts),
+artwork loading now tries Valve's configured local/custom Steam artwork first.
+If every native portrait image fails to load, the dashboard optionally searches
+SteamGridDB by **game title** and displays a matching 600×900-style cover. The
+selected game's full-screen hero similarly searches only after its native
+hero candidates fail, then falls back to the existing Steam header/cover.
+
+Setup in **Decky → Game Library → SteamGridDB Artwork**:
+
+1. Generate a free personal key at
+   https://www.steamgriddb.com/profile/preferences/api.
+2. Paste it into the password-masked field and select **Save API key**.
+3. Leave **Auto-fill missing Steam cover and hero** enabled. Disable it
+   at any time or remove the key.
+
+Safety and compatibility:
+- No search before a key is saved. Only Steam game titles with missing
+  artwork are sent to SteamGridDB, using an Authorization header from Decky's
+  Python backend; the key is never exposed through a read endpoint.
+- The key is saved in the Decky per-plugin settings folder in a separate
+  file with Unix 0600 permissions; **it is not embedded in the ZIP**.
+- Exact normalized-title matches only. Sequels, similar games and ambiguously
+  titled results are not guessed. Search results and missing matches are
+  cached locally with different expiration periods.
+- Static, non-NSFW, non-humor images only; portrait covers and landscape heroes
+  are selected by dimensions and community votes.
+- No edits to Steam userdata artwork, game properties, metadata, navigation,
+  QAM, Epic/GOG tab assets, or the underlying Steam client.
+- If the service is unavailable, game cards retain their text and Home uses
+  its existing Steam image fallbacks; all lookups run asynchronously.
+- Image URLs are cached locally in plugin metadata. The image bytes are loaded
+  normally from SteamGridDB's CDN and can also be cached by the Steam browser.
+
+**Note:** Current SteamGridDB endpoints and API-key requirements were verified
+against the provider's API v2 usage and the official SteamGridDB-backed Steam
+ROM Manager integration. Live key-based image retrieval still needs testing
+on the actual MSI Claw with the user's own key.
 
 ## Test release 0.5.4-test.1 — Midnight game-details refresh
 

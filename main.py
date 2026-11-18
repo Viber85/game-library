@@ -174,6 +174,28 @@ def _builtin_theme_bundle(theme_id):
 
 
 
+
+
+def _load_steamgriddb():
+    """Import bundled optional image provider without requiring plugin sys.path."""
+    path = BASE / "steamgriddb.py"
+    spec = importlib.util.spec_from_file_location("game_library_local_steamgriddb", str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError("SteamGridDB helper unavailable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _steamgriddb_config_dir():
+    return _settings_path().parent
+
+
+def _steamgriddb_cache_path():
+    directory = os.environ.get("DECKY_PLUGIN_RUNTIME_DIR") or os.environ.get("DECKY_PLUGIN_SETTINGS_DIR")
+    return pathlib.Path(directory) / "steamgriddb_artwork_cache.json" if directory else BASE / "steamgriddb_artwork_cache.json"
+
+
 def _runtime_cache_path():
     directory = os.environ.get("DECKY_PLUGIN_RUNTIME_DIR") or os.environ.get("DECKY_PLUGIN_SETTINGS_DIR")
     return pathlib.Path(directory) / "hltb_cache.json" if directory else BASE / "hltb_cache.json"
@@ -231,6 +253,7 @@ class Plugin:
     _hltb_service = None
     _protondb_service = None
     _protondb_name_resolver = None
+    _steamgriddb_service = None
 
     async def _main(self):
         pass
@@ -287,6 +310,67 @@ class Plugin:
             return {"ok": True, **_builtin_theme_bundle(theme_id)}
         except (OSError, ValueError, UnicodeError) as error:
             return {"ok": False, "error": type(error).__name__}
+
+
+    async def get_steamgriddb_settings(self):
+        """Never expose the actual key to CEF, even during diagnostics."""
+        try:
+            provider = _load_steamgriddb()
+            configured = bool(provider.read_key(_steamgriddb_config_dir()))
+            enabled = _read_preferences().get("steamgriddb_enabled", True) is True
+            return {"enabled": enabled, "has_key": configured}
+        except (OSError, RuntimeError):
+            return {"enabled": False, "has_key": False}
+
+    async def set_steamgriddb_key(self, key: str):
+        if type(key) is not str:
+            return {"ok": False, "reason": "Key format invalid"}
+        try:
+            provider = _load_steamgriddb()
+            token = key.strip()
+            if not provider.valid_key(token):
+                return {"ok": False, "reason": "Key format invalid"}
+            if not await asyncio.to_thread(provider.verify_key, token):
+                return {"ok": False, "reason": "SteamGridDB rejected this API key"}
+            saved = await asyncio.to_thread(provider.save_key,
+                                              _steamgriddb_config_dir(), token)
+            return {"ok": bool(saved), "reason": "" if saved else "Unable to save key"}
+        except (OSError, RuntimeError, ValueError):
+            return {"ok": False, "reason": "Cannot verify key. Check your connection"}
+
+    async def clear_steamgriddb_key(self):
+        return await asyncio.to_thread(_load_steamgriddb().delete_key,
+                                        _steamgriddb_config_dir())
+
+    async def set_steamgriddb_enabled(self, enabled: bool):
+        if type(enabled) is not bool:
+            return False
+        try:
+            saved = _read_preferences()
+            saved["steamgriddb_enabled"] = enabled
+            _write_preferences(saved)
+            return True
+        except OSError:
+            return False
+
+    async def steamgriddb_art(self, appid: int, title: str, non_steam: bool):
+        """Only missing artwork for Steam games; read-only Steam library."""
+        if type(appid) is not int or not (1 <= appid <= 0xffffffff) or \
+                type(non_steam) is not bool or non_steam or \
+                type(title) is not str or not (2 <= len(title.strip()) <= 180):
+            return {"status": "invalid", "cover": None, "hero": None}
+        if _read_preferences().get("steamgriddb_enabled", True) is not True:
+            return {"status": "disabled", "cover": None, "hero": None}
+        try:
+            provider = _load_steamgriddb()
+            key = provider.read_key(_steamgriddb_config_dir())
+            if not key:
+                return {"status": "needs_key", "cover": None, "hero": None}
+            if self._steamgriddb_service is None:
+                self._steamgriddb_service = provider.ArtworkService(_steamgriddb_cache_path())
+            return await asyncio.to_thread(self._steamgriddb_service.lookup, title, key)
+        except (OSError, RuntimeError, ValueError):
+            return {"status": "error", "cover": None, "hero": None}
 
     async def hltb_times(self, appid: int, name: str):
         if self._hltb_service is None:

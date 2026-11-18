@@ -8,6 +8,7 @@ import { Dashboard } from "./Dashboard";
 import { LibraryDiagnostics } from "./LibraryDiagnostics";
 import { UpdatesPanel } from "./UpdatesPanel";
 import { BuiltinThemePanel } from "./BuiltinThemePanel";
+import {SteamGridDBPanel} from "./SteamGridDBPanel";
 import { startBuiltInThemeRuntime, stopBuiltInThemeRuntime } from "./builtinThemeRuntime";
 import { loadDefaultTheme } from "./themeController";
 import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
@@ -119,6 +120,7 @@ function ControlPanel() {
         </PanelSectionRow>
       </PanelSection>
       <BuiltinThemePanel />
+      <SteamGridDBPanel />
       <UpdatesPanel />
     </>
   );
