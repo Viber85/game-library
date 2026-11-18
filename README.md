@@ -23,6 +23,19 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Release 0.5.1 — in-game Steam menu focus outline
+
+The secondary Steam button menu displayed while a game is running now uses
+the same **2px cyan outline and 20px blue focus glow** as the approved SteamOS
+Settings category. The glow is applied only to the focused
+`mainmenuapprunning_NavigationMenuItem`, never to the full list or columns.
+Each native navigation item has 22px left/right breathing room and a matching
+width reduction so the Steam `ScrollMask` does not crop the outline/bloom.
+The scroll mask remains intact; the left rail, game logo, other panels, mapped
+controller controls, and navigation behavior are unchanged. The theme cache
+marker is bumped to 80. The change has automated CSS/package tests and should
+be visually verified in Game Mode on the handheld.
+
 ## Release 0.5.0 — native Steam Input layout overview
 
 The Steam Input controller layout overview (controller diagram, mapped button

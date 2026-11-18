@@ -36,21 +36,34 @@
 
 /* Items default to a clean transparent surface. Focus is the only highlight,
  * rather than a permanently glowing game card or a painted stationary cursor. */
+/* 0.5.1: keep each in-game navigation row clear of the native ScrollMask
+ * edges. Reserve 22px on BOTH sides inside the existing column, instead of
+ * disabling Steam's scroll masking or outlining a whole NavigationBox.
+ * The text, icons and focus behavior remain native. */
 :is(.mainmenuapprunning_NavigationBox_36vNU,
   [class*="mainmenuapprunning_NavigationBox"])
   :is(.mainmenuapprunning_NavigationMenuItem_1G0K4,
     [class*="mainmenuapprunning_NavigationMenuItem"]) {
+  box-sizing:border-box !important;
+  width:calc(100% - 44px) !important;
+  margin:8px 22px !important;
   color:var(--glm-text) !important;
   border-radius:9px !important;
 }
+/* Match the approved SteamOS Settings category: one cyan 2px outline and
+ * 20px outer bloom on the focused row only. No outline/glow on the scroll
+ * container, navigation column, selected-but-unfocused rows or game art. */
 :is(.mainmenuapprunning_NavigationBox_36vNU,
   [class*="mainmenuapprunning_NavigationBox"])
   :is(.mainmenuapprunning_NavigationMenuItem_1G0K4,
     [class*="mainmenuapprunning_NavigationMenuItem"]):is(
-      .gpfocus,.gpfocuswithin,:focus-visible) {
+      .gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
   background:#163a5e !important;
   color:#f3f8ff !important;
-  box-shadow:inset 3px 0 0 #4ac1ff,inset 0 0 0 1px rgba(99,207,255,.5) !important;
+  outline:2px solid #63cfff !important;
+  outline-offset:-2px !important;
+  box-shadow:0 0 20px rgba(3,157,255,.72),
+    inset 0 0 7px rgba(3,157,255,.20) !important;
   animation:none !important;
 }
 /* Keep the original game logo unfiltered; headings and action labels remain
