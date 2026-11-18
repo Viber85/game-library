@@ -51,6 +51,8 @@ unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'da
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'gamepadpagedsettings_PagedSettingsDialog_PageContent'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'gamepaddialog_Field_'
 unzip -p "$output" 'game-library/dist/index.js' | grep -Fq '/decky/settings'
+unzip -p "$output" 'game-library/dist/index.js' | grep -Fq 'recentDomEvidence'
+unzip -p "$output" 'game-library/dist/index.js' | grep -Fq 'Read CEF diagnostics (no reload)'
 unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'background:#163a5e !important'
 # No brittle Steam route gate: the watcher identifies real painted Settings surfaces.
 unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq '[data-glm-settings-special-row]'

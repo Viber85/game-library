@@ -87,6 +87,26 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.17 — actual Steam CEF class/color diagnostics
+(device diagnostic):** Decky Settings was unchanged despite earlier CSS
+tests. This release intentionally does NOT add new visual rules.
+Instead the preexisting Steam CEF watcher retains up to 8 distinct,
+bounded observations of visible left/right painted components, including
+their Steam class tokens, parent class tokens and computed backgrounds,
+independent of React Router's URL, the Decky marker or nav row counts.
+Sampling is capped to once per 900 ms and remains solely in the Steam
+CEF tab's memory. It reads NO displayed text, network/user names,
+plugin labels, game titles, input values or URLs. The Appearance button
+is now **Read CEF diagnostics (no reload)**: the old Reapply operation
+removed the watcher and erased the useful snapshot before inspection.
+The UI shows recent evidence and a copy control. Open each Decky
+Settings page, then return to the Game Library panel to inspect or copy
+the actual classes and colors. CSS and interactions for Steam menus,
+QAM, Power, Volume and Decky remain unchanged. Watcher revision 16 and
+theme revision 68 ensure new diagnostics are installed. Tests verify
+capture without a Decky route, bounded parser and no refresh on inspect.
+Visual changes follow separately once actual MSI Claw selectors are known.
+
 **v0.4.21-test.16 — Decky 3.3.1 verified route & native Steam components
 (device preview):** The previous test.15 had no effect on MSI Claw.
 Inspection of exact Decky v3.3.1 sources shows

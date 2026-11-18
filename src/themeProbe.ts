@@ -174,18 +174,46 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
  * the active Midnight theme and stops as soon as the plugin/theme unloads.
  * No network names, game titles, text nodes or input values are read.
  */
+
+/** Bounded actual Steam CEF class/color evidence; no displayed text read. */
+export const THEME_DOM_SURVEY_SCRIPT="(() => {\n  try{\n    const root=document.querySelector('.BasicUI,#GamepadUI_Full_Root');\n    const w=window.innerWidth||0,h=window.innerHeight||0;\n    if(!root||w<500||h<270||!document.elementsFromPoint)return JSON.stringify(null);\n    const cls=(e)=>typeof e?.className==='string'?\n      e.className.split(/\\s+/).filter(x=>/^[A-Za-z_][A-Za-z0-9_-]{2,84}$/.test(x))\n        .slice(0,2).join(' ').slice(0,120):'';\n    const paint=(e)=>{\n      try{\n        const c=getComputedStyle(e),bg=String(c.backgroundColor||'');\n        const n=bg.match(/[\\d.]+/g)?.map(Number)||[];\n        if(!(n.length>=3&&(n.length<4||n[3]>=.15))&&c.backgroundImage==='none')return '';\n        return /^rgba?\\([\\d., ]+\\)$/.test(bg)?bg.slice(0,45):'gradient';\n      }catch{return '';}\n    };\n    const seen=new Set(),items=[];\n    for(const [zone,x] of [['rail',.16],['content',.62]])\n      for(const y of [.19,.30,.41,.52,.63,.74,.85])\n        for(const e of Array.from(document.elementsFromPoint(w*x,h*y)||[]).slice(0,16)){\n          if(!/^(DIV|LI|SECTION|BUTTON|A)$/i.test(e?.tagName||''))continue;\n          const b=e.getBoundingClientRect?.();\n          if(!b||b.width<55||b.height<19||seen.has(e)||\n             b.width>w*.97&&b.height>h*.91)continue;\n          const color=paint(e),classes=cls(e),parent=cls(e.parentElement);\n          if(!color||(!classes&&!parent))continue;\n          seen.add(e);\n          items.push({zone,tag:String(e.tagName||'').slice(0,8),\n            classes,parent,color,focused:Boolean(e.classList?.contains?.('gpfocus'))});\n          break;\n        }\n    if(items.length<2)return JSON.stringify(null);\n    return JSON.stringify({at:Date.now(),items:items.slice(0,14)});\n  }catch{return JSON.stringify(null);}\n})()";
+export type ThemeDomEvidence={
+  at:number;items:Array<{zone:"rail"|"content";tag:string;classes:string;
+    parent:string;color:string;focused:boolean}>;
+};
+export function parseThemeDomEvidence(value:unknown):ThemeDomEvidence|null{
+  let x:unknown=value;
+  try{if(typeof x==="string")x=JSON.parse(x);}catch{return null;}
+  if(!x||typeof x!=="object")return null;
+  const obj=x as Record<string,unknown>;
+  if(typeof obj.at!=="number"||!Number.isFinite(obj.at)||obj.at<=0||
+     !Array.isArray(obj.items))return null;
+  const items:ThemeDomEvidence["items"]=obj.items.slice(0,14).flatMap(item=>{
+    if(!item||typeof item!=="object")return [];
+    const e=item as Record<string,unknown>;
+    if(e.zone!=="rail"&&e.zone!=="content")return [];
+    const t=(k:string,n:number)=>typeof e[k]==="string"?String(e[k]).slice(0,n):"";
+    const classes=t("classes",120),parent=t("parent",120),color=t("color",45);
+    if(!/^[A-Za-z0-9_ -]*$/.test(classes)||!/^[A-Za-z0-9_ -]*$/.test(parent)||
+       !/^(?:rgba?\([0-9., ]+\)|gradient)$/.test(color))return [];
+    return [{zone:e.zone,tag:t("tag",8),classes,parent,color,focused:e.focused===true}];
+  });
+  return items.length>=2?{at:obj.at,items}:null;
+}
+
 export type ThemeAuditSample={at:number;probe:ThemeProbe};
 export type ThemeAudit={
   installed:boolean;
   latestSettings:ThemeAuditSample|null;
   latestGame:ThemeAuditSample|null;
   latestOther:ThemeAuditSample|null;
+  recentDomEvidence:ThemeDomEvidence[];
   sampleTicks:number;
   lastScanAt:number;
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "15";
+const AUDIT_REVISION = "16";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -534,7 +562,7 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   }
   state = { revision, intervalId: null, observer: null, frameId: null,
     onScroll:null, latestSettings: null, latestGame: null, latestOther: null,
-    sampleTicks:0, lastScanAt:0 };
+    recentDomEvidence:[],lastDomSurveyAt:0,sampleTicks:0,lastScanAt:0 };
   window[key] = state;
   const sample = () => {
     if (window[key] !== state) return;
@@ -545,6 +573,18 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       const at = Date.now();
       state.sampleTicks++;
       state.lastScanAt=at;
+       // Real CEF evidence, independent of DOM markers and React router paths.
+       if(at-state.lastDomSurveyAt>=900){
+         state.lastDomSurveyAt=at;
+         const evidence=JSON.parse(${THEME_DOM_SURVEY_SCRIPT});
+         if(evidence?.items?.length>=2){
+           const signature=evidence.items.map(x=>x.zone+':'+x.classes+':'+x.color).join('|');
+           const prior=state.recentDomEvidence[0];
+           const oldSignature=prior?.items?.map(x=>x.zone+':'+x.classes+':'+x.color).join('|');
+           if(signature!==oldSignature)
+             state.recentDomEvidence=[evidence,...state.recentDomEvidence].slice(0,8);
+         }
+       }
       if (probe.routeKind === 'other' && probe.surfaceElements >= 4)
         state.latestOther = {at,probe};
       if (probe.deckySettingsActive || probe.settingsRoots > 0 ||
@@ -629,6 +669,7 @@ export const THEME_AUDIT_READ_SCRIPT = `(() => {
     latestSettings: state?.latestSettings || null,
     latestGame: state?.latestGame || null,
     latestOther: state?.latestOther || null,
+    recentDomEvidence:state?.recentDomEvidence || [],
     sampleTicks: state?.sampleTicks || 0,
     lastScanAt: state?.lastScanAt || 0
   });
@@ -676,6 +717,11 @@ export function parseThemeAudit(value:unknown):ThemeAudit|null {
     latestSettings:read(obj.latestSettings),
     latestGame:read(obj.latestGame),
     latestOther:read(obj.latestOther),
+    recentDomEvidence:Array.isArray(obj.recentDomEvidence)?
+      obj.recentDomEvidence.slice(0,8).flatMap(entry=>{
+        const parsed=parseThemeDomEvidence(entry);
+        return parsed?[parsed]:[];
+      }):[],
     sampleTicks: Number.isSafeInteger(obj.sampleTicks) ? Math.max(0,Number(obj.sampleTicks)) : 0,
     lastScanAt: typeof obj.lastScanAt==="number" && Number.isFinite(obj.lastScanAt) ? obj.lastScanAt : 0
   };
