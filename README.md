@@ -87,6 +87,20 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.5 — native Steam focus glow matched to dashboard rail
+(device preview):** The v0.4.21-test.4 MSI Claw screenshots confirm the
+double border is gone. The remaining Steam Home highlight looks too flat
+because the single inset `::after` frame glows only 8 px, compared with
+the dashboard sidebar's 20 px cyan bloom. Increase only that existing
+frame's soft outer shadow to **20 px / rgba(3,157,255,.72)**, matching
+the dashboard rail. Keep the existing focused-row gradient, one 2 px
+inset cyan stroke, 4 px / 8 px inset geometry, and subtle inner glow.
+No new solid line, extra row box shadow, margins or overflow changes.
+QAM, theme panels, controller focus/navigation, TabMaster/UnifiedDeck and
+game launching are unchanged. Revision **56** replaces cached native
+CSS; automated checks cover border count, sidebar parity and ZIP CSS.
+As always, the result must be visually checked on-device.
+
 **v0.4.21-test.4 — one Steam menu focus border (device preview):**
 The MSI Claw screenshot of v0.4.21-test.3 confirmed the Steam menu focus
 frame now fits correctly, but revealed **two overlapping cyan outlines** on
