@@ -87,6 +87,24 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.15 — Midnight Decky Loader Settings in all four tabs
+(device preview):** Decky Loader General, Plugins, Developer and Testing
+use the shared @decky/ui SidebarNavigation with **four** categories;
+the previous Settings DOM recognizer required nine or more, so those
+panels never received Midnight markers. Recognize four native nav
+items and wide Settings fields immediately in the existing pre-paint
+MutationObserver. A new `decky-settings.css` is bundled in the main
+Steam document **once**, with no per-category CSS re-injection and no
+five-second fallback delay. The Decky-only marker scopes dark #0a1b30
+backgrounds, left rail #081425, ordinary cards #0f2842, selected
+#163a5e, action buttons #123452/#1d527d and readable headings.
+No cyan focus outlines or glow, as agreed for Settings. No changes
+to Decky action handlers, ReorderableList controls, switches, sliders,
+row sizes, the native Steam Settings pages, QAM, Power or Volume.
+Watcher revision 14 and stylesheet revision 66 force fresh theme
+injection. CI checks scope and packaging; real Claw visuals still
+need confirmation.
+
 **v0.4.21-test.14 — remove delayed gray flash in Settings
 (device preview):** The native gray rows in test.13 correctly turn
 Midnight navy, but can stay gray for several seconds after opening a

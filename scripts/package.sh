@@ -46,6 +46,9 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/volume.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/power-menu.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings-focus.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings-special.css'
+unzip -Z1 "$output" | grep -qx 'game-library/system-theme/decky-settings.css'
+unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'data-glm-decky-settings'
+unzip -p "$output" 'game-library/system-theme/decky-settings.css' | grep -Fq 'background:#163a5e !important'
 # No brittle Steam route gate: the watcher identifies real painted Settings surfaces.
 unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq '[data-glm-settings-special-row]'
 if unzip -p "$output" 'game-library/system-theme/settings-special.css' | grep -Fq '[data-glm-settings-page='; then

@@ -1,0 +1,94 @@
+/* Midnight: Decky Loader Settings, four @decky/ui SidebarNavigation pages.
+ * Main CEF only; applied by the existing pre-paint Settings observer.
+ * No geometry, app state, input handlers, sliders or QAM changes. */
+html[data-glm-decky-settings] [data-glm-settings-main],
+html[data-glm-decky-settings] [data-glm-settings-surface] {
+  background:#0a1b30 !important;
+  background-color:#0a1b30 !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-sidebar] {
+  background:#081425 !important;
+  background-color:#081425 !important;
+  background-image:none !important;
+  border-right-color:rgba(97,166,223,.27) !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-navitem] {
+  background:transparent !important;
+  color:#a6bed8 !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-navitem]:is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+  [aria-selected="true"],[aria-current="page"],[class*="Active"]) {
+  background:#163a5e !important;
+  color:#f3f8ff !important;
+  border-color:transparent !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-main] :is(
+  [class*="gamepaddialog_Field"],[class*="gamepadpagedsettings_SettingsRow"],
+  [class*="reorderablelist_Entry"],[class*="ReorderableEntry"],
+  [data-glm-settings-row],[data-glm-settings-special-row]) {
+  background:#0f2842 !important;
+  background-color:#0f2842 !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+  outline:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-main] :is(
+  [class*="gamepaddialog_Field"],[class*="gamepadpagedsettings_SettingsRow"],
+  [class*="reorderablelist_Entry"],[class*="ReorderableEntry"],
+  [data-glm-settings-row],[data-glm-settings-special-row]):is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within,
+  [aria-selected="true"],[aria-checked="true"]) {
+  background:#163a5e !important;
+  background-color:#163a5e !important;
+  background-image:none !important;
+  outline:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+  animation-name:none !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-main] :is(
+  [data-glm-settings-row-part],[data-glm-settings-special-part]) {
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+/* Decky DialogButtons remain independently focusable; preserve toggles,
+ * slider tracks, disabled controls and all original actions. */
+html[data-glm-decky-settings] [data-glm-settings-main] :is(
+  button.DialogButton,[class*="gamepaddialog_Button"],
+  [class*="gamepaddropdown_DropDownControlButton"]) {
+  background:#123452 !important;
+  background-color:#123452 !important;
+  background-image:none !important;
+  color:#f3f8ff !important;
+  border-color:rgba(97,166,223,.27) !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-main] :is(
+  button.DialogButton,[class*="gamepaddialog_Button"],
+  [class*="gamepaddropdown_DropDownControlButton"]):is(
+  .gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
+  background:#1d527d !important;
+  color:#f3f8ff !important;
+  border-color:transparent !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-main] :is(
+  .DialogControlsSectionHeader,[class*="gamepaddialog_FieldLabel"]) {
+  color:#f3f8ff !important;
+}
+html[data-glm-decky-settings] [data-glm-settings-main] :is(
+  .DialogBodyText,[class*="gamepaddialog_FieldDescription"]) {
+  color:#a6bed8 !important;
+}
