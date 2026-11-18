@@ -35,6 +35,9 @@ export type ThemeDiagnostics={
   networkRows:number;
   specialSettingsRows:number;
   specialSettingsRowColor:string;
+  deckySettingsActive:boolean;
+  deckyFieldRows:number;
+  deckyFieldColor:string;
   gameRoots:number;
   gameSections:number;
   computedFieldColor:string;
@@ -59,7 +62,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "66";
+const STYLE_REVISION = "67";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -330,6 +333,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       themeMarker:"",
       cssSheets:0,settingsRoots:0,settingsFields:0,networkRows:0,
       specialSettingsRows:0,specialSettingsRowColor:"",
+      deckySettingsActive:false,deckyFieldRows:0,deckyFieldColor:"",
       gameRoots:0,gameSections:0,computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
       colorSamples:[],surfaceElements:0,detectedRoute:"other",
@@ -346,7 +350,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     }catch(error){empty.details="Steam CSS inspection failed: "+String(error).slice(0,140);}
     if(!probe)return empty;
     const applied=probe.visibleUI && probe.marker===STYLE_REVISION && probe.sheets>0;
-    const liveSettings=probe.settingsRoots>0;
+    const liveSettings=probe.settingsRoots>0 || probe.deckySettingsActive;
     const liveGame=probe.gameRoots>0;
     // Steam may remove Settings/Game Details from the main tab when QAM opens.
     // Our in-tab watcher retains the last page's CSS counts in memory, rather
@@ -362,7 +366,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     }catch(error){console.warn("[game-library] last native CSS page snapshot unavailable",error);}
     const usingSnapshot=!liveSettings&&!liveGame&&snapshot!==null;
     const inspected=usingSnapshot?snapshot!.sample.probe:probe;
-    const onSettings=inspected.settingsRoots>0;
+    const onSettings=inspected.settingsRoots>0 || inspected.deckySettingsActive;
     const onGame=inspected.gameRoots>0;
     const details=!probe.visibleUI?"Selected CEF tab does not expose the Steam Game Mode DOM.":
       !applied?"Midnight CSS is not verified in this Steam document.":
@@ -388,6 +392,9 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       networkRows:inspected.networkRows,
       specialSettingsRows:inspected.specialSettingsRows,
       specialSettingsRowColor:inspected.specialSettingsRowColor,
+      deckySettingsActive:inspected.deckySettingsActive,
+      deckyFieldRows:inspected.deckyFieldRows,
+      deckyFieldColor:inspected.deckyFieldColor,
       gameRoots:inspected.gameRoots,
       gameSections:inspected.gameSections,computedFieldColor:inspected.fieldColor,
       computedRootColor:inspected.rootColor,sampleClasses:inspected.sampleClasses,

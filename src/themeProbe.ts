@@ -12,6 +12,9 @@ export type ThemeProbe={
   networkRows:number;
   specialSettingsRows:number;
   specialSettingsRowColor:string;
+  deckySettingsActive:boolean;
+  deckyFieldRows:number;
+  deckyFieldColor:string;
   gameRoots:number;
   gameSections:number;
   fieldColor:string;
@@ -35,6 +38,9 @@ export const THEME_PROBE_SCRIPT=`(() => {
   const networks = '[class*="networksettings_"],[class*="wifisettings_"],[class*="connectionsettings_"],[class*="wirelesssettings_"]';
   // A count and computed color only — never read any network names or file labels.
   const specialRow=document.querySelector('[data-glm-settings-special-row]');
+  const deckySettingsActive=Boolean(document.documentElement?.hasAttribute?.('data-glm-decky-settings'));
+  const deckyFields='[class*="gamepaddialog_Field_"],[class~="gamepaddialog_Field"]';
+  const deckyField=deckySettingsActive?document.querySelector(deckyFields):null;
   const games = '[class*="appdetails_Container"],[class*="appdetails_ScrollContainer"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]';
   const sections = '[class*="appdetailssection_"],[class*="appdetailsnotessection_"],[class*="appdetailsmediasection_"]';
   // First locate the actual native Settings root, then inspect a row inside
@@ -101,6 +107,9 @@ export const THEME_PROBE_SCRIPT=`(() => {
     networkRows: count(networks),
     specialSettingsRows: count('[data-glm-settings-special-row]'),
     specialSettingsRowColor: specialRow?getComputedStyle(specialRow).backgroundColor:'',
+    deckySettingsActive,
+    deckyFieldRows: deckySettingsActive?count(deckyFields):0,
+    deckyFieldColor: deckyField?getComputedStyle(deckyField).backgroundColor:'',
     gameRoots: count(games),
     gameSections: count(sections),
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
@@ -129,6 +138,9 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     specialSettingsRows:integer(obj.specialSettingsRows),
     specialSettingsRowColor:typeof obj.specialSettingsRowColor==='string'?
       obj.specialSettingsRowColor.slice(0,60):'',
+    deckySettingsActive:obj.deckySettingsActive===true,
+    deckyFieldRows:integer(obj.deckyFieldRows),
+    deckyFieldColor:typeof obj.deckyFieldColor==='string'?obj.deckyFieldColor.slice(0,60):'',
     gameRoots:integer(obj.gameRoots),
     gameSections:integer(obj.gameSections),
     fieldColor:typeof obj.fieldColor==="string"?obj.fieldColor.slice(0,60):"",
@@ -173,7 +185,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "14";
+const AUDIT_REVISION = "15";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -225,6 +237,21 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     const width=window.innerWidth||document.documentElement?.clientWidth||0;
     const height=window.innerHeight||document.documentElement?.clientHeight||0;
     if(width<500||height<270){prune();return false;}
+    // Decky Loader v3.3.1 registers its Settings route at /decky/settings
+    // in frontend/src/plugin-loader.tsx. @decky/ui resolves
+    // SidebarNavigation directly from Steam's webpack bundle, so DOM
+    // row counts or CSS classes cannot identify this route reliably.
+    // Use the actual router path, including child paths and hash routing.
+    const path=String(window.location?.pathname||'').toLowerCase();
+    const rawHash=String(window.location?.hash||'').toLowerCase();
+    const hash=rawHash.startsWith('#')?rawHash.slice(1):rawHash;
+    const isDeckySettingsRoute=value=>value.startsWith('/decky/settings') &&
+      ['', '/', '?', '#'].includes(value.charAt('/decky/settings'.length));
+    if(isDeckySettingsRoute(path)||isDeckySettingsRoute(hash)){
+      mark(document.documentElement,'data-glm-decky-settings');
+      prune();
+      return true; // Preloaded CSS applies before Steam's next paint.
+    }
     const left=[],right=[];
     const positions=new Map();
     const isRow=(el,kind)=>{
@@ -286,17 +313,11 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     // Family and similar categories can show only one control, or none.
     // A full Steam Settings rail has 9+ distinct navigation rows, whereas
     // Home, QAM and game details do not. This does not read page labels.
-    // Decky Loader's Settings are the native four-tab SidebarNavigation
-    // (General, Plugins, Developer, Testing). Steam Settings uses 9+ tabs.
-    // Rendered DOM geometry, NOT a slow delayed URL poll, drives the match.
-    const deckyRoute=/\\/decky\\/settings(?:\\/|$|[?#])/i.test(
-      String(window.location?.pathname||'')+String(window.location?.hash||''));
-    const deckySettings=nav.length>=3 && nav.length<=5 && rows.length>=2 &&
-      (nav.length===4 || deckyRoute);
-    const match=Boolean(semantic || deckySettings ||
+    // Steam-native Settings still uses the 9+ category geometry; Decky
+    // is handled above using its authoritative registered route.
+    const match=Boolean(semantic ||
       (nav.length>=9 && (rows.length>=1 || nav.length>=10)));
     if(!match){prune();return false;}
-    if(deckySettings)mark(document.documentElement,'data-glm-decky-settings');
     mark(root,'data-glm-settings-root');
     // Document root only activates Settings-scoped CSS; it is cleared as
     // soon as the recognizable Settings rail disappears.
@@ -495,7 +516,7 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
       }
     }
     prune();
-    return Boolean(mainPane || rows.length>0 || nav.length>=9 || deckySettings);
+    return Boolean(mainPane || rows.length>0 || nav.length>=9);
   }catch{return false;}
 })()`;
 
@@ -526,7 +547,8 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       state.lastScanAt=at;
       if (probe.routeKind === 'other' && probe.surfaceElements >= 4)
         state.latestOther = {at,probe};
-      if (probe.settingsRoots > 0 || probe.fieldRows > 0 && probe.networkRows > 0 ||
+      if (probe.deckySettingsActive || probe.settingsRoots > 0 ||
+          probe.fieldRows > 0 && probe.networkRows > 0 ||
           probe.routeKind === 'settings' && probe.surfaceElements >= 3)
         state.latestSettings = { at, probe };
       if (probe.gameRoots > 0 || probe.gameSections > 0 ||
