@@ -52,3 +52,83 @@ test("Special styling loads only in Steam main, before no-outline focus patch",(
   assert.ok(main.indexOf('"settings-special.css"')>main.indexOf('"settings-extras.css"'));
   assert.ok(main.indexOf('"settings-special.css"')<main.indexOf('"settings-focus.css"'));
 });
+
+test("Settings special row markers update across routes and disappear on exit",async()=>{
+  const {default:vm}=await import("node:vm");
+  const box=(x,y,w,h)=>({left:x,top:y,width:w,height:h,right:x+w,bottom:y+h});
+  const items=[];
+  const el=(x,y,w,h,role="")=>{
+    const attrs=new Map();
+    const obj={
+      tagName:"DIV",className:"_steam",children:[],parentElement:null,
+      setAttribute:(key,val)=>attrs.set(key,String(val)),
+      removeAttribute:key=>attrs.delete(key),
+      hasAttribute:key=>attrs.has(key),
+      getAttribute:key=>key==="role"?role:attrs.get(key)??null,
+      getBoundingClientRect:()=>box(x,y,w,h),
+      querySelector:()=>null,
+      querySelectorAll:()=>[],
+      classList:{contains:name=>name==="Focusable"&&Boolean(role)},
+    };
+    items.push(obj);
+    return obj;
+  };
+  const html=el(0,0,1000,760);
+  const root=el(0,0,1000,760);root.className="BasicUI";
+  const side=el(35,40,245,680),main=el(300,40,680,680);
+  side.parentElement=root;main.parentElement=root;
+  const nav=Array.from({length:12},(_,i)=>{
+    const node=el(58,70+i*45,195,37);node.parentElement=side;return node;
+  });
+  const rows=Array.from({length:5},(_,i)=>{
+    const node=el(327,170+i*85,620,51,i===0?"radio":"button");
+    node.parentElement=main;return node;
+  });
+  const part=el(330,170,610,49);part.parentElement=rows[0];
+  rows[0].querySelectorAll=selector=>selector==="div,section,li"?[part]:[];
+  const toggle=el(327,610,620,51,"button");toggle.parentElement=main;
+  toggle.querySelector=()=>({tagName:"DIV",className:"switch"});
+  let visible=true;
+  main.querySelectorAll=selector=>selector==="[class]"?
+    [...rows,toggle]:[...rows,toggle];
+  const document={
+    documentElement:html,
+    querySelector:q=>q===".BasicUI"?root:null,
+    querySelectorAll:q=>q.includes("data-glm-")?
+      items.filter(item=>q.split(",").some(token=>{
+        const match=token.match(/\[([^\]]+)\]/);return match&&item.hasAttribute(match[1]);
+      })):[],
+    elementsFromPoint:(x,y)=>{
+      if(!visible)return [];
+      if(x<220)return nav.filter(n=>y>=n.getBoundingClientRect().top &&
+        y<n.getBoundingClientRect().bottom);
+      return rows.filter(n=>y>=n.getBoundingClientRect().top &&
+        y<n.getBoundingClientRect().bottom);
+    },
+  };
+  const window={innerWidth:1000,innerHeight:760,
+    location:{pathname:"/settings/internet",hash:""}};
+  const run=()=>vm.runInNewContext(STEAM_SETTINGS_MARK_SCRIPT,{
+    document,window,getComputedStyle:node=>({
+      backgroundColor:node===part?"rgb(60,78,112)":"rgb(52,68,100)",
+      backgroundImage:"none",
+    }),Math,Array,Map,Set,String,Boolean,
+  });
+  assert.equal(run(),true);
+  assert.equal(html.getAttribute("data-glm-settings-page"),"internet");
+  assert.equal(rows[0].hasAttribute("data-glm-settings-special-row"),true);
+  assert.equal(part.hasAttribute("data-glm-settings-special-part"),true);
+  assert.equal(toggle.hasAttribute("data-glm-settings-special-row"),false,
+    "A full-width row with a functional switch must not be recolored");
+  window.location.pathname="/settings/keyboard";
+  assert.equal(run(),true);
+  assert.equal(html.getAttribute("data-glm-settings-page"),"keyboard");
+  window.location.pathname="/settings/customization";
+  assert.equal(run(),true);
+  assert.equal(html.getAttribute("data-glm-settings-page"),"customization");
+  visible=false;window.location.pathname="/library/home";
+  assert.equal(run(),false);
+  assert.equal(html.hasAttribute("data-glm-settings-page"),false);
+  assert.equal(rows[0].hasAttribute("data-glm-settings-special-row"),false);
+  assert.equal(part.hasAttribute("data-glm-settings-special-part"),false);
+});
