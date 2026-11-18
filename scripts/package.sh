@@ -45,6 +45,11 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/steam-input.css'
 # Ensure the ZIP contains THIS version's corrected native selector targets,
 # not just a valid file with stale v0.4.21-test.2 CSS.
 unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'inset:4px 8px !important'
+# Guard against shipping the extra outer Steam menu focus ring again.
+if [[ "$(unzip -p "$output" 'game-library/system-theme/menus.css')" == *'box-shadow:inset 0 0 0 2px #63cfff,'* ]]; then
+  echo "Duplicate outer Steam menu focus ring found in packaged CSS" >&2
+  exit 1
+fi
 unzip -p "$output" 'game-library/system-theme/qam.css' | grep -Fq 'quickaccessmenu_TabContentColumn_2z5NL'
 unzip -p "$output" 'game-library/system-theme/qam.css' | grep -Fq 'box-shadow:inset 0 0 0 2px #63cfff'
 unzip -Z1 "$output" | grep -qx 'game-library/dist/index.js'
