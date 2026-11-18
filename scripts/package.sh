@@ -45,6 +45,10 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/steam-input.css'
 # Ensure the ZIP contains THIS version's corrected native selector targets,
 # not just a valid file with stale v0.4.21-test.2 CSS.
 unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'inset:4px 8px !important'
+# Native Steam row must be transparent; only its inset ::before has blue fill.
+unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'isolation:isolate !important'
+unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'z-index:-1 !important'
+unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'background:transparent !important'
 # Ensure native Steam menu has the stronger glow of our own sidebar.
 unzip -p "$output" 'game-library/system-theme/menus.css' | grep -Fq 'box-shadow:0 0 20px rgba(3,157,255,.72),'
 # Guard against shipping the extra outer Steam menu focus ring again.

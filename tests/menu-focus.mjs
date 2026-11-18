@@ -18,19 +18,36 @@ test("Steam main menu's real clickable class is independently targeted",()=>{
   assert.match(menu,/width:calc\(100% - 28px\) !important;/);
   assert.match(menu,/position:relative !important;/);
   assert.match(menu,/border-radius:12px !important;/);
-  const focused=[...menu.matchAll(/:is\(\s*\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)(?:::after)?\s*\{([^}]*)\}/g)];
-  assert.equal(focused.length,2,"Expected a focused row and one decorative focus frame");
-  assert.match(focused[0][1],/box-shadow:none !important;/,
-    "Focused row must not draw an extra outer cyan ring");
-  assert.doesNotMatch(focused[0][1],/inset 0 0 0 2px|inset 0 0 0 5px|border:2px/,
-    "Only ::after owns the cyan border");
-  assert.match(focused[1][1],/border:2px solid #63cfff !important;/,
+  const focused=[...menu.matchAll(/:is\(\s*\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)(?:::before|::after)?\s*\{([^}]*)\}/g)];
+  assert.equal(focused.length,3,"Expected transparent focused row, inset fill and one frame");
+  const [row,fill,frame]=focused.map(match=>match[1]);
+  assert.match(row,/background:transparent !important;/,
+    "Native row must NOT paint the blue rectangle outside the inner frame");
+  assert.match(row,/box-shadow:none !important;/,
+    "Focused row must not draw another border or glow");
+  assert.match(row,/isolation:isolate !important;/,
+    "The inset fill must stack behind icon and label without changing focus order");
+  assert.doesNotMatch(row,/inset 0 0 0 2px|inset 0 0 0 5px|border:2px|z-index:/,
+    "Only ::after owns the cyan stroke; row layout/focus order stay untouched");
+  assert.match(fill,/inset:4px 8px !important;/,
+    "Blue fill must be contained by the inset cyan frame");
+  assert.match(fill,/border-radius:10px !important;/);
+  assert.match(fill,/background:linear-gradient\(140deg,#185488,#083058\) !important;/,
+    "Keep the same blue gradient only WITHIN the frame");
+  assert.match(fill,/z-index:-1 !important;/,
+    "Fill belongs behind game icon and label");
+  assert.match(fill,/pointer-events:none !important;/);
+  assert.doesNotMatch(fill,/\bborder:2px|box-shadow:/,
+    "Fill must not introduce a second ring or glow");
+  assert.match(frame,/border:2px solid #63cfff !important;/,
     "The original inset cyan frame must survive unchanged");
+  assert.match(frame,/inset:4px 8px !important;/,
+    "Fill and frame need exactly the same geometry");
   // The in-menu frame owns exactly the same broad cyan glow as Game Library's
   // left rail, while its single border and current row padding are unchanged.
-  assert.match(focused[1][1],/box-shadow:0 0 20px rgba\(3,157,255,\.72\),/,
+  assert.match(frame,/box-shadow:0 0 20px rgba\(3,157,255,\.72\),/,
     "Steam focus glow should match the Game Library rail's 20px bloom");
-  assert.doesNotMatch(focused[1][1],/0 0 8px rgba\(3,157,255,\.42\)/,
+  assert.doesNotMatch(frame,/0 0 8px rgba\(3,157,255,\.42\)/,
     "Do not regress to the too-subtle native menu glow");
   assert.match(read("src/theme.ts"),/box-shadow:inset 0 0 0 2px #63cfff,0 0 20px rgba\(3,157,255,\.72\)/,
     "Native menu glow must stay aligned to Game Library sidebar styling");
@@ -47,8 +64,12 @@ test("native Steam active and focused states remain separate",()=>{
   assert.match(menu,/\[aria-selected="true"\]\):not\(/);
   assert.match(menu,/background:rgba\(30,78,120,\.32\) !important;/);
   assert.match(menu,/box-shadow:none !important;/);
-  assert.doesNotMatch(menu,/display:none|visibility:hidden|z-index:/,
-    "Never hide controls or change their native focus order");
+  assert.doesNotMatch(menu,/display:none|visibility:hidden/,
+    "Never hide native menu controls");
+  const focusedRow=menu.match(/:is\(\s*\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)\s*\{([^}]*)\}/);
+  assert.ok(focusedRow,"Expected focused native Steam menu item");
+  assert.doesNotMatch(focusedRow[1],/z-index:/,
+    "Never move the actual Steam menu item in the focus stacking order");
 });
 
 test("QAM native icon is addressable without any #QuickAccess ancestor",()=>{

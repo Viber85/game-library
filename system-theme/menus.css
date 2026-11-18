@@ -38,18 +38,33 @@
   background:rgba(30,78,120,.32) !important;
   box-shadow:none !important;
 }
-/* Directly target focused Steam menu rows regardless of their parent.
- * Keep the row's dark fill but NOT a second cyan box-shadow ring: the
- * single visible cyan focus frame is drawn below by the inset ::after. */
+/* The focusable Steam row itself stays transparent: do not paint blue
+ * outside the inset frame. ::before paints the blue fill BEHIND text,
+ * ::after keeps the one bright border and glow without touching focus. */
 :is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
   #MainNavMenuContainer [role="menuitem"]):is(
     .gpfocus,.gpfocuswithin,:focus-visible,:focus-within) {
-  background:linear-gradient(140deg,#185488,#083058) !important;
+  background:transparent !important;
   color:#f3f8ff !important;
   border-radius:12px !important;
   box-shadow:none !important;
   outline:none !important;
+  isolation:isolate !important;
   animation:none !important;
+}
+/* Blue fill is strictly confined INSIDE the visible frame. Negative stacking
+ * within the isolated focused row puts it behind Steam's icon and label.
+ * Both decorative layers share the same inset and rounded corners. */
+:is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
+  #MainNavMenuContainer [role="menuitem"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)::before {
+  content:"" !important;
+  position:absolute !important;
+  inset:4px 8px !important;
+  border-radius:10px !important;
+  background:linear-gradient(140deg,#185488,#083058) !important;
+  z-index:-1 !important;
+  pointer-events:none !important;
 }
 /* Reserve a few pixels inside the Steam menu row for the one cyan frame.
  * Match Game Library's left rail 20px focus glow (not a second stroke).

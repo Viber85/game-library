@@ -87,6 +87,22 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.6 — remove the blue rectangle outside the Steam menu
+focus border (device preview):** Device photos showed that the focused
+native menu item still painted the blue gradient across the full row,
+including the 4px/8px gutters around the inset cyan ring. The native
+focused row now has a **transparent background**. A pointer-transparent
+`::before` is inset by the same 4px/8px as the existing `::after`
+frame, with the original gradient and 10px rounded corners. The new
+fill is stacked behind native labels/icons by isolation and negative
+pseudo-element stacking. This keeps the blue *inside* the ring only;
+the single 2px border and existing 20px cyan glow remain unchanged.
+No changes to Steam row geometry, hit areas, focus order, QAM,
+TabMaster/UnifiedDeck, in-game menu or Non-Steam games. Stylesheet
+revision **57** clears the previous CSS. Automated tests assert
+transparent parent, inset fill, matching frame geometry and preserved
+20px bloom. Final visual confirmation is still required on the MSI Claw.
+
 **v0.4.21-test.5 — native Steam focus glow matched to dashboard rail
 (device preview):** The v0.4.21-test.4 MSI Claw screenshots confirm the
 double border is gone. The remaining Steam Home highlight looks too flat
