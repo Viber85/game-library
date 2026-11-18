@@ -22,7 +22,7 @@ test("All Settings focus outlines are cleared without repainting the blue focus 
   const rules=[...patch.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
   assert.equal(rules.length,6,"Expected 6 scoped Settings focus rules");
   for(const [,selector,decl] of rules) {
-    assert.match(selector,/^\s*(?:html\[data-glm-settings-root\]|\.BasicUI\s+\[class\*="gamepadpagedsettings_PagedSettingsDialog_")/,
+    assert.match(selector,/^\s*(?:html\[data-glm-settings-root\]|\.BasicUI\s+\[class\*="gamepadpagedsettings_PagedSettingsDialog_)/,
       "No changes to unscoped Steam controls");
     assert.match(decl,/outline:none !important;/);
     assert.match(decl,/box-shadow:none !important;/);
