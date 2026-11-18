@@ -87,6 +87,27 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.20 — stabilize active left navigation item, not only the rail
+(device preview):** MSI Claw reports that the brief brighter-blue
+flash persisted in test.19. Source review found that test.19 only
+stabilized the left PageListColumn's dark background; the rule for its
+FOCUSED/SELECTED child still depended on the right
+`DialogControlsSection` being present. During a tab transition the
+right content can briefly disappear, causing the default Steam focus
+color to shine through a child *above* the dark rail. Duplicate the
+already working dark-blue selected-state rule directly under the
+persistent left `Panel > PageListColumn`, independent of right
+content, URL, marker or watcher. It supports Steam's gpfocus,
+gpfocuswithin, focus-within, aria-selected/current and native selected
+classes, and focuses parent Panel when a descendant owns gamepad focus.
+Selected rows remain `#163a5e`; idle rail stays `#081425`.
+Disable only row paint transitions/animations and native background
+images, preserving Steam Input, row geometry, other controls, QAM,
+Power, Volume and all other native screen styles. Theme CSS revision
+**71** forces a clean stylesheet update. Regression tests check the
+focus rule does not depend on right-side DOM. Device verification is
+still required.
+
 **v0.4.21-test.19 — eliminate bright-blue left rail flash in Decky Settings
 (device preview):** v0.4.21-test.18 was confirmed working on the MSI
 Claw, including all four Decky Loader Settings pages and direct CSS
