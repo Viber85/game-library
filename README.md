@@ -87,6 +87,22 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.7 — give the native Steam menu focus glow room
+(device preview):** MSI Claw screenshots showed the 20px cyan glow ending
+abruptly at the focus row's upper, lower and right boundaries. The native
+main-menu rows now use 12px vertical and 22px horizontal margins, a
+correspondingly paired width, and a minimum height of 76px. Focused rows
+allow the shadow to overflow; both decorative layers share a 10px
+vertical / 12px horizontal inset. This leaves clearance for the bloom
+without moving the native icons, adding an outer blue background or
+introducing a second border. The original 20px glow, single cyan frame,
+blue fill inside that frame and native focus/navigation remain intact.
+QAM, TabMaster/UnifiedDeck, game launch and Game Library's own left rail
+are unchanged. CSS revision 58 invalidates older injected styles.
+Regression tests cover focus geometry, space around the glow, CSS alias
+resolution and ZIP packaging. Visual confirmation on MSI Claw remains
+necessary.
+
 **v0.4.21-test.6 — remove the blue rectangle outside the Steam menu
 focus border (device preview):** Device photos showed that the focused
 native menu item still painted the blue gradient across the full row,
