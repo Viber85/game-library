@@ -35,7 +35,7 @@ test("No right-pane, route, watcher or timer prerequisite for gamepad focus",()=
   assert.doesNotMatch(rules,/\.BasicUI \.Panel\s*\{/,
     "Never change global Steam or game artwork Panels");
   for(const [,selector,declarations] of rules.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
-    assert.match(selector,/(?:\.BasicUI \.PageListColumn|\.BasicUI \.Panel:has\(> \.PageListColumn\))/,
+    assert.match(selector,/(?:\.BasicUI \.PageListColumn|\.BasicUI \.Panel:has\(> \.PageListColumn\)|\.Panel\.Focusable:has\(> \.PageListColumn\))/,
       "Every style must be strictly inside a native Settings navigation rail");
     assert.doesNotMatch(declarations,/\b(?:width|height|margin|padding|display|position|overflow|transform|pointer-events|z-index|opacity)\s*:/,
       "No controller geometry, hitbox or icon changes");
@@ -61,4 +61,17 @@ test("Shared Settings focus patch is preloaded AFTER Decky in main only, never Q
     main.indexOf('"decky-settings.css"'),"Shared focus override must win the cascade");
   assert.ok(!overlay.includes('"settings-gamepad-focus.css"'),
     "Never change Steam QAM/game-running overlay focus");
+});
+
+test("Observed outer native Focusable rail wrapper cannot flash a lighter focus backdrop",()=>{
+  assert.match(css,/\.Panel\.Focusable:has\(> \.PageListColumn\)/);
+  assert.match(css,/\.Panel\.Focusable:has\(> \.PageListColumn\)::before/);
+  assert.match(css,/\.Panel\.Focusable:has\(> \.PageListColumn\)::after/);
+  assert.match(css,/\.Panel\.Focusable:has\(> \.PageListColumn\) > \.PageListColumn/);
+  // Do not style generic Steam Focusable panels: only exact native Settings rail
+  assert.doesNotMatch(rules,/(?:^|\n)\s*\.Panel\.Focusable\s*\{/);
+  assert.doesNotMatch(rules,/(?:^|\n)\s*\.PageListColumn\s*\{/);
+  const wrapper=rules.slice(rules.indexOf('/* test.25')+1);
+  assert.match(css,/rgb\(10,27,48\)/);
+  assert.match(css,/rgb\(8,20,37\)/);
 });
