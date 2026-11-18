@@ -27,7 +27,7 @@ test("All Settings focus outlines are cleared without repainting the blue focus 
     assert.match(decl,/outline:none !important;/);
     assert.match(decl,/box-shadow:none !important;/);
     assert.match(decl,/border-color:transparent !important;/);
-    assert.doesNotMatch(decl,/\b(?:background|color|width|height|margin|padding|display|position|transform|animation|visibility|overflow|pointer-events|z-index|filter)\s*:/,
+    assert.doesNotMatch(decl,/(?:^|[;\n])\s*(?:background|color|width|height|margin|padding|display|position|transform|animation|visibility|overflow|pointer-events|z-index|filter)\s*:/,
       "Existing focus fill and geometry must not change");
   }
   assert.doesNotMatch(patch,/:hover|::before|::after/);
