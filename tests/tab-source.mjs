@@ -3,6 +3,7 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 
 const source=(path)=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
+const sourceFile=source;
 const backend=source("main.py"),dashboard=source("src/Dashboard.tsx");
 const controls=source("src/index.tsx"),tabs=source("src/tabmaster.ts");
 
@@ -29,7 +30,9 @@ test("QAM has no tab source selector or save action",()=>{
 });
 
 test("Dashboard switches sources during use without stale selected tab",()=>{
-  assert.match(dashboard,/window\.setInterval\(\(\) => \{ void refresh\(\); \}, 6000\)/);
+  const source=sourceFile("src/autoTabSource.ts");
+  assert.match(source,/window\.setInterval\(\(\)=>\{void sync\.refresh\(\);\},POLL_MS\)/);
+  assert.match(dashboard,/subscribeAutoTabs\(setTabInfo\)/);
   assert.match(dashboard,/tabInfo\.available && tabInfo\.tabs\.length \? tabInfo\.tabs : fallbackTabs/);
   assert.match(dashboard,/if\(tabs\.some\(t=>t\.id===activeTab\)\)return;/);
   assert.match(dashboard,/setActiveTab\(tabs\[0\]\?\.id \?\? "AllGames"\)/);
