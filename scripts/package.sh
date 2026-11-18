@@ -40,5 +40,7 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/game-details.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings-extras.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/game-details-extras.css'
+unzip -Z1 "$output" | grep -qx 'game-library/system-theme/running-menu.css'
+unzip -Z1 "$output" | grep -qx 'game-library/system-theme/steam-input.css'
 unzip -Z1 "$output" | grep -qx 'game-library/dist/index.js'
 unzip -Zt "$output"
