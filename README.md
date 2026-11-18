@@ -87,6 +87,36 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.18 — automatic TabMaster restoration without reloading Game Library:**
+The user verified that v0.4.17's native Steam fallback counts were correct,
+but turning TabMaster and UnifiedDeck back on did not restore the saved custom
+TabMaster tabs until manually refreshing Game Library in Decky. Previously the
+six-second `loadSteamTabs()` polling effect belonged only to the
+`Dashboard` React component, which can be temporarily unmounted or
+suspended while the Decky plugin manager is in use.
+
+Auto tab discovery now runs at the **plugin lifecycle level**, independent
+of the dashboard route, with a four-second refresh and immediate checks
+when returning from QAM/Steam menus via `focus`, `focusin`,
+`pageshow` or `visibilitychange`. A second delayed check lets TabMaster
+and UnifiedDeck populate their Steam collections shortly after enabling.
+The asynchronous source refresh has an explicit active generation,
+single-flight requests, stale-response rejection, and notification only
+when tab definitions actually change. The dashboard subscribes to that
+state; on real Steam-fallback ↔ TabMaster transitions it refreshes native
+game data, selects the first available tab and resets stale carousel/grid
+selection without restarting or reloading any Decky plugin.
+
+The 0.4.17 native fallback `all-games`/`local-install`/Non-Steam
+membership remains unchanged. No new source selector or plugin settings
+are introduced: Auto is still the sole behavior. Runtime cleanup removes
+timers and focus listeners on plugin dismount. Automated tests simulate
+the real disable/enable transition while the dashboard is unmounted,
+queued stale async responses, backend failures and focus/wake triggers;
+the TypeScript build and existing navigation, Midnight, QAM and packaging
+tests must pass before this release. The exact visual transition still
+requires a final on-device check.
+
 **v0.4.17 — actual native Steam tab membership (Claw diagnostics fix):**
 The v0.4.16 on-device report gave decisive evidence: `type-games`
 contains 785 titles, `all-games` has 464 actual Steam games,
