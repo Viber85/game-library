@@ -52,29 +52,27 @@ test("Steam root stays transparent for volume and achievement popups",()=>{
   assert.ok(css("settings-extras.css").includes("[data-glm-settings-main]"));
 });
 
-test("QAM focuses native rail icons inside a wider protected gutter",()=>{
+test("QAM selected tab is styled even while its content panel has focus",()=>{
   const qam=stripCssComments(css("qam.css"));
-  assert.ok(qam.includes("#QuickAccess-Menu :is(.quickaccessmenu_Tabs_3Ag1w"),
-    "Theme only the native QAM icon rail, not tab controls inside Decky plugins");
-  assert.ok(qam.includes("width:86px !important"),"Icon column extends to 86px");
-  assert.ok(qam.includes("min-width:86px !important"),"Rail cannot collapse around icons");
-  assert.ok(qam.includes("flex:0 0 86px !important"),"Rail reserves its own width");
-  assert.ok(qam.includes("padding-inline:8px !important"),"Give edge halos room");
-  assert.ok(qam.includes("margin-inline:6px !important"),"Keep the glow inside the icon column");
-  assert.ok(qam.includes("width:calc(100% - 12px) !important"),
-    "Each tab stays inside available width instead of overflowing");
-  assert.ok(qam.includes("border-radius:12px !important"),"Match library rail corners");
-  assert.ok(qam.includes("background:linear-gradient(140deg,#185488,#083058)"),
-    "Focused background matches library navigation");
-  assert.ok(qam.includes("box-shadow:inset 0 0 0 2px #63cfff,"),
-    "Cyan border stays visible even if a parent clips the halo");
+  assert.ok(qam.includes(':is(.quickaccessmenu_Tab_1S76C,'),
+    "QAM native tab class must be a global selector, not restricted to old portal parents");
+  assert.ok(qam.includes('[class*="quickaccessmenu_TabContentColumn_"]'),
+    "Actual icon list column must also be widened on SteamOS");
+  assert.ok(qam.includes("width:86px !important"),"QAM parent rail width");
+  assert.ok(qam.includes("width:74px !important"),"QAM content column width");
+  assert.ok(qam.includes("padding-inline:5px !important"),"Give icon list padding");
+  assert.ok(qam.includes("margin:5px !important"),"Give each QAM icon breathing room");
+  assert.ok(qam.includes("width:calc(100% - 10px) !important"),
+    "Tab content must not overflow the available icon rail");
+  assert.ok(qam.includes(".quickaccessmenu_Selected_2QHMu"),
+    "An active QAM section must retain a visible ring when the right panel owns focus");
+  assert.equal((qam.match(/box-shadow:inset 0 0 0 2px #63cfff,/g)??[]).length,2,
+    "Selected and focused icons both show cyan border");
   assert.ok(qam.includes("0 0 12px rgba(3,157,255,.68)"),
-    "Add a softer outer glow like Game Library");
-  assert.ok(qam.includes("aria-selected=\"true\""),"Active and focused are separate");
-  assert.ok(qam.includes(".gpfocuswithin"),"Steam gamepad focus-within supported");
+    "Focused icon retains a blue glow");
   assert.doesNotMatch(qam,/:hover/, "Idle cursor hover must not mimic controller focus");
   assert.doesNotMatch(qam,/#GamepadUI_Full_Root[^\n]*\s*\{/,
-    "Never paint a full-screen CEF background behind game notifications");
+    "Never paint the root behind volume/achievement overlays");
 });
 
 test("All Settings categories use a flat canvas with no overlay-wide paint",()=>{
