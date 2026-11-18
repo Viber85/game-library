@@ -79,3 +79,36 @@
   transition:none !important;
   animation:none !important;
 }
+
+/* test.25 — CEF evidence from MSI Claw test.23 shows:
+ *   .PageListColumn.Panel                  rgb(8,20,37)  (correct)
+ *   parent .Panel.Focusable                rgb(10,27,48) (different)
+ * The previous .BasicUI-prefixed rule reaches the rail but not necessarily
+ * this focusable OUTER wrapper (it can sit outside .BasicUI). The wrapper
+ * itself receives native gamepad focus/paint, unlike touch navigation.
+ *
+ * Match ONLY the outer Panel with a *direct* .PageListColumn child.
+ * This selector is active in the main CEF independently of Decky route or
+ * watcher markers. It cannot select unrelated content Panels or QAM cards.
+ * Do not touch DOM geometry, focus events, or Steam's controller behavior. */
+.Panel.Focusable:has(> .PageListColumn),
+.Panel.Focusable:has(> .PageListColumn) > .PageListColumn {
+  background:#081425 !important;
+  background-color:#081425 !important;
+  background-image:none !important;
+  transition:none !important;
+  animation:none !important;
+}
+/* Native controller-only highlight is allowed to change colors on the
+ * focusable WRAPPER, even when children have the correct Midnight fill.
+ * Neutralize only that wrapper's decorative pseudo-layer paint. */
+.Panel.Focusable:has(> .PageListColumn)::before,
+.Panel.Focusable:has(> .PageListColumn)::after {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  outline:none !important;
+  transition:none !important;
+  animation:none !important;
+}
