@@ -25,7 +25,7 @@ test("Steam main menu's real clickable class is independently targeted",()=>{
   assert.match(menu,/border:2px solid #63cfff !important;/);
   assert.match(menu,/pointer-events:none !important;/,
     "Purely visual focus frame cannot block Steam menu controls");
-  assert.match(menu,/:is\(\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)/);
+  assert.match(menu,/:is\(\s*\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)/);
   assert.doesNotMatch(menu,/:hover/);
 });
 
@@ -56,7 +56,7 @@ test("QAM native icon is addressable without any #QuickAccess ancestor",()=>{
 
 test("QAM selected panel icon keeps an inset cyan ring and focus strengthens it",()=>{
   assert.match(qam,/\.quickaccessmenu_Selected_2QHMu,\[aria-selected="true"\]/);
-  assert.match(qam,/:is\(\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)/);
+  assert.match(qam,/:is\(\s*\.gpfocus,\.gpfocuswithin,:focus-visible,:focus-within\)/);
   const matches=qam.match(/box-shadow:inset 0 0 0 2px #63cfff,/g)??[];
   assert.equal(matches.length,2,"Both native selected and actual focused state need a full ring");
   assert.match(qam,/0 0 8px rgba\(3,157,255,\.42\)/);
