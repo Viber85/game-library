@@ -164,7 +164,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "10";
+const AUDIT_REVISION = "11";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -179,7 +179,8 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
   const attrs = ['data-glm-settings-root','data-glm-settings-row',
     'data-glm-settings-navitem','data-glm-settings-row-part',
     'data-glm-settings-sidebar','data-glm-settings-main',
-    'data-glm-settings-surface'];
+    'data-glm-settings-surface','data-glm-settings-page',
+    'data-glm-settings-special-row','data-glm-settings-special-part'];
   try {
     // Retain markers on stable Settings DOM nodes. Removing every marker and
     // then re-adding it briefly reveals Valve's native gradient on navigation.
@@ -277,6 +278,19 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
     // Document root only activates Settings-scoped CSS; it is cleared as
     // soon as the recognizable Settings rail disappears.
     mark(document.documentElement,'data-glm-settings-root');
+    // The coarse Settings route selects the row color, not any
+    // network names, user input, media filenames or text content.
+    const route=String(window.location?.pathname||'')+'/' +
+      String(window.location?.hash||'');
+    const routePos=route.toLowerCase().indexOf('/settings/');
+    const routePage=routePos<0?'':route.slice(routePos+10).split(/[/?#]/)[0].toLowerCase();
+    const settingsPage=['internet','keyboard','customization'].includes(routePage)?
+      routePage:null;
+    if(settingsPage){
+      mark(document.documentElement,'data-glm-settings-page');
+      if(document.documentElement?.getAttribute?.('data-glm-settings-page')!==settingsPage)
+        document.documentElement?.setAttribute?.('data-glm-settings-page',settingsPage);
+    }
     const findPane=(element,minWidth,maxWidth)=>{
       // Prefer the outermost Settings pane, not the first inner scroll list.
       // Storage's games list is nested and its disk/header background sits
@@ -395,6 +409,43 @@ export const STEAM_SETTINGS_MARK_SCRIPT = `(() => {
       }
     }
     for(const item of nav)mark(item,'data-glm-settings-navitem');
+    // Old generic marker excludes interactive rows. Tag wide native
+    // clickable/radio cards on these three pages, never small controls.
+    if(settingsPage && mainPane?.querySelectorAll){
+      const list=mainPane.querySelectorAll(
+        '[role="button"],[role="radio"],[role="option"],.Focusable');
+      const limit=Math.min(list.length,2100);
+      for(let i=0;i<limit;i++){
+        const el=list[i];
+        if(!el?.getBoundingClientRect || !/^(DIV|BUTTON|LI|SECTION)$/i.test(el.tagName||''))continue;
+        const role=el.getAttribute?.('role')||'';
+        if(!(['button','option'].includes(role) || role==='radio' ||
+            el.classList?.contains?.('Focusable')))continue;
+        const b=el.getBoundingClientRect();
+        if(b.width<width*.40 || b.width>width*.88 ||
+           b.left<width*.22 || b.right>width*1.07 ||
+           b.height<32 || b.height>175)continue;
+        const hasControl=Boolean(el.querySelector?.(
+          '[role="switch"],[role="checkbox"],[role="slider"],'+
+          '[class*="gamepaddialog_Toggle"],[class*="gamepadslider_"],'+
+          'input,select,textarea'));
+        if(hasControl)continue;
+        mark(el,'data-glm-settings-special-row');
+        // Clear only broad gray background children, not thumbnail artwork,
+        // video previews, SVGs or active input/switch/slider layers.
+        const parts=el.querySelectorAll?.('div,section,li')||[];
+        for(let j=0;j<Math.min(parts.length,80);j++){
+          const part=parts[j];
+          if(!part?.getBoundingClientRect)continue;
+          const rect=part.getBoundingClientRect();
+          if(rect.width<b.width*.68 || rect.width>b.width*1.06 ||
+             rect.height<b.height*.56 || rect.height>b.height*1.12)continue;
+          const style=getComputedStyle(part);
+          if(style.backgroundImage && style.backgroundImage!=='none')continue;
+          if(blueGray(part))mark(part,'data-glm-settings-special-part');
+        }
+      }
+    }
     prune();
     return Boolean(mainPane || rows.length>0 || nav.length>=9);
   }catch{return false;}
@@ -524,7 +575,8 @@ export const THEME_AUDIT_REMOVE_SCRIPT = `(() => {
   const attrs=['data-glm-settings-root','data-glm-settings-row',
     'data-glm-settings-navitem','data-glm-settings-row-part',
     'data-glm-settings-sidebar','data-glm-settings-main',
-    'data-glm-settings-surface'];
+    'data-glm-settings-surface','data-glm-settings-page',
+    'data-glm-settings-special-row','data-glm-settings-special-part'];
   for(const node of document.querySelectorAll(attrs.map(a=>'['+a+']').join(',')))
     for(const attr of attrs)node.removeAttribute?.(attr);
   delete window[key];
