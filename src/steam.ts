@@ -1,6 +1,7 @@
 import { Navigation } from "@decky/ui";
 import { canonicalSteamAppId, isNonSteamAppId, requestSteamLaunch } from "./launchGame";
 import { nativeAppId, nativeBooleanFlag, nativeCollectionRows, nativeLibraryRows } from "./libraryInventory";
+import {readNativeSortFields} from "./nativeSortFields";
 
 export interface LibraryGame {
   id: number;
@@ -10,6 +11,9 @@ export interface LibraryGame {
   nonSteam: boolean;
   lastPlayed: number;
   playtimeMinutes: number;
+  addedAt?: number;
+  releaseDate?: number;
+  sizeBytes?: number;
   achievementsUnlocked?: number;
   achievementsTotal?: number;
   poster?: string;
@@ -83,6 +87,7 @@ function gameFromRow(row: unknown): LibraryGame | null {
     nonSteam,
     lastPlayed: finite(overview.rt_last_time_played ?? overview.rt_last_time_locally_played),
     playtimeMinutes: finite(overview.minutes_playtime_forever),
+    ...readNativeSortFields(overview),
     achievementsUnlocked: typeof overview.achievements_achieved === "number" ? overview.achievements_achieved : undefined,
     achievementsTotal: typeof overview.achievements_total === "number" ? overview.achievements_total : undefined,
     poster: customPoster, hero: customHero,
