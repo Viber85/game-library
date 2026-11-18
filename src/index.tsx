@@ -10,6 +10,7 @@ import { UpdatesPanel } from "./UpdatesPanel";
 import { BuiltinThemePanel } from "./BuiltinThemePanel";
 import { startBuiltInThemeRuntime, stopBuiltInThemeRuntime } from "./builtinThemeRuntime";
 import { loadDefaultTheme } from "./themeController";
+import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const LIBRARY_DIAGNOSTICS_ROUTE = "/game-library/library-diagnostics";
@@ -127,6 +128,9 @@ export default definePlugin(() => {
   unloaded = false;
   routerHook.addRoute(DASHBOARD_ROUTE, Dashboard, { exact: true });
   routerHook.addRoute(LIBRARY_DIAGNOSTICS_ROUTE, LibraryDiagnostics, { exact: true });
+  // Tab synchronization belongs to the plugin, not the dashboard route. Decky
+  // can hide/unmount Game Mode while enabling TabMaster and UnifiedDeck.
+  startAutoTabSource();
   // Built-in Midnight system colors are applied automatically as soon as
   // Decky loads this plugin; CSS Loader is not needed or consulted.
   startBuiltInThemeRuntime();
@@ -150,6 +154,7 @@ export default definePlugin(() => {
     icon: <MdLibraryBooks />,
     onDismount() {
       unloaded = true;
+      stopAutoTabSource();
       stopBuiltInThemeRuntime();
       listeners.clear();
       if(homePatch) {
