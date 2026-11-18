@@ -11,6 +11,7 @@ export interface LibraryGame {
   nonSteam: boolean;
   lastPlayed: number;
   playtimeMinutes: number;
+  playtimeKnown?: boolean;
   addedAt?: number;
   releaseDate?: number;
   sizeBytes?: number;
@@ -87,6 +88,10 @@ function gameFromRow(row: unknown): LibraryGame | null {
     nonSteam,
     lastPlayed: finite(overview.rt_last_time_played ?? overview.rt_last_time_locally_played),
     playtimeMinutes: finite(overview.minutes_playtime_forever),
+    // Optional proto field may be absent on non-Steam shortcuts. Never
+    // label those as Never Played simply because no duration was returned.
+    playtimeKnown:typeof overview.minutes_playtime_forever==="number"&&
+      Number.isFinite(overview.minutes_playtime_forever),
     ...readNativeSortFields(overview),
     achievementsUnlocked: typeof overview.achievements_achieved === "number" ? overview.achievements_achieved : undefined,
     achievementsTotal: typeof overview.achievements_total === "number" ? overview.achievements_total : undefined,
