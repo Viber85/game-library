@@ -123,7 +123,7 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
         account=current;
         setHour24(null);
       }
-      if(!/^\\d{1,10}$/.test(current) || pending)return;
+      if(!/^\d{1,10}$/.test(current) || pending)return;
       pending=true;
       void readSteamClockFormat(current).then(response=>{
         if(active && account===current && typeof response?.hour24==="boolean")
