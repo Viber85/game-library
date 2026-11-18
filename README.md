@@ -87,6 +87,23 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.9 — Midnight native Volume and Power menus
+(device preview):** The Power submenu screenshot shows Steam's default
+white focused row and a flat blue panel over the running game. A small,
+overlay-only stylesheet now recolors the Power/context-menu panel and
+its header and replaces the native focused-row fill with one inset
+2px cyan ring, blue Midnight gradient and soft glow, without altering
+shutdown/restart actions or menu geometry. A separate Volume stylesheet
+covers Steam's short-lived hardware volume pop-in in both main and
+overlay documents: navy surface, cyan edge/glow, readable labels and
+cyan slider progress. Critically, no styles paint the game-wide CEF
+root, ModalOverlayBackground, or notification layers. Audio,
+GamepadContextMenu and BasicContextMenu class aliases are resolved
+dynamically for minified Steam builds. QAM and main Steam menu CSS
+remain identical to test.8. Revision **60** replaces cached native CSS;
+new scope/geometry tests and packaged-ZIP checks verify both modules.
+Exact visual appearance on MSI Claw still requires on-device testing.
+
 **v0.4.21-test.8 — restore native QAM geometry; keep cyan focus
 (device preview):** MSI Claw screenshots exposed a squeezed vertical
 Decky tab outline and a plugin list pushed off the right side of QAM.

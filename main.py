@@ -81,11 +81,12 @@ def _builtin_theme_bundle(theme_id):
         "main": (
             "shared.css", "buttons.css", "settings.css", "settings-extras.css",
             "game-details.css", "game-details-extras.css", "downloads.css", "dialogs.css",
-            "steam-input.css",
+            "steam-input.css", "volume.css",
         ),
         "overlay": (
             "shared.css", "buttons.css", "menus.css", "running-menu.css",
             "steam-input.css", "qam.css", "dialogs.css",
+            "volume.css", "power-menu.css",
         ),
     }
     result = {}

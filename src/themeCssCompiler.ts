@@ -52,6 +52,10 @@ const MODULE_ANCHORS:Record<string,readonly string[]> = {
   // Resolve hashes on each theme scan; these may be absent on Home/QAM.
   mainmenu:["MainMenu","Item","ItemLabel"],
   quickaccessmenu:["Tabs","Tab","TabContentColumn"],
+  // Volume OSD and Power context menu are native transient overlay panels.
+  audio:["VolumePopin","VolumeSliderLabel"],
+  gamepadcontextmenu:["contextMenuContents","contextMenuItem","BasicContextMenuHeader"],
+  basiccontextmenu:["contextMenuContents","contextMenuItem","BasicContextMenuHeader"],
   mainmenuapprunning:["MainMenuAppRunning","NavigationColumn","AppColumn"],
   controllerconfiguratorsummary:["ControllerConfiguratorSummary","ControlsListSection","BottomControlsSections"],
   controllerconfigurator:["ControllerConfiguratorMain","TopSection","BottomSection"],

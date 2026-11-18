@@ -1,0 +1,61 @@
+/* Midnight native Steam Power menu and other native context menus.
+ * Power uses Steam's GamepadContextMenu (some builds use BasicContextMenu).
+ * Recolor existing surfaces and real controller focus only. Do not
+ * replace commands, move the menu, resize rows or paint its full-screen
+ * modal backdrop over the running game. */
+:is(.gamepadcontextmenu_contextMenuContents_sIgB-,
+  [class*="gamepadcontextmenu_contextMenuContents_"],
+  .basiccontextmenu_contextMenuContents_1qI9c,
+  [class*="basiccontextmenu_contextMenuContents_"]) {
+  background:linear-gradient(155deg,#0e2542,#050f22) !important;
+  color:var(--glm-text) !important;
+  border:1px solid var(--glm-border) !important;
+  border-radius:14px !important;
+  box-shadow:0 12px 30px rgba(0,0,0,.48) !important;
+}
+/* The 'Power' title in the screenshot is a native context-menu header. */
+:is(.gamepadcontextmenu_BasicContextMenuHeader_2Jp8B,
+  [class*="gamepadcontextmenu_BasicContextMenuHeader_"],
+  .basiccontextmenu_BasicContextMenuHeader_2nHKK,
+  [class*="basiccontextmenu_BasicContextMenuHeader_"]) {
+  color:#f3f8ff !important;
+  background:transparent !important;
+}
+/* Neutral rows never look focused just because the menu is open. */
+:is(.gamepadcontextmenu_contextMenuContents_sIgB-,
+  [class*="gamepadcontextmenu_contextMenuContents_"],
+  .basiccontextmenu_contextMenuContents_1qI9c,
+  [class*="basiccontextmenu_contextMenuContents_"])
+  :is(.gamepadcontextmenu_contextMenuItem_1sdvo,
+    [class*="gamepadcontextmenu_contextMenuItem_"],
+    .basiccontextmenu_contextMenuItem_3PqLg,
+    [class*="basiccontextmenu_contextMenuItem_"]) {
+  color:var(--glm-text) !important;
+  background:transparent !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
+}
+/* Match the blue inner fill, ONE complete cyan ring and soft outer glow
+ * from our Steam menu. Steam keeps row size and focus/activation handlers.
+ * Include the native Focused classes for builds where gpfocus is absent. */
+:is(.gamepadcontextmenu_contextMenuContents_sIgB-,
+  [class*="gamepadcontextmenu_contextMenuContents_"],
+  .basiccontextmenu_contextMenuContents_1qI9c,
+  [class*="basiccontextmenu_contextMenuContents_"])
+  :is(.gamepadcontextmenu_contextMenuItem_1sdvo,
+    [class*="gamepadcontextmenu_contextMenuItem_"],
+    .basiccontextmenu_contextMenuItem_3PqLg,
+    [class*="basiccontextmenu_contextMenuItem_"]):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,
+    .gamepadcontextmenu_Focused_X813r,
+    [class*="gamepadcontextmenu_Focused_"],
+    .basiccontextmenu_Focused_3t3Zg,
+    [class*="basiccontextmenu_Focused_"]) {
+  background:linear-gradient(140deg,#185488,#083058) !important;
+  color:#f3f8ff !important;
+  border-radius:10px !important;
+  outline:none !important;
+  box-shadow:inset 0 0 0 2px #63cfff,
+    inset 0 0 8px rgba(3,157,255,.22),
+    0 0 12px rgba(3,157,255,.55) !important;
+}
