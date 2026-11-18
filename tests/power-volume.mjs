@@ -24,6 +24,17 @@ test("Power context-menu actions retain native geometry and one cyan focus ring"
   assert.match(power,/gamepadcontextmenu_contextMenuContents_sIgB-/);
   assert.match(power,/gamepadcontextmenu_BasicContextMenuHeader_2Jp8B/);
   assert.match(power,/gamepadcontextmenu_contextMenuItem_1sdvo/);
+  // Verified on native Steam Game Mode: the Power popup is a main-window
+  // BasicUIContextMenu modal with role=menuitem and generic class names.
+  assert.match(power,/\.BasicUIContextMenu/);
+  assert.match(power,/gamepaddialog_BasicContextMenuModal_/);
+  assert.match(power,/\[role="menu"\]/);
+  assert.match(power,/\[role="menuitem"\]/);
+  assert.match(power,/\.contextMenuItem/);
+  assert.match(power,/\[class\*="Focused_"\]/);
+  assert.match(power,/box-shadow:inset 0 0 0 2px #63cfff,/);
+  assert.ok(power.indexOf(".BasicUIContextMenu")>power.indexOf("gamepadcontextmenu_Focused_X813r"),
+    "Main-window Power focus override must follow old overlay-only selectors");
   assert.match(power,/gamepadcontextmenu_Focused_X813r/);
   assert.match(power,/basiccontextmenu_Focused_3t3Zg/);
   assert.match(power,/box-shadow:inset 0 0 0 2px #63cfff,/);
@@ -40,12 +51,14 @@ test("Power and Volume CSS are compiled in the correct native Steam scopes",()=>
   const main=bundle.slice(bundle.indexOf('"main": ('),bundle.indexOf('"overlay": ('));
   const overlay=bundle.slice(bundle.indexOf('"overlay": ('),bundle.indexOf('    result = {}'));
   assert.match(main,/"volume.css"/);
-  assert.doesNotMatch(main,/"power-menu.css"/,
-    "Power menu styling must only load in Steam menu overlay");
+  assert.match(main,/"power-menu.css"/,
+    "Power is a main-window context menu, even when opened during gameplay");
   assert.match(overlay,/"volume.css"/);
   assert.match(overlay,/"power-menu.css"/);
+  assert.ok(main.indexOf('"dialogs.css"')<main.indexOf('"power-menu.css"'),
+    "The main-window Power menu must override generic context menu rules");
   assert.ok(overlay.indexOf('"dialogs.css"')<overlay.indexOf('"power-menu.css"'),
-    "Focused Power actions must override previous generic context menu rules");
+    "The overlay fallback must override generic context menu rules");
 });
 
 test("Steam's minified volume and context menu class names remain supported",()=>{

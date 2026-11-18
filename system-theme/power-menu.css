@@ -59,3 +59,44 @@
     inset 0 0 8px rgba(3,157,255,.22),
     0 0 12px rgba(3,157,255,.55) !important;
 }
+
+/* Steam's Power menu actually opens inside the MAIN window as a
+ * BasicUIContextMenu modal. Some builds use generic role=menu/role=menuitem
+ * and .contextMenuItem, rather than gamepadcontextmenu_* class names.
+ * Match that real hierarchy without painting the fullscreen modal/root. */
+:is(.BasicUIContextMenu,[class*="gamepaddialog_BasicContextMenuModal_"])
+  :is([role="menu"],[class*="contextMenuContents"]) {
+  background:linear-gradient(155deg,#0e2542,#050f22) !important;
+  color:#f3f8ff !important;
+  border:1px solid rgba(97,166,223,.27) !important;
+  border-radius:14px !important;
+}
+:is(.BasicUIContextMenu,[class*="gamepaddialog_BasicContextMenuModal_"])
+  :is([class*="BasicContextMenuHeader_"]) {
+  background:transparent !important;
+  color:#f3f8ff !important;
+}
+/* Native focus remains a real menuitem; we change only its painting.
+ * Specificity and order override the default white/orange destructive
+ * highlight, including Steam's dynamically generated Focused class. */
+:is(.BasicUIContextMenu,[class*="gamepaddialog_BasicContextMenuModal_"])
+  :is([role="menu"],[class*="contextMenuContents"])
+  :is([role="menuitem"],.contextMenuItem) {
+  color:#f3f8ff !important;
+  background:transparent !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
+}
+:is(.BasicUIContextMenu,[class*="gamepaddialog_BasicContextMenuModal_"])
+  :is([role="menu"],[class*="contextMenuContents"])
+  :is([role="menuitem"],.contextMenuItem):is(
+    .gpfocus,.gpfocuswithin,:focus-visible,
+    [class*="Focused_"]) {
+  background:linear-gradient(140deg,#185488,#083058) !important;
+  color:#f3f8ff !important;
+  outline:none !important;
+  border-radius:10px !important;
+  box-shadow:inset 0 0 0 2px #63cfff,
+    inset 0 0 8px rgba(3,157,255,.22),
+    0 0 12px rgba(3,157,255,.55) !important;
+}
