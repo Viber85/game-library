@@ -51,10 +51,10 @@
   outline:none !important;
   animation:none !important;
 }
-/* Reserve a few pixels inside the real Steam menu row for a complete
- * round-cornered focus frame. ::after is pointer-transparent and inset
- * on all four sides; unlike an external outline it survives overflow
- * clipping from Steam's viewport. */
+/* Reserve a few pixels inside the Steam menu row for the one cyan frame.
+ * Match Game Library's left rail 20px focus glow (not a second stroke).
+ * ::after stays pointer-transparent and inset on all four sides so the
+ * actual border survives Steam's scroll viewport clipping. */
 :is(.mainmenu_Item_2w9Tp,[class*="mainmenu_Item_"],
   #MainNavMenuContainer [role="menuitem"]):is(
     .gpfocus,.gpfocuswithin,:focus-visible,:focus-within)::after {
@@ -63,7 +63,7 @@
   inset:4px 8px !important;
   border:2px solid #63cfff !important;
   border-radius:10px !important;
-  box-shadow:0 0 8px rgba(3,157,255,.42),
+  box-shadow:0 0 20px rgba(3,157,255,.72),
     inset 0 0 7px rgba(3,157,255,.20) !important;
   pointer-events:none !important;
 }

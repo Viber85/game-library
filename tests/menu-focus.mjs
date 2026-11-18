@@ -26,6 +26,14 @@ test("Steam main menu's real clickable class is independently targeted",()=>{
     "Only ::after owns the cyan border");
   assert.match(focused[1][1],/border:2px solid #63cfff !important;/,
     "The original inset cyan frame must survive unchanged");
+  // The in-menu frame owns exactly the same broad cyan glow as Game Library's
+  // left rail, while its single border and current row padding are unchanged.
+  assert.match(focused[1][1],/box-shadow:0 0 20px rgba\(3,157,255,\.72\),/,
+    "Steam focus glow should match the Game Library rail's 20px bloom");
+  assert.doesNotMatch(focused[1][1],/0 0 8px rgba\(3,157,255,\.42\)/,
+    "Do not regress to the too-subtle native menu glow");
+  assert.match(read("src/theme.ts"),/box-shadow:inset 0 0 0 2px #63cfff,0 0 20px rgba\(3,157,255,\.72\)/,
+    "Native menu glow must stay aligned to Game Library sidebar styling");
   assert.match(menu,/inset:4px 8px !important;/,
     "Entire upper/lower/right/left focus frame must be inside row boundaries");
   assert.match(menu,/border:2px solid #63cfff !important;/);
