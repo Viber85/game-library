@@ -104,6 +104,10 @@ this is a measurement correction, not a speculative visual fix. Audit watcher
 revision 19, CSS marker revision 75, and regression tests prevent stale
 instrumentation and missed newly focused rows.
 
+**v0.4.21-test.27 — category-only Settings focus ring**
+
+The user verified test.26 restores a good cyan outline and glow on the active Keyboard category, but pointed out an unwanted second cyan outline wrapping the entire left category list. The native outer list `.Panel` receives `.gpfocuswithin` whenever a nested row is focused, causing test.26 to style both ancestor and row. In test.27, the same focused-row selectors now exclude a Panel that contains another focused Panel. This preserves the 2px cyan row outline and 20px glow but removes the duplicate list-wide frame. Applies to SteamOS Settings and Decky Settings only; no geometry, input handling or right-pane changes. Style marker 78. Physical device verification pending.
+
 **v0.4.21-test.26 — native Steam/Decky Settings focus outline and glow**
 
 The reported visual issue is missing *cyan outline and blue glow* around the D-pad/left-stick focused category, not a short blue flash. The v22/v25 native focus rules reset `outline:none` and `box-shadow:none`, including more-specific Decky Settings overrides. Restore a focused-row 2px #63cfff outline and 20px blue glow on the real .Panel row inside .PageListColumn, using CEF-evidenced native structure and a final selector with enough specificity for both Settings. Only the currently controller-focused row receives the frame; selected-but-unfocused entries stay unchanged. No input event, hitbox, layout, QAM, or global panel changes. CSS revision 77; confirm visually on hardware.
