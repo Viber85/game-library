@@ -5,7 +5,7 @@ import { identifySteamTabs, FALLBACK_MAIN_TITLES, type ThemeScope, type SteamTab
 import {
   STEAM_PAGE_CHECK_SCRIPT, THEME_PROBE_SCRIPT, parseThemeProbe, type ThemeProbe,
   THEME_AUDIT_INSTALL_SCRIPT, THEME_AUDIT_READ_SCRIPT,
-  THEME_AUDIT_REMOVE_SCRIPT, parseThemeAudit, latestThemePage,
+  THEME_AUDIT_REMOVE_SCRIPT, parseThemeAudit, latestThemePage, type ThemeDomEvidence,
 } from "./themeProbe";
 import { compileMidnightCss } from "./themeCssCompiler";
 
@@ -33,6 +33,7 @@ export type ThemeDiagnostics={
   settingsRoots:number;
   settingsFields:number;
   networkRows:number;
+  domEvidence:ThemeDomEvidence[];
   specialSettingsRows:number;
   specialSettingsRowColor:string;
   deckySettingsActive:boolean;
@@ -62,7 +63,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "67";
+const STYLE_REVISION = "68";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -332,7 +333,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       applied:false,
       themeMarker:"",
       cssSheets:0,settingsRoots:0,settingsFields:0,networkRows:0,
-      specialSettingsRows:0,specialSettingsRowColor:"",
+      domEvidence:[],specialSettingsRows:0,specialSettingsRowColor:"",
       deckySettingsActive:false,deckyFieldRows:0,deckyFieldColor:"",
       gameRoots:0,gameSections:0,computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
@@ -390,6 +391,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       themeMarker:probe.marker,cssSheets:probe.sheets,
       settingsRoots:inspected.settingsRoots,settingsFields:inspected.fieldRows,
       networkRows:inspected.networkRows,
+      domEvidence:audit?.recentDomEvidence??[],
       specialSettingsRows:inspected.specialSettingsRows,
       specialSettingsRowColor:inspected.specialSettingsRowColor,
       deckySettingsActive:inspected.deckySettingsActive,
