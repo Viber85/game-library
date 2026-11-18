@@ -22,7 +22,9 @@ class NativeSteamScreenThemeTests(unittest.TestCase):
         self.assertIn("audio_VolumePopin", bundle["css"]["main"])
         self.assertIn("audio_VolumePopin", bundle["css"]["overlay"])
         self.assertIn("gamepadcontextmenu_Focused", bundle["css"]["overlay"])
-        self.assertNotIn("gamepadcontextmenu_Focused", bundle["css"]["main"])
+        self.assertIn("gamepadcontextmenu_Focused", bundle["css"]["main"])
+        self.assertIn("BasicUIContextMenu", bundle["css"]["main"])
+        self.assertIn('[role="menuitem"]', bundle["css"]["main"])
 
     def test_bundled_source_files_exist_and_are_small(self):
         for filename in ("running-menu.css", "steam-input.css", "volume.css", "power-menu.css"):

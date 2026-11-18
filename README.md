@@ -87,6 +87,23 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.10 — fix Power focus in Steam's real main window
+(device preview):** The MSI Claw screenshot from test.9 still showed a
+native orange Power highlight. Root cause: Steam renders the Power popup
+as a **BasicUIContextMenu inside the main window** while test.9 bundled
+its rules into the overlay only. Fix the theme bundle to load
+`power-menu.css` in both main and overlay, after the generic dialog
+styles. Steam builds may also render the popup using generic
+`.BasicUIContextMenu`, `[role="menu"]`, `.contextMenuItem` and
+`[role="menuitem"]` instead of the previously targeted
+`gamepadcontextmenu_` selectors. Add these precise fallback selectors
+with the same single inset cyan border, blue focused fill and soft glow.
+No layout size, controller handlers, game-wide CEF backdrop, QAM, main
+Steam nav or Volume changes. Native CSS revision **61** clears stale
+injection. New scope and selector regression checks verify the main
+Power menu is genuinely themed; actual Claw rendering still requires
+a device photo.
+
 **v0.4.21-test.9 — Midnight native Volume and Power menus
 (device preview):** The Power submenu screenshot shows Steam's default
 white focused row and a flat blue panel over the running game. A small,

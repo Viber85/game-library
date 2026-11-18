@@ -46,6 +46,10 @@ unzip -Z1 "$output" | grep -qx 'game-library/system-theme/volume.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/power-menu.css'
 unzip -p "$output" 'game-library/system-theme/volume.css' | grep -Fq 'audio_VolumePopin_2iUUM'
 unzip -p "$output" 'game-library/system-theme/power-menu.css' | grep -Fq 'gamepadcontextmenu_Focused_X813r'
+unzip -p "$output" 'game-library/system-theme/power-menu.css' | grep -Fq 'BasicUIContextMenu'
+unzip -p "$output" 'game-library/system-theme/power-menu.css' | grep -Fq '[role="menuitem"]'
+# Power CSS must also load in main: Steam mounts its native Power popup there.
+unzip -p "$output" 'game-library/main.py' | grep -Fq '"steam-input.css", "volume.css", "power-menu.css"'
 unzip -p "$output" 'game-library/system-theme/power-menu.css' | grep -Fq 'box-shadow:inset 0 0 0 2px #63cfff'
 # Ensure the ZIP contains THIS version's corrected native selector targets,
 # not just a valid file with stale v0.4.21-test.2 CSS.
