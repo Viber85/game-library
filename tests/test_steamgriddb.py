@@ -86,6 +86,72 @@ class SteamGridDBTests(unittest.TestCase):
                 self.assertNotIn(token, repr(response))
                 self.assertIsNone(steamgriddb.read_key(tmp))
 
+    def test_provider_uses_decky_trust_bundle_in_real_https_opener(self):
+        import ssl
+        context = ssl.create_default_context()
+        with mock.patch.object(steamgriddb, "_decky_ssl_context", return_value=context) as supplied:
+            self.assertIs(steamgriddb._ssl_context(), context)
+            supplied.assert_called_once_with()
+        response = mock.MagicMock()
+        response.geturl.return_value = "https://www.steamgriddb.com/api/v2/search/autocomplete/Portal"
+        response.read.return_value = b'{"success":true,"data":[]}'
+        opener = mock.MagicMock()
+        opener.open.return_value.__enter__.return_value = response
+        with mock.patch.object(steamgriddb, "_decky_ssl_context", return_value=context), \
+             mock.patch.object(steamgriddb.urllib.request, "build_opener",
+                               return_value=opener) as builder:
+            reply = steamgriddb.fetch_json("search/autocomplete/Portal", "A"*32)
+            self.assertTrue(reply["success"])
+            args = builder.call_args.args
+            self.assertTrue(any(isinstance(arg, steamgriddb.urllib.request.HTTPSHandler)
+                                for arg in args))
+            self.assertTrue(any(isinstance(arg, type) and
+                                issubclass(arg, steamgriddb.urllib.request.HTTPRedirectHandler)
+                                for arg in args))
+
+    def test_key_verification_distinguishes_http_ssl_and_transport_errors(self):
+        import ssl
+        cases = [
+            (urllib.error.HTTPError("https://www.steamgriddb.com/api/v2", 401,
+                                    "Unauthorized", None, None), "invalid_key"),
+            (urllib.error.HTTPError("https://www.steamgriddb.com/api/v2", 403,
+                                    "Forbidden", None, None), "access_forbidden"),
+            (urllib.error.HTTPError("https://www.steamgriddb.com/api/v2", 429,
+                                    "Too Many Requests", None, None), "rate_limited"),
+            (urllib.error.HTTPError("https://www.steamgriddb.com/api/v2", 503,
+                                    "Unavailable", None, None), "provider_unavailable"),
+            (urllib.error.URLError(ssl.SSLCertVerificationError(
+                "CERTIFICATE_VERIFY_FAILED")), "ssl_certificate"),
+            (urllib.error.URLError(TimeoutError("timed out")), "timeout"),
+        ]
+        for error, expected in cases:
+            with self.subTest(expected=expected), \
+                 mock.patch.object(steamgriddb, "fetch_json", side_effect=error):
+                with self.assertRaises(steamgriddb.KeyVerificationError) as reported:
+                    steamgriddb.verify_key("D" * 32)
+                self.assertEqual(reported.exception.code, expected)
+                self.assertNotIn("D"*32, str(reported.exception))
+        with mock.patch.object(steamgriddb, "fetch_json",
+                               return_value={"success":False,"errors":["Invalid API key"]}):
+            with self.assertRaises(steamgriddb.KeyVerificationError) as reported:
+                steamgriddb.verify_key("D" * 32)
+            self.assertEqual(reported.exception.code, "invalid_key")
+
+    def test_decky_backend_error_contains_actionable_code_without_secret(self):
+        error = urllib.error.URLError(ssl.SSLCertVerificationError(
+            "CERTIFICATE_VERIFY_FAILED"))
+        with tempfile.TemporaryDirectory() as tmp, \
+             mock.patch.object(main, "_load_steamgriddb", return_value=steamgriddb), \
+             mock.patch.object(main, "_steamgriddb_config_dir",
+                               return_value=pathlib.Path(tmp)), \
+             mock.patch.object(steamgriddb, "fetch_json", side_effect=error):
+            result = asyncio.run(main.Plugin().set_steamgriddb_key("D" * 32))
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["code"], "ssl_certificate")
+            self.assertIn("certificate", result["reason"].lower())
+            self.assertNotIn("D"*32, repr(result))
+            self.assertIsNone(steamgriddb.read_key(tmp))
+
     def test_positive_and_negative_results_cached_without_requery(self):
         with tempfile.TemporaryDirectory() as tmp:
             service = steamgriddb.ArtworkService(pathlib.Path(tmp) / "cache.json")
