@@ -231,12 +231,13 @@ export type ThemeAudit={
   latestOther:ThemeAuditSample|null;
   recentDomEvidence:ThemeDomEvidence[];
   focusTrace:ThemeFocusFrame[];
+  focusAnomalies:ThemeFocusFrame[];
   sampleTicks:number;
   lastScanAt:number;
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "18";
+const AUDIT_REVISION = "19";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -591,7 +592,7 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   }
   state = { revision, intervalId: null, observer: null, frameId: null,
     focusFrameId:null,onFocus:null,lastFocusCaptureAt:0,
-    focusTrace:[],onScroll:null,
+    focusTrace:[],focusAnomalies:[],onScroll:null,
     latestSettings:null,latestGame:null,latestOther:null,
     recentDomEvidence:[],lastDomSurveyAt:0,sampleTicks:0,lastScanAt:0 };
   window[key] = state;
@@ -645,6 +646,21 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       const observation=JSON.parse(${THEME_FOCUS_TRACE_SCRIPT});
       if(!observation?.items?.length)return;
       const next={...observation,reason};
+      // Preserve distinct brighter gamepad paint frames even after subsequent
+      // normal navy frames and QAM navigation evict the rolling trace.
+      const bluePaint=i=>{
+        const color=String(i.bg||'');
+        if(!color.startsWith('rgb(')&&!color.startsWith('rgba('))return false;
+        const n=color.slice(color.indexOf('(')+1,color.lastIndexOf(')')).split(',').map(Number);
+        return n.length>=3&&(n.length!==4||n[3]>=.12)&&
+          n[2]>=112&&n[2]>n[0]+48&&n[1]>n[0]+18;
+      };
+      const candidate=next.items.find(bluePaint);
+      if(candidate){
+        const already=state.focusAnomalies.some(frame=>frame.items.some(item=>
+          item.cls===candidate.cls&&item.layer===candidate.layer&&item.bg===candidate.bg));
+        if(!already)state.focusAnomalies=[next,...state.focusAnomalies].slice(0,8);
+      }
       const previous=state.focusTrace[0];
       const sign=x=>x.items.map(i=>i.role+'|'+i.layer+'|'+i.cls+'|'+i.bg+'|'+i.image+'|'+i.shadow).join(';');
       if(previous?.reason===reason&&sign(previous)===sign(next))return;
@@ -750,6 +766,7 @@ export const THEME_AUDIT_READ_SCRIPT = `(() => {
     latestOther: state?.latestOther || null,
     recentDomEvidence:state?.recentDomEvidence || [],
     focusTrace:state?.focusTrace || [],
+    focusAnomalies:state?.focusAnomalies || [],
     sampleTicks: state?.sampleTicks || 0,
     lastScanAt: state?.lastScanAt || 0
   });
@@ -810,6 +827,11 @@ export function parseThemeAudit(value:unknown):ThemeAudit|null {
       }):[],
     focusTrace:Array.isArray(obj.focusTrace)?
       obj.focusTrace.slice(0,28).flatMap(entry=>{
+        const parsed=parseThemeFocusFrame(entry);
+        return parsed?[parsed]:[];
+      }):[],
+    focusAnomalies:Array.isArray(obj.focusAnomalies)?
+      obj.focusAnomalies.slice(0,8).flatMap(entry=>{
         const parsed=parseThemeFocusFrame(entry);
         return parsed?[parsed]:[];
       }):[],

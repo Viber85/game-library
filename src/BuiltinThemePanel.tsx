@@ -85,6 +85,26 @@ export function BuiltinThemePanel(){
         <div>Decky native Field matches: {diagnostics.deckyFieldRows}</div>
         <div>Real CEF snapshots: {diagnostics.domEvidence.length}</div>
         <div>Controller focus transition frames: {diagnostics.focusTrace.length}</div>
+        <div>Preserved brighter-blue gamepad paint: {diagnostics.focusAnomalies.length} event(s)</div>
+        {diagnostics.focusAnomalies.slice(0,5).map((frame,i)=>
+          <div key={"flash-"+i} style={{marginTop:6,padding:7,border:"1px solid #526b86",borderRadius:5}}>
+            <strong>Bright focus paint {i+1}</strong> · {frame.reason} · {Math.max(0,Math.round((Date.now()-frame.at)/1000))}s ago
+            {frame.items.filter(item=>{
+              const n=(item.bg.match(/[0-9.]+/g)||[]).map(Number);
+              return n.length>=3&&n[2]>=112&&n[2]>n[0]+48&&n[1]>n[0]+18;
+            }).slice(0,4).map((item,k)=>
+              <div key={k} style={{fontSize:11,overflowWrap:"anywhere"}}>
+                {item.role}/{item.layer} · .{item.cls||"(none)"} · {item.bg}
+                {item.animation!=="none"?" · animation "+item.animation:""}
+                {item.transition&&item.transition!=="0s"?" · transition "+item.transition:""}
+              </div>)}
+          </div>)}
+        {diagnostics.focusAnomalies.length>0&&
+          <ButtonItem layout="below" onClick={()=>{
+            void navigator.clipboard?.writeText(
+              JSON.stringify(diagnostics.focusAnomalies,null,2)
+            )?.catch(()=>setError("Copy unavailable; send screenshots of the bright focus paint entries."));
+          }}>Copy preserved bright-blue focus evidence</ButtonItem>}
         {diagnostics.focusTrace.slice(0,5).map((frame,i)=>
           <div key={i} style={{marginTop:6,paddingTop:5,borderTop:"1px solid #345"}}>
             <strong>Focus frame {i+1}</strong> · {frame.reason} · {Math.max(0,Math.round((Date.now()-frame.at)/1000))}s ago
@@ -136,10 +156,11 @@ export function BuiltinThemePanel(){
         <div style={{opacity:.7,marginTop:4}}>
           Close QAM and move 5–10 rows using D-pad or left analog in
           Steam Settings and Decky Settings. When the blue flash appears,
-          return here and choose Read CEF diagnostics, then Copy gamepad
-          focus transition trace. It captures computed row/pseudo-layer
-          colors, not text, names or input values. Do not toggle Midnight
-          before copying; that clears the in-memory observations.
+          return here and choose Read CEF diagnostics. Photograph the
+          preserved brighter-blue focus entries (if any), or copy their
+          evidence. These are retained even when normal frames replace the
+          rolling trace. No text, names, URLs or input values are collected.
+          Do not toggle Midnight before copying.
         </div>
       </div>
     </PanelSectionRow>}
