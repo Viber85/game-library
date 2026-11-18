@@ -12,8 +12,8 @@ import {
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
 import { SystemStatusBar } from "./SystemStatusBar";
-import { fallbackTabs, gamesForTab, loadSteamTabs, SteamTab } from "./tabmaster";
-import { getActiveUserId } from "./steam";
+import { fallbackTabs, gamesForTab } from "./tabmaster";
+import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
@@ -132,7 +132,7 @@ function GameCard({
 
 export function Dashboard() {
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
-  const [tabInfo, setTabInfo] = useState<{available: boolean; reason: string; tabs: SteamTab[]; mode?: string}>({available:false,reason:"Checking library tab source…",tabs:[],mode:"auto"});
+  const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
   const [activeTab, setActiveTab] = useState("AllGames");
   const [sort, setSort] = useState<Sort>("alphabetical");
   const [selectedId, setSelectedId] = useState<number | undefined>();
@@ -160,16 +160,28 @@ export function Dashboard() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-    const refresh = async () => {
-      const result = await loadSteamTabs(getActiveUserId());
-      if (active) setTabInfo(result);
-    };
-    void refresh();
-    // Follow Decky's enable/disable switch without a Steam or Decky restart.
-    const timer = window.setInterval(() => { void refresh(); }, 6000);
-    return () => { active = false; window.clearInterval(timer); };
+    // Watch the plugin-level source. It continues polling even while Steam
+    // unmounts this route to show Decky's plugin manager.
+    const unsubscribe=subscribeAutoTabs(setTabInfo);
+    // Close the small render-to-subscribe race without requesting twice.
+    setTabInfo(getAutoTabs());
+    return unsubscribe;
   }, []);
+  const lastSource=useRef<boolean | null>(null);
+  useEffect(()=>{
+    const prior=lastSource.current;
+    lastSource.current=tabInfo.available;
+    if(prior===null || prior===tabInfo.available)return;
+    // When TabMaster returns after enabling it in Decky, restore its first
+    // configured tab even if Steam's fallback also used the ID AllGames.
+    // Refresh the newly mounted UnifiedDeck/Steam collections immediately.
+    setGames(getLibraryGames());
+    setActiveTab(tabInfo.tabs[0]?.id ?? "AllGames");
+    setSelectedId(undefined);
+    setViewAll(false);
+    setGridLimit(60);
+    pendingGridIndex.current=null;
+  },[tabInfo.available]);
   const tabs = tabInfo.available && tabInfo.tabs.length ? tabInfo.tabs : fallbackTabs;
   const tabIds = tabs.map(t=>t.id).join("|");
   useEffect(()=>{
