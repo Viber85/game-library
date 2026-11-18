@@ -11,7 +11,7 @@ import {
   LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates, heroCandidates, heroFallbackCandidates, logoCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
-import {getMissingSteamArt} from "./steamGridArtwork";
+import {getMissingSteamArt,subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 import { SystemStatusBar } from "./SystemStatusBar";
 import { fallbackTabs, gamesForTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
@@ -40,6 +40,11 @@ function HeroBackdrop({game}:{game:LibraryGame}) {
   const [artRevision,setArtRevision] = useState(0);
   const [remoteHero,setRemoteHero] = useState<string|null>(null);
   const [lookupFinished,setLookupFinished] = useState(game.nonSteam);
+  useEffect(()=>subscribeArtworkSettingsChanged(()=>{
+    setRemoteHero(null);
+    setLookupFinished(game.nonSteam);
+    setImageIndex(0);
+  }),[game.id,game.nonSteam]);
   // Steam may not have loaded library assets when the game first receives focus.
   // Request only the selected game's details; never prefetch the whole library.
   useEffect(() => {
@@ -112,6 +117,11 @@ function GameCard({
   const [coverIndex,setCoverIndex] = useState(0);
   const [remoteCover,setRemoteCover] = useState<string|null>(null);
   const [lookupFinished,setLookupFinished] = useState(false);
+  useEffect(()=>subscribeArtworkSettingsChanged(()=>{
+    setRemoteCover(null);
+    setLookupFinished(false);
+    setCoverIndex(0);
+  }),[game.id]);
   const covers = posterCandidates(game);
   const poster = covers[coverIndex] ?? remoteCover;
   // Only search once every native Steam cover candidate returned an image
