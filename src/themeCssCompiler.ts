@@ -20,11 +20,15 @@ const MODULE_ANCHORS:Record<string,readonly string[]> = {
   gamepadslider:["SliderTrackActive"],
   appdetails:["ScrollContainer","ShowPlayBar"],
   appdetailsoverview:["ColumnContainer","BackdropGlass"],
+  // Decky UI static-classes.ts: Steam's real native game-header module.
+  sharedappdetailsheader:["TopCapsule","HeaderBackgroundImage"],
   appdetailsplaysection:["PlayBar","MenuButton"],
   appdetailssection:["AppDetailsSectionContainer","Highlight"],
   basicappdetailssectionstyler:["AppDetailsRoot","PlaySection"],
   appactionbutton:["ButtonChild","ButtonText"],
   appdetailscommunityfeed:["CommunityItem","HeaderStyles"],
+  // Steam community input module verified in native GamePage CSS themes.
+  posttextentry:["PostTextEntry","PostTextEntryArea"],
   appdetailsactivitysection:["ActivityFeedContainer","NoActivity"],
   appactivityday:["EventBody","Event"],
   appdetailsprimarylinkssection:["LinksSection","LinkButton"],
