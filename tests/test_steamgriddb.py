@@ -1,6 +1,7 @@
 import asyncio
 import os
 import pathlib
+import ssl
 import tempfile
 import unittest
 import urllib.error
