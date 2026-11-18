@@ -87,6 +87,23 @@ tests check stylesheet syntax, scope, coverage and foreground/background
 contrast. Valve's actual DOM and third-party plugin badges can vary, so the
 photos' remaining visual cases still require verification on the handheld.
 
+**v0.4.21-test.8 — restore native QAM geometry; keep cyan focus
+(device preview):** MSI Claw screenshots exposed a squeezed vertical
+Decky tab outline and a plugin list pushed off the right side of QAM.
+This came from forcing the native QAM tab rail to 86px, its inner column
+to 74px, and each icon to `calc(100% - 10px)` with further margin and
+padding. SteamOS/Decky must own these widths. Remove *all* QAM width,
+min-width, flex-basis, margin, padding and sizing overrides; preserve
+the current direct native Tab selector and selected/focused cyan border,
+blue gradient and soft glow. This frees the plugin content pane to use
+its native space, and returns icon geometry to Steam's normal layout.
+The native Steam button menu and our Game Library left rail are
+unchanged, as are TabMaster/UnifiedDeck, controller navigation and
+game launches. CSS revision **59** replaces older injected styles.
+Automated tests assert there are no QAM geometry overrides and that
+both selected/focused icon rings and ZIP CSS remain intact. On-device
+visual validation is still required.
+
 **v0.4.21-test.7 — give the native Steam menu focus glow room
 (device preview):** MSI Claw screenshots showed the 20px cyan glow ending
 abruptly at the focus row's upper, lower and right boundaries. The native

@@ -60,7 +60,12 @@ if [[ "$(unzip -p "$output" 'game-library/system-theme/menus.css')" == *'box-sha
   echo "Duplicate outer Steam menu focus ring found in packaged CSS" >&2
   exit 1
 fi
-unzip -p "$output" 'game-library/system-theme/qam.css' | grep -Fq 'quickaccessmenu_TabContentColumn_2z5NL'
-unzip -p "$output" 'game-library/system-theme/qam.css' | grep -Fq 'box-shadow:inset 0 0 0 2px #63cfff'
+# Guard against the QAM regression that squeezed the icons and clipped Decky.
+qam_css="$(unzip -p "$output" 'game-library/system-theme/qam.css')"
+printf '%s\n' "$qam_css" | grep -Fq 'box-shadow:inset 0 0 0 2px #63cfff'
+if printf '%s\n' "$qam_css" | grep -Eq '^[[:space:]]*(width|min-width|max-width|flex|flex-basis|height|min-height|max-height|box-sizing|margin|margin-inline|margin-block|padding|padding-inline|padding-block|overflow|position|transform)[[:space:]]*:'; then
+  echo "QAM package contains layout-altering native rail/tab CSS" >&2
+  exit 1
+fi
 unzip -Z1 "$output" | grep -qx 'game-library/dist/index.js'
 unzip -Zt "$output"

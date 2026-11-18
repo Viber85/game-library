@@ -13,24 +13,10 @@
   background:var(--glm-bg-deep) !important;
   color:var(--glm-text) !important;
 }
-/* Expand BOTH the visible native rail and the inner focusable tab column;
- * widening only .Tabs left the actual list and icon items at Steam's
- * original narrow width on the Claw. Do not change QAM content/panel width.
- */
-:is(.quickaccessmenu_Tabs_3Ag1w,[class*="quickaccessmenu_Tabs_"]) {
-  box-sizing:border-box !important;
-  width:86px !important;
-  min-width:86px !important;
-  flex:0 0 86px !important;
-  padding-inline:6px !important;
-}
-:is(.quickaccessmenu_TabContentColumn_2z5NL,
-  [class*="quickaccessmenu_TabContentColumn_"]) {
-  box-sizing:border-box !important;
-  width:74px !important;
-  min-width:74px !important;
-  padding-inline:5px !important;
-}
+/* Steam/Decky owns the QAM's overall width, tab-rail width, inner column
+ * and icon dimensions. NEVER force flex-basis, widths or side padding here:
+ * the previous 86px/74px columns squeezed icon frames and shifted the
+ * Decky plugin panel off-screen on MSI Claw. Style focus only. */
 /* This MUST target the real tab by its native Steam class, even when the
  * focus is held by the QAM plugin panel rather than the left icon list.
  * 'Selected' and 'focused' are separate states, but both deserve a
@@ -38,10 +24,6 @@
 :is(.quickaccessmenu_Tab_1S76C,
   [class*="quickaccessmenu_Tab_"],
   #QuickAccess-Menu [role="tab"]) {
-  box-sizing:border-box !important;
-  width:calc(100% - 10px) !important;
-  min-width:0 !important;
-  margin:5px !important;
   color:var(--glm-muted) !important;
   background:transparent !important;
   border:0 !important;

@@ -85,18 +85,15 @@ test("native Steam active and focused states remain separate",()=>{
 test("QAM native icon is addressable without any #QuickAccess ancestor",()=>{
   assert.match(qam,/:is\(\.quickaccessmenu_Tab_1S76C,\s*\[class\*="quickaccessmenu_Tab_"\],/);
   assert.match(qam,/#QuickAccess-Menu \[role="tab"\]/);
-  assert.match(qam,/:is\(\.quickaccessmenu_Tabs_3Ag1w,\[class\*="quickaccessmenu_Tabs_"\]\)/);
-  assert.match(qam,/:is\(\.quickaccessmenu_TabContentColumn_2z5NL,/);
-  assert.match(qam,/width:86px !important;/);
-  assert.match(qam,/width:74px !important;/);
-  assert.match(qam,/padding-inline:5px !important;/);
-  assert.match(qam,/margin:5px !important;/);
-  assert.match(qam,/width:calc\(100% - 10px\) !important;/);
+  // Native Steam must own widths for the QAM root, rail, icon list and
+  // Decky plugin panel. Forced values compressed tabs and clipped content.
+  assert.doesNotMatch(qam,/\b(?:width|min-width|max-width|flex|flex-basis|height|min-height|max-height|box-sizing|margin|margin-inline|margin-block|padding|padding-inline|padding-block|overflow|transform|position)\s*:/,
+    "No geometry overrides anywhere in native QAM CSS");
+  assert.doesNotMatch(qam,/\[class\*="quickaccessmenu_Tabs_"\]|\[class\*="quickaccessmenu_TabContentColumn_"\]/,
+    "Theme must not style native QAM column containers");
   assert.doesNotMatch(qam,/#QuickAccess-Menu\s*\{[^}]*\bwidth:/);
-  assert.doesNotMatch(qam,/PanelOuterNav[^}]*\bwidth:/,
-    "No layout change for plugin content panel");
-  assert.doesNotMatch(qam,/overflow\s*:\s*hidden/,
-    "No parent overflow clipping");
+  assert.doesNotMatch(qam,/:hover/,
+    "Only native selected or controller focus should show the frame");
 });
 
 test("QAM selected panel icon keeps an inset cyan ring and focus strengthens it",()=>{
@@ -122,8 +119,14 @@ test("native menu/tab hashed CSS modules are discovered and aliased",()=>{
   const menuCSS=expandThemeClassAliases(menu,aliases);
   const qamCSS=expandThemeClassAliases(qam,aliases);
   assert.match(menuCSS,/\[class~="_STmenuItem98"\]/);
-  for(const key of ["_STqamTab98","_STqamTabs83","_STqamContent85"])
-    assert.ok(qamCSS.includes('[class~="'+key+'"]'),"Missing hashed alias "+key);
+  assert.match(qamCSS,/\[class~="_STqamTab98"\]/,
+    "QAM icon frame must target the actual minified native Tab class");
+  // Compiler still understands native rail/column aliases, but no real
+  // stylesheet rule must force their layout.
+  const synthetic='[class*="quickaccessmenu_Tabs_"],[class*="quickaccessmenu_TabContentColumn_"]{color:white;}';
+  const expanded=expandThemeClassAliases(synthetic,aliases);
+  for(const key of ["_STqamTabs83","_STqamContent85"])
+    assert.ok(expanded.includes('[class~="'+key+'"]'),"Missing hashed alias "+key);
   assert.match(bundle,/"overlay": \([\s\S]*?"menus.css"/);
   assert.match(bundle,/"overlay": \([\s\S]*?"qam.css"/);
   assert.doesNotMatch(menuCSS,/(?:#GamepadUI_Full_Root|\.BasicUI)\s*\{/);

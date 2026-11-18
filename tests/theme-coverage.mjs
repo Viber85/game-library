@@ -56,14 +56,10 @@ test("QAM selected tab is styled even while its content panel has focus",()=>{
   const qam=stripCssComments(css("qam.css"));
   assert.ok(qam.includes(':is(.quickaccessmenu_Tab_1S76C,'),
     "QAM native tab class must be a global selector, not restricted to old portal parents");
-  assert.ok(qam.includes('[class*="quickaccessmenu_TabContentColumn_"]'),
-    "Actual icon list column must also be widened on SteamOS");
-  assert.ok(qam.includes("width:86px !important"),"QAM parent rail width");
-  assert.ok(qam.includes("width:74px !important"),"QAM content column width");
-  assert.ok(qam.includes("padding-inline:5px !important"),"Give icon list padding");
-  assert.ok(qam.includes("margin:5px !important"),"Give each QAM icon breathing room");
-  assert.ok(qam.includes("width:calc(100% - 10px) !important"),
-    "Tab content must not overflow the available icon rail");
+  assert.doesNotMatch(qam,/\b(?:width|min-width|max-width|flex|flex-basis|height|min-height|max-height|box-sizing|margin|padding|overflow|transform|position)\s*:/,
+    "QAM must preserve native Steam rail, icon and plugin-panel layout");
+  assert.ok(!qam.includes('[class*="quickaccessmenu_TabContentColumn_"]'),
+    "Do not constrain the native inner tab column");
   assert.ok(qam.includes(".quickaccessmenu_Selected_2QHMu"),
     "An active QAM section must retain a visible ring when the right panel owns focus");
   assert.equal((qam.match(/box-shadow:inset 0 0 0 2px #63cfff,/g)??[]).length,2,
@@ -275,6 +271,6 @@ test("Midnight palette has high contrast for Settings and notes",()=>{
 
 test("0.4.2 forces replacement of earlier cached style revision",()=>{
   const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"58"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"59"/);
   assert.match(runtime,/CLEANUP_SCRIPT/);
 });
