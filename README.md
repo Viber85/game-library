@@ -55,38 +55,6 @@ navigation, L1/R1 tabs, Y sorting, SteamGridDB artwork or metadata. Controller
 mapping tests and full build/typecheck/package pass in CI; the real native
 context menu still needs on-device testing on the MSI Claw.
 
-## Test release 0.5.6-test.3 — Start opens the real Steam game options menu
-
-At the user's request, **Select/View is unmapped again** inside the Game
-Library cards. **Y** continues to open Midnight Sort.
-
-When a Home carousel or Library grid game cover is focused, **Start/Menu**
-now uses Decky's real `Focusable.onMenuButton` to open Steam's native
-**LibraryContextMenu**, anchored to the focused card for its exact Steam
-AppID. This is the genuine Steam game context menu, so entries added by
-SteamGridDB, HowLongToBeat, launch options and other existing context-menu
-patches can appear without manually reproducing their actions.
-
-The menu is discovered from Steam's actual webpack exports by the verified
-`bFitToWindow` + `LibraryContextMenu` and
-`navigator:` + `instance:` source markers. The same two-module technique
-is implemented and exercised in
-`MichaelScottsman/LiquidAss-Frame/device/rt/41-home.js`, and the
-`SteamGridDB/decky-steamgriddb` integration verifies the native
-`LibraryContextMenu` component. Props use the native game overview,
-`client="mostavailable"`, Steam Library `launchSource=1000`,
-`bInGamepadUI=true`, and the appropriate Steam window. Only one match per
-export is accepted, so an unexpected Steam client build will fail closed.
-
-If the Steam component is unavailable, a Decky notification explains that
-native game options cannot be opened, rather than silently dispatching fake
-keyboard/controller events or showing a replica with missing integrations.
-
-No changes to original Steam Library, Midnight styling, game details, A/B
-navigation, L1/R1 tabs, Y sorting, SteamGridDB artwork or metadata. Controller
-mapping tests and full build/typecheck/package pass in CI; the real native
-context menu still needs on-device testing on the MSI Claw.
-
 ## Test release 0.5.6-test.2 — controller shortcuts
 
 The Game Library **game covers** now use the verified Decky/Steam
