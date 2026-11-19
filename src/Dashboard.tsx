@@ -359,28 +359,40 @@ export function Dashboard({initialMode="home",originRoute}:
     const prior=lastSource.current;
     lastSource.current=tabInfo.available;
     if(prior===null || prior===tabInfo.available)return;
-    // When TabMaster returns after enabling it in Decky, restore its first
-    // configured tab even if Steam's fallback also used the ID AllGames.
-    // Refresh the newly mounted UnifiedDeck/Steam collections immediately.
+    // Keep a saved return tab when TabMaster finishes hydrating AFTER native
+    // Game Details has returned. Normal source changes still select tab 1.
+    const snapshot=restorePending.current;
+    const savedTab=tabInfo.available&&snapshot&&
+      tabInfo.tabs.some(t=>t.id===snapshot.tabId)?snapshot.tabId:null;
     setGames(getLibraryGames());
-    setActiveTab(tabInfo.tabs[0]?.id ?? "AllGames");
-    setSelectedId(undefined);
-    setViewAll(initialMode==="library");
-    setGridLimit(60);
+    if(savedTab)setActiveTab(savedTab);
+    else setActiveTab(tabInfo.tabs[0]?.id ?? "AllGames");
+    setSelectedId(savedTab?snapshot!.gameId:undefined);
+    setViewAll(savedTab?snapshot!.viewAll:initialMode==="library");
+    setGridLimit(savedTab?snapshot!.gridLimit:60);
     pendingGridIndex.current=null;
   },[tabInfo.available]);
   const tabs = tabInfo.available && tabInfo.tabs.length ? tabInfo.tabs : fallbackTabs;
   const tabIds = tabs.map(t=>t.id).join("|");
   useEffect(()=>{
     if(tabs.some(t=>t.id===activeTab))return;
-    // The selected TabMaster tab may disappear while a Decky plugin is
-    // disabled. Reset to Steam All Games rather than retaining stale ID.
+    // During a Details return, the saved tab can precede TabMaster's async
+    // hydration. Wait briefly instead of immediately losing the user's tab.
+    if(!tabInfo.available && restorePending.current?.tabId===activeTab){
+      const timer=window.setTimeout(()=>{
+        if(getAutoTabs().available)return;
+        restorePending.current=null; // saved collection truly unavailable
+        setActiveTab(tabs[0]?.id??"AllGames");
+      },2000);
+      return ()=>window.clearTimeout(timer);
+    }
+    // When a tab is actually removed, fall back to first valid native tab.
     setActiveTab(tabs[0]?.id ?? "AllGames");
     setSelectedId(undefined);
     setViewAll(initialMode==="library");
     setGridLimit(60);
     pendingGridIndex.current=null;
-  },[tabIds,activeTab]);
+  },[tabIds,activeTab,tabInfo.available]);
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
   const sort = sortForTab(tab,tabSorts);
   const sortKind=externalSortKind(sort);
