@@ -23,6 +23,31 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Test release 0.5.6-test.4 — readable HLTB sorting progress
+
+Improves the visual notification shown while fetching **HowLongToBeat
+Main + Extras** data for Library sorting. The previous small text box was
+anchored near Steam's B/Back footer and overlapped the controller hint on
+the MSI Claw. The new separate Midnight status panel includes:
+
+- Stronger cyan left accent, dark navy surface, soft glow and an hourglass icon
+- Clear uppercase provider name, larger real game counter (e.g. 16 / 48)
+- A slim animated progress bar based on completed / total lookup count
+- A legible reminder that results are still sorting and titles without
+  metadata remain at the end
+
+In full Library grid mode the panel has its **own flex row just above game
+covers**, so it never obstructs the grid, the Y/Start/B/L1/R1 controller
+hint or Steam's native Back footer. On Home, it floats near the top tabs
+instead of the footer. The same improvement applies when retrieving
+ProtonDB or achievement metadata. The panel disappears when all games are
+checked, and reduced-motion preferences disable the progress transition.
+
+Only the presentation of progress changes. Metadata API/cache/queue/sort
+algorithms and recently confirmed Start native context-menu functionality
+remain unchanged. Automated UI assertions verify positioning and controls;
+visual appearance awaits MSI Claw confirmation.
+
 ## Test release 0.5.6-test.3 — Start opens the real Steam game options menu
 
 At the user's request, **Select/View is unmapped again** inside the Game

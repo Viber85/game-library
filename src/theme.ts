@@ -1264,12 +1264,114 @@ export const DASHBOARD_CSS = String.raw`
 .gl-root .gl-sort-menu-hint {
   font-size:11px;color:#aec7df;padding:8px 12px 2px;text-align:center;
 }
+/* v0.5.6-test.4 — Sort metadata status is distinct from native B footer.
+ * Full Library: dedicated flex row below the page heading (never covers
+ * controller hint or game covers). Home: a compact overlay near the top tabs.
+ * No spinner or pulsing animation that distracts while long HLTB requests run.
+ */
+.gl-root .gl-sort-progress-slot {
+  pointer-events:none;
+}
+.gl-root .gl-sort-progress-grid {
+  flex:0 0 auto;
+  min-height:0;
+  display:flex;
+  justify-content:flex-end;
+  padding:0 8px 10px;
+}
+.gl-root .gl-sort-progress-home {
+  position:absolute;
+  z-index:5;
+  top:132px;
+  right:22px;
+  width:min(420px,calc(100% - 44px));
+}
 .gl-root .gl-sort-progress {
-  position:absolute;z-index:3;bottom:35px;right:18px;
-  max-width:52%;padding:7px 11px;border-radius:9px;
-  color:#def3ff;background:rgba(4,19,37,.94);
-  border:1px solid rgba(82,179,232,.38);
-  font-size:11px;pointer-events:none;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  width:min(420px,100%);
+  padding:12px 14px 10px;
+  color:#e9f6ff;
+  border:1px solid rgba(103,211,255,.72);
+  border-left:3px solid #59d8ff;
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(12,43,72,.98),rgba(4,17,34,.98));
+  box-shadow:0 10px 28px rgba(0,0,0,.45),0 0 18px rgba(0,167,255,.20);
+}
+.gl-root .gl-sort-progress-top {
+  display:flex;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+}
+.gl-root .gl-sort-progress-icon {
+  flex:0 0 34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:rgba(59,175,233,.17);
+  border:1px solid rgba(95,208,255,.27);
+  color:#67d9ff;
+  font-size:21px;
+}
+.gl-root .gl-sort-progress-name {
+  display:flex;
+  flex:1 1 auto;
+  min-width:0;
+  flex-direction:column;
+  gap:3px;
+}
+.gl-root .gl-sort-progress-name strong {
+  font-size:12px;
+  line-height:1.25;
+  font-weight:800;
+  color:#bbebff;
+  letter-spacing:.04em;
+}
+.gl-root .gl-sort-progress-name span {
+  font-size:11px;
+  color:#d9eaff;
+  font-weight:550;
+}
+.gl-root .gl-sort-progress-count {
+  flex:0 0 auto;
+  white-space:nowrap;
+  color:#fff;
+  font-size:18px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+.gl-root .gl-sort-progress-track {
+  height:6px;
+  flex:0 0 6px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#08192b;
+  box-shadow:inset 0 0 0 1px rgba(98,184,233,.27);
+}
+.gl-root .gl-sort-progress-fill {
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#268fe2,#5ce5ff);
+  box-shadow:0 0 10px rgba(81,213,255,.35);
+  transition:width .22s ease-out;
+}
+.gl-root .gl-sort-progress-note {
+  color:#abc8df;
+  font-size:10.5px;
+  line-height:1.25;
+}
+@media (max-width:860px) {
+  .gl-root .gl-sort-progress-grid {padding:0 6px 7px;}
+  .gl-root .gl-sort-progress-home {top:110px;right:13px;}
+  .gl-root .gl-sort-progress {padding:9px 10px 8px;gap:6px;}
+  .gl-root .gl-sort-progress-count {font-size:16px;}
+  .gl-root .gl-sort-progress-icon {height:30px;flex-basis:30px;font-size:18px;}
+}
+@media (prefers-reduced-motion:reduce) {
+  .gl-root .gl-sort-progress-fill {transition:none;}
 }
 .gl-root .gl-grid-header-actions {
   display:flex;align-items:center;justify-content:flex-end;gap:8px;
