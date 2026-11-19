@@ -25,7 +25,7 @@ test("QAM has no tab source selector or save action",()=>{
   assert.doesNotMatch(controls,/\bDropdownItem\b|\bsaveTabSource\b|\bchangeTabSource\b|\btype TabSource\b|\btabSource\s*=/);
   assert.match(controls,/const getSettings = callable<\[\], \{ default_home: boolean \}>/);
   assert.match(controls,/label="Use as Steam Home"/);
-  assert.match(controls,/Open Game Library Dashboard/);
+  assert.match(controls,/Open Game Library/);
   assert.match(backend,/return \{"default_home": _read_preferences\(\)\.get\("default_home", True\) is True\}/);
 });
 

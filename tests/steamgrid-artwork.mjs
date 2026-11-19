@@ -58,6 +58,8 @@ test("New provider is packaged, no Steam custom artwork overwrites",()=>{
   assert.match(pack,/steamgriddb\.py/);
   assert.doesNotMatch(dashboard,/WriteCustom|SetCustom|StoreCustomArt|SaveHero/);
   assert.doesNotMatch(art,/writeFile|localStorage|fetch\(/);
+  const appearance=read("src/AppearancePage.tsx");
   const index=read("src/index.tsx");
-  assert.match(index,/<SteamGridDBPanel \/>/);
+  assert.match(appearance,/<SteamGridDBPanel\/>/);
+  assert.doesNotMatch(index,/<SteamGridDBPanel \/>/);
 });
