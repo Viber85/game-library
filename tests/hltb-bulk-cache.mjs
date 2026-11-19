@@ -24,7 +24,9 @@ test("Fast disk prewarm happens when the user visits a tab, independent of selec
   const warm=ui.indexOf("void primeHltbCache(",start);
   const network=ui.indexOf("return startSortMetadata(",start);
   assert.ok(start>0&&warm>start&&network>warm);
-  const prewarmEffect=ui.slice(start,network);
+  const prewarmEnd=ui.indexOf("},[tab.id,metadataQueryIds,tabResult.supported]);",warm);
+  const prewarmEffect=ui.slice(start,prewarmEnd);
+  assert.ok(prewarmEnd>warm);
   assert.doesNotMatch(prewarmEffect,/if\(!sortKind/);
   assert.match(prewarmEffect,/if\(!tabResult\.supported\|\|!tabResult\.games\.length\)return;/);
   assert.match(prewarmEffect,/if\(mounted\)setMetaRevision\(revision=>revision\+1\);/);
