@@ -39,7 +39,8 @@ test("Sort A/B restores the card that launched it instead of jumping to the filt
 test("Original A Play/Details, B Back, L1/R1 and grid movement unchanged",()=>{
   assert.match(card,/onActivate=\{activate \?\? \(\(\) => play\(game\)\)\}/);
   assert.match(card,/onCancelButton=\{onCancel\}/);
-  assert.match(source,/activate=\{\(\)=>openGameDetails\(game\)\}/);\n  assert.match(source,/openDetails\(game\);/);
+  assert.match(source,/activate=\{\(\)=>openGameDetails\(game\)\}/);
+  assert.match(source,/openDetails\(game\);/);
   assert.match(source,/GamepadButton\.BUMPER_LEFT/);
   assert.match(source,/GamepadButton\.BUMPER_RIGHT/);
   assert.match(source,/onMove=\{button=>moveInGrid\(index,button\)\}/);
