@@ -2,6 +2,12 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.8-test.2 — render-only status optimizations
+
+- Move the 15-second clock tick into `SystemStatusBar` so it no longer triggers full Game Library grid re-renders. The visible SteamOS clock and 12/24-hour preference checks work as before.
+- Retain the previous React state reference when the polled battery, Wi-Fi, Bluetooth, avatar or unread notification data have not changed. Keep all existing polling periods and failure-safe fallbacks.
+- No visual, CSS, focus, controller-navigation, HLTB, TabMaster, ProtonDB or SteamGridDB behavior changes. This is a narrowly scoped performance test release; test on the handheld before promoting to stable.
+
 ## Features
 
 - **Optional Steam Home replacement (enabled by default):** intercept Steam's /library/home route after Decky loads, so Game Library is used when entering Game Mode. Disable in Quick Access to restore native Home; the default preference persists across reboots.

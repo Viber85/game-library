@@ -305,7 +305,6 @@ export function Dashboard({initialMode="home",originRoute}:
     detailsReturn?.viewAll??(initialMode==="library"));
   const [gridLimit,setGridLimit] = useState(
     Math.max(60,detailsReturn?.gridLimit??60));
-  const [time,setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sidebarRef = useRef<HTMLElement>(null);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -351,8 +350,7 @@ export function Dashboard({initialMode="home",originRoute}:
       membershipSignature.current=signature;
       setGames(previous=>sameLibraryGames(previous,next)?previous:next);
     },15000);
-    const clock = window.setInterval(() => setTime(new Date()), 15000);
-    return ()=>{window.clearInterval(refresh);window.clearInterval(clock);};
+    return ()=>{window.clearInterval(refresh);};
   },[]);
 
   useEffect(() => {
@@ -765,7 +763,7 @@ export function Dashboard({initialMode="home",originRoute}:
           <div className="gl-topbar-titles">
             <span className="gl-topbar-current" title={tab.title} aria-live="polite">{tab.title}</span>
           </div>
-          <SystemStatusBar time={time} searchRef={headerSearchRef}
+          <SystemStatusBar searchRef={headerSearchRef}
             onStatusButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
               if(e.detail?.button===GamepadButton.DIR_DOWN){
