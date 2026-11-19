@@ -1387,4 +1387,75 @@ export const DASHBOARD_CSS = String.raw`
   .gl-root .gl-sort-menu {max-height:calc(100vh - 120px);}
   .gl-root .gl-sort-option {font-size:12px;min-height:35px;padding:7px 9px;}
 }
+
+/* v0.5.9-test.1 — Game Library left rail and collapsible Appearance screen.
+ * Only .gl-root is affected; Steam native Menu, Settings and QAM CSS remain untouched. */
+.gl-root .gl-rail-item.gl-rail-current:not(.gl-focused)::after {
+  content:"";position:absolute;left:0;top:18px;bottom:18px;width:2px;
+  border-radius:3px;background:var(--gl-blue);pointer-events:none;
+}
+.gl-root .gl-appearance {position:relative;display:flex;flex:1;flex-direction:column;min-height:0;}
+.gl-root .gl-appearance-scroll {
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  padding:17px 9px 22px;scrollbar-color:#326d97 transparent;
+}
+.gl-root .gl-appearance-intro {padding:8px 3px 23px;}
+.gl-root .gl-appearance-overline {color:#76c9ef;font-size:10px;font-weight:800;letter-spacing:.16em;}
+.gl-root .gl-appearance-intro h1 {font-size:clamp(26px,3vw,38px);line-height:1.15;margin:9px 0;}
+.gl-root .gl-appearance-intro p {font-size:13px;color:var(--gl-muted);margin:0;}
+.gl-root .gl-appearance-cards {display:flex;flex-direction:column;gap:11px;max-width:1030px;}
+.gl-root .gl-appearance-card {
+  border:1px solid rgba(97,156,202,.3);border-radius:13px;
+  background:linear-gradient(145deg,rgba(11,32,55,.95),rgba(5,18,37,.96));
+  overflow:visible;box-shadow:0 8px 18px rgba(0,0,0,.14);
+}
+.gl-root .gl-appearance-card-heading {
+  display:flex;align-items:center;gap:15px;width:100%;min-height:68px;
+  padding:14px 18px;border-radius:12px;background:transparent;
+  color:#edf8ff;border:1px solid transparent;
+}
+.gl-root .gl-appearance-card-heading.gl-focused,
+.gl-root .gl-appearance-card-heading:focus-visible {
+  background:#17577a;border-color:#63cfff;outline:2px solid #63cfff;
+  outline-offset:-2px;box-shadow:0 0 18px rgba(3,157,255,.38);
+}
+.gl-root .gl-appearance-card-icon {font-size:25px;color:#67d9ff;flex:0 0 27px;}
+.gl-root .gl-appearance-heading-copy {display:flex;flex:1;flex-direction:column;gap:5px;min-width:0;}
+.gl-root .gl-appearance-heading-copy strong {font-size:17px;line-height:1.2;}
+.gl-root .gl-appearance-heading-copy small {font-size:12px;color:#b2cbe1;line-height:1.25;}
+.gl-root .gl-appearance-chevron {color:#b8dbef;font-size:23px;flex-shrink:0;}
+.gl-root .gl-appearance-card-body {padding:3px 17px 18px;border-top:1px solid rgba(114,176,210,.16);}
+.gl-root .gl-appearance-theme-options {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;}
+.gl-root .gl-appearance-theme-option {
+  display:flex;align-items:center;gap:12px;min-height:74px;
+  padding:12px 14px;border:1px solid #31516d;border-radius:11px;
+  background:#0d2842;color:#ecf6ff;
+}
+.gl-root .gl-appearance-theme-option.gl-appearance-theme-selected {
+  border-color:#4fc3ff;background:#123a5b;
+}
+.gl-root .gl-appearance-theme-option.gl-focused,
+.gl-root .gl-appearance-theme-option:focus-visible {
+  outline:2px solid #fff;outline-offset:1px;
+  box-shadow:0 0 18px rgba(3,157,255,.55);
+}
+.gl-root .gl-appearance-swatch {
+  width:41px;height:41px;flex:0 0 41px;border-radius:9px;
+  background:linear-gradient(140deg,#061323 10%,#175d94 58%,#52c7f2);
+  border:1px solid rgba(119,205,255,.58);
+}
+.gl-root .gl-appearance-swatch-steam {background:linear-gradient(140deg,#151c26,#4a5058);}
+.gl-root .gl-appearance-choice-copy {display:flex;flex:1;min-width:0;flex-direction:column;gap:4px;}
+.gl-root .gl-appearance-choice-copy strong {font-size:15px;}
+.gl-root .gl-appearance-choice-copy small {font-size:11px;color:#bdd5e7;line-height:1.3;}
+.gl-root .gl-appearance-selected-check {font-size:22px;color:#6be2ff;flex-shrink:0;}
+.gl-root .gl-appearance-note {font-size:12px;color:#b2cbe1;line-height:1.45;margin:12px 0 0;}
+.gl-root .gl-appearance-error {color:#ffb1b9;font-size:12px;}
+.gl-root .gl-appearance-success {color:#b5ebd2;font-size:12px;}
+.gl-root .gl-appearance-card-body .DialogPanel {max-width:100%;}
+@media (max-width:760px){
+  .gl-root .gl-appearance-theme-options {grid-template-columns:1fr;}
+  .gl-root .gl-appearance-card-heading {min-height:58px;padding:11px 12px;}
+  .gl-root .gl-appearance-card-body {padding:2px 12px 13px;}
+}
 `;

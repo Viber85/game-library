@@ -6,9 +6,7 @@ import { Component, ReactNode, useEffect, useState } from "react";
 import { MdLibraryBooks } from "react-icons/md";
 import { Dashboard } from "./Dashboard";
 import { LibraryDiagnostics } from "./LibraryDiagnostics";
-import { UpdatesPanel } from "./UpdatesPanel";
 import { BuiltinThemePanel } from "./BuiltinThemePanel";
-import {SteamGridDBPanel} from "./SteamGridDBPanel";
 import { startBuiltInThemeRuntime, stopBuiltInThemeRuntime } from "./builtinThemeRuntime";
 import { loadDefaultTheme } from "./themeController";
 import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
@@ -16,6 +14,7 @@ import {returnDestinationFromHome,clearDetailsOrigin} from "./detailsReturn";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const LIBRARY_ROUTE = "/game-library/library";
+const APPEARANCE_ROUTE = "/game-library/appearance";
 const LIBRARY_DIAGNOSTICS_ROUTE = "/game-library/library-diagnostics";
 const HOME_ROUTE = "/library/home";
 const getSettings = callable<[], { default_home: boolean }>("get_dashboard_settings");
@@ -120,15 +119,7 @@ function ControlPanel() {
             Navigation.Navigate(DASHBOARD_ROUTE);
             Navigation.CloseSideMenus();
           }}>
-            Open Game Library Dashboard
-          </ButtonItem>
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ButtonItem layout="below" onClick={() => {
-            Navigation.Navigate(LIBRARY_ROUTE);
-            Navigation.CloseSideMenus();
-          }}>
-            Open Midnight Library
+            Open Game Library
           </ButtonItem>
         </PanelSectionRow>
         <PanelSectionRow>
@@ -149,8 +140,6 @@ function ControlPanel() {
         </PanelSectionRow>
       </PanelSection>
       <BuiltinThemePanel />
-      <SteamGridDBPanel />
-      <UpdatesPanel />
     </>
   );
 }
@@ -160,6 +149,8 @@ export default definePlugin(() => {
   routerHook.addRoute(DASHBOARD_ROUTE,
     ()=> <Dashboard originRoute={DASHBOARD_ROUTE}/>, { exact: true });
   routerHook.addRoute(LIBRARY_ROUTE, ()=> <Dashboard initialMode="library"/>,
+    {exact:true});
+  routerHook.addRoute(APPEARANCE_ROUTE, ()=> <Dashboard initialMode="appearance"/>,
     {exact:true});
   routerHook.addRoute(LIBRARY_DIAGNOSTICS_ROUTE, LibraryDiagnostics, { exact: true });
   // Tab synchronization belongs to the plugin, not the dashboard route. Decky
@@ -198,6 +189,7 @@ export default definePlugin(() => {
       }
       routerHook.removeRoute(DASHBOARD_ROUTE);
       routerHook.removeRoute(LIBRARY_ROUTE);
+      routerHook.removeRoute(APPEARANCE_ROUTE);
       routerHook.removeRoute(LIBRARY_DIAGNOSTICS_ROUTE);
     },
   };
