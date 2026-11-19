@@ -107,12 +107,13 @@ function GameLogo({game}:{game:LibraryGame}) {
 }
 
 function GameCard({
-  game, index, onSelect, onMove, cardRef, activate, onCancel, captureVertical=false,
+  game, index, onSelect, onMove, onSort, cardRef, activate, onCancel, captureVertical=false,
 }: {
   game: LibraryGame;
   index: number;
   onSelect: () => void;
   onMove: (button: GamepadButton) => void;
+  onSort: () => void;
   cardRef?: React.Ref<HTMLDivElement>;
   activate?: () => void;
   onCancel?: () => void;
@@ -140,6 +141,12 @@ function GameCard({
   },[game.id,game.title,game.nonSteam,covers.length,coverIndex,lookupFinished]);
   const handleDirection = (e: GamepadEvent) => {
     const b = e.detail?.button;
+    // SELECT is the handheld View/Select button, not Y/OPTIONS.
+    if (b === GamepadButton.SELECT) {
+      consume(e);
+      openDetails(game);
+      return;
+    }
     if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT ||
         b === GamepadButton.DIR_UP || (captureVertical && b === GamepadButton.DIR_DOWN) ||
         b === GamepadButton.BUMPER_LEFT ||
@@ -158,12 +165,13 @@ function GameCard({
       preferredFocus={!captureVertical && index === 0}
       onActivate={activate ?? (() => play(game))}
       onCancelButton={onCancel}
-      onOptionsButton={() => openDetails(game)}
+      onOptionsButton={(e:GamepadEvent)=>{consume(e);onSort();}}
       onGamepadFocus={onSelect}
       onMouseEnter={captureVertical ? undefined : onSelect}
       onButtonDown={handleDirection}
       onOKActionDescription={activate ? "Game details" : gameActionLabel(game)}
-      onOptionsActionDescription="Game details"
+      onOptionsActionDescription="Sort games"
+      actionDescriptionMap={{[GamepadButton.SELECT]:"Game details"}}
     >
       <div className="gl-poster">
         {poster ? <img src={poster} alt="" loading="lazy" key={poster}
@@ -242,6 +250,7 @@ export function Dashboard({initialMode="home"}:
     ()=>({...rememberedSorts}));
   const [sortOpen,setSortOpen]=useState(false);
   const sortMenuRefs=useRef<Array<HTMLDivElement|null>>([]);
+  const sortReturnFocus=useRef<HTMLElement|null>(null);
   const [metaRevision,setMetaRevision]=useState(0);
   const [selectedId, setSelectedId] = useState<number | undefined>();
   const [viewAll,setViewAll] = useState(initialMode==="library");
@@ -454,10 +463,21 @@ export function Dashboard({initialMode="home"}:
     if(initialMode==="library")Navigation.Navigate("/library/home");
     else closeGrid();
   };
-  const showSortMenu=()=>{setSortOpen(true);};
+  const showSortMenu=()=>{
+    if(sortOpen)return;
+    // Y can be pressed on a cover or the Sort pill; restore that focus on B/A.
+    sortReturnFocus.current=document.activeElement instanceof HTMLElement?
+      document.activeElement:null;
+    setSortOpen(true);
+  };
   const closeSortMenu=()=>{
     setSortOpen(false);
-    window.requestAnimationFrame(()=>sortRef.current?.focus());
+    window.requestAnimationFrame(()=>{
+      const original=sortReturnFocus.current;
+      sortReturnFocus.current=null;
+      if(original?.isConnected)original.focus();
+      else sortRef.current?.focus();
+    });
   };
   const chooseSort=(id:Sort)=>{
     rememberedSorts[tab.id]=id;
@@ -609,6 +629,8 @@ export function Dashboard({initialMode="home"}:
                 ref={el => { pillRefs.current[index] = el; }}
                 className={"gl-pill" + (tab.id === item.id ? " gl-active" : "")}
                 focusClassName="gl-focused" noFocusRing
+                onOptionsButton={(e:GamepadEvent)=>{consume(e);showSortMenu();}}
+                onOptionsActionDescription="Sort games"
                 onActivate={() => { pendingGridIndex.current=null; setGames(getLibraryGames()); setActiveTab(item.id); setViewAll(initialMode==="library"); setSortOpen(false); setGridLimit(60); setSelectedId(undefined); }}
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
@@ -627,6 +649,8 @@ export function Dashboard({initialMode="home"}:
           </Focusable>
           <Focusable ref={sortRef} className="gl-sort" focusClassName="gl-focused" noFocusRing
             onActivate={showSortMenu}
+            onOptionsButton={(e:GamepadEvent)=>{consume(e);showSortMenu();}}
+            onOptionsActionDescription="Sort games"
             onButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
               if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);focusPill(tabs.length-1);}
@@ -696,6 +720,7 @@ export function Dashboard({initialMode="home"}:
                           setGridLimit(v=>Math.min(v+60,shown.length));
                       }}
                       activate={()=>openDetails(game)}
+                      onSort={showSortMenu}
                       captureVertical
                       onCancel={exitGrid}
                       onMove={button=>moveInGrid(index,button)}
@@ -704,7 +729,7 @@ export function Dashboard({initialMode="home"}:
                   ))}
                 </div>
               </div>
-              <div className="gl-grid-hint">← First column: Menu · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs · Sort: Select</div>
+              <div className="gl-grid-hint">Y: Sort · Select: Game details · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
             </section>
           ) : (
           <>
@@ -715,6 +740,7 @@ export function Dashboard({initialMode="home"}:
                   game={game}
                   index={index}
                   onSelect={() => setSelectedId(game.id)}
+                  onSort={showSortMenu}
                   onMove={button=>{
                     if(button===GamepadButton.DIR_LEFT)index===0?focusRail(railIndex):goToGame(index-1);
                     else if(button===GamepadButton.DIR_RIGHT) {
@@ -730,6 +756,8 @@ export function Dashboard({initialMode="home"}:
               ))}
               {shown.length>INITIAL_GAME_COUNT &&
                 <Focusable ref={viewMoreRef} className="gl-view-more" noFocusRing focusClassName="gl-focused"
+                  onOptionsButton={(e:GamepadEvent)=>{consume(e);showSortMenu();}}
+                  onOptionsActionDescription="Sort games"
                   onActivate={openGrid} onOKActionDescription="View all games"
                   onButtonDown={(e:GamepadEvent)=>{
                     const b=e.detail?.button;
