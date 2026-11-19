@@ -2,6 +2,17 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.3 — unified Game Library search
+
+The built-in magnifier now opens a Game Library search route instead of
+Steam's generic Search page. It searches the complete Steam inventory and
+Steam-registered Epic/GOG/other shortcuts in one place, using live local
+title filtering and optional source/installation filters. The native
+Decky TextField invokes the SteamOS keyboard. Results reuse GameCard
+artwork, options, controller focus and native game details; the original
+query/filters and route are retained when returning from Game Details.
+No external search API, Appearance changes or native Steam CSS changes.
+
 ## v0.5.9-test.2 — status-bar overlap hotfix
 
 Game Library routes outside Steam Home no longer show Steam's original

@@ -1471,4 +1471,86 @@ html:has(.gl-root.gl-own-status-only) #header {
   visibility:hidden !important;
   pointer-events:none !important;
 }
+
+/* v0.5.9-test.3 — local search controls. Native Steam QAM, Settings and
+ * the Appearance controls are unchanged; scope all rules to .gl-root. */
+.gl-root .gl-library-search-controls {
+  position:relative;z-index:5;flex:0 0 auto;display:flex;flex-direction:column;
+  gap:8px;min-width:0;padding:8px 7px 11px;
+  border-bottom:1px solid rgba(82,160,209,.18);
+}
+.gl-root .gl-library-search-field-row {
+  display:flex;align-items:center;gap:10px;min-height:50px;
+}
+.gl-root .gl-library-search-field {
+  display:flex;align-items:center;gap:12px;flex:1;min-width:0;
+  min-height:44px;border:1px solid rgba(101,195,252,.33);
+  border-radius:13px;padding:2px 12px;
+  background:linear-gradient(90deg,rgba(12,41,70,.95),rgba(8,25,46,.90));
+}
+.gl-root .gl-library-search-field>svg {flex-shrink:0;font-size:23px;color:#7dd8ff;}
+.gl-root .gl-library-search-field input {
+  min-width:0;width:100%;background:transparent;
+  color:#e7f6ff;font-size:17px;
+}
+.gl-root .gl-library-search-field:focus-within {
+  outline:2px solid #bceaff;outline-offset:0;
+  box-shadow:0 0 17px rgba(3,157,255,.4);
+}
+.gl-root .gl-library-search-clear {
+  display:flex;align-items:center;gap:4px;padding:8px 10px;
+  background:#113555;border:1px solid #315d7c;
+  border-radius:11px;color:#d1edff;font-size:12px;
+}
+.gl-root .gl-library-search-filter-row {
+  display:flex;align-items:center;gap:12px;min-width:0;
+  min-height:33px;
+}
+.gl-root .gl-library-search-filter-row>strong {
+  width:94px;flex:0 0 94px;font-size:12px;color:#afcfe7;font-weight:750;
+}
+.gl-root .gl-library-search-chips {
+  display:flex;flex-wrap:nowrap;gap:7px;min-width:0;
+  overflow-x:auto;scrollbar-width:none;
+}
+.gl-root .gl-library-search-chips::-webkit-scrollbar {display:none;}
+.gl-root .gl-library-search-chip {
+  flex:0 0 auto;padding:7px 13px;border:1px solid rgba(92,161,213,.31);
+  border-radius:999px;background:rgba(14,42,71,.79);
+  color:#c3d9eb;font-size:12px;font-weight:700;white-space:nowrap;
+}
+.gl-root .gl-library-search-chip.gl-search-active {
+  background:#d6edff;color:#06192d;border-color:#8ad8ff;
+}
+.gl-root .gl-library-search-chip.gl-focused,
+.gl-root .gl-library-search-clear.gl-focused {
+  outline:2px solid #fff;outline-offset:1px;
+  box-shadow:0 0 15px rgba(42,184,255,.52);
+}
+.gl-root .gl-search-page {position:relative;padding-top:5px;min-height:0;}
+.gl-root .gl-search-page .gl-grid-heading {flex-basis:56px;padding-bottom:7px;}
+.gl-root .gl-search-sort-menu {
+  position:absolute;right:4px;top:48px;z-index:50;width:min(400px,90%);
+  max-height:min(62vh,420px);overflow-y:auto;overflow-x:hidden;
+}
+.gl-root .gl-search-empty {
+  flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:9px;color:#b8d3e9;text-align:center;
+}
+.gl-root .gl-search-empty>svg {font-size:42px;color:#70c8f7;}
+.gl-root .gl-search-empty h2 {color:#ecf8ff;font-size:23px;margin:3px 0;}
+.gl-root .gl-search-empty p {font-size:13px;margin:0;}
+@media (max-height:730px) {
+  .gl-root .gl-library-search-controls {gap:5px;padding:3px 6px 5px;}
+  .gl-root .gl-library-search-field-row {min-height:39px;}
+  .gl-root .gl-library-search-field {min-height:36px;}
+  .gl-root .gl-library-search-filter-row {min-height:29px;}
+  .gl-root .gl-library-search-chip {padding:5px 10px;}
+  .gl-root .gl-search-page .gl-grid-heading {flex-basis:49px;}
+}
+@media (max-width:720px) {
+  .gl-root .gl-library-search-filter-row {gap:6px;}
+  .gl-root .gl-library-search-filter-row>strong {width:71px;flex-basis:71px;font-size:10px;}
+  .gl-root .gl-library-search-chip {font-size:11px;padding:6px 9px;}
+}
 `;
