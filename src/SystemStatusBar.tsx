@@ -5,7 +5,7 @@ import {
   MdAccountCircle, MdBattery20, MdBattery50, MdBattery80,
   MdBatteryChargingFull, MdBatteryFull, MdBatteryUnknown,
   MdBluetooth, MdBluetoothDisabled, MdNotificationsNone,
-  MdSearch, MdWifi, MdWifiOff,
+  MdWifi, MdWifiOff,
 } from "react-icons/md";
 import { getActiveUserId } from "./steam";
 import {readLiveSteamClockPreference} from "./steamClock";
@@ -70,11 +70,10 @@ function batteryIcon(status: Battery | null) {
 
 type Props = {
   onStatusButtonDown: (event: GamepadEvent) => void;
-  searchRef: Ref<HTMLDivElement>;
-  onSearch?:()=>void;
+  statusRef: Ref<HTMLDivElement>;
 };
 
-export function SystemStatusBar({onStatusButtonDown,searchRef,onSearch}:Props) {
+export function SystemStatusBar({onStatusButtonDown,statusRef}:Props) {
   const [time,setTime]=useState<Date>(()=>new Date());
   const [device,setDevice] = useState<DeviceStatus>(NO_DEVICE_STATUS);
   const [steam,setSteam] = useState<SteamSupplement>(()=>readSteamSupplement());
@@ -207,14 +206,8 @@ export function SystemStatusBar({onStatusButtonDown,searchRef,onSearch}:Props) {
   };
 
   return <Focusable className="gl-topbar-status" flow-children="row">
-    <Focusable ref={searchRef} className="gl-topbar-search" noFocusRing
-      focusClassName="gl-focused"
-      onActivate={()=>{if(onSearch)onSearch();else Navigation.Navigate("/search");}}
-      onButtonDown={onStatusButtonDown}
-      onOKActionDescription="Search games" title="Search games" aria-label="Search games">
-      <MdSearch aria-hidden="true"/>
-    </Focusable>
-    <Focusable className="gl-topbar-icon gl-topbar-notifications" noFocusRing
+    {/* First status control remains the D-pad Up destination from tabs. */}
+    <Focusable ref={statusRef} className="gl-topbar-icon gl-topbar-notifications" noFocusRing
       focusClassName="gl-focused" onButtonDown={onStatusButtonDown}
       onActivate={()=>Navigation.Navigate("/notifications")}
       onOKActionDescription="Steam notifications" title="Steam notifications"

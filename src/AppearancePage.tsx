@@ -12,11 +12,10 @@ type Props={
   firstRef:{current:HTMLDivElement|null};
   onFocusRail:()=>void;
   onBack:()=>void;
-  onSearch:()=>void;
 };
 
 /** Controller-first Game Mode appearance screen. Color Editor is postponed. */
-export function AppearancePage({firstRef,onFocusRail,onBack,onSearch}:Props){
+export function AppearancePage({firstRef,onFocusRail,onBack}:Props){
   const [status,setStatus]=useState<ThemeStatus>(themeRuntimeStatus);
   const [expanded,setExpanded]=useState<Section|null>("theme");
   const [busy,setBusy]=useState(false);
@@ -24,7 +23,7 @@ export function AppearancePage({firstRef,onFocusRail,onBack,onSearch}:Props){
   const [notice,setNotice]=useState("");
   const headers=useRef<Array<HTMLDivElement|null>>([]);
   const options=useRef<Array<HTMLDivElement|null>>([]);
-  const searchRef=useRef<HTMLDivElement>(null);
+  const statusRef=useRef<HTMLDivElement>(null);
   useEffect(()=>subscribeThemeStatus(setStatus),[]);
   useEffect(()=>{
     const frame=window.requestAnimationFrame(()=>headers.current[0]?.focus());
@@ -64,7 +63,7 @@ export function AppearancePage({firstRef,onFocusRail,onBack,onSearch}:Props){
   return <div className="gl-appearance" aria-label="Appearance settings">
     <header className="gl-header gl-library-topbar" aria-label="Appearance navigation">
       <div className="gl-topbar-titles"><span className="gl-topbar-current">Appearance</span></div>
-      <SystemStatusBar searchRef={searchRef} onSearch={onSearch}
+      <SystemStatusBar statusRef={statusRef}
         onStatusButtonDown={(e:GamepadEvent)=>{
           if(e.detail?.button===GamepadButton.DIR_DOWN){
             e.preventDefault();e.stopPropagation();focusHeader(0);

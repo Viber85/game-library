@@ -58,17 +58,18 @@ test("Search state and origin stay in memory across native Game Details navigati
   assert.equal(searchBackRoute(),"/game-library/appearance");
 });
 
-test("Magnifier uses the internal search route from Home, Library and Appearance",()=>{
+test("Left rail Search uses the internal route and retains Game Details return",()=>{
   const bar=read("src/SystemStatusBar.tsx");
   const dash=read("src/Dashboard.tsx");
   const app=read("src/AppearancePage.tsx");
   const routes=read("src/index.tsx");
   const details=read("src/detailsReturn.ts");
-  assert.match(bar,/onActivate=\{\(\)=>\{if\(onSearch\)onSearch\(\);else Navigation.Navigate\("\/search"\);\}\}/);
+  assert.doesNotMatch(bar,/MdSearch|gl-topbar-search|Navigate\("\/search"\)/);
+  assert.match(dash,/\{ id: "search", label: "Search", icon: MdSearch, go: openLocalSearch \}/);
   assert.match(dash,/rememberSearchOrigin\(actualRoute\)/);
   assert.match(dash,/Navigation\.Navigate\(SEARCH_ROUTE\)/);
   assert.match(dash,/initialMode==="search"/);
-  assert.match(app,/onSearch=\{onSearch\}/);
+  assert.match(app,/<SystemStatusBar statusRef=\{statusRef\}/);
   assert.match(routes,/routerHook\.addRoute\(SEARCH_ROUTE/);
   assert.match(routes,/routerHook\.removeRoute\(SEARCH_ROUTE\)/);
   assert.match(details,/route===SEARCH_ROUTE/);
