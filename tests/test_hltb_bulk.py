@@ -120,6 +120,40 @@ class HltbBulkCacheTests(unittest.TestCase):
                              {"entries": []})
             search.assert_not_called()
 
+    def test_bulk_cache_read_does_not_wait_for_slow_http_lookup(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from threading import Event
+
+        started, release = Event(), Event()
+        def slow_search(name):
+            started.set()
+            release.wait(timeout=5)
+            raise OSError("simulated network outage")
+
+        with tempfile.TemporaryDirectory() as tmp, \
+             mock.patch.object(hltb.time, "time", return_value=NOW), \
+             mock.patch.object(hltb, "_search", side_effect=slow_search):
+            svc = self.make_service(tmp)
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                slow = pool.submit(svc.lookup, 103, "Stale Success")
+                self.assertTrue(started.wait(timeout=2))
+                fast = pool.submit(svc.cached_bulk, [{"id": 101, "title": "Hades"}])
+                try:
+                    cached = fast.result(timeout=1.5)
+                    self.assertEqual(cached["entries"][0]["extras"], 31.2)
+                finally:
+                    release.set()
+                self.assertTrue(slow.result(timeout=2)["stale"])
+
+    def test_offline_stale_fallback_must_not_reuse_other_games_title(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+             mock.patch.object(hltb.time, "time", return_value=NOW), \
+             mock.patch.object(hltb, "_search", side_effect=OSError("offline")):
+            svc = self.make_service(tmp)
+            other = svc.lookup(103, "Another Game")
+            self.assertEqual(other["status"], "error")
+            self.assertNotIn("data", other)
+
     def test_lookups_preserve_expired_values_when_provider_is_offline(self):
         with tempfile.TemporaryDirectory() as tmp, \
              mock.patch.object(hltb.time, "time", return_value=NOW), \
