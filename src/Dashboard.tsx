@@ -409,6 +409,8 @@ export function Dashboard({initialMode="home",originRoute}:
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
   const sort = sortForTab(tab,tabSorts);
   const sortKind=externalSortKind(sort);
+  const activeSortKind=useRef(sortKind);
+  activeSortKind.current=sortKind;
   const tabCounts = useMemo(() => new Map(tabs.map(t => {
     const result = gamesForTab(t, games);
     return [t.id, result.supported ? result.games.length : null] as const;
@@ -429,7 +431,10 @@ export function Dashboard({initialMode="home",originRoute}:
     if(!tabResult.supported||!tabResult.games.length)return;
     let mounted=true;
     void primeHltbCache(tabResult.games,()=>{
-      if(mounted)setMetaRevision(revision=>revision+1);
+      // Preloading HLTB while viewing A-Z, Recent or ProtonDB must not
+      // trigger an unrelated full-library re-sort and cover rerender.
+      if(mounted&&activeSortKind.current==="hltb")
+        setMetaRevision(revision=>revision+1);
     });
     return ()=>{mounted=false;};
   },[tab.id,metadataQueryIds,tabResult.supported]);
