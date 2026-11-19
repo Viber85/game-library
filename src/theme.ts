@@ -1458,4 +1458,17 @@ export const DASHBOARD_CSS = String.raw`
   .gl-root .gl-appearance-card-heading {min-height:58px;padding:11px 12px;}
   .gl-root .gl-appearance-card-body {padding:2px 12px 13px;}
 }
+
+/* v0.5.9-test.2 — non-Home Game Library routes own the top status area.
+ * Steam's real #header is independently painted by system-theme/shared.css
+ * and may overlay our pill on Decky /game-library/* routes. Hide ONLY
+ * that verified native header while one of our own-status pages is mounted.
+ * Unlike global body classes, this is automatically reverted by unmounting
+ * the page, and never targets our .gl-library-topbar or Steam QAM popups.
+ * Preserve element geometry to avoid shifting Steam's native route/layout.
+ */
+html:has(.gl-root.gl-own-status-only) #header {
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
 `;

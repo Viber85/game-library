@@ -2,6 +2,14 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.2 — status-bar overlap hotfix
+
+Game Library routes outside Steam Home no longer show Steam's original
+`#header` over our own `SystemStatusBar`. This applies only while a
+custom Game Library route is mounted, leaves the native Home/Settings/QAM
+alone and does not modify Appearance settings or navigation. Tested via
+CI; verify visually on MSI Claw.
+
 ## v0.5.9-test.1 — new navigation rail and Appearance
 
 Game Library rail: Running Game (only while running), Home, Library, Appearance and Steam Menu. Removes duplicate Store/Downloads/Settings/Power shortcuts while retaining the original Steam native menu as the one place for those actions. Appearance now hosts collapsible Theme, SteamGridDB Artwork and Updates sections. The built-in Midnight and Steam Default selectors reuse existing persistent theme settings. The Color Editor remains deferred. Decky QAM keeps the Game Library enable switch, Midnight switch, library and CEF diagnostics and a launch action. No SteamOS native CSS or card/grid/controller focus code is changed. Verify on MSI Claw before stable.

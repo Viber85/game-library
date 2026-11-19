@@ -554,7 +554,12 @@ export function Dashboard({initialMode="home",originRoute}:
 
   return (
     <div
-      className={"gl-root" + (railExpanded ? " gl-nav-expanded" : "")}
+      // Steam renders its original #header over custom Decky routes. The
+      // Home replacement does not need this: Home already has one header.
+      // The class and its CSS disappear immediately when this route unmounts.
+      className={"gl-root" +
+        (actualRoute!=="/library/home" ? " gl-own-status-only" : "") +
+        (railExpanded ? " gl-nav-expanded" : "")}
       onFocusCapture={event => {
         // Focus moves within the sidebar must not collapse it; outside
         // focus (mouse, keyboard, controller) restores the compact rail.
