@@ -77,7 +77,7 @@ test("runtime scans live Steam CSS aliases once per sync, still verifies every t
   assert.match(runtime,/const RECHECK_MS = 6500/);
   assert.match(runtime,/const STYLE_REVISION = "81"/);
   assert.match(compiler,/const modules=getSteamModules\(\)/);
-  assert.match(compiler,/const compileWithCache=createThemeAliasCache\(\)/);
+  assert.match(compiler,/const compileWithCache=createThemeAliasCache\(expandThemeClassAliases\)/);
 });
 
 test("focus, native Decky settings and Steam Input CSS remain untouched",()=>{
