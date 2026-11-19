@@ -16,6 +16,7 @@ const DASHBOARD_ROUTE = "/game-library/dashboard";
 const LIBRARY_ROUTE = "/game-library/library";
 const APPEARANCE_ROUTE = "/game-library/appearance";
 const SEARCH_ROUTE = "/game-library/search";
+const COLLECTIONS_ROUTE="/game-library/collections";
 const LIBRARY_DIAGNOSTICS_ROUTE = "/game-library/library-diagnostics";
 const HOME_ROUTE = "/library/home";
 const getSettings = callable<[], { default_home: boolean }>("get_dashboard_settings");
@@ -155,6 +156,8 @@ export default definePlugin(() => {
     {exact:true});
   routerHook.addRoute(SEARCH_ROUTE,()=> <Dashboard initialMode="search"/>,
     {exact:true});
+  routerHook.addRoute(COLLECTIONS_ROUTE,()=> <Dashboard initialMode="collections"/>,
+    {exact:true});
   routerHook.addRoute(LIBRARY_DIAGNOSTICS_ROUTE, LibraryDiagnostics, { exact: true });
   // Tab synchronization belongs to the plugin, not the dashboard route. Decky
   // can hide/unmount Game Mode while enabling TabMaster and UnifiedDeck.
@@ -194,6 +197,7 @@ export default definePlugin(() => {
       routerHook.removeRoute(LIBRARY_ROUTE);
       routerHook.removeRoute(APPEARANCE_ROUTE);
       routerHook.removeRoute(SEARCH_ROUTE);
+      routerHook.removeRoute(COLLECTIONS_ROUTE);
       routerHook.removeRoute(LIBRARY_DIAGNOSTICS_ROUTE);
     },
   };

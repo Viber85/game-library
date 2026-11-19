@@ -1582,4 +1582,116 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-library-search-filter-row>strong {width:71px;flex-basis:71px;font-size:10px;}
   .gl-root .gl-library-search-chip {font-size:11px;padding:6px 9px;}
 }
+
+/* v0.5.9-test.8 — Collections hub, intentionally local to our route.
+ * No changes to Steam native Settings, QAM, Appearance or Home colors. */
+.gl-root .gl-collections-page {
+  flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;
+  position:relative;
+}
+.gl-root .gl-collections-scroll {
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  padding:13px 8px 22px;overscroll-behavior:contain;
+  scrollbar-color:#315e88 transparent;
+}
+.gl-root .gl-collections-intro {padding:7px 4px 24px;}
+.gl-root .gl-collections-eyebrow {
+  color:#70cafa;font-size:11px;letter-spacing:.15em;font-weight:800;
+}
+.gl-root .gl-collections-intro h1 {
+  margin:7px 0 5px;font-size:clamp(26px,3vw,38px);font-weight:800;
+  line-height:1.15;color:#f0faff;
+}
+.gl-root .gl-collections-intro p {
+  margin:0;font-size:13px;color:#adcbdf;
+}
+.gl-root .gl-collections-cards {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;align-items:stretch;max-width:1120px;
+}
+.gl-root .gl-collections-card {
+  position:relative;min-width:0;min-height:174px;
+  display:flex;flex-direction:column;align-items:stretch;
+  padding:18px 21px;border-radius:15px;
+  border:1px solid rgba(107,183,233,.36);color:#eff9ff;
+  background:linear-gradient(145deg,rgba(17,57,93,.88),rgba(5,20,39,.98));
+  outline:none;overflow:visible;text-align:left;
+}
+.gl-root .gl-collections-card.gl-focused,
+.gl-root .gl-collections-card:focus-visible {
+  border-color:#b7ecff;background:linear-gradient(145deg,#195f92,#0b3459);
+  box-shadow:inset 0 0 0 1px #d1efff,0 0 19px rgba(18,165,250,.42);
+}
+.gl-root .gl-collections-card-top {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:9px;margin-bottom:10px;
+}
+.gl-root .gl-collections-card-icon {font-size:28px;color:#7ddcff;}
+.gl-root .gl-collections-card-count {
+  padding:4px 11px;min-width:35px;border-radius:999px;
+  border:1px solid rgba(126,197,233,.3);color:#c9e7f9;
+  text-align:center;font-size:13px;font-weight:750;
+}
+.gl-root .gl-collections-card-tag {
+  color:#8cbbd8;letter-spacing:.11em;font-size:10px;
+  font-weight:750;margin-bottom:6px;
+}
+.gl-root .gl-collections-card strong {
+  font-size:clamp(17px,1.65vw,23px);line-height:1.25;font-weight:750;
+}
+.gl-root .gl-collections-card small {
+  margin-top:5px;padding-right:20px;color:#bed4e5;font-size:12px;
+}
+.gl-root .gl-collections-card-arrow {
+  position:absolute;right:17px;bottom:19px;font-size:22px;color:#86cdea;
+}
+.gl-root .gl-collections-detail-heading {
+  display:flex;align-items:center;gap:16px;min-height:67px;
+  margin-bottom:18px;
+}
+.gl-root .gl-collections-detail-copy h1 {
+  margin:0 0 2px;font-size:clamp(20px,2.5vw,30px);
+}
+.gl-root .gl-collections-detail-copy span {
+  font-size:12px;color:#a7c7de;
+}
+.gl-root .gl-collections-groups {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.gl-root .gl-collections-group {
+  display:flex;align-items:center;gap:11px;min-height:64px;
+  padding:15px;border:1px solid #345e80;border-radius:11px;
+  background:#0b2948;color:#e4f4ff;
+}
+.gl-root .gl-collections-group>svg {font-size:23px;color:#79d1f9;}
+.gl-root .gl-collections-group>strong {flex:1;min-width:0;}
+.gl-root .gl-collections-group.gl-focused {
+  outline:2px solid #d8f4ff;outline-offset:0;
+  border-color:#a9dcff;background:#185176;
+}
+.gl-root .gl-collections-grid {
+  grid-auto-rows:max-content;padding:5px 8px 20px;
+}
+.gl-root .gl-collections-empty {
+  display:flex;flex:1;min-height:230px;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:22px;gap:10px;color:#bcd2e4;
+}
+.gl-root .gl-collections-empty>svg {font-size:38px;color:#78d1ff;}
+.gl-root .gl-collections-empty h2 {font-size:21px;margin:0;color:#eaf8ff;}
+.gl-root .gl-collections-empty p {
+  margin:0;max-width:520px;font-size:13px;line-height:1.55;
+}
+@media(max-width:720px){
+  .gl-root .gl-collections-card {min-height:145px;padding:13px;}
+  .gl-root .gl-collections-intro {padding-bottom:15px;}
+  .gl-root .gl-collections-cards {gap:10px;}
+  .gl-root .gl-collections-group {padding:10px;min-height:57px;}
+}
+@media(max-height:650px){
+  .gl-root .gl-collections-card {min-height:133px;padding:12px;}
+  .gl-root .gl-collections-card-top {margin-bottom:5px;}
+  .gl-root .gl-collections-intro {padding-bottom:13px;}
+}
 `;
