@@ -22,8 +22,11 @@ export function normalizeSearchText(value:string):string {
     .toLocaleLowerCase().trim().replace(/\s+/g," ");
 }
 
-/** All query words may appear anywhere in the title; results rank exact,
- * prefix, word-boundary, then substring hits and sort by name within ties.
+/** Search matches the BEGINNING of the game's full title, not letters
+ * anywhere inside it. For example "h" matches "Hades" but not "The Hobbit".
+ * Full prefixes such as "dark so" match "Dark Souls", ignoring case,
+ * accents and repeated spaces. Existing source/install filters are applied
+ * before results are returned. Keep an exact title first, then A-Z.
  */
 export function searchLibraryGames(
   games:readonly LibraryGame[],query:string,
@@ -31,21 +34,14 @@ export function searchLibraryGames(
 ):LibraryGame[]{
   const normalized=normalizeSearchText(query);
   if(!normalized)return [];
-  const words=normalized.split(" ");
   return games.filter(game=>{
     if(source!=="all"&&gameSearchSource(game,membership)!==source)return false;
     if(installed==="installed"&&!game.installed)return false;
     if(installed==="not-installed"&&game.installed)return false;
-    const title=normalizeSearchText(game.title);
-    return words.every(word=>title.includes(word));
+    return normalizeSearchText(game.title).startsWith(normalized);
   }).sort((a,b)=>{
-    const rank=(title:string)=>{
-      const normalizedTitle=normalizeSearchText(title);
-      if(normalizedTitle===normalized)return 0;
-      if(normalizedTitle.startsWith(normalized))return 1;
-      if(normalizedTitle.includes(" "+normalized))return 2;
-      return 3;
-    };
-    return rank(a.title)-rank(b.title)||a.title.localeCompare(b.title);
+    const aExact=normalizeSearchText(a.title)===normalized;
+    const bExact=normalizeSearchText(b.title)===normalized;
+    return Number(bExact)-Number(aExact)||a.title.localeCompare(b.title);
   });
 }

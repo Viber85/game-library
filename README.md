@@ -2,6 +2,19 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.7 — prefix-only Game Library search
+
+Search now filters titles strictly from their first character instead
+of finding query letters anywhere in a title. Typing `h` shows games
+starting with H (e.g. Hades, Hollow Knight), not games like The Hobbit
+or Ghost of Tsushima. Multiword prefixes such as `dark so` still
+match Dark Souls. Case, whitespace and Croatian accents are normalized.
+Exact matches rank first, otherwise alphabetical sorting is preserved.
+
+All existing Steam/Epic/GOG/Other, installation filters, controller
+navigation, Search field, artwork and Game Details behavior are
+unchanged. No Appearance, Midnight, or native SteamOS CSS changes.
+
 ## v0.5.9-test.6 — make Search input visible and readable
 
 Regression hotfix after the v0.5.9-test.5 visual change: the native
