@@ -614,7 +614,7 @@ export function Dashboard({initialMode="home",originRoute}:
       restorePending.current=null;
     });
     return ()=>window.cancelAnimationFrame(frame);
-  },[initialMode,viewAll,tab.id,shown.length,gridLimit]);
+  },[initialMode,viewAll,tab.id,activeTab,shown.length,gridLimit]);
   const autoFocusedHome=useRef(false);
   useEffect(()=>{
     if(viewAll||!detailsReturn||autoFocusedHome.current||
