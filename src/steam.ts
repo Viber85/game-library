@@ -274,14 +274,6 @@ export function posterCandidates(game:LibraryGame): string[] {
   if(!game.nonSteam)out.push("https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/library_600x900.jpg");
   return [...new Set(out)];
 }
-export function posterUrl(game: LibraryGame): string | undefined {
-  return game.poster || (game.nonSteam ? undefined :
-    "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/library_600x900.jpg");
-}
-export function heroUrl(game: LibraryGame): string | undefined {
-  return game.hero || (game.nonSteam ? undefined :
-    "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/"+game.id+"/library_hero.jpg");
-}
 export function openDetails(game: LibraryGame): void {
   Navigation.Navigate("/library/app/"+game.id);
 }
