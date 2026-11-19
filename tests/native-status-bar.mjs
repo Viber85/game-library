@@ -9,7 +9,7 @@ const appearance=read("src/AppearancePage.tsx");
 const index=read("src/index.tsx");
 
 test("Our original Home does not suppress Steam #header on native routes",()=>{
-  assert.match(dash,/actualRoute!=="/library\/home" \? " gl-own-status-only" : ""/);
+  assert.ok(dash.includes('actualRoute!=="/library/home" ? " gl-own-status-only" : ""'));
   assert.match(index,/new HomeReturnGate|<HomeReturnGate native=\{props\.children\}/);
   assert.match(index,/<Dashboard originRoute=\{HOME_ROUTE\}\/>/);
   assert.match(dash,/initialMode==="library"\?\s*LIBRARY_ROUTE:initialMode==="appearance"\?APPEARANCE_ROUTE:"\/library\/home"/);
