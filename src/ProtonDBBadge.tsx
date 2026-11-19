@@ -1,19 +1,9 @@
-import { callable } from "@decky/api";
+import {requestProtonRating,type ProtonTier,type ProtonRating} from "./metadataRequests";
 import { useEffect, useState } from "react";
 import { MdShield, MdVerified } from "react-icons/md";
 import type { LibraryGame } from "./steam";
 
-type Tier = "platinum" | "gold" | "silver" | "bronze" | "borked" | null;
-type Rating = {
-  status: "ok" | "unavailable" | "error";
-  tier: Tier;
-  appid?: number;
-  matched_title?: string | null;
-  cached?: boolean;
-  reason?: string;
-};
-const fetchRating = callable<[number,string,boolean], Rating>("protondb_for_game");
-const label = (tier: Tier) =>
+const label = (tier: ProtonTier) =>
   tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : "Not rated";
 
 /**
@@ -22,12 +12,12 @@ const label = (tier: Tier) =>
  * that matching game's actual ProtonDB community score.
  */
 export function ProtonDBBadge({game}:{game:LibraryGame}) {
-  const [rating,setRating] = useState<Rating | null>(null);
+  const [rating,setRating] = useState<ProtonRating | null>(null);
   useEffect(() => {
     let active=true;
     setRating(null);
     const timer=window.setTimeout(() => {
-      void fetchRating(game.id,game.title,game.nonSteam).then(r => {
+      void requestProtonRating(game.id,game.title,game.nonSteam).then(r => {
         if(active)setRating(r);
       }).catch(()=>{if(active)setRating({status:"error",tier:null});});
     },450);

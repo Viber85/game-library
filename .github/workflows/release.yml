@@ -58,6 +58,6 @@ jobs:
           if [[ "$VERSION" == *"-"* ]]; then PREVIEW=(--prerelease); fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG}" \
-            --notes "Game Library v0.5.8-test.1: Conservative source-code cleanup based on confirmed v0.5.7. Avoid full Steam library React rerenders on the 15-second poll when every displayed/sorted CAppOverview field is unchanged, while independently tracking native Steam/TabMaster/UnifiedDeck collection membership to keep Installed, Epic and GOG grids live. Deduplicate simultaneous native Steam RequestAppDetails calls from the selected hero and title logo; requests are still refreshed on later selections. Remove unused posterUrl/heroUrl exports without touching the real SteamGridDB fallback candidate pipeline. Avoid waking the whole grid when HLTB local cache completes while sorting by A-Z, Recent or ProtonDB. No CSS or Midnight colors modified, no Steam Game Mode routes or A/B/Y/Start/Select/L1/R1 controller changes, and no changes to B from Game Details returning to its previous grid. Automated performance regression checks and full typecheck/build/ZIP CI passed. Next phase: gradual customizable Midnight colors starting with the accent, documented in docs/theme-color-roadmap.md. On-device MSI Claw verification requested." \
+            --notes-file docs/release-notes-0.5.8-test.3.md \
             --target "$GITHUB_SHA" \
             "${PREVIEW[@]}"

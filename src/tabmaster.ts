@@ -1,6 +1,7 @@
 import { callable } from "@decky/api";
 import { defaultLibraryTabGames } from "./libraryInventory";
 import { getCollectionIdSet, getUnifideckCollectionIds, LibraryGame } from "./steam";
+import {createCollectionLookupBatch,type CollectionLookup} from "./collectionLookupBatch";
 
 export type TabMasterFilter = { type: string; inverted?: boolean; params?: Record<string, any> };
 export type SteamTab = {
@@ -33,8 +34,17 @@ export const fallbackTabs: SteamTab[] = [
 ];
 
 type Predicate = (game: LibraryGame) => boolean;
+const COLLECTION_SOURCE:CollectionLookup={
+  native:getCollectionIdSet,unified:getUnifideckCollectionIds,
+};
 
-function matchFilter(filter: TabMasterFilter, depth=0): Predicate | null {
+/** Creates a fresh lookup cache for each active-tab or membership scan. */
+export function createBatchGamesForTab(){
+  const lookups=createCollectionLookupBatch(COLLECTION_SOURCE);
+  return (tab:SteamTab,games:LibraryGame[])=>gamesForTab(tab,games,lookups);
+}
+
+function matchFilter(filter: TabMasterFilter,depth=0,lookups:CollectionLookup=COLLECTION_SOURCE): Predicate | null {
   const p = filter.params ?? {};
   let fn: Predicate | null = null;
   if (depth > 3) return null;
@@ -42,7 +52,7 @@ function matchFilter(filter: TabMasterFilter, depth=0): Predicate | null {
     case "collection": {
       const id = p.id ?? p.collection;
       const name = typeof p.name === "string" ? p.name : undefined;
-      const set = typeof id === "string" ? getCollectionIdSet(id, name) : null;
+      const set = typeof id === "string" ? lookups.native(id, name) : null;
       if (set) fn = g => set.has(g.id);
       break;
     }
@@ -69,7 +79,7 @@ function matchFilter(filter: TabMasterFilter, depth=0): Predicate | null {
       } catch { /* invalid TabMaster pattern; use native Steam instead */ }
       break;
     case "merge": {
-      const children = Array.isArray(p.filters) ? p.filters.map((f:TabMasterFilter)=>matchFilter(f,depth+1)) : [];
+      const children = Array.isArray(p.filters) ? p.filters.map((f:TabMasterFilter)=>matchFilter(f,depth+1,lookups)) : [];
       if (!children.length || children.some(x=>x===null)) break;
       const preds=children as Predicate[];
       fn = p.mode === "or" ? g=>preds.some(f=>f(g)) : g=>preds.every(f=>f(g));
@@ -86,7 +96,7 @@ function matchFilter(filter: TabMasterFilter, depth=0): Predicate | null {
 }
 
 /** Unsupported custom TabMaster filters fail CLOSED rather than displaying a false result. */
-export function gamesForTab(tab: SteamTab, games: LibraryGame[]): {
+export function gamesForTab(tab: SteamTab, games: LibraryGame[],lookups:CollectionLookup=COLLECTION_SOURCE): {
   supported: boolean;
   games: LibraryGame[];
   reason?: string;
@@ -97,7 +107,7 @@ export function gamesForTab(tab: SteamTab, games: LibraryGame[]): {
     /^gog$/i.test(tab.title.trim()) ? "GOG" : null;
   const collectionFallback = (source && (!tab.filters ||
     (tab.filters.length === 1 && tab.filters[0].type === "collection")))
-      ? getUnifideckCollectionIds(source) : null;
+      ? lookups.unified(source) : null;
   if (!tab.filters) {
     if (collectionFallback !== null)
       return {supported:true, games:games.filter(g=>collectionFallback.has(g.id))};
@@ -106,16 +116,16 @@ export function gamesForTab(tab: SteamTab, games: LibraryGame[]): {
     // The old installed flag included all 321 shortcuts and overstated
     // the Steam Installed tab as 331 titles.
     const id=tab.id.toLowerCase();
-    const native=id==="allgames" ? {allGames:getCollectionIdSet("all-games")} :
-      id==="installed" ? {installed:getCollectionIdSet("local-install")} :
-      id==="favorites" ? {favorites:getCollectionIdSet("favorite")} : {};
+    const native=id==="allgames" ? {allGames:lookups.native("all-games")} :
+      id==="installed" ? {installed:lookups.native("local-install")} :
+      id==="favorites" ? {favorites:lookups.native("favorite")} : {};
     const nativeGames=defaultLibraryTabGames(tab.id,games,native);
     return nativeGames!==null
       ? { supported:true, games:nativeGames }
       : { supported:false, games:[],
           reason:"This native Steam tab cannot be reproduced here yet." };
   }
-  const predicates = tab.filters.map(f=>matchFilter(f));
+  const predicates = tab.filters.map(f=>matchFilter(f,0,lookups));
   if (predicates.some(x=>x===null)) {
     if(collectionFallback !== null) {
       return {supported:true, games:games.filter(g=>collectionFallback.has(g.id))};

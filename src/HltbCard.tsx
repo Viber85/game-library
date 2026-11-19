@@ -1,19 +1,7 @@
-import { callable } from "@decky/api";
+import {requestHltbTimes,type HltbReply} from "./metadataRequests";
 import { useEffect, useState } from "react";
 import { MdTimer } from "react-icons/md";
 import type { LibraryGame } from "./steam";
-
-type Times = {
-  main:number|null;
-  extras:number|null;
-  completionist:number|null;
-  name:string;
-  url:string|null;
-  source:string;
-};
-type Reply = { status:"ok"|"unavailable"|"error"; data?:Times|null; cached?:boolean; reason?:string };
-
-const lookup = callable<[number,string],Reply>("hltb_times");
 
 function fmt(value:number|null|undefined) {
   return typeof value==="number" && Number.isFinite(value) && value>0 ? value.toFixed(value>=10?0:1)+"h" : "—";
@@ -21,12 +9,12 @@ function fmt(value:number|null|undefined) {
 
 /** Only the focused game is queried, after a short pause; Python caches responses for a week. */
 export function HowLongToBeatCard({game}:{game:LibraryGame}) {
-  const [result,setResult] = useState<Reply|null>(null);
+  const [result,setResult] = useState<HltbReply|null>(null);
   useEffect(()=>{
     let active=true;
     setResult(null);
     const timer=window.setTimeout(()=>{
-      void lookup(game.id,game.title).then(data=>{
+      void requestHltbTimes(game.id,game.title).then(data=>{
         if(active)setResult(data);
       }).catch(()=>{if(active)setResult({status:"error",reason:"Network unavailable"});});
     },500);

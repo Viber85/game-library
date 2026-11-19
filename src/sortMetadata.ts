@@ -1,4 +1,5 @@
 import {callable} from "@decky/api";
+import {requestHltbTimes,requestProtonRating} from "./metadataRequests";
 import type {LibraryGame} from "./steam";
 import {loadAchievements} from "./achievements";
 import type {ExternalSortKind,SortData} from "./homeSort";
@@ -11,12 +12,6 @@ import type {ExternalSortKind,SortData} from "./homeSort";
  * - Distinguish a fresh cached miss (12h) from an unknown game.
  * No bulk web requests and no new disk storage formats.
  */
-type HltbReply={
-  status:string;
-  data?:{extras?:number|null}|null;
-  stale?:boolean;
-  expires_in?:number;
-};
 type HltbBulkItem={
   id:number;
   title:string;
@@ -26,12 +21,8 @@ type HltbBulkItem={
 };
 type HltbBulkReply={entries?:HltbBulkItem[]};
 
-const hltb=callable<[number,string],HltbReply>("hltb_times");
 const hltbBulk=callable<[Array<{id:number;title:string}>],HltbBulkReply>(
   "hltb_cached_bulk");
-const proton=callable<[number,string,boolean],{
-  status:string;tier?:string|null;
-}>("protondb_for_game");
 
 const cached:{
   hltb:Map<number,number|null>;
@@ -97,11 +88,11 @@ export function primeHltbCache(
           // rate-limited individual lookup path.
           continue;
         }
-        const requested=new Map(chunk.map(g=>[g.id,g.title.trim()]));
+        const requested=new Map(chunk.map(g=>[g.id,g] as const));
         for(const entry of response?.entries??[]){
           if(!entry||!Number.isSafeInteger(entry.id)||
-             requested.get(entry.id)!==entry.title)continue;
-          const original=chunk.find(g=>g.id===entry.id);
+             requested.get(entry.id)?.title.trim()!==entry.title)continue;
+          const original=requested.get(entry.id);
           if(!original||readyHltb(original))continue;
           cached.hltb.set(entry.id,validHours(entry.extras));
           if(entry.fresh&&typeof entry.expires_in==="number"&&
@@ -130,7 +121,7 @@ async function lookup(g:LibraryGame,kind:ExternalSortKind):Promise<number|null>{
   try{
     if(kind==="hltb"){
       ensureTitle(g);
-      const result=await hltb(g.id,g.title);
+      const result=await requestHltbTimes(g.id,g.title);
       // HLTB comp_plus = Main + Extras; never derive an average from main.
       const hours=result?.status==="ok"?result.data?.extras:null;
       if(result?.status==="ok"||result?.status==="unavailable"){
@@ -156,7 +147,7 @@ async function lookup(g:LibraryGame,kind:ExternalSortKind):Promise<number|null>{
       return cached.hltb.get(g.id)??null;
     }
     if(kind==="proton"){
-      const result=await proton(g.id,g.title,g.nonSteam);
+      const result=await requestProtonRating(g.id,g.title,g.nonSteam);
       return result?.status==="ok"&&typeof result.tier==="string"?
         ranks[result.tier.toLowerCase()]??null:null;
     }
