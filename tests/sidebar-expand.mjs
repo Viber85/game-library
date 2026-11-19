@@ -38,7 +38,7 @@ test("floating library header shows only current tab with real search and clock"
   assert.doesNotMatch(ui,/gl-topbar-divider/);
   assert.match(ui,/<SystemStatusBar searchRef=\{headerSearchRef\}/);
   assert.match(status,/<Focusable ref=\{searchRef\} className="gl-topbar-search"/);
-  assert.match(status,/onActivate=\{\(\)=>Navigation\.Navigate\("\/search"\)\}/);
+  assert.match(status,/onActivate=\{\(\)=>\{if\(onSearch\)onSearch\(\);else Navigation.Navigate\("\/search"\);\}\}/);
   assert.match(status,/<time className="gl-topbar-clock" dateTime=\{time\.toISOString\(\)\}/);
   assert.match(status,/const clock=window\.setInterval\(\(\)=>setTime\(new Date\(\)\),15000\)/);
   assert.doesNotMatch(ui,/setTime\(new Date\(\)\)/);

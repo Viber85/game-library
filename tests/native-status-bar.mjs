@@ -12,7 +12,7 @@ test("Our original Home does not suppress Steam #header on native routes",()=>{
   assert.ok(dash.includes('actualRoute!=="/library/home" ? " gl-own-status-only" : ""'));
   assert.match(index,/new HomeReturnGate|<HomeReturnGate native=\{props\.children\}/);
   assert.match(index,/<Dashboard originRoute=\{HOME_ROUTE\}\/>/);
-  assert.match(dash,/initialMode==="library"\?\s*LIBRARY_ROUTE:initialMode==="appearance"\?APPEARANCE_ROUTE:"\/library\/home"/);
+  assert.match(dash,/initialMode==="library"\?\s*LIBRARY_ROUTE:initialMode==="appearance"\?APPEARANCE_ROUTE:\s*searchMode\?SEARCH_ROUTE:"\/library\/home"/);
 });
 
 test("Library, Appearance and Dashboard share our own status bar without native overlay",()=>{
@@ -28,7 +28,7 @@ test("Library, Appearance and Dashboard share our own status bar without native 
 });
 
 test("No global Steam UI suppression, observers or changes to Appearance",()=>{
-  const added=css.slice(css.indexOf("/* v0.5.9-test.2"));
+  const added=css.slice(css.indexOf("/* v0.5.9-test.2"),css.indexOf("/* v0.5.9-test.3"));
   assert.ok(added.length>100);
   assert.doesNotMatch(added,/MutationObserver|querySelector|\.BasicUI|#Footer|display:none|body\.|class\*=/);
   assert.doesNotMatch(added,/\.gl-topbar-status\s*\{/);

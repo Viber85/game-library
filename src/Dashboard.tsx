@@ -9,12 +9,16 @@ import {
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
-  getLibraryGames, hasLibraryStore, lastPlayedLabel,
+  getLibraryGames, getUnifideckCollectionIds, hasLibraryStore, lastPlayedLabel,
   LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
 import {getMissingSteamArt,subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 import { SystemStatusBar } from "./SystemStatusBar";
+import {LibrarySearchToolbar} from "./LibrarySearchToolbar";
+import {searchLibraryGames} from "./librarySearch";
+import {SEARCH_ROUTE,rememberSearchOrigin,searchBackRoute,
+  readSearchSelection,saveSearchSelection} from "./searchNavigation";
 import {AppearancePage} from "./AppearancePage";
 import {openNativeSteamMenu} from "./nativeSteamMenu";
 import { fallbackTabs, gamesForTab, createBatchGamesForTab, type SteamTab } from "./tabmaster";
@@ -137,9 +141,11 @@ function GameCard({
 
 
 export function Dashboard({initialMode="home",originRoute}:
-  {initialMode?:"home"|"library"|"appearance";originRoute?:DetailsOriginRoute}={}) {
+  {initialMode?:"home"|"library"|"appearance"|"search";originRoute?:DetailsOriginRoute}={}) {
+  const searchMode=initialMode==="search";
   const actualRoute=originRoute??(initialMode==="library"?
-    LIBRARY_ROUTE:initialMode==="appearance"?APPEARANCE_ROUTE:"/library/home");
+    LIBRARY_ROUTE:initialMode==="appearance"?APPEARANCE_ROUTE:
+      searchMode?SEARCH_ROUTE:"/library/home");
   // Read a single return snapshot only if this exact original route mounts.
   const [detailsReturn]=useState(()=>peekDetailsOrigin(actualRoute));
   useEffect(()=>{
@@ -147,6 +153,10 @@ export function Dashboard({initialMode="home",originRoute}:
   },[actualRoute,detailsReturn]);
   const restorePending=useRef(detailsReturn);
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
+  const [searchSelection,setSearchSelection]=useState(readSearchSelection);
+  useEffect(()=>{
+    if(searchMode)saveSearchSelection(searchSelection);
+  },[searchMode,searchSelection]);
   const {runningGame,setRunningGame}=useRunningGameState();
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
   const [activeTab, setActiveTab] = useState(()=>
@@ -162,13 +172,15 @@ export function Dashboard({initialMode="home",originRoute}:
   const [selectedId, setSelectedId] = useState<number | undefined>(
     detailsReturn?.gameId);
   const [viewAll,setViewAll] = useState(
-    detailsReturn?.viewAll??(initialMode==="library"));
+    searchMode?true:(detailsReturn?.viewAll??(initialMode==="library")));
   const [gridLimit,setGridLimit] = useState(
     Math.max(60,detailsReturn?.gridLimit??60));
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sidebarRef = useRef<HTMLElement>(null);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
   const headerSearchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef=useRef<HTMLDivElement>(null);
+  const firstSearchFilterRef=useRef<HTMLDivElement>(null);
   const appearanceEntryRef=useRef<HTMLDivElement>(null);
   const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -179,7 +191,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
-  const lastRailId=useRef(initialMode==="appearance"?"appearance":initialMode==="library"?"library":"home");
+  const lastRailId=useRef(initialMode==="appearance"?"appearance":initialMode==="library"||searchMode?"library":"home");
   const [railExpanded, setRailExpanded] = useState(false);
   const tabsForRefresh=useRef<SteamTab[]>(fallbackTabs);
   const membershipSignature=useRef<string|null>(null);
@@ -254,7 +266,7 @@ export function Dashboard({initialMode="home",originRoute}:
     pendingGridIndex.current=null;
   },[tabIds,activeTab,tabInfo.available]);
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
-  const sort = sortForTab(tab,tabSorts);
+  const sort = searchMode?(tabSorts["__search__"]??"alphabetical"):sortForTab(tab,tabSorts);
   const sortKind=externalSortKind(sort);
   const activeSortKind=useRef(sortKind);
   activeSortKind.current=sortKind;
@@ -265,8 +277,18 @@ export function Dashboard({initialMode="home",originRoute}:
     return [t.id, result.supported ? result.games.length : null] as const;
   }));
   }, [tabs, games, membershipRevision]);
-  const tabResult = useMemo(() => gamesForTab(tab, games),
-    [tab, games, membershipRevision]);
+  // The search is GLOBAL; the currently selected TabMaster tab does not
+  // exclude Steam or Unifideck games from the searchable inventory.
+  const searchMembership=useMemo(()=>searchMode?{
+    epic:getUnifideckCollectionIds("Epic"),
+    gog:getUnifideckCollectionIds("GOG"),
+  }:{epic:null,gog:null},[searchMode,games,membershipRevision]);
+  const searchResults=useMemo(()=>searchMode?
+    searchLibraryGames(games,searchSelection.query,searchSelection.source,
+      searchSelection.installed,searchMembership):[],
+    [searchMode,games,searchSelection,searchMembership]);
+  const tabResult = useMemo(()=>searchMode?{supported:true,games:searchResults}:
+    gamesForTab(tab,games),[searchMode,searchResults,tab,games,membershipRevision]);
   const shown=useMemo(()=>sortGames(tabResult.games,sort,getSortData()),
     [tabResult.games,sort,metaRevision]);
   const metaProgress=sortKind?
@@ -357,6 +379,16 @@ export function Dashboard({initialMode="home",originRoute}:
     setRailExpanded(true);
     railRefs.current[target]?.focus();
   };
+  const searchStarted=useRef(false);
+  useEffect(()=>{
+    if(!searchMode)return;
+    if(!searchStarted.current){searchStarted.current=true;return;}
+    pendingGridIndex.current=null;
+    lastGridFocusIndex.current=0;
+    setSelectedId(undefined);
+    setGridLimit(60);
+    if(fullGridScrollRef.current)fullGridScrollRef.current.scrollTop=0;
+  },[searchMode,searchSelection]);
   const commitGridFocus = (index:number):boolean => {
     const node=fullGridRefs.current[index];
     if (!node || !node.isConnected) return false;
@@ -386,6 +418,8 @@ export function Dashboard({initialMode="home",originRoute}:
     if(commitGridFocus(target))pendingGridIndex.current=null;
   },[viewAll,gridLimit,shown.length,activeTab,sort]);
   const moveInGrid = (index:number, button:GamepadButton) => {
+    if(searchMode&&(button===GamepadButton.BUMPER_LEFT||
+      button===GamepadButton.BUMPER_RIGHT))return;
     if(button===GamepadButton.BUMPER_LEFT){cycleTab(-1);return;}
     if(button===GamepadButton.BUMPER_RIGHT){cycleTab(1);return;}
     const direction:GridDirection|undefined =
@@ -395,6 +429,10 @@ export function Dashboard({initialMode="home",originRoute}:
       button===GamepadButton.DIR_DOWN?"down":undefined;
     if(!direction)return;
     const columns=getGridColumnCount(fullGridLayoutRef.current);
+    if(searchMode&&direction==="up"&&index<columns){
+      firstSearchFilterRef.current?.focus();
+      return;
+    }
     if (canEnterNavigationRail(index, shown.length, columns, direction)) {
       // This is an explicit first-column -> sidebar transition, not Steam's
       // free-form spatial focus search. Right/B returns to the same game.
@@ -410,6 +448,11 @@ export function Dashboard({initialMode="home",originRoute}:
     setRailExpanded(false);
     if(initialMode==="appearance"){
       appearanceEntryRef.current?.focus();
+      return;
+    }
+    if(searchMode){
+      if(shown.length)focusGrid(index??lastGridFocusIndex.current);
+      else firstSearchFilterRef.current?.focus();
       return;
     }
     if (viewAll) {
@@ -438,7 +481,8 @@ export function Dashboard({initialMode="home",originRoute}:
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
   const exitGrid=()=>{
-    if(initialMode==="library")Navigation.Navigate("/library/home");
+    if(searchMode)Navigation.Navigate(searchBackRoute());
+    else if(initialMode==="library")Navigation.Navigate("/library/home");
     else closeGrid();
   };
   const showSortMenu=()=>{
@@ -458,8 +502,9 @@ export function Dashboard({initialMode="home",originRoute}:
     });
   };
   const chooseSort=(id:Sort)=>{
-    rememberedSorts[tab.id]=id;
-    setTabSorts(previous=>({...previous,[tab.id]:id}));
+    const sortId=searchMode?"__search__":tab.id;
+    rememberedSorts[sortId]=id;
+    setTabSorts(previous=>({...previous,[sortId]:id}));
     pendingGridIndex.current=null;
     lastGridFocusIndex.current=0;
     setSelectedId(undefined);
@@ -482,6 +527,7 @@ export function Dashboard({initialMode="home",originRoute}:
     if(!viewAll||!shown.length||autoFocusedLibrary.current)return;
     // Native Library is a grid; Home can be in View More full-grid mode.
     if(initialMode!=="library"&&!detailsReturn?.viewAll)return;
+    if(searchMode&&!restorePending.current)return;
     const snapshot=restorePending.current;
     if(snapshot&&snapshot.tabId!==tab.id)return;
     const restoredIndex=snapshot?
@@ -542,7 +588,7 @@ export function Dashboard({initialMode="home",originRoute}:
     window.requestAnimationFrame(() => focusPill(nextIndex));
   };
   const handleBumper = (e:GamepadEvent):boolean => {
-    if(initialMode==="appearance")return false;
+    if(initialMode==="appearance"||searchMode)return false;
     if (e.detail?.button === GamepadButton.BUMPER_LEFT) {
       consume(e);cycleTab(-1);return true;
     }
@@ -552,6 +598,10 @@ export function Dashboard({initialMode="home",originRoute}:
     return false;
   };
 
+  const openLocalSearch=()=>{
+    rememberSearchOrigin(actualRoute);
+    Navigation.Navigate(SEARCH_ROUTE);
+  };
   return (
     <div
       // Steam renders its original #header over custom Decky routes. The
@@ -585,7 +635,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 ref={el => { railRefs.current[index] = el; }}
                 className={"gl-rail-item"+(action.id==="running"?" gl-running-item":"")+
                   (action.id===(initialMode==="appearance"?"appearance":
-                    initialMode==="library"?"library":"home")?" gl-rail-current":"")}
+                    initialMode==="library"||searchMode?"library":"home")?" gl-rail-current":"")}
                 focusClassName="gl-focused"
                 noFocusRing
                 onGamepadFocus={() => {
@@ -624,8 +674,96 @@ export function Dashboard({initialMode="home",originRoute}:
         {initialMode==="appearance"
           ? <AppearancePage firstRef={appearanceEntryRef}
               onFocusRail={()=>focusRail(railIndex)}
+              onSearch={openLocalSearch}
               onBack={()=>Navigation.Navigate("/library/home")}/>
-          : <>
+          : searchMode ? <>
+        <header className="gl-header gl-library-topbar" aria-label="Search navigation">
+          <div className="gl-topbar-titles"><span className="gl-topbar-current">Search</span></div>
+          <SystemStatusBar searchRef={headerSearchRef}
+            onSearch={()=>searchInputRef.current?.querySelector("input")?.focus()}
+            onStatusButtonDown={(e:GamepadEvent)=>{
+              if(e.detail?.button===GamepadButton.DIR_DOWN){
+                consume(e);searchInputRef.current?.querySelector("input")?.focus();
+              }
+            }}/>
+        </header>
+        <LibrarySearchToolbar
+          query={searchSelection.query}
+          source={searchSelection.source} installed={searchSelection.installed}
+          onQuery={value=>setSearchSelection(current=>({...current,query:value.slice(0,160)}))}
+          onSource={value=>setSearchSelection(current=>({...current,source:value}))}
+          onInstalled={value=>setSearchSelection(current=>({...current,installed:value}))}
+          onFocusRail={()=>focusRail(railIndex)}
+          onFocusResults={()=>{if(shown.length)focusGrid(0);}}
+          onBack={exitGrid}
+          inputRef={searchInputRef} firstFilterRef={firstSearchFilterRef}
+          autoFocus={!detailsReturn}/>
+        <section className="gl-grid-page gl-search-page" aria-label="Game Library search results">
+          <div className="gl-grid-heading">
+            <div><h2>Results</h2>
+              <span aria-live="polite">{searchSelection.query.trim()
+                ?shown.length+" matching games · Steam / Epic / GOG / Other"
+                :"Search across your entire game library"}</span>
+            </div>
+            <div className="gl-grid-header-actions">
+              <Focusable ref={sortRef} className="gl-grid-back" focusClassName="gl-focused"
+                noFocusRing onActivate={showSortMenu}
+                onCancelButton={exitGrid} onOKActionDescription="Sort search results">
+                Sort · {sortLabel(sort)}
+              </Focusable>
+              <Focusable className="gl-grid-back" focusClassName="gl-focused"
+                noFocusRing onActivate={exitGrid} onCancelButton={exitGrid}
+                onOKActionDescription="Return to previous Game Library page">
+                <MdArrowBack/> Back
+              </Focusable>
+            </div>
+          </div>
+          {sortOpen&&<Focusable className="gl-sort-menu gl-search-sort-menu"
+            flow-children="column" aria-label="Sort search results">
+            <div className="gl-sort-menu-title">SORT SEARCH RESULTS</div>
+            {SORT_OPTIONS.map((option,index)=><Focusable key={option.id}
+              ref={el=>{sortMenuRefs.current[index]=el;}}
+              className={"gl-sort-option"+(sort===option.id?" gl-sort-selected":"")}
+              focusClassName="gl-focused" noFocusRing
+              onActivate={()=>chooseSort(option.id)}
+              onCancelButton={closeSortMenu}
+              onButtonDown={(e:GamepadEvent)=>{
+                const button=e.detail?.button;
+                if(button===GamepadButton.DIR_UP){consume(e);focusSortItem(index-1);}
+                else if(button===GamepadButton.DIR_DOWN){consume(e);focusSortItem(index+1);}
+                else if(button===GamepadButton.DIR_LEFT){consume(e);closeSortMenu();}
+              }}>
+              <span>{option.label}</span>
+              {sort===option.id&&<MdCheckCircle aria-hidden="true"/>}
+            </Focusable>)}
+            <div className="gl-sort-menu-hint">A Select · B Close</div>
+          </Focusable>}
+          {shown.length>0
+            ? <div className="gl-full-grid-scroll" ref={fullGridScrollRef}>
+                <div className="gl-full-grid" ref={fullGridLayoutRef}>
+                  {visibleGridGames.map((game,index)=><GameCard key={game.id}
+                    game={game} index={index} captureVertical
+                    onSelect={()=>{
+                      setSelectedId(game.id);
+                      if(index>=gridLimit-12&&gridLimit<shown.length)
+                        setGridLimit(limit=>Math.min(limit+60,shown.length));
+                    }}
+                    activate={()=>openGameDetails(game)}
+                    onCancel={exitGrid} onSort={showSortMenu}
+                    onMove={button=>moveInGrid(index,button)}
+                    cardRef={el=>{fullGridRefs.current[index]=el;}}/>)}
+                </div>
+              </div>
+            : <div className="gl-search-empty">
+                <MdLibraryBooks aria-hidden="true"/>
+                <h2>{searchSelection.query.trim()?"No matching games":"Find a game"}</h2>
+                <p>{searchSelection.query.trim()
+                  ?"Try another title or change the source / availability filters."
+                  :"Enter a title to search Steam, Epic, GOG and other shortcuts."}</p>
+              </div>}
+          <div className="gl-grid-hint">A: Game details · Y: Sort · Start: Game options · B: Back</div>
+        </section>
+          </> : <>
         {!viewAll && selected && <div className="gl-scene" aria-hidden="true">
           <HeroBackdrop key={selected.id} game={selected}/>
           <div className="gl-scene-shade"/>
@@ -635,7 +773,7 @@ export function Dashboard({initialMode="home",originRoute}:
           <div className="gl-topbar-titles">
             <span className="gl-topbar-current" title={tab.title} aria-live="polite">{tab.title}</span>
           </div>
-          <SystemStatusBar searchRef={headerSearchRef}
+          <SystemStatusBar searchRef={headerSearchRef} onSearch={openLocalSearch}
             onStatusButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
               if(e.detail?.button===GamepadButton.DIR_DOWN){

@@ -78,7 +78,7 @@ test("Dashboard gets a fresh collection batch for refresh and per-tab counts",()
   assert.match(ui,/tabsForRefresh\.current,next,createBatchGamesForTab\(\)\)/);
   assert.match(ui,/libraryTabSignature\(tabs,games,createBatchGamesForTab\(\)\)/);
   assert.match(ui,/const resolve=createBatchGamesForTab\(\)/);
-  assert.match(ui,/\[tab, games, membershipRevision\]/);
+  assert.match(ui,/\[searchMode,searchResults,tab,games,membershipRevision\]/);
 });
 
 test("HLTB cache is indexed once per chunk but retains title matching and TTL",()=>{

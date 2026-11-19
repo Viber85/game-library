@@ -71,9 +71,10 @@ function batteryIcon(status: Battery | null) {
 type Props = {
   onStatusButtonDown: (event: GamepadEvent) => void;
   searchRef: Ref<HTMLDivElement>;
+  onSearch?:()=>void;
 };
 
-export function SystemStatusBar({onStatusButtonDown,searchRef}:Props) {
+export function SystemStatusBar({onStatusButtonDown,searchRef,onSearch}:Props) {
   const [time,setTime]=useState<Date>(()=>new Date());
   const [device,setDevice] = useState<DeviceStatus>(NO_DEVICE_STATUS);
   const [steam,setSteam] = useState<SteamSupplement>(()=>readSteamSupplement());
@@ -208,7 +209,7 @@ export function SystemStatusBar({onStatusButtonDown,searchRef}:Props) {
   return <Focusable className="gl-topbar-status" flow-children="row">
     <Focusable ref={searchRef} className="gl-topbar-search" noFocusRing
       focusClassName="gl-focused"
-      onActivate={()=>Navigation.Navigate("/search")}
+      onActivate={()=>{if(onSearch)onSearch();else Navigation.Navigate("/search");}}
       onButtonDown={onStatusButtonDown}
       onOKActionDescription="Search games" title="Search games" aria-label="Search games">
       <MdSearch aria-hidden="true"/>
