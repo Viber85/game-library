@@ -2,6 +2,18 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.6 — make Search input visible and readable
+
+Regression hotfix after the v0.5.9-test.5 visual change: the native
+Steam TextField was not visible and typed characters disappeared. Replace
+the unsafe label/class selector that could clip the entire field with the
+documented optional label/ARIA property. The native TextField stays
+mounted and controlled, with a single 48px visible input boundary, a
+full-width responsive input, an explicit readable foreground, visible
+placeholder and one focus outline. Preserve controller, SteamOS keyboard
+and source/availability focus controls. CSS is scoped to the Search
+input and does not affect Midnight, other screens or Steam Settings.
+
 ## v0.5.9-test.5 — Search textbox and button focus polish
 
 On Search, replace the oversized outer input container with a

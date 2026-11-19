@@ -1482,10 +1482,15 @@ html:has(.gl-root.gl-own-status-only) #header {
 .gl-root .gl-library-search-field-row {
   display:flex;align-items:center;gap:10px;min-height:50px;
 }
-/* One real textbox, not a small native TextField inside a large fake box. */
+/* v0.5.9-test.6 — native Steam TextField: no clipped/hidden descendants.
+ * Decky resolves this component dynamically from Steam, so its wrapper
+ * class names are not a stable API. Only set width on containers and
+ * render one visible input with a single focus ring on the row. */
 .gl-root .gl-library-search-field {
-  display:flex;align-items:center;gap:12px;flex:1;min-width:0;
-  min-height:0;border:0;border-radius:0;padding:0;background:transparent;
+  display:flex;align-items:center;gap:11px;flex:1 1 0;min-width:0;
+  min-height:48px;padding:0 14px;box-sizing:border-box;
+  border:1px solid rgba(110,189,240,.65);border-radius:11px;
+  background:#0b2b4a;color:#f1faff;
 }
 .gl-root .gl-library-search-field>svg {
   flex-shrink:0;font-size:23px;color:#7dd8ff;
@@ -1493,31 +1498,30 @@ html:has(.gl-root.gl-own-status-only) #header {
 .gl-root .gl-library-search-native {
   flex:1 1 0;width:100%;min-width:0;max-width:none;
 }
-/* Steam TextField inserts several flex wrappers with intrinsic widths.
- * Resize those wrappers rather than replacing the virtual-keyboard input. */
-.gl-root .gl-library-search-native :is(div:has(input),input) {
-  flex:1 1 auto;box-sizing:border-box;
-  width:100%!important;min-width:0!important;max-width:none!important;
-}
-.gl-root .gl-library-search-native :is(label,[class*="Input_Label"],[class*="InputLabel"]) {
-  position:absolute!important;width:1px!important;height:1px!important;
-  padding:0!important;margin:-1px!important;overflow:hidden!important;
-  clip-path:inset(50%)!important;white-space:nowrap!important;
+.gl-root .gl-library-search-native > *,
+.gl-root .gl-library-search-native :where(div,label) {
+  box-sizing:border-box;width:100%!important;
+  min-width:0!important;max-width:none!important;
 }
 .gl-root .gl-library-search-native input {
-  display:block;min-height:47px;padding:0 17px;
-  border:1px solid rgba(110,189,240,.54)!important;
-  border-radius:11px!important;
-  background:linear-gradient(90deg,#0b2b4a,#0b223d)!important;
-  color:#f1faff!important;font-size:17px;
+  box-sizing:border-box;display:block;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  min-height:44px;padding:0 3px!important;
+  border:0!important;border-radius:0!important;
+  outline:0!important;box-shadow:none!important;
+  background:transparent!important;
+  color:#f1faff!important;-webkit-text-fill-color:#f1faff!important;
+  font-size:17px!important;font-weight:500;
+  opacity:1!important;visibility:visible!important;
+}
+.gl-root .gl-library-search-native input::placeholder {
+  color:#a7c6df!important;-webkit-text-fill-color:#a7c6df!important;
+  opacity:1!important;
 }
 .gl-root .gl-library-search-field:focus-within {
-  outline:0;box-shadow:none;
-}
-.gl-root .gl-library-search-native input:focus {
-  outline:2px solid #d3efff!important;outline-offset:0;
-  border-color:#b7e8ff!important;
-  box-shadow:0 0 13px rgba(41,169,255,.38)!important;
+  border-color:#d3efff!important;
+  outline:2px solid #d3efff;outline-offset:0;
+  box-shadow:0 0 13px rgba(41,169,255,.38);
 }
 .gl-root .gl-library-search-clear {
   display:flex;align-items:center;gap:4px;padding:8px 10px;
@@ -1567,7 +1571,8 @@ html:has(.gl-root.gl-own-status-only) #header {
 @media (max-height:730px) {
   .gl-root .gl-library-search-controls {gap:5px;padding:3px 6px 5px;}
   .gl-root .gl-library-search-field-row {min-height:39px;}
-  .gl-root .gl-library-search-field {min-height:36px;}
+  .gl-root .gl-library-search-field {min-height:42px;}
+  .gl-root .gl-library-search-native input {min-height:38px;}
   .gl-root .gl-library-search-filter-row {min-height:29px;}
   .gl-root .gl-library-search-chip {padding:5px 10px;}
   .gl-root .gl-search-page .gl-grid-heading {flex-basis:49px;}
