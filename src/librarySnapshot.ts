@@ -31,3 +31,20 @@ export function sameLibraryGames(
   }
   return true;
 }
+
+/**
+ * Installed/Favorites/TabMaster/UnifiedDeck collections can change while
+ * every game's CAppOverview stays byte-for-byte the same.
+ * Keep their membership in the refresh signature: otherwise skipping an
+ * unchanged game snapshot would leave the grid and count stale.
+ */
+export function libraryTabSignature<T extends {id:string}>(
+  tabs:readonly T[],
+  games:LibraryGame[],
+  resolve:(tab:T,items:LibraryGame[])=>{supported:boolean;games:LibraryGame[]}
+):string{
+  return JSON.stringify(tabs.map(tab=>{
+    const result=resolve(tab,games);
+    return [tab.id,result.supported,result.games.map(game=>game.id)];
+  }));
+}
