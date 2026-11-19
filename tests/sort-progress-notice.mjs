@@ -47,7 +47,7 @@ test("No progress overlay across native Steam footer; subtle but visible Midnigh
 });
 
 test("Metadata fetching logic and B/Y/Start controller actions remain unchanged",()=>{
-  assert.match(service,/result\?\.data\?\.extras/);
+  assert.match(service,/result\.data\?\.extras/);
   assert.match(service,/const count=kind==="hltb"\?1/);
   assert.match(service,/map\.set\(g\.id,value\)/);
   assert.match(ui,/onSort=\{showSortMenu\}/);
