@@ -45,6 +45,9 @@ export function AppearancePage({firstRef,onFocusRail,onBack}:Props){
     }else if(button===GamepadButton.DIR_UP){
       event.preventDefault();event.stopPropagation();focusHeader(index-1);
     }else if(button===GamepadButton.DIR_DOWN){
+      // Decky's native ToggleField / ButtonItem controls inside Artwork and
+      // Updates own their own focus tree. Let Steam handle Down into them.
+      if(expanded===section&&section!=="theme")return;
       event.preventDefault();event.stopPropagation();
       if(expanded===section&&section==="theme")options.current[0]?.focus();
       else focusHeader(index+1);
