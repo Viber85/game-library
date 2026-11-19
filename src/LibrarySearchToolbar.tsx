@@ -61,8 +61,10 @@ export function LibrarySearchToolbar({query,source,installed,onQuery,onSource,
     <div className="gl-library-search-field-row">
       <div ref={inputRef} className="gl-library-search-field">
         <MdSearch aria-hidden="true"/>
-        <TextField label="Search game titles" value={query} placeholder="Search Steam, Epic, GOG..."
-          onChange={event=>onQuery(event.target.value)} />
+        <div className="gl-library-search-native">
+          <TextField label="Search game titles" value={query} placeholder="Search Steam, Epic, GOG..."
+            onChange={event=>onQuery(event.target.value)} />
+        </div>
       </div>
       {query&&<Focusable className="gl-library-search-clear" focusClassName="gl-focused"
         noFocusRing onActivate={()=>{onQuery("");focusInput();}} onCancelButton={onBack}

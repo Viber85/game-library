@@ -1482,20 +1482,42 @@ html:has(.gl-root.gl-own-status-only) #header {
 .gl-root .gl-library-search-field-row {
   display:flex;align-items:center;gap:10px;min-height:50px;
 }
+/* One real textbox, not a small native TextField inside a large fake box. */
 .gl-root .gl-library-search-field {
   display:flex;align-items:center;gap:12px;flex:1;min-width:0;
-  min-height:44px;border:1px solid rgba(101,195,252,.33);
-  border-radius:13px;padding:2px 12px;
-  background:linear-gradient(90deg,rgba(12,41,70,.95),rgba(8,25,46,.90));
+  min-height:0;border:0;border-radius:0;padding:0;background:transparent;
 }
-.gl-root .gl-library-search-field>svg {flex-shrink:0;font-size:23px;color:#7dd8ff;}
-.gl-root .gl-library-search-field input {
-  min-width:0;width:100%;background:transparent;
-  color:#e7f6ff;font-size:17px;
+.gl-root .gl-library-search-field>svg {
+  flex-shrink:0;font-size:23px;color:#7dd8ff;
+}
+.gl-root .gl-library-search-native {
+  flex:1 1 0;width:100%;min-width:0;max-width:none;
+}
+/* Steam TextField inserts several flex wrappers with intrinsic widths.
+ * Resize those wrappers rather than replacing the virtual-keyboard input. */
+.gl-root .gl-library-search-native :is(div:has(input),input) {
+  flex:1 1 auto;box-sizing:border-box;
+  width:100%!important;min-width:0!important;max-width:none!important;
+}
+.gl-root .gl-library-search-native :is(label,[class*="Input_Label"],[class*="InputLabel"]) {
+  position:absolute!important;width:1px!important;height:1px!important;
+  padding:0!important;margin:-1px!important;overflow:hidden!important;
+  clip-path:inset(50%)!important;white-space:nowrap!important;
+}
+.gl-root .gl-library-search-native input {
+  display:block;min-height:47px;padding:0 17px;
+  border:1px solid rgba(110,189,240,.54)!important;
+  border-radius:11px!important;
+  background:linear-gradient(90deg,#0b2b4a,#0b223d)!important;
+  color:#f1faff!important;font-size:17px;
 }
 .gl-root .gl-library-search-field:focus-within {
-  outline:2px solid #bceaff;outline-offset:0;
-  box-shadow:0 0 17px rgba(3,157,255,.4);
+  outline:0;box-shadow:none;
+}
+.gl-root .gl-library-search-native input:focus {
+  outline:2px solid #d3efff!important;outline-offset:0;
+  border-color:#b7e8ff!important;
+  box-shadow:0 0 13px rgba(41,169,255,.38)!important;
 }
 .gl-root .gl-library-search-clear {
   display:flex;align-items:center;gap:4px;padding:8px 10px;
@@ -1510,10 +1532,9 @@ html:has(.gl-root.gl-own-status-only) #header {
   width:94px;flex:0 0 94px;font-size:12px;color:#afcfe7;font-weight:750;
 }
 .gl-root .gl-library-search-chips {
-  display:flex;flex-wrap:nowrap;gap:7px;min-width:0;
-  overflow-x:auto;scrollbar-width:none;
+  display:flex;flex-wrap:wrap;gap:7px;min-width:0;max-width:100%;
+  overflow:visible;padding:3px;margin:-3px;
 }
-.gl-root .gl-library-search-chips::-webkit-scrollbar {display:none;}
 .gl-root .gl-library-search-chip {
   flex:0 0 auto;padding:7px 13px;border:1px solid rgba(92,161,213,.31);
   border-radius:999px;background:rgba(14,42,71,.79);
@@ -1522,10 +1543,13 @@ html:has(.gl-root.gl-own-status-only) #header {
 .gl-root .gl-library-search-chip.gl-search-active {
   background:#d6edff;color:#06192d;border-color:#8ad8ff;
 }
-.gl-root .gl-library-search-chip.gl-focused,
-.gl-root .gl-library-search-clear.gl-focused {
-  outline:2px solid #fff;outline-offset:1px;
-  box-shadow:0 0 15px rgba(42,184,255,.52);
+/* Consistent inset focus ring: native Steam ring no longer looks doubled
+ * or gets clipped by a horizontal-scroll container on the source chips. */
+.gl-root .gl-library-search-chip:is(.gl-focused,.gpfocus,:focus-visible),
+.gl-root .gl-library-search-clear:is(.gl-focused,.gpfocus,:focus-visible),
+.gl-root .gl-search-page .gl-grid-back:is(.gl-focused,.gpfocus,:focus-visible) {
+  outline:none!important;border-color:#e1f4ff!important;
+  box-shadow:inset 0 0 0 1px #f0faff,0 0 12px rgba(42,184,255,.55)!important;
 }
 .gl-root .gl-search-page {position:relative;padding-top:5px;min-height:0;}
 .gl-root .gl-search-page .gl-grid-heading {flex-basis:56px;padding-bottom:7px;}
