@@ -29,7 +29,8 @@ test("Fast disk prewarm happens when the user visits a tab, independent of selec
   assert.ok(prewarmEnd>warm);
   assert.doesNotMatch(prewarmEffect,/if\(!sortKind/);
   assert.match(prewarmEffect,/if\(!tabResult\.supported\|\|!tabResult\.games\.length\)return;/);
-  assert.match(prewarmEffect,/if\(mounted\)setMetaRevision\(revision=>revision\+1\);/);
+  assert.match(prewarmEffect,/if\(mounted&&activeSortKind\.current==="hltb"\)/);
+  assert.match(prewarmEffect,/setMetaRevision\(revision=>revision\+1\);/);
 });
 
 test("A successful persistent cache entry instantly provides Main + Extras without a remote lookup",()=>{

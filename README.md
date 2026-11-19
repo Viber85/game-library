@@ -23,6 +23,36 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Game Library v0.5.8-test.1 — safe code cleanup ahead of palette options
+
+This is a **non-visual performance/maintenance test build**, based on the
+fully released v0.5.7. No SteamOS CSS, Midnight colors, gamepad navigation,
+TabMaster/UnifiedDeck, HLTB sorting or SteamGridDB artwork changed.
+
+- Eliminates redundant full-library React updates every 15 seconds when
+  Steam overview fields are identical. A separate native/TabMaster/
+  UnifiedDeck membership signature still updates Steam/Installed/Epic/GOG
+  grids when collections change independently of the game data.
+- Deduplicates simultaneous `RequestAppDetails` Steam calls from the
+  selected game's hero artwork and logo. Requests remain fresh when
+  returning to the same game later.
+- Avoids unnecessary rerenders from preloading HLTB's disk cache while
+  the selected sort does not depend on HLTB metadata.
+- Removes unused `posterUrl` and `heroUrl` exports. Real Steam
+  and SteamGridDB artwork candidate/fallback functions are unchanged.
+- Adds automated source and runtime regression tests for every update.
+- Keeps the hard-won Steam-native Settings/QAM focus CSS and diagnostics;
+  no blind deletion of seemingly duplicated native CSS rules.
+
+The existing dark-navy/cyan **Midnight** appearance remains the default.
+The agreed future work is gradual, user-controlled color personalization,
+not a simultaneous recoloring of every Steam screen. A source-verified
+implementation proposal lives in
+[docs/theme-color-roadmap.md](docs/theme-color-roadmap.md); the current
+code audit is in [docs/code-audit-0.5.8.md](docs/code-audit-0.5.8.md).
+Color controls will be developed in a **separate version** after this
+cleanup passes testing on MSI Claw.
+
 ## Game Library v0.5.7 — instant local HowLongToBeat sorting cache
 
 Game Library now **warms the existing local HowLongToBeat JSON cache
