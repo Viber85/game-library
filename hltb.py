@@ -210,19 +210,28 @@ class HltbService:
         with self._lock:
             old = self._cache.get(key)
             if isinstance(old, dict) and old.get("query") == name:
-                age = now - float(old.get("timestamp") or 0)
+                try:
+                    age = now - float(old.get("timestamp") or 0)
+                except (TypeError, ValueError):
+                    age = float("inf")
                 if 0 <= age < (HIT_TTL if old.get("data") else MISS_TTL):
                     return {"status": "ok" if old["data"] else "unavailable",
                             "data": old.get("data"), "cached": True,
                             "expires_in": max(0, int((HIT_TTL if old["data"] else MISS_TTL)-age))}
-            try:
-                candidates = _search(name)
-                result = _selected_result(name, candidates)
-            except (urllib.error.URLError, OSError, ValueError, RuntimeError) as error:
-                if isinstance(old, dict) and old.get("data"):
-                    return {"status": "ok", "data": old["data"],
-                            "cached": True, "stale": True, "expires_in": 0}
-                return {"status": "error", "reason": type(error).__name__}
+
+        # IMPORTANT: never hold the cache lock during slow HLTB HTTP.
+        # Bulk disk reads and selected-game cards must stay responsive even
+        # while a different title is being fetched from the provider.
+        try:
+            candidates = _search(name)
+            result = _selected_result(name, candidates)
+        except (urllib.error.URLError, OSError, ValueError, RuntimeError) as error:
+            if isinstance(old, dict) and old.get("query") == name and old.get("data"):
+                return {"status": "ok", "data": old["data"],
+                        "cached": True, "stale": True, "expires_in": 0}
+            return {"status": "error", "reason": type(error).__name__}
+
+        with self._lock:
             self._cache[key] = {"query": name, "timestamp": now, "data": result}
             try:
                 self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -231,5 +240,5 @@ class HltbService:
                 os.replace(temp, self.path)
             except OSError:
                 pass
-            return {"status": "ok" if result else "unavailable", "data": result,
-                    "cached": False, "expires_in": HIT_TTL if result else MISS_TTL}
+        return {"status": "ok" if result else "unavailable", "data": result,
+                "cached": False, "expires_in": HIT_TTL if result else MISS_TTL}
