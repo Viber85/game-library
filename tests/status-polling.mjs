@@ -58,7 +58,8 @@ test("Clock updates do not trigger Dashboard re-render; SteamOS timers stay unch
   assert.match(status,/window\.setInterval\(refreshLiveClock,2000\)/);
   assert.match(status,/sameDeviceStatus\(previous,normalized\)/);
   assert.match(status,/sameSteamSupplement\(previous,next\)/);
-  assert.match(dashboard,/window\.setInterval\(refresh,15000\)/);
+  assert.match(dashboard,/const refresh=window\.setInterval\(\(\)=>\{/);
+  assert.match(dashboard,/\},15000\);\s*return \(\)=>\{window\.clearInterval\(refresh\);\}/);
   assert.match(dashboard,/libraryTabSignature\(/);
   assert.match(dashboard,/onMenuButton=\{\(e:GamepadEvent\)=>\{/);
 });
