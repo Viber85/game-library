@@ -9,12 +9,7 @@ import {
 } from "react-icons/md";
 import { getActiveUserId } from "./steam";
 import {readLiveSteamClockPreference} from "./steamClock";
-
-type Battery = { percent: number; charging: boolean | null; plugged: boolean | null };
-type Wifi = { enabled: boolean | null; connected: boolean | null; signal: number | null };
-type Bluetooth = { enabled: boolean | null };
-type DeviceStatus = { battery: Battery | null; wifi: Wifi | null; bluetooth: Bluetooth | null };
-type SteamSupplement = { unread: number | null; avatar: string | null };
+import {sameDeviceStatus,sameSteamSupplement,type Battery,type DeviceStatus,type SteamSupplement} from "./systemStatusSnapshot";
 
 const readSystemStatus = callable<[], DeviceStatus>("get_system_status");
 const readSteamClockFormat =
@@ -74,12 +69,12 @@ function batteryIcon(status: Battery | null) {
 }
 
 type Props = {
-  time: Date;
   onStatusButtonDown: (event: GamepadEvent) => void;
   searchRef: Ref<HTMLDivElement>;
 };
 
-export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
+export function SystemStatusBar({onStatusButtonDown,searchRef}:Props) {
+  const [time,setTime]=useState<Date>(()=>new Date());
   const [device,setDevice] = useState<DeviceStatus>(NO_DEVICE_STATUS);
   const [steam,setSteam] = useState<SteamSupplement>(()=>readSteamSupplement());
   const [failedAvatar,setFailedAvatar] = useState<string | null>(null);
@@ -89,6 +84,12 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
   const [savedClock,setSavedClock] = useState<boolean|null>(null);
   const hour24=liveClock??savedClock;
 
+  // A clock tick must never invalidate the Dashboard or game-card tree.
+  useEffect(()=>{
+    const clock=window.setInterval(()=>setTime(new Date()),15000);
+    return ()=>window.clearInterval(clock);
+  },[]);
+
   useEffect(()=>{
     let live = true;
     let pending = false;
@@ -96,19 +97,24 @@ export function SystemStatusBar({time,onStatusButtonDown,searchRef}:Props) {
       if (pending) return;
       pending = true;
       void readSystemStatus().then((next)=>{
-        if (live && next && typeof next === "object")
-          setDevice({
-            battery: next.battery ?? null,
-            wifi: next.wifi ?? null,
-            bluetooth: next.bluetooth ?? null,
-          });
+        if (live && next && typeof next === "object"){
+          const normalized:DeviceStatus={
+            battery:next.battery??null,
+            wifi:next.wifi??null,
+            bluetooth:next.bluetooth??null,
+          };
+          setDevice(previous=>sameDeviceStatus(previous,normalized)?previous:normalized);
+        }
       }).catch(()=>{
-        if (live) setDevice(NO_DEVICE_STATUS);
+        if (live) setDevice(previous=>sameDeviceStatus(previous,NO_DEVICE_STATUS)?previous:NO_DEVICE_STATUS);
       }).finally(()=>{pending=false;});
     };
     refresh();
     const deviceTimer=window.setInterval(refresh,12000);
-    const steamTimer=window.setInterval(()=>setSteam(readSteamSupplement()),5000);
+    const steamTimer=window.setInterval(()=>{
+      const next=readSteamSupplement();
+      setSteam(previous=>sameSteamSupplement(previous,next)?previous:next);
+    },5000);
     return ()=>{
       live=false;
       window.clearInterval(deviceTimer);
