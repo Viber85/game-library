@@ -4,8 +4,8 @@ import {showNativeGameOptions} from "./nativeGameContextMenu";
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
-  MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSettings,
-  MdShoppingCart, MdVideogameAsset, MdChevronRight, MdArrowBack,
+  MdLibraryBooks, MdPlayArrow, MdPalette, MdMenu,
+  MdVideogameAsset, MdChevronRight, MdArrowBack,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
@@ -15,6 +15,8 @@ import {
 import { DASHBOARD_CSS } from "./theme";
 import {getMissingSteamArt,subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 import { SystemStatusBar } from "./SystemStatusBar";
+import {AppearancePage} from "./AppearancePage";
+import {openNativeSteamMenu} from "./nativeSteamMenu";
 import { fallbackTabs, gamesForTab, createBatchGamesForTab, type SteamTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
@@ -37,6 +39,7 @@ import {
 type Sort = HomeSort;
 const INITIAL_GAME_COUNT = 15;
 const LIBRARY_ROUTE = "/game-library/library";
+const APPEARANCE_ROUTE = "/game-library/appearance";
 let lastSelectedLibraryTab="AllGames";
 const rememberedSorts:Record<string,Sort>={};
 
@@ -134,9 +137,9 @@ function GameCard({
 
 
 export function Dashboard({initialMode="home",originRoute}:
-  {initialMode?:"home"|"library";originRoute?:DetailsOriginRoute}={}) {
+  {initialMode?:"home"|"library"|"appearance";originRoute?:DetailsOriginRoute}={}) {
   const actualRoute=originRoute??(initialMode==="library"?
-    LIBRARY_ROUTE:"/library/home");
+    LIBRARY_ROUTE:initialMode==="appearance"?APPEARANCE_ROUTE:"/library/home");
   // Read a single return snapshot only if this exact original route mounts.
   const [detailsReturn]=useState(()=>peekDetailsOrigin(actualRoute));
   useEffect(()=>{
@@ -166,6 +169,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const sidebarRef = useRef<HTMLElement>(null);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
   const headerSearchRef = useRef<HTMLDivElement>(null);
+  const appearanceEntryRef=useRef<HTMLDivElement>(null);
   const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridLayoutRef = useRef<HTMLDivElement>(null);
@@ -175,7 +179,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
-  const lastRailId=useRef("home");
+  const lastRailId=useRef(initialMode==="appearance"?"appearance":initialMode==="library"?"library":"home");
   const [railExpanded, setRailExpanded] = useState(false);
   const tabsForRefresh=useRef<SteamTab[]>(fallbackTabs);
   const membershipSignature=useRef<string|null>(null);
@@ -327,14 +331,17 @@ export function Dashboard({initialMode="home",originRoute}:
     }] : []),
     { id: "home", label: "Home", icon: MdHome, go: () => Navigation.Navigate("/library/home") },
     { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate(LIBRARY_ROUTE) },
-    { id: "store", label: "Store", icon: MdShoppingCart, go: () => Navigation.NavigateToSteamWeb("https://store.steampowered.com/") },
-    { id: "downloads", label: "Downloads", icon: MdDownload, go: () => Navigation.Navigate("/library/downloads") },
-    { id: "settings", label: "Settings", icon: MdSettings, go: () => Navigation.Navigate("/settings") },
-    { id: "power", label: "Power", icon: MdPowerSettingsNew, go: () => Navigation.OpenPowerMenu() },
+    { id: "appearance", label: "Appearance", icon: MdPalette, go: () => Navigation.Navigate(APPEARANCE_ROUTE) },
+    { id: "steam-menu", label: "Steam Menu", icon: MdMenu, go: () => {
+      if(!openNativeSteamMenu(Navigation))toaster.toast({
+        title:"Game Library",
+        body:"The native Steam menu is unavailable on this client. Use the Steam button."
+      });
+    } },
   ];
 
   // Inserting/removing the transient first item must not silently remap
-  // the previously focused Home/Library/Settings icon to another action.
+  // the previously focused Home/Library/Appearance icon to another action.
   useEffect(()=>{
     const index=railActions.findIndex(action=>action.id===lastRailId.current);
     if(index>=0){setRailIndex(index);return;}
@@ -401,6 +408,10 @@ export function Dashboard({initialMode="home",originRoute}:
   };
   const goToGame = (index?: number) => {
     setRailExpanded(false);
+    if(initialMode==="appearance"){
+      appearanceEntryRef.current?.focus();
+      return;
+    }
     if (viewAll) {
       focusGrid(index ?? lastGridFocusIndex.current);
       return;
@@ -531,6 +542,7 @@ export function Dashboard({initialMode="home",originRoute}:
     window.requestAnimationFrame(() => focusPill(nextIndex));
   };
   const handleBumper = (e:GamepadEvent):boolean => {
+    if(initialMode==="appearance")return false;
     if (e.detail?.button === GamepadButton.BUMPER_LEFT) {
       consume(e);cycleTab(-1);return true;
     }
@@ -554,7 +566,7 @@ export function Dashboard({initialMode="home",originRoute}:
       <aside
         ref={sidebarRef}
         className="gl-sidebar"
-        aria-label="Steam navigation"
+        aria-label="Game Library navigation"
         aria-expanded={railExpanded}
         onFocusCapture={() => setRailExpanded(true)}
       >
@@ -566,7 +578,9 @@ export function Dashboard({initialMode="home",originRoute}:
               <Focusable
                 key={action.id}
                 ref={el => { railRefs.current[index] = el; }}
-                className={"gl-rail-item"+(action.id==="running"?" gl-running-item":"")}
+                className={"gl-rail-item"+(action.id==="running"?" gl-running-item":"")+
+                  (action.id===(initialMode==="appearance"?"appearance":
+                    initialMode==="library"?"library":"home")?" gl-rail-current":"")}
                 focusClassName="gl-focused"
                 noFocusRing
                 onGamepadFocus={() => {
@@ -602,6 +616,11 @@ export function Dashboard({initialMode="home",originRoute}:
       </aside>
 
       <div className="gl-main">
+        {initialMode==="appearance"
+          ? <AppearancePage firstRef={appearanceEntryRef}
+              onFocusRail={()=>focusRail(railIndex)}
+              onBack={()=>Navigation.Navigate("/library/home")}/>
+          : <>
         {!viewAll && selected && <div className="gl-scene" aria-hidden="true">
           <HeroBackdrop key={selected.id} game={selected}/>
           <div className="gl-scene-shade"/>
@@ -823,6 +842,7 @@ export function Dashboard({initialMode="home",originRoute}:
 
 
         <footer className="gl-footer"><span>STEAM · Menu</span><span>L1 / R1 · Tabs</span><span>A Select</span><span>B Back</span><span>← Navigation</span></footer>
+        </>}
       </div>
     </div>
   );
