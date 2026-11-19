@@ -18,10 +18,12 @@ const library=[
 const collections={epic:new Set([2,4]),gog:new Set([5,6])};
 
 test("One local search covers all Steam + Epic + GOG registered shortcuts",()=>{
-  assert.deepEqual(searchLibraryGames(library,"ark","all","all",collections).map(x=>x.id),[1]);
+  assert.deepEqual(searchLibraryGames(library,"South","all","all",collections).map(x=>x.id),[1]);
+  assert.deepEqual(searchLibraryGames(library,"ark","all","all",collections),[]);
   assert.deepEqual(searchLibraryGames(library,"clair","epic","all",collections).map(x=>x.id),[2]);
   assert.deepEqual(searchLibraryGames(library,"HADES","epic","installed",collections).map(x=>x.id),[4]);
-  assert.deepEqual(searchLibraryGames(library,"galaxy","gog","not-installed",collections).map(x=>x.id),[6]);
+  assert.deepEqual(searchLibraryGames(library,"GOG","gog","not-installed",collections).map(x=>x.id),[6]);
+  assert.deepEqual(searchLibraryGames(library,"galaxy","gog","not-installed",collections),[]);
   assert.deepEqual(searchLibraryGames(library,"cyber","steam","all",collections).map(x=>x.id),[3]);
   assert.deepEqual(searchLibraryGames(library,"clair","steam","all",collections),[]);
   assert.deepEqual(searchLibraryGames(library,"hades","other","all",collections),[]);
@@ -34,17 +36,48 @@ test("Source inference is based on native UnifiedDeck membership, never title gu
   assert.equal(gameSearchSource(library[1],{epic:null,gog:null}),"other");
 });
 
-test("Case, Croatian diacritics and split words work without a remote service",()=>{
+test("Case, Croatian diacritics and multiword title prefixes work locally",()=>{
   assert.equal(normalizeSearchText("  ŽIVIO   Čar  "),"zivio car");
   assert.deepEqual(searchLibraryGames(library,"ZIVIO","all","all",collections).map(x=>x.id),[5]);
-  assert.deepEqual(searchLibraryGames(library,"Stick South","all","all",collections).map(x=>x.id),[1]);
+  assert.deepEqual(searchLibraryGames(library,"South Park","all","all",collections).map(x=>x.id),[1]);
+  assert.deepEqual(searchLibraryGames(library,"  souTH   pARk  ","all","all",collections).map(x=>x.id),[1]);
+  assert.deepEqual(searchLibraryGames(library,"Stick South","all","all",collections),[]);
   assert.deepEqual(searchLibraryGames(library,"   ","all","all",collections),[]);
 });
 
-test("Name ranking prioritizes exact and prefix before substring hits",()=>{
+test("Single letter matches only titles STARTING with that letter",()=>{
+  const items=[
+    game(10,"The Hobbit",false,true),
+    game(11,"Hades",false,true),
+    game(12,"Hollow Knight",false,true),
+    game(13,"Dark Souls III",false,true),
+    game(14,"Hogwarts Legacy",false,false),
+    game(15,"Ghost of Tsushima",false,true),
+  ];
+  assert.deepEqual(searchLibraryGames(items,"h","all","all",{epic:null,gog:null}).map(x=>x.id),
+    [11,14,12]);
+  assert.deepEqual(searchLibraryGames(items,"ho","all","all",{epic:null,gog:null}).map(x=>x.id),
+    [14,12]);
+  assert.deepEqual(searchLibraryGames(items,"hobbit","all","all",{epic:null,gog:null}),[]);
+  assert.deepEqual(searchLibraryGames(items,"dark so","all","all",{epic:null,gog:null}).map(x=>x.id),[13]);
+});
+
+test("Search still prioritizes an exact title and alphabetizes other prefix matches",()=>{
   const items=[game(12,"The Test Game",false,true),game(13,"Tester",false,true),
-    game(14,"Test",false,true),game(15,"A test Story",false,false)];
-  assert.deepEqual(searchLibraryGames(items,"test","all","all",{epic:null,gog:null}).map(x=>x.id),[14,13,15,12]);
+    game(14,"Test",false,true),game(15,"A test Story",false,false),
+    game(16,"Testing Ground",false,true)];
+  assert.deepEqual(searchLibraryGames(items,"test","all","all",{epic:null,gog:null}).map(x=>x.id),
+    [14,13,16]);
+  assert.deepEqual(searchLibraryGames(items,"te","all","all",{epic:null,gog:null}).map(x=>x.id),
+    [14,13,16]);
+});
+
+test("Prefix search obeys source and installation filters for one-character queries",()=>{
+  assert.deepEqual(searchLibraryGames(library,"h","epic","installed",collections).map(x=>x.id),[4]);
+  assert.deepEqual(searchLibraryGames(library,"h","steam","all",collections),[]);
+  assert.deepEqual(searchLibraryGames(library,"g","gog","not-installed",collections).map(x=>x.id),[6]);
+  assert.deepEqual(searchLibraryGames(library,"c","all","all",collections).map(x=>x.id),[2,3]);
+  assert.deepEqual(searchLibraryGames(library,"c","steam","not-installed",collections).map(x=>x.id),[3]);
 });
 
 test("Search state and origin stay in memory across native Game Details navigation",()=>{
