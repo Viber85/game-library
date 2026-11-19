@@ -5,6 +5,7 @@ import {readFileSync} from "node:fs";
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const source=read("src/sortMetadata.ts");
 const ui=read("src/Dashboard.tsx");
+const notice=read("src/SortProgressNotice.tsx");
 const backend=read("main.py");
 const python=read("hltb.py");
 
@@ -71,5 +72,5 @@ test("Other metadata sorting and controls remain unchanged",()=>{
   assert.match(ui,/showNativeGameOptions\(game\.id,e\.currentTarget\)/);
   assert.match(ui,/onSort=\{showSortMenu\}/);
   assert.match(ui,/consumeDetailsOrigin,peekDetailsOrigin,rememberDetailsOrigin/);
-  assert.match(ui,/HOWLONGTOBEAT · MAIN \+ EXTRAS/);
+  assert.match(notice,/HOWLONGTOBEAT · MAIN \+ EXTRAS/);
 });
