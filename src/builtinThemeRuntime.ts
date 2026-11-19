@@ -7,7 +7,8 @@ import {
   THEME_AUDIT_INSTALL_SCRIPT, THEME_AUDIT_READ_SCRIPT,
   THEME_AUDIT_REMOVE_SCRIPT, parseThemeAudit, latestThemePage, type ThemeDomEvidence, type ThemeFocusFrame,
 } from "./themeProbe";
-import { compileMidnightCss } from "./themeCssCompiler";
+import { createMidnightCssCompiler } from "./themeCssCompiler";
+import {sameThemeRuntimeStatus} from "./themeCycleCache";
 
 export type ThemeId = "midnight" | "off";
 export type ThemeBundle = {
@@ -103,7 +104,9 @@ export function subscribeThemeStatus(listener:(next:ThemeStatus)=>void):()=>void
   return ()=>listeners.delete(listener);
 }
 function report(patch:Partial<ThemeStatus>) {
-  status={...status,...patch};
+  const next={...status,...patch};
+  if(sameThemeRuntimeStatus(status,next))return;
+  status=next;
   for(const cb of listeners)cb(themeRuntimeStatus());
 }
 function bounded<T>(value:PromiseLike<T>|T,timeout=TIMEOUT_MS):Promise<T> {
@@ -196,13 +199,11 @@ function queue<T>(job:()=>Promise<T>):Promise<T> {
 }
 
 async function applyToTab(
-  title:string,scope:ThemeScope,epoch:number,
+  title:string,scope:ThemeScope,epoch:number,css:string,
 ):Promise<void> {
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
-  // CSS modules may finish loading when Settings or game-details is opened.
-  // Compile live Steam class aliases on each check, then re-inject only if
-  // the mapping changed. This allows themed pages to work after lazy loads.
-  const css=compileMidnightCss(theme.css[scope])+markerCss;
+  // The CSS is compiled once per scope per cycle from live Steam classes.
+  // Atomic replacement and marker verification below are unchanged.
   const signature=cssSignature(css);
   const previous=managedTabs.get(title);
   // Steam can rebuild QAM/Home's DOM without changing the DevTools tab title.
@@ -257,9 +258,19 @@ async function syncTheme():Promise<void>{
   if(shuttingDown||desired!=="midnight"||!theme)return;
   const epoch=generation;
   const tabs=await listTabs();
+  // Steam CSS class modules may lazy-load when Settings/Game Details opens:
+  // rescan on every sync, but share that snapshot across main/QAM/Menu tabs.
+  // The compiled CSS is reused while its live alias signature is identical.
+  const compile=tabs.length?createMidnightCssCompiler():null;
+  const cssByScope=new Map<ThemeScope,string>();
   for(const tab of tabs) {
     if(shuttingDown||desired!=="midnight"||epoch!==generation)break;
-    await applyToTab(tab.title,tab.scope,epoch);
+    let css=cssByScope.get(tab.scope);
+    if(css===undefined){
+      css=compile!(theme.css[tab.scope])+markerCss;
+      cssByScope.set(tab.scope,css);
+    }
+    await applyToTab(tab.title,tab.scope,epoch,css);
   }
   if(epoch!==generation)return;
   const actual=new Set(tabs.map(x=>x.title));
