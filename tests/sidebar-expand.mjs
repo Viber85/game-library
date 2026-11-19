@@ -5,6 +5,7 @@ import test from "node:test";
 const ui=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../src/theme.ts",import.meta.url),"utf8");
 const status=readFileSync(new URL("../src/SystemStatusBar.tsx",import.meta.url),"utf8");
+const artwork=readFileSync(new URL("../src/SelectedGameArtwork.tsx",import.meta.url),"utf8");
 
 test("focus opens navigation and returning to games collapses it",()=>{
   assert.match(ui,/const \[railExpanded, setRailExpanded\] = useState\(false\)/);
@@ -121,7 +122,7 @@ test("v0.4.12 scales both carousel and selected-game detail safely",()=>{
   assert.ok(!layout.includes("data-glm-settings"),"Do not touch Settings palette");
   for(const name of [
     "gl-game-logo","gl-status","gl-metrics","gl-metric","gl-actions",
-  ])assert.ok(ui.includes(name),"The resized region must exist: "+name);
+  ])assert.ok((ui+artwork).includes(name),"The resized region must exist: "+name);
   assert.match(ui,/<HowLongToBeatCard key=\{"hltb-"/);
   assert.match(ui,/<AchievementsCard key=\{"achievements-"/);
   assert.ok(layout.includes(".gl-hltb")&&layout.includes(".gl-achievement-card"),

@@ -97,24 +97,25 @@ test("safe return route is used only after Steam successfully selects the runnin
 
 test("sidebar running icon is dynamic, at the top, and controller-focusable",()=>{
   const ui=read("src/Dashboard.tsx"),css=read("src/theme.ts");
+  const visuals=read("src/RunningGameVisuals.tsx"),hook=read("src/useRunningGameState.ts");
   const startup=ui.indexOf('...(runningGame ? [{');
   const home=ui.indexOf('{ id: "home"');
   assert.ok(startup>0&&startup<home,"Running action must precede Home");
-  assert.match(ui,/readRunningGame\(\(window as any\)\.SteamUIStore/);
+  assert.match(hook,/readRunningGame\(\(window as any\)\.SteamUIStore/);
   assert.match(ui,/resumeRunningGame\(runningGame,\(window as any\)\.SteamUIStore/);
-  assert.match(ui,/1600/);
+  assert.match(hook,/1600/);
   assert.match(ui,/focusClassName="gl-focused"/);
   assert.match(ui,/lastRailId\.current=railActions\[target\]\.id/);
   assert.match(ui,/lastRailId\.current=action\.id/);
   assert.match(ui,/gl-running-indicator/);
   assert.match(ui,/RunningGameIcon.*game=\{games\.find\(g=>g\.id===runningGame\?\.id\)\}/);
-  assert.match(ui,/posterCandidates\(game\)/);
+  assert.match(visuals,/posterCandidates\(game\)/);
   assert.doesNotMatch(ui,/requestSteamLaunch\(runningGame|play\(runningGame|RunGame\(runningGame/,
     "Return must never launch an existing app");
   assert.match(css,/gl-running-title-news/);
   assert.match(css,/overflow:hidden/);
   assert.match(css,/\.gl-root\.gl-nav-expanded \.gl-running-title\.gl-marquee-active/);
   assert.match(css,/prefers-reduced-motion:reduce/);
-  assert.match(ui,/pixels>3\?pixels:0/,"Marquee must only run when text is too wide");
-  assert.match(ui,/resize\?\.disconnect\(\)/);
+  assert.match(visuals,/pixels>3\?pixels:0/,"Marquee must only run when text is too wide");
+  assert.match(visuals,/resize\?\.disconnect\(\)/);
 });

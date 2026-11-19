@@ -5,7 +5,7 @@ const file=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const dashboard=file("src/Dashboard.tsx");
 const menu=file("src/nativeGameContextMenu.tsx");
 const card=dashboard.slice(dashboard.indexOf("function GameCard("),
-  dashboard.indexOf("/** Use the same Steam artwork lookup"));
+  dashboard.indexOf("export function Dashboard("));
 
 test("Select/View is unassigned; no previous Game Details shortcut remains",()=>{
   assert.doesNotMatch(card,/GamepadButton\.SELECT/);

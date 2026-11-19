@@ -4,18 +4,19 @@ import test from "node:test";
 
 const source=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const ui=source("src/Dashboard.tsx");
+const notice=source("src/SortProgressNotice.tsx");
 const css=source("src/theme.ts");
 const service=source("src/sortMetadata.ts");
 
 test("Sort metadata has legible title, real completion count, progress track and clear missing-data explanation",()=>{
-  assert.match(ui,/function SortProgressNotice\(/);
-  assert.match(ui,/HOWLONGTOBEAT · MAIN \+ EXTRAS/);
-  assert.match(ui,/className="gl-sort-progress-count">\{done\} \/ \{total\}/);
-  assert.match(ui,/Math\.round\(done\/total\*100\)/);
-  assert.match(ui,/className="gl-sort-progress-track" role="progressbar"/);
-  assert.match(ui,/aria-valuemax=\{total\} aria-valuenow=\{done\}/);
-  assert.match(ui,/className="gl-sort-progress-fill" style=\{\{width:percent\+"%"\}\}/);
-  assert.match(ui,/Sorting as data loads · Games without data appear last/);
+  assert.match(notice,/function SortProgressNotice\(/);
+  assert.match(notice,/HOWLONGTOBEAT · MAIN \+ EXTRAS/);
+  assert.match(notice,/className="gl-sort-progress-count">\{done\} \/ \{total\}/);
+  assert.match(notice,/Math\.round\(done\/total\*100\)/);
+  assert.match(notice,/className="gl-sort-progress-track" role="progressbar"/);
+  assert.match(notice,/aria-valuemax=\{total\} aria-valuenow=\{done\}/);
+  assert.match(notice,/className="gl-sort-progress-fill" style=\{\{width:percent\+"%"\}\}/);
+  assert.match(notice,/Sorting as data loads · Games without data appear last/);
 });
 
 test("Grid status appears in a dedicated row ABOVE the scrolling game covers and B footer",()=>{
