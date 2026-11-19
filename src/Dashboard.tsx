@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {toaster} from "@decky/api";
+import {showNativeGameOptions} from "./nativeGameContextMenu";
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
@@ -141,12 +143,7 @@ function GameCard({
   },[game.id,game.title,game.nonSteam,covers.length,coverIndex,lookupFinished]);
   const handleDirection = (e: GamepadEvent) => {
     const b = e.detail?.button;
-    // SELECT is the handheld View/Select button, not Y/OPTIONS.
-    if (b === GamepadButton.SELECT) {
-      consume(e);
-      openDetails(game);
-      return;
-    }
+    // Select/View is intentionally not mapped inside Game Library.
     if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT ||
         b === GamepadButton.DIR_UP || (captureVertical && b === GamepadButton.DIR_DOWN) ||
         b === GamepadButton.BUMPER_LEFT ||
@@ -166,12 +163,20 @@ function GameCard({
       onActivate={activate ?? (() => play(game))}
       onCancelButton={onCancel}
       onOptionsButton={(e:GamepadEvent)=>{consume(e);onSort();}}
+      onMenuButton={(e:GamepadEvent)=>{
+        consume(e);
+        const opened=showNativeGameOptions(game.id,e.currentTarget);
+        if(!opened)toaster.toast({
+          title:"Game Library",
+          body:"Steam game options unavailable on this client. Open the original Steam Library to use the native menu."
+        });
+      }}
+      onMenuActionDescription="Game options"
       onGamepadFocus={onSelect}
       onMouseEnter={captureVertical ? undefined : onSelect}
       onButtonDown={handleDirection}
       onOKActionDescription={activate ? "Game details" : gameActionLabel(game)}
       onOptionsActionDescription="Sort games"
-      actionDescriptionMap={{[GamepadButton.SELECT]:"Game details"}}
     >
       <div className="gl-poster">
         {poster ? <img src={poster} alt="" loading="lazy" key={poster}
@@ -729,7 +734,7 @@ export function Dashboard({initialMode="home"}:
                   ))}
                 </div>
               </div>
-              <div className="gl-grid-hint">Y: Sort · Select: Game details · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
+              <div className="gl-grid-hint">Y: Sort · Start: Game options · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
             </section>
           ) : (
           <>
