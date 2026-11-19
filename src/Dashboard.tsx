@@ -24,6 +24,10 @@ import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
 import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
 import { readRunningGame, resumeRunningGame, type RunningGame } from "./runningGame";
+import {
+  consumeDetailsOrigin,peekDetailsOrigin,rememberDetailsOrigin,
+  type DetailsOriginRoute,
+} from "./detailsReturn";
 
 /** Compact, non-interactive metadata loader that never covers Steam's B footer.
  * A real completed/total counter drives the progress bar; unknown data stays
@@ -277,14 +281,23 @@ function RunningGameLabel({title,expanded}:{title:string;expanded:boolean}) {
   </span>;
 }
 
-export function Dashboard({initialMode="home"}:
-  {initialMode?:"home"|"library"}={}) {
+export function Dashboard({initialMode="home",originRoute}:
+  {initialMode?:"home"|"library";originRoute?:DetailsOriginRoute}={}) {
+  const actualRoute=originRoute??(initialMode==="library"?
+    LIBRARY_ROUTE:"/library/home");
+  // Read a single return snapshot only if this exact original route mounts.
+  const [detailsReturn]=useState(()=>peekDetailsOrigin(actualRoute));
+  useEffect(()=>{
+    if(detailsReturn)consumeDetailsOrigin(actualRoute);
+  },[actualRoute,detailsReturn]);
+  const restorePending=useRef(detailsReturn);
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
   const [runningGame,setRunningGame]=useState<RunningGame|null>(()=>
     readRunningGame((window as any).SteamUIStore,(window as any).appStore));
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
   const [activeTab, setActiveTab] = useState(()=>
-    initialMode==="library"?lastSelectedLibraryTab:"AllGames");
+    detailsReturn?.tabId??
+      (initialMode==="library"?lastSelectedLibraryTab:"AllGames"));
   useEffect(()=>{lastSelectedLibraryTab=activeTab;},[activeTab]);
   const [tabSorts, setTabSorts] = useState<Record<string,Sort>>(
     ()=>({...rememberedSorts}));
@@ -292,9 +305,12 @@ export function Dashboard({initialMode="home"}:
   const sortMenuRefs=useRef<Array<HTMLDivElement|null>>([]);
   const sortReturnFocus=useRef<HTMLElement|null>(null);
   const [metaRevision,setMetaRevision]=useState(0);
-  const [selectedId, setSelectedId] = useState<number | undefined>();
-  const [viewAll,setViewAll] = useState(initialMode==="library");
-  const [gridLimit,setGridLimit] = useState(60);
+  const [selectedId, setSelectedId] = useState<number | undefined>(
+    detailsReturn?.gameId);
+  const [viewAll,setViewAll] = useState(
+    detailsReturn?.viewAll??(initialMode==="library"));
+  const [gridLimit,setGridLimit] = useState(
+    Math.max(60,detailsReturn?.gridLimit??60));
   const [time,setTime] = useState(() => new Date());
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -303,8 +319,9 @@ export function Dashboard({initialMode="home"}:
   const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridLayoutRef = useRef<HTMLDivElement>(null);
+  const fullGridScrollRef = useRef<HTMLDivElement>(null);
   const pendingGridIndex = useRef<number | null>(null);
-  const lastGridFocusIndex = useRef(0);
+  const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
@@ -342,28 +359,40 @@ export function Dashboard({initialMode="home"}:
     const prior=lastSource.current;
     lastSource.current=tabInfo.available;
     if(prior===null || prior===tabInfo.available)return;
-    // When TabMaster returns after enabling it in Decky, restore its first
-    // configured tab even if Steam's fallback also used the ID AllGames.
-    // Refresh the newly mounted UnifiedDeck/Steam collections immediately.
+    // Keep a saved return tab when TabMaster finishes hydrating AFTER native
+    // Game Details has returned. Normal source changes still select tab 1.
+    const snapshot=restorePending.current;
+    const savedTab=tabInfo.available&&snapshot&&
+      tabInfo.tabs.some(t=>t.id===snapshot.tabId)?snapshot.tabId:null;
     setGames(getLibraryGames());
-    setActiveTab(tabInfo.tabs[0]?.id ?? "AllGames");
-    setSelectedId(undefined);
-    setViewAll(initialMode==="library");
-    setGridLimit(60);
+    if(savedTab)setActiveTab(savedTab);
+    else setActiveTab(tabInfo.tabs[0]?.id ?? "AllGames");
+    setSelectedId(savedTab?snapshot!.gameId:undefined);
+    setViewAll(savedTab?snapshot!.viewAll:initialMode==="library");
+    setGridLimit(savedTab?snapshot!.gridLimit:60);
     pendingGridIndex.current=null;
   },[tabInfo.available]);
   const tabs = tabInfo.available && tabInfo.tabs.length ? tabInfo.tabs : fallbackTabs;
   const tabIds = tabs.map(t=>t.id).join("|");
   useEffect(()=>{
     if(tabs.some(t=>t.id===activeTab))return;
-    // The selected TabMaster tab may disappear while a Decky plugin is
-    // disabled. Reset to Steam All Games rather than retaining stale ID.
+    // During a Details return, the saved tab can precede TabMaster's async
+    // hydration. Wait briefly instead of immediately losing the user's tab.
+    if(!tabInfo.available && restorePending.current?.tabId===activeTab){
+      const timer=window.setTimeout(()=>{
+        if(getAutoTabs().available)return;
+        restorePending.current=null; // saved collection truly unavailable
+        setActiveTab(tabs[0]?.id??"AllGames");
+      },2000);
+      return ()=>window.clearTimeout(timer);
+    }
+    // When a tab is actually removed, fall back to first valid native tab.
     setActiveTab(tabs[0]?.id ?? "AllGames");
     setSelectedId(undefined);
     setViewAll(initialMode==="library");
     setGridLimit(60);
     pendingGridIndex.current=null;
-  },[tabIds,activeTab]);
+  },[tabIds,activeTab,tabInfo.available]);
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
   const sort = sortForTab(tab,tabSorts);
   const sortKind=externalSortKind(sort);
@@ -387,6 +416,28 @@ export function Dashboard({initialMode="home"}:
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
   const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
   const visibleGridGames = shown.slice(0,gridLimit);
+  /** Save the real origin before handing over to native Steam details. */
+  const rememberGameDetails=(game:LibraryGame)=>{
+    const focusedIndex=shown.findIndex(entry=>entry.id===game.id);
+    rememberDetailsOrigin({
+      route:actualRoute,
+      tabId:tab.id,
+      gameId:game.id,
+      viewAll,
+      gridLimit,
+      gridScrollTop:fullGridScrollRef.current?.scrollTop??0,
+      gridFocusIndex:focusedIndex>=0?focusedIndex:lastGridFocusIndex.current,
+    });
+  };
+  const openGameDetails=(game:LibraryGame)=>{
+    rememberGameDetails(game);
+    openDetails(game);
+  };
+  const runGameAction=(game:LibraryGame)=>{
+    // Never arm a return for successful installed-game launches.
+    if(!game.installed)rememberGameDetails(game);
+    play(game);
+  };
   // Hero images are resolved on selection to honor custom SteamGridDB artwork.
 
   const railActions: RailAction[] = [
@@ -541,11 +592,44 @@ export function Dashboard({initialMode="home"}:
   },[sortOpen]);
   const autoFocusedLibrary=useRef(false);
   useEffect(()=>{
-    if(initialMode!=="library"||!shown.length||autoFocusedLibrary.current)return;
+    if(!viewAll||!shown.length||autoFocusedLibrary.current)return;
+    // Native Library is a grid; Home can be in View More full-grid mode.
+    if(initialMode!=="library"&&!detailsReturn?.viewAll)return;
+    const snapshot=restorePending.current;
+    if(snapshot&&snapshot.tabId!==tab.id)return;
+    const restoredIndex=snapshot?
+      shown.findIndex(game=>game.id===snapshot.gameId):-1;
+    const target=snapshot?
+      restoredIndex>=0?restoredIndex:
+        Math.min(snapshot.gridFocusIndex,shown.length-1):0;
+    if(target>=gridLimit){
+      setGridLimit(limit=>Math.max(limit,target+1));
+      return;
+    }
     autoFocusedLibrary.current=true;
-    const frame=window.requestAnimationFrame(()=>focusGrid(0));
+    const frame=window.requestAnimationFrame(()=>{
+      if(snapshot&&fullGridScrollRef.current)
+        fullGridScrollRef.current.scrollTop=snapshot.gridScrollTop;
+      focusGrid(target);
+      restorePending.current=null;
+    });
     return ()=>window.cancelAnimationFrame(frame);
-  },[initialMode,shown.length]);
+  },[initialMode,viewAll,tab.id,activeTab,shown.length,gridLimit]);
+  const autoFocusedHome=useRef(false);
+  useEffect(()=>{
+    if(viewAll||!detailsReturn||autoFocusedHome.current||
+       detailsReturn.tabId!==tab.id)return;
+    const index=previewGames.findIndex(game=>game.id===detailsReturn.gameId);
+    if(index<0)return;
+    autoFocusedHome.current=true;
+    const frame=window.requestAnimationFrame(()=>{
+      const card=gameRefs.current[index];
+      card?.focus();
+      card?.scrollIntoView({block:"nearest",inline:"nearest"});
+      restorePending.current=null;
+    });
+    return ()=>window.cancelAnimationFrame(frame);
+  },[viewAll,tab.id,previewGames.length]);
   const focusPill = (index:number) => {
     setRailExpanded(false);
     const target = pillRefs.current[Math.max(0,Math.min(tabs.length - 1,index))];
@@ -755,7 +839,7 @@ export function Dashboard({initialMode="home"}:
                   <SortProgressNotice kind={sortKind} done={metaProgress.done}
                     total={metaProgress.total}/>
                 </div>}
-              <div className="gl-full-grid-scroll">
+              <div className="gl-full-grid-scroll" ref={fullGridScrollRef}>
                 <div className="gl-full-grid" ref={fullGridLayoutRef}>
                   {visibleGridGames.map((game,index)=>(
                     <GameCard key={game.id} game={game} index={index}
@@ -764,7 +848,7 @@ export function Dashboard({initialMode="home"}:
                         if(index>=gridLimit-12 && gridLimit<shown.length)
                           setGridLimit(v=>Math.min(v+60,shown.length));
                       }}
-                      activate={()=>openDetails(game)}
+                      activate={()=>openGameDetails(game)}
                       onSort={showSortMenu}
                       captureVertical
                       onCancel={exitGrid}
@@ -784,6 +868,7 @@ export function Dashboard({initialMode="home"}:
                   key={game.id}
                   game={game}
                   index={index}
+                  activate={()=>runGameAction(game)}
                   onSelect={() => setSelectedId(game.id)}
                   onSort={showSortMenu}
                   onMove={button=>{
@@ -833,11 +918,11 @@ export function Dashboard({initialMode="home"}:
                 </div>
                 <Focusable className="gl-actions" flow-children="row">
                   <Focusable className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing
-                    onActivate={() => play(selected)} onOKActionDescription={gameActionLabel(selected)}>
+                    onActivate={() => runGameAction(selected)} onOKActionDescription={gameActionLabel(selected)}>
                     {selected.installed ? <MdPlayArrow /> : <MdDownload />} {gameActionLabel(selected)}
                   </Focusable>
                   <Focusable className="gl-button" focusClassName="gl-focused" noFocusRing
-                    onActivate={() => openDetails(selected)} onOKActionDescription="Game details">
+                    onActivate={() => openGameDetails(selected)} onOKActionDescription="Game details">
                     <MdInfo /> Game Details
                   </Focusable>
 

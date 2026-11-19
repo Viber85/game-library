@@ -12,6 +12,7 @@ import {SteamGridDBPanel} from "./SteamGridDBPanel";
 import { startBuiltInThemeRuntime, stopBuiltInThemeRuntime } from "./builtinThemeRuntime";
 import { loadDefaultTheme } from "./themeController";
 import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
+import {returnDestinationFromHome,clearDetailsOrigin} from "./detailsReturn";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const LIBRARY_ROUTE = "/game-library/library";
@@ -38,24 +39,43 @@ class NativeHomeFallback extends Component<
   render() { return this.state.failed ? this.props.native : this.props.children; }
 }
 
-/** Installing the patch does not navigate the user away from a running game. */
+/** A one-shot return redirect, never a global Game Mode B replacement.
+ * When Steam's native details route sends B to Home (instead of a custom
+ * Decky route), only a Game Library-launched details session may redirect.
+ * Disabled Home replacement still renders the native Home unmodified.
+ */
+function HomeReturnGate({native}:{native:ReactNode}){
+  const [destination]=useState(()=>returnDestinationFromHome());
+  useEffect(()=>{
+    if(destination)Navigation.Navigate(destination);
+  },[destination]);
+  if(destination)return null;
+  if(!defaultHome)return <>{native}</>;
+  return <NativeHomeFallback native={native}>
+    <Dashboard originRoute={HOME_ROUTE}/>
+  </NativeHomeFallback>;
+}
+
+/** Keep a lightweight route gate even if the Home replacement is disabled.
+ * Normal native Home content is returned untouched when not restoring a
+ * Game Library details session. No global navigator/B listeners are changed.
+ */
 function updateHomePatch() {
   if (unloaded) return;
-  if (defaultHome && !homePatch) {
-    try {
-      homePatch = routerHook.addPatch(HOME_ROUTE, (props) => ({
-        ...props,
-        children: <NativeHomeFallback native={props.children}><Dashboard /></NativeHomeFallback>,
-        component: undefined,
-        render: undefined,
-      }));
-    } catch (error) {
-      console.error("[game-library] Steam Home patch unavailable", error);
-      homePatch = undefined;
-    }
-  } else if (!defaultHome && homePatch) {
-    routerHook.removePatch(HOME_ROUTE, homePatch);
-    homePatch = undefined;
+  if(homePatch){
+    routerHook.removePatch(HOME_ROUTE,homePatch);
+    homePatch=undefined;
+  }
+  try {
+    homePatch=routerHook.addPatch(HOME_ROUTE, (props)=>({
+      ...props,
+      children:<HomeReturnGate native={props.children}/>,
+      component:undefined,
+      render:undefined,
+    }));
+  } catch(error){
+    console.error("[game-library] Steam Home return gate unavailable",error);
+    homePatch=undefined;
   }
 }
 
@@ -137,7 +157,8 @@ function ControlPanel() {
 
 export default definePlugin(() => {
   unloaded = false;
-  routerHook.addRoute(DASHBOARD_ROUTE, Dashboard, { exact: true });
+  routerHook.addRoute(DASHBOARD_ROUTE,
+    ()=> <Dashboard originRoute={DASHBOARD_ROUTE}/>, { exact: true });
   routerHook.addRoute(LIBRARY_ROUTE, ()=> <Dashboard initialMode="library"/>,
     {exact:true});
   routerHook.addRoute(LIBRARY_DIAGNOSTICS_ROUTE, LibraryDiagnostics, { exact: true });
@@ -169,6 +190,7 @@ export default definePlugin(() => {
       unloaded = true;
       stopAutoTabSource();
       stopBuiltInThemeRuntime();
+      clearDetailsOrigin();
       listeners.clear();
       if(homePatch) {
         routerHook.removePatch(HOME_ROUTE, homePatch);

@@ -27,7 +27,8 @@ test("Y remains sort while A and B keep their existing functions",()=>{
   assert.match(card,/onOptionsActionDescription="Sort games"/);
   assert.match(card,/onActivate=\{activate \?\? \(\(\) => play\(game\)\)\}/);
   assert.match(card,/onCancelButton=\{onCancel\}/);
-  assert.match(dashboard,/activate=\{\(\)=>openDetails\(game\)\}/);
+  assert.match(dashboard,/activate=\{\(\)=>openGameDetails\(game\)\}/);
+  assert.match(dashboard,/openDetails\(game\);/);
   assert.equal((dashboard.match(/onSort=\{showSortMenu\}/g)||[]).length,2);
 });
 

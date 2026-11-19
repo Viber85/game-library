@@ -23,6 +23,41 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Test release 0.5.6-test.5 — B from Game Details returns to its actual previous screen
+
+SteamOS's native Game Details view can send B/Back to `/library/home`
+even when the game was opened from our custom `/game-library/library`
+Decky route. Previously this reset users to the beginning of Home and lost
+their position in the Steam/Epic/GOG full cover grid.
+
+**The plugin now remembers the exact source immediately before opening Game
+Details:** route (Home, Midnight Library, or QAM Dashboard), selected TabMaster
+tab, focused Steam AppID, whether View More/full grid was active, number of
+loaded grid cards, and vertical grid scroll offset. When native Steam navigates
+back to Home, a **one-time** route gate redirects to the original Library
+route if necessary. The restored Dashboard uses the saved tab and focuses the
+same game by AppID, not by an index that might have changed as HLTB sort data
+loads. A Home View More → Game Details → B flow returns to that same full-grid
+Home view instead of collapsing to the carousel.
+
+The route gate does not replace or intercept SteamOS's global B input. It only
+handles an **armed** details return opened from our Game Library; normal
+Steam-native game pages and unrelated navigation remain unaffected. The
+previous source is stored in memory only and is cleared after one successful
+restore, when the Decky plugin unloads, or after two hours to avoid stale
+redirects. If the optional Home replacement is disabled, the Home route still
+renders Steam's native content whenever no Game Library return is pending.
+
+The code also protects the saved custom tab while TabMaster rehydrates after
+returning from details; its fallback remains available if that source is gone.
+Existing Y Sort, Start native options, Select unmapped, A Play/Details, L1/R1,
+SteamGridDB artwork, HLTB metadata and Midnight UI styles remain unchanged.
+
+Automated tests cover native Back-to-Home redirects, both grid modes,
+per-tab/AppID/scroll restoration, unarmed Steam navigation and stale routes.
+On-device testing on MSI Claw is still required to confirm the native B
+routing behavior after the Steam client handles its own details page.
+
 ## Test release 0.5.6-test.4 — readable HLTB sorting progress
 
 Improves the visual notification shown while fetching **HowLongToBeat
