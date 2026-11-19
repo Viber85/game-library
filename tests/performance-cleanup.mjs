@@ -95,8 +95,8 @@ test("Steam artwork helper fails closed on absent API, invalid IDs and rejection
 });
 
 test("Dashboard no longer causes two identical native app-details calls",()=>{
-  const s=read("src/Dashboard.tsx");
-  assert.equal((s.match(/requestSelectedGameDetails\(game\.id\)/g)||[]).length,2);
+  const s=read("src/Dashboard.tsx"),artwork=read("src/SelectedGameArtwork.tsx");
+  assert.equal((artwork.match(/requestSelectedGameDetails\(game\.id\)/g)||[]).length,2);
   assert.doesNotMatch(s,/\.RequestAppDetails\(game\.id\)/);
   assert.match(s,/sameLibraryGames\(previous,next\)\?previous:next/);
   assert.match(s,/membershipSignature\.current!==signature/);

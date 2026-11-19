@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {toaster} from "@decky/api";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
-  MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSettings, MdHourglassEmpty,
+  MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSettings,
   MdShoppingCart, MdStar, MdVideogameAsset, MdChevronRight, MdArrowBack,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
   getLibraryGames, hasLibraryStore, lastPlayedLabel,
-  LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates, heroCandidates, heroFallbackCandidates, logoCandidates,
+  LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
 import {getMissingSteamArt,subscribeArtworkSettingsChanged} from "./steamGridArtwork";
@@ -20,51 +20,19 @@ import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabS
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
 import {getSortData,primeHltbCache,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
 import {sameLibraryGames,libraryTabSignature} from "./librarySnapshot";
-import {requestSelectedGameDetails} from "./selectedGameDetails";
+import {SortProgressNotice} from "./SortProgressNotice";
+import {HeroBackdrop,GameLogo} from "./SelectedGameArtwork";
+import {RunningGameIcon,RunningGameLabel} from "./RunningGameVisuals";
+import {useRunningGameState} from "./useRunningGameState";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
 import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
-import { readRunningGame, resumeRunningGame, type RunningGame } from "./runningGame";
+import { resumeRunningGame } from "./runningGame";
 import {
   consumeDetailsOrigin,peekDetailsOrigin,rememberDetailsOrigin,
   type DetailsOriginRoute,
 } from "./detailsReturn";
-
-/** Compact, non-interactive metadata loader that never covers Steam's B footer.
- * A real completed/total counter drives the progress bar; unknown data stays
- * at the bottom until resolved by the selected sort provider.
- */
-function SortProgressNotice({
-  kind,done,total,
-}:{
-  kind:"hltb"|"proton"|"achievement";
-  done:number;
-  total:number;
-}) {
-  const label=kind==="hltb"?"HOWLONGTOBEAT · MAIN + EXTRAS":
-    kind==="proton"?"PROTONDB RATINGS":"ACHIEVEMENT PROGRESS";
-  const percent=total>0?Math.max(0,Math.min(100,Math.round(done/total*100))):0;
-  return <div className="gl-sort-progress" role="status"
-    aria-label={`Loading ${label}: ${done} of ${total} games processed`}>
-    <div className="gl-sort-progress-top">
-      <div className="gl-sort-progress-icon" aria-hidden="true"><MdHourglassEmpty/></div>
-      <div className="gl-sort-progress-name">
-        <strong>{label}</strong>
-        <span>Loading game data</span>
-      </div>
-      <strong className="gl-sort-progress-count">{done} / {total}</strong>
-    </div>
-    <div className="gl-sort-progress-track" role="progressbar"
-      aria-label="Games processed" aria-valuemin={0}
-      aria-valuemax={total} aria-valuenow={done}>
-      <div className="gl-sort-progress-fill" style={{width:percent+"%"}}/>
-    </div>
-    <div className="gl-sort-progress-note">
-      Sorting as data loads · Games without data appear last
-    </div>
-  </div>;
-}
 
 type Sort = HomeSort;
 const INITIAL_GAME_COUNT = 15;
@@ -80,66 +48,6 @@ interface RailAction {
 }
 
 const consume = (e: GamepadEvent) => { e.preventDefault(); e.stopPropagation(); };
-
-/** Tries each custom/local/store asset until one actually loads. */
-function HeroBackdrop({game}:{game:LibraryGame}) {
-  const [imageIndex,setImageIndex] = useState(0);
-  const [artRevision,setArtRevision] = useState(0);
-  const [remoteHero,setRemoteHero] = useState<string|null>(null);
-  const [lookupFinished,setLookupFinished] = useState(game.nonSteam);
-  useEffect(()=>subscribeArtworkSettingsChanged(()=>{
-    setRemoteHero(null);
-    setLookupFinished(game.nonSteam);
-    setImageIndex(0);
-  }),[game.id,game.nonSteam]);
-  // Steam may not have loaded library assets when the game first receives focus.
-  // Request only the selected game's details; never prefetch the whole library.
-  useEffect(() => {
-    let live=true;
-    // Same selected game also mounts GameLogo: share one Steam details request.
-    void requestSelectedGameDetails(game.id).then(success=>{
-      if(live&&success){setImageIndex(0);setArtRevision(n=>n+1);}
-    });
-    return ()=>{live=false;};
-  },[game.id]);
-  const steamHeroes = useMemo(() => heroCandidates(game),
-    [game.id,game.hero,game.poster,artRevision]);
-  const lastResort = useMemo(()=>heroFallbackCandidates(game),
-    [game.id,game.poster]);
-  // Steam native hero first, optional SGDB hero second, and only then the
-  // normal store header/poster fallback. Existing artwork is never replaced.
-  const choices = [...steamHeroes,...(remoteHero?[remoteHero]:[]),
-    ...(lookupFinished?lastResort:[])];
-  const src=choices[imageIndex];
-  useEffect(()=>{
-    if(game.nonSteam || src || lookupFinished)return;
-    let mounted=true;
-    void getMissingSteamArt(game).then(art=>{
-      if(mounted){setRemoteHero(art.hero);setLookupFinished(true);}
-    }).catch(()=>{if(mounted)setLookupFinished(true);});
-    return ()=>{mounted=false;};
-  },[game.id,game.title,game.nonSteam,src,lookupFinished]);
-  if(!src)return null;
-  return <img className="gl-hero" src={src} alt="" key={src}
-    onError={() => setImageIndex(n => n+1)}/>;
-}
-
-/** The user-selected title logo appears above the game's name. */
-function GameLogo({game}:{game:LibraryGame}) {
-  const [sourceIndex,setSourceIndex]=useState(0);
-  const [refresh,setRefresh]=useState(0);
-  useEffect(()=>{
-    let mounted=true;
-    void requestSelectedGameDetails(game.id).then(success=>{
-      if(mounted&&success){setSourceIndex(0);setRefresh(n=>n+1);}
-    });
-    return ()=>{mounted=false;};
-  },[game.id]);
-  const candidates=useMemo(()=>logoCandidates(game),[game.id,game.nonSteam,refresh]);
-  const src=candidates[sourceIndex];
-  return src?<img className="gl-game-logo" src={src} alt="" key={src}
-    onError={()=>setSourceIndex(n=>n+1)}/>:null;
-}
 
 function GameCard({
   game, index, onSelect, onMove, onSort, cardRef, activate, onCancel, captureVertical=false,
@@ -225,56 +133,6 @@ function GameCard({
 }
 
 
-/** Use the same Steam artwork lookup as our non-Steam-compatible game cards.
- * A missing image becomes a generic game icon rather than a broken image. */
-function RunningGameIcon({game}:{game:LibraryGame|undefined}) {
-  const [imageIndex,setImageIndex]=useState(0);
-  useEffect(()=>setImageIndex(0),[game?.id]);
-  const images=game?posterCandidates(game):[];
-  const src=images[imageIndex];
-  return src ? <img className="gl-running-art" src={src} alt=""
-    onError={()=>setImageIndex(value=>value+1)}/>
-    : <MdVideogameAsset className="gl-rail-icon" aria-hidden="true"/>;
-}
-
-/** Marquee activates only for an actually truncated title. A long title
- * remains legible in controller focus and never shifts other rail items. */
-function RunningGameLabel({title,expanded}:{title:string;expanded:boolean}) {
-  const viewport=useRef<HTMLSpanElement>(null);
-  const content=useRef<HTMLSpanElement>(null);
-  const [overflow,setOverflow]=useState(0);
-  useEffect(()=>{
-    if(!expanded){setOverflow(0);return;}
-    const measure=()=>{
-      if(!viewport.current||!content.current)return;
-      const pixels=Math.ceil(content.current.scrollWidth-viewport.current.clientWidth);
-      setOverflow(pixels>3?pixels:0);
-    };
-    const frame=window.requestAnimationFrame(measure);
-    let resize:ResizeObserver|undefined;
-    if(typeof ResizeObserver!=="undefined"){
-      resize=new ResizeObserver(measure);
-      if(viewport.current)resize.observe(viewport.current);
-      if(content.current)resize.observe(content.current);
-    }
-    return ()=>{
-      window.cancelAnimationFrame(frame);
-      resize?.disconnect();
-    };
-  },[title,expanded]);
-  const style=overflow>0
-    ? {"--gl-marquee-distance":overflow+"px"} as CSSProperties
-    : undefined;
-  return <span className="gl-rail-label gl-running-label">
-    <span className="gl-running-title-viewport" ref={viewport}>
-      <span ref={content} style={style}
-        className={"gl-running-title"+(overflow>0?" gl-marquee-active":"")}>
-        {title}
-      </span>
-    </span>
-  </span>;
-}
-
 export function Dashboard({initialMode="home",originRoute}:
   {initialMode?:"home"|"library";originRoute?:DetailsOriginRoute}={}) {
   const actualRoute=originRoute??(initialMode==="library"?
@@ -286,8 +144,7 @@ export function Dashboard({initialMode="home",originRoute}:
   },[actualRoute,detailsReturn]);
   const restorePending=useRef(detailsReturn);
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
-  const [runningGame,setRunningGame]=useState<RunningGame|null>(()=>
-    readRunningGame((window as any).SteamUIStore,(window as any).appStore));
+  const {runningGame,setRunningGame}=useRunningGameState();
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
   const [activeTab, setActiveTab] = useState(()=>
     detailsReturn?.tabId??
@@ -323,18 +180,6 @@ export function Dashboard({initialMode="home",originRoute}:
   const tabsForRefresh=useRef<SteamTab[]>(fallbackTabs);
   const membershipSignature=useRef<string|null>(null);
   const [membershipRevision,setMembershipRevision]=useState(0);
-
-  useEffect(()=>{
-    const refresh=()=>{
-      const next=readRunningGame((window as any).SteamUIStore,(window as any).appStore);
-      setRunningGame(previous=>previous?.id===next?.id&&previous?.title===next?.title
-        ? previous:next);
-    };
-    refresh();
-    const check=window.setInterval(refresh,1600);
-    window.addEventListener("focus",refresh);
-    return ()=>{window.clearInterval(check);window.removeEventListener("focus",refresh);};
-  },[]);
 
   useEffect(() => {
     const refresh=window.setInterval(()=>{

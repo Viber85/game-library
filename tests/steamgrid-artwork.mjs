@@ -4,6 +4,7 @@ import test from "node:test";
 
 const read=(name)=>readFileSync(new URL("../"+name,import.meta.url),"utf8");
 const dashboard=read("src/Dashboard.tsx");
+const artwork=read("src/SelectedGameArtwork.tsx");
 const steam=read("src/steam.ts");
 const art=read("src/steamGridArtwork.ts");
 const panel=read("src/SteamGridDBPanel.tsx");
@@ -23,10 +24,10 @@ test("Hero chooses custom/native first, SGDB second, store header/poster last",(
   assert.match(steam,/export function heroFallbackCandidates/);
   assert.match(steam,/GetCustomHeroImageURLs/);
   assert.match(steam,/library_hero\.jpg/);
-  assert.match(dashboard,/const choices = \[\.\.\.steamHeroes,\.\.\.\(remoteHero\?\[remoteHero\]:\[\]\),/);
-  assert.match(dashboard,/\.\.\.\(lookupFinished\?lastResort:\[\]\)/);
-  assert.match(dashboard,/setRemoteHero\(art\.hero\)/);
-  assert.match(dashboard,/if\(game\.nonSteam \|\| src \|\| lookupFinished\)return;/);
+  assert.match(artwork,/const choices = \[\.\.\.steamHeroes,\.\.\.\(remoteHero\?\[remoteHero\]:\[\]\),/);
+  assert.match(artwork,/\.\.\.\(lookupFinished\?lastResort:\[\]\)/);
+  assert.match(artwork,/setRemoteHero\(art\.hero\)/);
+  assert.match(artwork,/if\(game\.nonSteam \|\| src \|\| lookupFinished\)return;/);
 });
 
 test("SteamGridDB lookups deduplicate cards and do not embed API keys in JS",()=>{

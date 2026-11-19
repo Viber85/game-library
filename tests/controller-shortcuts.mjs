@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 
 const source=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
 const card=source.slice(source.indexOf("function GameCard("),
-  source.indexOf("/** Use the same Steam artwork lookup"));
+  source.indexOf("export function Dashboard("));
 const sortMenu=source.slice(source.indexOf("  const showSortMenu="),
   source.indexOf("  const focusSortItem="));
 
