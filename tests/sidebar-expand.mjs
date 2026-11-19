@@ -35,11 +35,12 @@ test("floating library header shows only current tab with real search and clock"
   assert.match(ui,/<span className="gl-topbar-current" title=\{tab\.title\} aria-live="polite">\{tab\.title\}<\/span>/);
   assert.doesNotMatch(ui,/<span className="gl-topbar-title">Game Library<\/span>/);
   assert.doesNotMatch(ui,/gl-topbar-divider/);
-  assert.match(ui,/<SystemStatusBar time=\{time\} searchRef=\{headerSearchRef\}/);
+  assert.match(ui,/<SystemStatusBar searchRef=\{headerSearchRef\}/);
   assert.match(status,/<Focusable ref=\{searchRef\} className="gl-topbar-search"/);
   assert.match(status,/onActivate=\{\(\)=>Navigation\.Navigate\("\/search"\)\}/);
   assert.match(status,/<time className="gl-topbar-clock" dateTime=\{time\.toISOString\(\)\}/);
-  assert.match(ui,/const clock = window\.setInterval\(\(\) => setTime\(new Date\(\)\), 15000\)/);
+  assert.match(status,/const clock=window\.setInterval\(\(\)=>setTime\(new Date\(\)\),15000\)/);
+  assert.doesNotMatch(ui,/setTime\(new Date\(\)\)/);
   assert.match(css,/\/\* v0\.4\.7[^]*?\.gl-root\s*\{\s*padding:0;/);
   assert.match(css,/\.gl-root \.gl-sidebar\s*\{\s*align-self:stretch;\s*height:100%;/);
   assert.match(css,/\.gl-root \.gl-main\s*\{\s*padding-top:20px;/);
