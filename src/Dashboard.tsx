@@ -9,7 +9,7 @@ import {
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
-  getLibraryGames, hasLibraryStore, heroUrl, lastPlayedLabel,
+  getLibraryGames, hasLibraryStore, lastPlayedLabel,
   LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates, heroCandidates, heroFallbackCandidates, logoCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
@@ -19,6 +19,8 @@ import { fallbackTabs, gamesForTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
 import {getSortData,primeHltbCache,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
+import {sameLibraryGames} from "./librarySnapshot";
+import {requestSelectedGameDetails} from "./selectedGameDetails";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
@@ -94,15 +96,11 @@ function HeroBackdrop({game}:{game:LibraryGame}) {
   // Request only the selected game's details; never prefetch the whole library.
   useEffect(() => {
     let live=true;
-    const store=(window as any).appDetailsStore;
-    if(typeof store?.RequestAppDetails==="function"){
-      try {
-        void Promise.resolve(store.RequestAppDetails(game.id)).then(()=>{
-          if(live){setImageIndex(0);setArtRevision(n=>n+1);}
-        }).catch(()=>{/* cached art fallback stays available */});
-      } catch {/* stock assets may still be available */ }
-    }
-    return ()=>{live=false};
+    // Same selected game also mounts GameLogo: share one Steam details request.
+    void requestSelectedGameDetails(game.id).then(success=>{
+      if(live&&success){setImageIndex(0);setArtRevision(n=>n+1);}
+    });
+    return ()=>{live=false;};
   },[game.id]);
   const steamHeroes = useMemo(() => heroCandidates(game),
     [game.id,game.hero,game.poster,artRevision]);
@@ -132,13 +130,9 @@ function GameLogo({game}:{game:LibraryGame}) {
   const [refresh,setRefresh]=useState(0);
   useEffect(()=>{
     let mounted=true;
-    const details=(window as any).appDetailsStore;
-    if(typeof details?.RequestAppDetails === "function"){
-      try { void Promise.resolve(details.RequestAppDetails(game.id)).then(()=>{
-        if(mounted){setSourceIndex(0);setRefresh(n=>n+1);}
-      }).catch(()=>{ /* Use existing cached assets */ }); }
-      catch { /* logo may already be cached */ }
-    }
+    void requestSelectedGameDetails(game.id).then(success=>{
+      if(mounted&&success){setSourceIndex(0);setRefresh(n=>n+1);}
+    });
     return ()=>{mounted=false;};
   },[game.id]);
   const candidates=useMemo(()=>logoCandidates(game),[game.id,game.nonSteam,refresh]);
@@ -341,10 +335,13 @@ export function Dashboard({initialMode="home",originRoute}:
   },[]);
 
   useEffect(() => {
-    const refresh = window.setInterval(() => setGames(getLibraryGames()), 15000);
-    const clock = window.setInterval(() => setTime(new Date()), 15000);
-    return () => { window.clearInterval(refresh); window.clearInterval(clock); };
-  }, []);
+    const refresh=window.setInterval(()=>{
+      const next=getLibraryGames();
+      setGames(previous=>sameLibraryGames(previous,next)?previous:next);
+    },15000);
+    const clock=window.setInterval(()=>setTime(new Date()),15000);
+    return ()=>{window.clearInterval(refresh);window.clearInterval(clock);};
+  },[]);
 
   useEffect(() => {
     // Watch the plugin-level source. It continues polling even while Steam
