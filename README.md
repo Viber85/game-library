@@ -23,6 +23,27 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Test release 0.5.6-test.2 — controller shortcuts
+
+The Game Library **game covers** now use the verified Decky/Steam
+`GamepadButton.OPTIONS` (Y) to open the Midnight Sort menu rather than
+opening Game Details. The handheld's **Select/View** hardware button uses
+`GamepadButton.SELECT` to open the **focused game's** native Steam Details
+page. This applies to both Home carousel covers and Midnight Library grid
+covers. Y also opens the Sort menu while focused on tab pills and the
+View More tile. Footer legends and the Library hint reflect Y/Select.
+
+The Sort menu remembers its originating focused cover. On choosing a sort or
+pressing B to close, focus returns to that element when still mounted;
+otherwise focus falls back safely to the Sort pill. No changes to the
+existing A action (Home Play / Library Details), B Back, L1/R1 tab change,
+D-pad movement, or controller mappings outside Game Library.
+
+**Mapping verified** against Decky's actual `FooterLegend.ts`:
+`OPTIONS` is Y and `SELECT` is the handheld View/Select button.
+No `GamepadButton.Y` or made-up `onSelectButton` callback was introduced.
+This code still needs physical validation on the MSI Claw.
+
 ## Test release 0.5.6-test.1 — Midnight Library and 11 sorting criteria
 
 **Left sidebar Library** now opens `/game-library/library`, our existing
