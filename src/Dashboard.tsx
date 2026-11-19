@@ -18,7 +18,7 @@ import { SystemStatusBar } from "./SystemStatusBar";
 import { fallbackTabs, gamesForTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
-import {getSortData,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
+import {getSortData,primeHltbCache,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
 import { AchievementsCard } from "./AchievementsCard";
@@ -408,6 +408,17 @@ export function Dashboard({initialMode="home",originRoute}:
   // Native Steam refreshes its overviews every 15s. A fresh array with the
   // same games must NOT cancel an in-flight HLTB search and start it over.
   const metadataQueryIds=tabResult.games.map(g=>g.id+":"+g.title).join("|");
+  // Warm the EXISTING local HLTB JSON as soon as a library tab becomes
+  // available. This never calls HowLongToBeat; actual remote refresh only
+  // begins if the user selects an HLTB sort. Overlapping readers coalesce.
+  useEffect(()=>{
+    if(!tabResult.supported||!tabResult.games.length)return;
+    let mounted=true;
+    void primeHltbCache(tabResult.games,()=>{
+      if(mounted)setMetaRevision(revision=>revision+1);
+    });
+    return ()=>{mounted=false;};
+  },[tab.id,metadataQueryIds,tabResult.supported]);
   useEffect(()=>{
     if(!sortKind||!tabResult.supported||!tabResult.games.length)return;
     return startSortMetadata(sortKind,tabResult.games,()=>
