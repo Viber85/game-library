@@ -62,7 +62,9 @@ export function LibrarySearchToolbar({query,source,installed,onQuery,onSource,
       <div ref={inputRef} className="gl-library-search-field">
         <MdSearch aria-hidden="true"/>
         <div className="gl-library-search-native">
-          <TextField label="Search game titles" value={query} placeholder="Search Steam, Epic, GOG..."
+          <TextField aria-label="Search game titles" type="text"
+            style={{width:"100%",minWidth:0}} value={query}
+            placeholder="Search Steam, Epic, GOG..."
             onChange={event=>onQuery(event.target.value)} />
         </div>
       </div>

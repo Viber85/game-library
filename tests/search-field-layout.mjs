@@ -7,24 +7,32 @@ const css=read("src/theme.ts");
 const source=css.slice(css.indexOf("/* v0.5.9-test.3"));
 const dash=read("src/Dashboard.tsx");
 
-test("Single native Steam keyboard TextField stretches across the row",()=>{
-  assert.match(view,/<div ref=\{inputRef\} className="gl-library-search-field">/);
-  assert.match(view,/<div className="gl-library-search-native">\s*<TextField label="Search game titles"/);
-  assert.match(view,/onChange=\{event=>onQuery\(event\.target\.value\)\}/);
-  assert.match(view,/querySelector\("input"\)\?\.focus\(\)/);
-  assert.match(source,/\.gl-root \.gl-library-search-native :is\(div:has\(input\),input\) \{/);
-  assert.match(source,/width:100%!important;min-width:0!important;max-width:none!important/);
+test("Steam TextField keeps the visible editable input and accessible label",()=>{
+  assert.ok(view.includes('<div ref={inputRef} className="gl-library-search-field">'));
+  assert.ok(view.includes('<div className="gl-library-search-native">'));
+  assert.ok(view.includes('<TextField aria-label="Search game titles" type="text"'));
+  assert.ok(view.includes('style={{width:"100%",minWidth:0}}'));
+  assert.ok(view.includes('onChange={event=>onQuery(event.target.value)}'));
+  assert.ok(view.includes('querySelector("input")?.focus()'));
+  assert.ok(!view.includes('<TextField label="Search game titles"'));
 });
 
-test("Search input has no large surrounding fake box or giant focus rectangle",()=>{
-  const field=source.match(/\.gl-root \.gl-library-search-field \{([^}]+)\}/)?.[1];
-  assert.ok(field,"search field must have its own style");
-  assert.match(field,/border:0;border-radius:0;padding:0;background:transparent/);
-  assert.doesNotMatch(field,/linear-gradient|padding:2px 12px/);
-  const wrapperFocus=source.match(/\.gl-root \.gl-library-search-field:focus-within \{([^}]+)\}/)?.[1];
-  assert.match(wrapperFocus,/outline:0;box-shadow:none/);
-  assert.match(source,/\.gl-root \.gl-library-search-native input:focus \{/);
-  assert.match(source,/border-radius:11px!important/);
+test("Search field has a visible 48px border and no hidden native descendants",()=>{
+  assert.ok(source.includes(".gl-root .gl-library-search-native > *"));
+  assert.ok(source.includes(".gl-root .gl-library-search-native input {"));
+  assert.ok(source.includes("width:100%!important;min-width:0!important;max-width:none!important"));
+  assert.ok(source.includes("-webkit-text-fill-color:#f1faff!important"));
+  assert.ok(source.includes("visibility:visible!important"));
+  const fieldStart=source.indexOf(".gl-root .gl-library-search-field {");
+  const field=source.slice(fieldStart,source.indexOf("}",fieldStart));
+  assert.ok(field.includes("min-height:48px"));
+  assert.ok(field.includes("background:#0b2b4a"));
+  const ownCss=source.slice(0,source.indexOf(".gl-root .gl-library-search-clear"));
+  for(const unsafe of ["clip-path", "position:absolute", ":has(", "display:none", "visibility:hidden", "[class*="]){
+    assert.ok(!ownCss.includes(unsafe),"Unsafe field rule: "+unsafe);
+  }
+  assert.ok(source.includes(".gl-root .gl-library-search-field:focus-within {"));
+  assert.ok(!source.includes(".gl-root .gl-library-search-native input:focus {"));
 });
 
 test("Filter buttons use consistent non-clipped focus instead of scroll clipping",()=>{

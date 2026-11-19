@@ -83,7 +83,7 @@ test("Search results reuse GameCard, native Start menu, original art and B navig
   assert.match(dash,/returnDestinationFromHome|searchBackRoute\(\)/);
   assert.match(dash,/onMove=\{button=>moveInGrid\(index,button\)\}/);
   assert.match(dash,/showNativeGameOptions\(game\.id,e\.currentTarget\)/);
-  assert.match(toolbar,/<TextField label="Search game titles"/);
+  assert.match(toolbar,/<TextField aria-label="Search game titles" type="text"/);
   assert.match(toolbar,/onChange=\{event=>onQuery\(event\.target\.value\)\}/);
   assert.match(toolbar,/firstFilterRef\.current=el/);
   assert.match(toolbar,/onFocusResults\(\)/);
