@@ -67,6 +67,14 @@ export function returnDestinationFromHome():DetailsOriginRoute|null{
   return origin&&origin.route!==HOME_ROUTE?origin.route:null;
 }
 
+/** Reading a snapshot must not mutate React render state (StrictMode-safe). */
+export function peekDetailsOrigin(route:DetailsOriginRoute):GameDetailsOrigin|null{
+  const origin=current();
+  if(!origin||origin.route!==route)return null;
+  const {armedAt:_ignored,...snapshot}=origin;
+  return snapshot;
+}
+
 /** Consumed only when the original Dashboard route is actually mounted. */
 export function consumeDetailsOrigin(route:DetailsOriginRoute):GameDetailsOrigin|null{
   const origin=current();
