@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
 import {createThemeAliasCache,sameThemeRuntimeStatus} from "../src/themeCycleCache.ts";
+import {expandThemeClassAliases} from "../src/themeClassAliases.ts";
 
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const source='.BasicUI [class*="gamepadpagedsettings_PagedSettingsDialog_PageContent"] [class*="gamepaddialog_Field"] { background:#0c1b32; }';
@@ -21,7 +22,7 @@ test("unchanged lazy-loaded Steam CSS aliases reuse the expanded stylesheet",()=
 });
 
 test("missing module is detected when Settings or Game Details lazy-loads it",()=>{
-  const compile=createThemeAliasCache();
+  const compile=createThemeAliasCache(expandThemeClassAliases);
   const old=compile(source,{});
   assert.ok(old.includes('[class*="gamepaddialog_Field"]'));
   const first=compile(source,{

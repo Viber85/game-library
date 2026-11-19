@@ -1,4 +1,4 @@
-import {expandThemeClassAliases,type AliasRegistry} from "./themeClassAliases";
+import type {AliasRegistry} from "./themeClassAliases";
 
 /**
  * Cache an alias-expanded stylesheet only while its exact source and all
@@ -38,7 +38,7 @@ function aliasSignature(refs:readonly AliasReference[],modules:AliasRegistry):st
 }
 
 export function createThemeAliasCache(
-  expand:(css:string,modules:AliasRegistry)=>string=expandThemeClassAliases,
+  expand:(css:string,modules:AliasRegistry)=>string,
 ){
   const sources=new Map<string,CacheEntry>();
   return (css:string,modules:AliasRegistry):string=>{

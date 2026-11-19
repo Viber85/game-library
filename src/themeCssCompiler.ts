@@ -1,5 +1,5 @@
 import { findClassModule } from "@decky/ui";
-import { type AliasRegistry } from "./themeClassAliases";
+import {expandThemeClassAliases,type AliasRegistry} from "./themeClassAliases";
 import {createThemeAliasCache} from "./themeCycleCache";
 
 /**
@@ -91,7 +91,7 @@ function getSteamModules():AliasRegistry {
 
 // A fresh Steam webpack snapshot is always collected once per runtime scan.
  // Only the expanded strings are memoized; no CSS-module aliases are retained.
-const compileWithCache=createThemeAliasCache();
+const compileWithCache=createThemeAliasCache(expandThemeClassAliases);
 
 export function createMidnightCssCompiler(): (css:string)=>string {
   const modules=getSteamModules();
