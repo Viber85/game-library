@@ -23,7 +23,8 @@ test("Select/View shortcut is removed; START owns the native Steam context menu"
 });
 
 test("Both Home carousel and Midnight full grid pass the Sort callback",()=>{
-  assert.equal((source.match(/onSort=\{showSortMenu\}/g)||[]).length,2);
+  assert.equal((source.match(/onSort=\{showSortMenu\}/g)||[]).length,3);
+  assert.match(source,/className="gl-grid-page gl-search-page"/);
   assert.match(source,/onOptionsButton=\{\(e:GamepadEvent\)=>\{consume\(e\);showSortMenu\(\);\}\}/);
 });
 

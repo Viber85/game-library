@@ -103,7 +103,7 @@ test("Dashboard no longer causes two identical native app-details calls",()=>{
   assert.match(s,/libraryTabSignature\(tabs,games,createBatchGamesForTab\(\)\)/);
   assert.match(s,/membershipRevision/);
   assert.match(s,/\[tabs, games, membershipRevision\]/);
-  assert.match(s,/\[tab, games, membershipRevision\]/);
+  assert.match(s,/\[searchMode,searchResults,tab,games,membershipRevision\]/);
   assert.match(s,/showNativeGameOptions\(game\.id,e\.currentTarget\)/);
   assert.match(s,/return startSortMetadata/);
 });
