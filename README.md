@@ -2,6 +2,17 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.5 — Search textbox and button focus polish
+
+On Search, replace the oversized outer input container with a
+single real native Decky TextField that stretches across the
+available width. The existing SteamOS keyboard, input change
+events, D-pad focus and Clear action are retained. Source and
+availability chips wrap instead of clipping the controller
+focus ring; all Search filter/Clear/Sort/Back focus outlines
+use one clean inset border. No changes to search logic,
+library cards, left navigation, Appearance or Midnight theme.
+
 ## v0.5.9-test.4 — Search in the left navigation rail
 
 The existing Search function moves from the top SystemStatusBar to

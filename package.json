@@ -1,6 +1,6 @@
 {
   "name": "game-library",
-  "version": "0.5.9-test.4",
+  "version": "0.5.9-test.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "test:achievements": "node --test tests/achievements.mjs",
     "test:theme": "node --test tests/theme-runtime-performance.mjs tests/theme-tabs.mjs tests/game-details-midnight.mjs tests/theme-ingame.mjs tests/menu-focus.mjs tests/power-volume.mjs tests/settings-focus.mjs tests/settings-gamepad-nav.mjs tests/settings-focus-trace.mjs tests/settings-special.mjs tests/decky-settings.mjs tests/decky-dom-diagnostics.mjs tests/decky-live-css.mjs",
     "test:css-aliases": "node --test tests/theme-css-aliases.mjs",
-    "test:sidebar": "node --test tests/search-rail.mjs tests/native-status-bar.mjs tests/sidebar-repurpose.mjs tests/sidebar-expand.mjs tests/card-focus.mjs tests/running-game.mjs",
+    "test:sidebar": "node --test tests/search-field-layout.mjs tests/search-rail.mjs tests/native-status-bar.mjs tests/sidebar-repurpose.mjs tests/sidebar-expand.mjs tests/card-focus.mjs tests/running-game.mjs",
     "test:coverage": "node --test tests/theme-coverage.mjs",
     "test:probe": "node --test tests/theme-probe.mjs",
     "test:audit": "node --test tests/theme-audit.mjs"
