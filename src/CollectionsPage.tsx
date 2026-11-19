@@ -10,6 +10,7 @@ import {posterCandidates} from "./steam";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
 import type {SteamTab} from "./tabmaster";
 import {createBatchGamesForTab} from "./tabmaster";
+import {continuePlayingGames,personalCollectionTabs} from "./collectionViews";
 import {getGridColumnCount,gridNeighbor,canEnterNavigationRail,type GridDirection} from "./gridNavigation";
 import {SystemStatusBar} from "./SystemStatusBar";
 import {
@@ -36,12 +37,6 @@ type Tile={
   caption:string;
 };
 
-const CORE_TABS=new Set(["allgames","installed","favorites","nonsteam"]);
-const isCustomTab=(tab:SteamTab):boolean=>
-  !CORE_TABS.has(tab.id.toLowerCase())&&
-  !["all games","installed","favorites","non-steam","steam","epic","gog"]
-    .includes(tab.title.trim().toLowerCase());
-
 const CONSUME=(event:GamepadEvent)=>{
   event.preventDefault();event.stopPropagation();
 };
@@ -64,13 +59,8 @@ export function CollectionsPage({
   const scrollRef=useRef<HTMLDivElement>(null);
   const restoreFocus=useRef(location.gameId);
 
-  const customTabs=useMemo(()=>tabs.filter(isCustomTab).sort((a,b)=>
-    a.position-b.position||a.title.localeCompare(b.title)),[tabs]);
-  const recent=useMemo(()=>{
-    const last30Days=Math.floor(Date.now()/1000)-30*24*60*60;
-    return games.filter(game=>game.lastPlayed>=last30Days&&game.lastPlayed>0)
-      .sort((a,b)=>b.lastPlayed-a.lastPlayed||a.title.localeCompare(b.title));
-  },[games]);
+  const customTabs=useMemo(()=>personalCollectionTabs(tabs),[tabs]);
+  const recent=useMemo(()=>continuePlayingGames(games),[games]);
   const selectedTab=customTabs.find(tab=>tab.id===location.tabId)??null;
   const selectedResult=useMemo(()=>{
     if(!selectedTab)return null;
