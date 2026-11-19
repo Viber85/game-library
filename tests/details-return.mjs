@@ -125,6 +125,16 @@ test("Fullscreen grid and Home restore tab, selected game, batch size, scroll an
   assert.match(dashboard,/if\(detailsReturn\)consumeDetailsOrigin\(actualRoute\);/);
 });
 
+test("Restored Steam/Epic/GOG tabs are not overwritten while TabMaster hydrates",()=>{
+  assert.match(dashboard,/const savedTab=tabInfo\.available&&snapshot&&/);
+  assert.match(dashboard,/tabInfo\.tabs\.some\(t=>t\.id===snapshot\.tabId\)/);
+  assert.match(dashboard,/if\(savedTab\)setActiveTab\(savedTab\);/);
+  assert.match(dashboard,/!tabInfo\.available && restorePending\.current\?\.tabId===activeTab/);
+  assert.match(dashboard,/const timer=window\.setTimeout\(\(\)=>\{/);
+  assert.match(dashboard,/if\(getAutoTabs\(\)\.available\)return;/);
+  assert.match(dashboard,/\[initialMode,viewAll,tab\.id,activeTab,shown\.length,gridLimit\]/);
+});
+
 test("Native Steam Game Details B is handled on return route, not globally rebound",()=>{
   assert.match(index,/function HomeReturnGate/);
   assert.match(index,/returnDestinationFromHome\(\)/);
