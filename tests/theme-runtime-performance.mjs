@@ -88,5 +88,5 @@ test("focus, native Decky settings and Steam Input CSS remain untouched",()=>{
   assert.match(css,/background:#163a5e !important/);
   assert.match(decky,/data-glm-decky-settings/);
   assert.match(menu,/box-shadow:0 0 20px rgba\(3,157,255,\.72\)/);
-  assert.doesNotMatch(input,/controllerconfiguratorsummary_/);
+  assert.doesNotMatch(input.replace(/\/\*[\s\S]*?\*\//g,""),/controllerconfiguratorsummary_/);
 });
