@@ -5,6 +5,7 @@ import {
   PanelSection, PanelSectionRow, showModal,
 } from "@decky/ui";
 import { MdSystemUpdate } from "react-icons/md";
+import {withRequestTimeout as limited} from "./requestDeadline";
 
 const RELEASES_API = "https://api.github.com/repos/Viber85/game-library/releases?per_page=30";
 const RELEASES_URL = "https://github.com/Viber85/game-library/releases";
@@ -21,10 +22,6 @@ const loader = ():Loader|null => (window as Window & {DeckyBackend?:Loader}).Dec
 const checkUpdates = callable<[], UpdateInfo>("check_updates");
 const validateReleases = callable<[string], UpdateInfo>("validate_github_releases");
 const getVersion = callable<[],{version:string;error?:string}>("get_installed_version");
-const limited = <T,>(p:Promise<T>) => Promise.race([
-  p, new Promise<T>((_,reject)=>setTimeout(()=>reject(new Error("Request timed out")),12000))
-]);
-
 export function UpdatesPanel() {
   const [installed,setInstalled] = useState("Loading…");
   const [checking,setChecking] = useState(false);
