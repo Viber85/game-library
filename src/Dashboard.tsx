@@ -351,7 +351,7 @@ export function Dashboard({initialMode="home",originRoute}:
       membershipSignature.current=signature;
       setGames(previous=>sameLibraryGames(previous,next)?previous:next);
     },15000);
-    const clock=window.setInterval(()=>setTime(new Date()),15000);
+    const clock = window.setInterval(() => setTime(new Date()), 15000);
     return ()=>{window.clearInterval(refresh);window.clearInterval(clock);};
   },[]);
 
