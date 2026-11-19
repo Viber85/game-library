@@ -2,6 +2,16 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.8 — stable release
+
+Validated on MSI Claw A8 through v0.5.8-test.5. This release promotes
+that tested Game Library behavior without any visual, controller, focus,
+SteamOS native CSS, TabMaster/UnifiedDeck or gameplay changes. Release
+preparation includes a minor update-check timeout cleanup and removal of
+an unused icon import. The complete architecture and timer/subscription
+audit is in [docs/release-audit-0.5.8.md](docs/release-audit-0.5.8.md).
+
+
 ## v0.5.8-test.2 — render-only status optimizations
 
 - Move the 15-second clock tick into `SystemStatusBar` so it no longer triggers full Game Library grid re-renders. The visible SteamOS clock and 12/24-hour preference checks work as before.

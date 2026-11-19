@@ -5,7 +5,7 @@ import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
   MdLibraryBooks, MdPlayArrow, MdPowerSettingsNew, MdSettings,
-  MdShoppingCart, MdStar, MdVideogameAsset, MdChevronRight, MdArrowBack,
+  MdShoppingCart, MdVideogameAsset, MdChevronRight, MdArrowBack,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
