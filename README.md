@@ -2,6 +2,21 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.8 — Collections landing page
+
+Adds **Collections** to the permanent left rail, between Search and
+Appearance. Opens a new Game Mode screen with four controller-ready 2×2
+tiles: Continue Playing, Backlog, Completed and My Collections.
+
+Continue Playing shows games played within the last 30 days, using
+native Steam timestamps. My Collections discovers custom Steam/TabMaster
+tab groups and opens a read-only game view. Backlog and Completed have
+honest empty states until their manual assignment functionality is
+implemented in a follow-up. No false completion inference or invented
+backlog data. Game Details return and the original native Start menu
+remain available for collection game posters. No changes to existing
+Home/Library/Search/Appearance layouts or Midnight/Steam CSS.
+
 ## v0.5.9-test.7 — prefix-only Game Library search
 
 Search now filters titles strictly from their first character instead

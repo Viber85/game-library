@@ -55,7 +55,6 @@ export function CollectionsPage({
   games,tabs,membershipRevision,firstRef,onFocusRail,onOpenGame,onHome,
 }:Props){
   const [location,setLocation]=useState<CollectionLocation>(readCollectionLocation);
-  const [focusedId,setFocusedId]=useState<number|null>(null);
   const headerRef=useRef<HTMLDivElement>(null);
   const tileRefs=useRef<Array<HTMLDivElement|null>>([]);
   const backRef=useRef<HTMLDivElement>(null);
@@ -89,7 +88,6 @@ export function CollectionsPage({
   const changeLocation=(next:CollectionLocation)=>{
     saveCollectionLocation(next);
     setLocation(next);
-    setFocusedId(null);
     if(scrollRef.current)scrollRef.current.scrollTop=0;
   };
   const openSection=(section:Exclude<CollectionSection,"home">)=>{
@@ -108,7 +106,6 @@ export function CollectionsPage({
     if(!target)return;
     target.focus();
     target.scrollIntoView({block:"nearest",inline:"nearest"});
-    setFocusedId(entries[index]?.id??null);
   };
   const handleGridDirection=(event:GamepadEvent,index:number)=>{
     const button=event.detail?.button;
@@ -268,7 +265,6 @@ export function CollectionsPage({
                   saveCollectionLocation({...location,gameId:game.id});
                   onOpenGame(game);
                 }}
-                onGamepadFocus={()=>setFocusedId(game.id)}
                 onCancelButton={back}
                 onMenuButton={(event:GamepadEvent)=>{
                   CONSUME(event);

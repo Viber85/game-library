@@ -11,9 +11,10 @@ export const DASHBOARD_ROUTE="/game-library/dashboard";
 export const LIBRARY_ROUTE="/game-library/library";
 export const APPEARANCE_ROUTE="/game-library/appearance";
 export const SEARCH_ROUTE="/game-library/search";
+export const COLLECTIONS_ROUTE="/game-library/collections";
 
 export type DetailsOriginRoute=
-  typeof HOME_ROUTE|typeof DASHBOARD_ROUTE|typeof LIBRARY_ROUTE|typeof APPEARANCE_ROUTE|typeof SEARCH_ROUTE;
+  typeof HOME_ROUTE|typeof DASHBOARD_ROUTE|typeof LIBRARY_ROUTE|typeof APPEARANCE_ROUTE|typeof SEARCH_ROUTE|typeof COLLECTIONS_ROUTE;
 
 export interface GameDetailsOrigin {
   route:DetailsOriginRoute;
@@ -31,7 +32,7 @@ const MAX_ORIGIN_AGE_MS=2*60*60*1000;
 let pending:SavedOrigin|null=null;
 
 const validRoute=(route:string):route is DetailsOriginRoute=>
-  route===HOME_ROUTE||route===DASHBOARD_ROUTE||route===LIBRARY_ROUTE||route===APPEARANCE_ROUTE||route===SEARCH_ROUTE;
+  route===HOME_ROUTE||route===DASHBOARD_ROUTE||route===LIBRARY_ROUTE||route===APPEARANCE_ROUTE||route===SEARCH_ROUTE||route===COLLECTIONS_ROUTE;
 
 function current():SavedOrigin|null{
   if(!pending)return null;

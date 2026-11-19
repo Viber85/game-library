@@ -4,7 +4,7 @@ import {showNativeGameOptions} from "./nativeGameContextMenu";
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
-  MdLibraryBooks, MdPlayArrow, MdPalette, MdMenu, MdSearch,
+  MdLibraryBooks, MdPlayArrow, MdPalette, MdMenu, MdSearch, MdCollectionsBookmark,
   MdVideogameAsset, MdChevronRight, MdArrowBack,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
@@ -20,6 +20,8 @@ import {searchLibraryGames} from "./librarySearch";
 import {SEARCH_ROUTE,rememberSearchOrigin,searchBackRoute,
   readSearchSelection,saveSearchSelection} from "./searchNavigation";
 import {AppearancePage} from "./AppearancePage";
+import {CollectionsPage} from "./CollectionsPage";
+import {resetCollectionLocation} from "./collectionsNavigation";
 import {openNativeSteamMenu} from "./nativeSteamMenu";
 import { fallbackTabs, gamesForTab, createBatchGamesForTab, type SteamTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
@@ -44,6 +46,7 @@ type Sort = HomeSort;
 const INITIAL_GAME_COUNT = 15;
 const LIBRARY_ROUTE = "/game-library/library";
 const APPEARANCE_ROUTE = "/game-library/appearance";
+const COLLECTIONS_ROUTE="/game-library/collections";
 let lastSelectedLibraryTab="AllGames";
 const rememberedSorts:Record<string,Sort>={};
 
@@ -141,11 +144,12 @@ function GameCard({
 
 
 export function Dashboard({initialMode="home",originRoute}:
-  {initialMode?:"home"|"library"|"appearance"|"search";originRoute?:DetailsOriginRoute}={}) {
+  {initialMode?:"home"|"library"|"appearance"|"search"|"collections";originRoute?:DetailsOriginRoute}={}) {
   const searchMode=initialMode==="search";
+  const collectionsMode=initialMode==="collections";
   const actualRoute=originRoute??(initialMode==="library"?
     LIBRARY_ROUTE:initialMode==="appearance"?APPEARANCE_ROUTE:
-      searchMode?SEARCH_ROUTE:"/library/home");
+      searchMode?SEARCH_ROUTE:collectionsMode?COLLECTIONS_ROUTE:"/library/home");
   // Read a single return snapshot only if this exact original route mounts.
   const [detailsReturn]=useState(()=>peekDetailsOrigin(actualRoute));
   useEffect(()=>{
@@ -182,6 +186,8 @@ export function Dashboard({initialMode="home",originRoute}:
   const searchInputRef=useRef<HTMLDivElement>(null);
   const firstSearchFilterRef=useRef<HTMLDivElement>(null);
   const appearanceEntryRef=useRef<HTMLDivElement>(null);
+  const collectionsEntryRef=useRef<HTMLDivElement>(null);
+  const [collectionsPageRevision,setCollectionsPageRevision]=useState(0);
   const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridLayoutRef = useRef<HTMLDivElement>(null);
@@ -191,7 +197,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
-  const lastRailId=useRef(initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
+  const lastRailId=useRef(collectionsMode?"collections":initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
   const [railExpanded, setRailExpanded] = useState(false);
   const tabsForRefresh=useRef<SteamTab[]>(fallbackTabs);
   const membershipSignature=useRef<string|null>(null);
@@ -351,6 +357,14 @@ export function Dashboard({initialMode="home",originRoute}:
     Navigation.Navigate(SEARCH_ROUTE);
   };
 
+  const openCollections=()=>{
+    // Opening Collections from the rail should always show the four cards,
+    // not a previously selected group from a Game Details return.
+    resetCollectionLocation();
+    if(collectionsMode)setCollectionsPageRevision(revision=>revision+1);
+    else Navigation.Navigate(COLLECTIONS_ROUTE);
+  };
+
   const railActions: RailAction[] = [
     ...(runningGame ? [{
       id:"running",label:runningGame.title,icon:MdVideogameAsset,
@@ -363,6 +377,7 @@ export function Dashboard({initialMode="home",originRoute}:
     { id: "home", label: "Home", icon: MdHome, go: () => Navigation.Navigate("/library/home") },
     { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate(LIBRARY_ROUTE) },
     { id: "search", label: "Search", icon: MdSearch, go: openLocalSearch },
+    { id: "collections", label: "Collections", icon: MdCollectionsBookmark, go: openCollections },
     { id: "appearance", label: "Appearance", icon: MdPalette, go: () => Navigation.Navigate(APPEARANCE_ROUTE) },
     { id: "steam-menu", label: "Steam Menu", icon: MdMenu, go: () => {
       if(!openNativeSteamMenu(Navigation))toaster.toast({
@@ -373,7 +388,7 @@ export function Dashboard({initialMode="home",originRoute}:
   ];
 
   // Inserting/removing the transient first item must not silently remap
-  // the previously focused Home/Library/Search/Appearance icon to another action.
+  // the previously focused Home/Library/Search/Collections/Appearance icon to another action.
   useEffect(()=>{
     const index=railActions.findIndex(action=>action.id===lastRailId.current);
     if(index>=0){setRailIndex(index);return;}
@@ -456,6 +471,10 @@ export function Dashboard({initialMode="home",originRoute}:
   };
   const goToGame = (index?: number) => {
     setRailExpanded(false);
+    if(collectionsMode){
+      collectionsEntryRef.current?.focus();
+      return;
+    }
     if(initialMode==="appearance"){
       appearanceEntryRef.current?.focus();
       return;
@@ -535,7 +554,7 @@ export function Dashboard({initialMode="home",originRoute}:
   },[sortOpen]);
   const autoFocusedLibrary=useRef(false);
   useEffect(()=>{
-    if(!viewAll||!shown.length||autoFocusedLibrary.current)return;
+    if(collectionsMode||!viewAll||!shown.length||autoFocusedLibrary.current)return;
     // Native Library is a grid; Home can be in View More full-grid mode.
     if(initialMode!=="library"&&!detailsReturn?.viewAll)return;
     if(searchMode&&!restorePending.current)return;
@@ -561,7 +580,7 @@ export function Dashboard({initialMode="home",originRoute}:
   },[initialMode,viewAll,tab.id,activeTab,shown.length,gridLimit]);
   const autoFocusedHome=useRef(false);
   useEffect(()=>{
-    if(viewAll||!detailsReturn||autoFocusedHome.current||
+    if(collectionsMode||viewAll||!detailsReturn||autoFocusedHome.current||
        detailsReturn.tabId!==tab.id)return;
     const index=previewGames.findIndex(game=>game.id===detailsReturn.gameId);
     if(index<0)return;
@@ -599,7 +618,7 @@ export function Dashboard({initialMode="home",originRoute}:
     window.requestAnimationFrame(() => focusPill(nextIndex));
   };
   const handleBumper = (e:GamepadEvent):boolean => {
-    if(initialMode==="appearance"||searchMode)return false;
+    if(initialMode==="appearance"||searchMode||collectionsMode)return false;
     if (e.detail?.button === GamepadButton.BUMPER_LEFT) {
       consume(e);cycleTab(-1);return true;
     }
@@ -641,7 +660,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 key={action.id}
                 ref={el => { railRefs.current[index] = el; }}
                 className={"gl-rail-item"+(action.id==="running"?" gl-running-item":"")+
-                  (action.id===(initialMode==="appearance"?"appearance":
+                  (action.id===(collectionsMode?"collections":initialMode==="appearance"?"appearance":
                     searchMode?"search":initialMode==="library"?"library":"home")?" gl-rail-current":"")}
                 focusClassName="gl-focused"
                 noFocusRing
@@ -678,7 +697,22 @@ export function Dashboard({initialMode="home",originRoute}:
       </aside>
 
       <div className="gl-main">
-        {initialMode==="appearance"
+        {collectionsMode
+          ? <CollectionsPage key={collectionsPageRevision}
+              firstRef={collectionsEntryRef}
+              games={games} tabs={tabs} membershipRevision={membershipRevision}
+              onFocusRail={()=>focusRail(railIndex)}
+              onHome={()=>Navigation.Navigate("/library/home")}
+              onOpenGame={game=>{
+                // Preserve this *exact* Collections route across native
+                // Steam game details without modifying global Back behavior.
+                rememberDetailsOrigin({
+                  route:COLLECTIONS_ROUTE,tabId:tab.id,gameId:game.id,
+                  viewAll:false,gridLimit:60,gridScrollTop:0,gridFocusIndex:0,
+                });
+                openDetails(game);
+              }}/>
+          : initialMode==="appearance"
           ? <AppearancePage firstRef={appearanceEntryRef}
               onFocusRail={()=>focusRail(railIndex)}
               onBack={()=>Navigation.Navigate("/library/home")}/>

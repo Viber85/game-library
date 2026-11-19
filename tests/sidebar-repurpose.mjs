@@ -9,8 +9,8 @@ const entry=read("src/index.tsx"),css=read("src/theme.ts");
 
 test("Rail has exactly agreed five entries, with running game first only if active",()=>{
   assert.match(dash,/\.\.\.\(runningGame \? \[\{/);
-  const ids=[...dash.matchAll(/\{ id: "(home|library|search|appearance|steam-menu|store|downloads|settings|power)"/g)].map(m=>m[1]);
-  assert.deepEqual(ids,["home","library","search","appearance","steam-menu"]);
+  const ids=[...dash.matchAll(/\{ id: "(home|library|search|collections|appearance|steam-menu|store|downloads|settings|power)"/g)].map(m=>m[1]);
+  assert.deepEqual(ids,["home","library","search","collections","appearance","steam-menu"]);
   assert.match(dash,/id:"running",label:runningGame.title/);
   assert.match(dash,/Navigation\.Navigate\(APPEARANCE_ROUTE\)/);
   assert.match(dash,/\{ id: "search", label: "Search", icon: MdSearch, go: openLocalSearch \}/);

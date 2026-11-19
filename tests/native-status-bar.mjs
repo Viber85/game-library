@@ -12,7 +12,7 @@ test("Our original Home does not suppress Steam #header on native routes",()=>{
   assert.ok(dash.includes('actualRoute!=="/library/home" ? " gl-own-status-only" : ""'));
   assert.match(index,/new HomeReturnGate|<HomeReturnGate native=\{props\.children\}/);
   assert.match(index,/<Dashboard originRoute=\{HOME_ROUTE\}\/>/);
-  assert.match(dash,/initialMode==="library"\?\s*LIBRARY_ROUTE:initialMode==="appearance"\?APPEARANCE_ROUTE:\s*searchMode\?SEARCH_ROUTE:"\/library\/home"/);
+  assert.match(dash,/initialMode==="library"\?\s*LIBRARY_ROUTE:initialMode==="appearance"\?APPEARANCE_ROUTE:\s*searchMode\?SEARCH_ROUTE:collectionsMode\?COLLECTIONS_ROUTE:"\/library\/home"/);
 });
 
 test("Library, Appearance and Dashboard share our own status bar without native overlay",()=>{
