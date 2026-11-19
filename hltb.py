@@ -6,6 +6,7 @@ request the user's Steam account, inventory, achievements or playtime.
 """
 from difflib import SequenceMatcher
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -148,6 +149,54 @@ class HltbService:
         except (OSError, ValueError):
             pass
 
+    def cached_bulk(self, games):
+        """Read local persisted HLTB results in ONE call, without any HTTP.
+
+        Existing per-AppID/title entries are returned even when expired:
+        stale Main+Extras hours can be displayed immediately while a normal
+        lookup refreshes them in the background. Fresh misses are also
+        returned and must NOT be re-queried until their 12-hour TTL expires.
+        """
+        if not isinstance(games, list) or len(games) > 1000:
+            return {"entries": []}
+        now = time.time()
+        entries = []
+        with self._lock:
+            for game in games:
+                if not isinstance(game, dict):
+                    continue
+                appid, title = game.get("id"), game.get("title")
+                if (type(appid) is not int or not (0 < appid <= 0xffffffff)
+                        or not isinstance(title, str)):
+                    continue
+                title = title.strip()
+                if not title or len(title) > 160:
+                    continue
+                old = self._cache.get(str(appid))
+                if not isinstance(old, dict) or old.get("query") != title:
+                    continue
+                data = old.get("data")
+                has_data = isinstance(data, dict) and bool(data)
+                ttl = HIT_TTL if has_data else MISS_TTL
+                try:
+                    timestamp = float(old.get("timestamp") or 0)
+                except (TypeError, ValueError):
+                    timestamp = 0
+                age = now - timestamp
+                fresh = math.isfinite(age) and 0 <= age < ttl
+                hours = data.get("extras") if has_data else None
+                if (type(hours) not in (int, float) or
+                        not math.isfinite(hours) or hours <= 0):
+                    hours = None
+                entries.append({
+                    "id": appid,
+                    "title": title,
+                    "extras": hours,
+                    "fresh": fresh,
+                    "expires_in": max(0, int(ttl - age)) if fresh else 0,
+                })
+        return {"entries": entries}
+
     def lookup(self, appid, name):
         if type(appid) is not int or appid <= 0 or not isinstance(name, str):
             return {"status": "unavailable", "reason": "Invalid game"}
@@ -161,17 +210,28 @@ class HltbService:
         with self._lock:
             old = self._cache.get(key)
             if isinstance(old, dict) and old.get("query") == name:
-                age = now - float(old.get("timestamp") or 0)
+                try:
+                    age = now - float(old.get("timestamp") or 0)
+                except (TypeError, ValueError):
+                    age = float("inf")
                 if 0 <= age < (HIT_TTL if old.get("data") else MISS_TTL):
                     return {"status": "ok" if old["data"] else "unavailable",
-                            "data": old.get("data"), "cached": True}
-            try:
-                candidates = _search(name)
-                result = _selected_result(name, candidates)
-            except (urllib.error.URLError, OSError, ValueError, RuntimeError) as error:
-                if isinstance(old, dict) and old.get("data"):
-                    return {"status": "ok", "data": old["data"], "cached": True}
-                return {"status": "error", "reason": type(error).__name__}
+                            "data": old.get("data"), "cached": True,
+                            "expires_in": max(0, int((HIT_TTL if old["data"] else MISS_TTL)-age))}
+
+        # IMPORTANT: never hold the cache lock during slow HLTB HTTP.
+        # Bulk disk reads and selected-game cards must stay responsive even
+        # while a different title is being fetched from the provider.
+        try:
+            candidates = _search(name)
+            result = _selected_result(name, candidates)
+        except (urllib.error.URLError, OSError, ValueError, RuntimeError) as error:
+            if isinstance(old, dict) and old.get("query") == name and old.get("data"):
+                return {"status": "ok", "data": old["data"],
+                        "cached": True, "stale": True, "expires_in": 0}
+            return {"status": "error", "reason": type(error).__name__}
+
+        with self._lock:
             self._cache[key] = {"query": name, "timestamp": now, "data": result}
             try:
                 self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -180,4 +240,5 @@ class HltbService:
                 os.replace(temp, self.path)
             except OSError:
                 pass
-            return {"status": "ok" if result else "unavailable", "data": result, "cached": False}
+        return {"status": "ok" if result else "unavailable", "data": result,
+                "cached": False, "expires_in": HIT_TTL if result else MISS_TTL}

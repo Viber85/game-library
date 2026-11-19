@@ -23,6 +23,50 @@ Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metr
 - Colors have been tuned toward the deep-navy and cyan UI concept.
 - Integrated GitHub Releases checker, notes, confirmation and Decky-managed installer (in Quick Access).
 
+## Game Library v0.5.7 — instant local HowLongToBeat sorting cache
+
+Game Library now **warms the existing local HowLongToBeat JSON cache
+in bulk** whenever a library tab becomes available. This is a read-only
+Decky Python RPC called `hltb_cached_bulk`; it returns the stored **Main
++ Extras** duration (`comp_plus`) for up to 1,000 game IDs/titles at
+a time. There is **no internet traffic during prewarming**, and the
+disk file remains the same existing `hltb_cache.json`.
+
+Selecting HowLongToBeat Shortest/Longest no longer issues a separate
+backend call and 650 ms delay for every game whose valid cached result
+already exists. Instead, sorting uses the values loaded in one batch.
+The slow, rate-limited HLTB queue runs **only for games with missing or
+expired cache entries**. A cached "no result" also counts as known
+until its TTL expires, rather than triggering repeated searches.
+
+Cache retention stays unchanged:
+- Found titles: 7 days before refreshing.
+- No matching HLTB result: 12 hours before retrying.
+- Expired *positive* entries are still displayed immediately as
+  provisional Main + Extras durations, and are refreshed in the
+  background. If HLTB is temporarily unreachable, the old valid
+  duration stays visible instead of disappearing.
+- Provider/network errors use a short five-minute in-memory
+  retry cooldown, rather than repeatedly blocking sorting.
+
+The local cache is keyed by **both the Steam AppID and the exact title**
+to avoid matching artwork or times to another game after renaming.
+The bulk reader does not send user or library metadata to any outside
+service. Individual refresh requests follow the pre-existing privacy
+behavior (only the game title). Cold-start cache warm-up also does not
+block behind an unrelated slow HLTB HTTP search.
+
+Sorting remains explicitly **Main + Extras**, not Main Story,
+Completionist or a calculated average. The new loader reuses the
+existing progress notification and does not change the UI, tab sorting
+choices, Y/Start/Select/B controller mapping, SteamGridDB covers, or
+the previous v0.5.6-test.5 Game Details return-navigation logic.
+
+Automated backend tests cover bulk disk hits/misses, TTL, stale
+refresh, renamed-game safety and concurrent slow-network lookups.
+Frontend tests verify bulk hydration before individual requests.
+On-device verification is still required for the first cold launch.
+
 ## Test release 0.5.6-test.5 — B from Game Details returns to its actual previous screen
 
 SteamOS's native Game Details view can send B/Back to `/library/home`
