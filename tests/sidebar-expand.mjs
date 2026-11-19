@@ -31,14 +31,14 @@ test("labels are inline in the expanded rail, not floating tooltip popups",()=>{
 });
 
 
-test("floating library header shows only current tab with real search and clock",()=>{
+test("floating library header has native notifications focus, clock and no search icon",()=>{
   assert.match(ui,/<header className="gl-header gl-library-topbar" aria-label="Library navigation">/);
   assert.match(ui,/<span className="gl-topbar-current" title=\{tab\.title\} aria-live="polite">\{tab\.title\}<\/span>/);
   assert.doesNotMatch(ui,/<span className="gl-topbar-title">Game Library<\/span>/);
   assert.doesNotMatch(ui,/gl-topbar-divider/);
-  assert.match(ui,/<SystemStatusBar searchRef=\{headerSearchRef\}/);
-  assert.match(status,/<Focusable ref=\{searchRef\} className="gl-topbar-search"/);
-  assert.match(status,/onActivate=\{\(\)=>\{if\(onSearch\)onSearch\(\);else Navigation.Navigate\("\/search"\);\}\}/);
+  assert.match(ui,/<SystemStatusBar statusRef=\{headerStatusRef\}/);
+  assert.match(status,/<Focusable ref=\{statusRef\} className="gl-topbar-icon gl-topbar-notifications"/);
+  assert.doesNotMatch(status,/gl-topbar-search|onSearch|MdSearch|Navigate\("\/search"\)/);
   assert.match(status,/<time className="gl-topbar-clock" dateTime=\{time\.toISOString\(\)\}/);
   assert.match(status,/const clock=window\.setInterval\(\(\)=>setTime\(new Date\(\)\),15000\)/);
   assert.doesNotMatch(ui,/setTime\(new Date\(\)\)/);
@@ -63,7 +63,7 @@ test("floating library header shows only current tab with real search and clock"
   assert.match(status,/callable<\[\], DeviceStatus>\("get_system_status"\)/);
   assert.match(status,/onActivate=\{\(\)=>Navigation.Navigate\("\/settings"\)\}/);
   assert.match(status,/onStatusButtonDown/);
-  assert.match(ui,/headerSearchRef\.current\?\.focus\(\)/);
+  assert.match(ui,/headerStatusRef\.current\?\.focus\(\)/);
   assert.doesNotMatch(status,/Math\.random\(\)/);
 });
 

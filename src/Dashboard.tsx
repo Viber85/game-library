@@ -4,7 +4,7 @@ import {showNativeGameOptions} from "./nativeGameContextMenu";
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
-  MdLibraryBooks, MdPlayArrow, MdPalette, MdMenu,
+  MdLibraryBooks, MdPlayArrow, MdPalette, MdMenu, MdSearch,
   MdVideogameAsset, MdChevronRight, MdArrowBack,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
@@ -178,7 +178,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const railRefs = useRef<Array<HTMLDivElement | null>>([]);
   const sidebarRef = useRef<HTMLElement>(null);
   const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const headerSearchRef = useRef<HTMLDivElement>(null);
+  const headerStatusRef = useRef<HTMLDivElement>(null);
   const searchInputRef=useRef<HTMLDivElement>(null);
   const firstSearchFilterRef=useRef<HTMLDivElement>(null);
   const appearanceEntryRef=useRef<HTMLDivElement>(null);
@@ -191,7 +191,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
-  const lastRailId=useRef(initialMode==="appearance"?"appearance":initialMode==="library"||searchMode?"library":"home");
+  const lastRailId=useRef(initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
   const [railExpanded, setRailExpanded] = useState(false);
   const tabsForRefresh=useRef<SteamTab[]>(fallbackTabs);
   const membershipSignature=useRef<string|null>(null);
@@ -341,6 +341,15 @@ export function Dashboard({initialMode="home",originRoute}:
     play(game);
   };
   // Hero images are resolved on selection to honor custom SteamGridDB artwork.
+  const openLocalSearch=()=>{
+    if(searchMode){
+      // A on the selected Search rail item returns to the editable field.
+      searchInputRef.current?.querySelector("input")?.focus();
+      return;
+    }
+    rememberSearchOrigin(actualRoute);
+    Navigation.Navigate(SEARCH_ROUTE);
+  };
 
   const railActions: RailAction[] = [
     ...(runningGame ? [{
@@ -353,6 +362,7 @@ export function Dashboard({initialMode="home",originRoute}:
     }] : []),
     { id: "home", label: "Home", icon: MdHome, go: () => Navigation.Navigate("/library/home") },
     { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate(LIBRARY_ROUTE) },
+    { id: "search", label: "Search", icon: MdSearch, go: openLocalSearch },
     { id: "appearance", label: "Appearance", icon: MdPalette, go: () => Navigation.Navigate(APPEARANCE_ROUTE) },
     { id: "steam-menu", label: "Steam Menu", icon: MdMenu, go: () => {
       if(!openNativeSteamMenu(Navigation))toaster.toast({
@@ -363,7 +373,7 @@ export function Dashboard({initialMode="home",originRoute}:
   ];
 
   // Inserting/removing the transient first item must not silently remap
-  // the previously focused Home/Library/Appearance icon to another action.
+  // the previously focused Home/Library/Search/Appearance icon to another action.
   useEffect(()=>{
     const index=railActions.findIndex(action=>action.id===lastRailId.current);
     if(index>=0){setRailIndex(index);return;}
@@ -451,8 +461,9 @@ export function Dashboard({initialMode="home",originRoute}:
       return;
     }
     if(searchMode){
-      if(shown.length)focusGrid(index??lastGridFocusIndex.current);
-      else firstSearchFilterRef.current?.focus();
+      // Right/B from the expanded Search rail always targets the input,
+      // even when a previous query already has results.
+      searchInputRef.current?.querySelector("input")?.focus();
       return;
     }
     if (viewAll) {
@@ -598,10 +609,6 @@ export function Dashboard({initialMode="home",originRoute}:
     return false;
   };
 
-  const openLocalSearch=()=>{
-    rememberSearchOrigin(actualRoute);
-    Navigation.Navigate(SEARCH_ROUTE);
-  };
   return (
     <div
       // Steam renders its original #header over custom Decky routes. The
@@ -635,7 +642,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 ref={el => { railRefs.current[index] = el; }}
                 className={"gl-rail-item"+(action.id==="running"?" gl-running-item":"")+
                   (action.id===(initialMode==="appearance"?"appearance":
-                    initialMode==="library"||searchMode?"library":"home")?" gl-rail-current":"")}
+                    searchMode?"search":initialMode==="library"?"library":"home")?" gl-rail-current":"")}
                 focusClassName="gl-focused"
                 noFocusRing
                 onGamepadFocus={() => {
@@ -674,13 +681,11 @@ export function Dashboard({initialMode="home",originRoute}:
         {initialMode==="appearance"
           ? <AppearancePage firstRef={appearanceEntryRef}
               onFocusRail={()=>focusRail(railIndex)}
-              onSearch={openLocalSearch}
               onBack={()=>Navigation.Navigate("/library/home")}/>
           : searchMode ? <>
         <header className="gl-header gl-library-topbar" aria-label="Search navigation">
           <div className="gl-topbar-titles"><span className="gl-topbar-current">Search</span></div>
-          <SystemStatusBar searchRef={headerSearchRef}
-            onSearch={()=>searchInputRef.current?.querySelector("input")?.focus()}
+          <SystemStatusBar statusRef={headerStatusRef}
             onStatusButtonDown={(e:GamepadEvent)=>{
               if(e.detail?.button===GamepadButton.DIR_DOWN){
                 consume(e);searchInputRef.current?.querySelector("input")?.focus();
@@ -773,7 +778,7 @@ export function Dashboard({initialMode="home",originRoute}:
           <div className="gl-topbar-titles">
             <span className="gl-topbar-current" title={tab.title} aria-live="polite">{tab.title}</span>
           </div>
-          <SystemStatusBar searchRef={headerSearchRef} onSearch={openLocalSearch}
+          <SystemStatusBar statusRef={headerStatusRef}
             onStatusButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
               if(e.detail?.button===GamepadButton.DIR_DOWN){
@@ -797,7 +802,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
                   const b=e.detail?.button;
-                  if(b===GamepadButton.DIR_UP){consume(e);headerSearchRef.current?.focus();}
+                  if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
                   else if(b===GamepadButton.DIR_DOWN){consume(e);goToGame();}
                   else if(b===GamepadButton.DIR_LEFT){consume(e);index===0?focusRail(0):focusPill(index-1);}
                   else if(b===GamepadButton.DIR_RIGHT){consume(e);index===tabs.length-1?sortRef.current?.focus():focusPill(index+1);}

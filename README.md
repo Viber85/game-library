@@ -2,6 +2,16 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.4 — Search in the left navigation rail
+
+The existing Search function moves from the top SystemStatusBar to
+its own left navigation entry, between Library and Appearance.
+Notifications are now the first focusable status icon, preserving
+D-pad Up navigation from game tabs. A/Right on Search focuses the
+query field; source/availability filters, native Steam keyboard,
+Epic/GOG results and Game Details return behaviour remain unchanged.
+Appearance, Home, Midnight CSS and native Steam Settings are untouched.
+
 ## v0.5.9-test.3 — unified Game Library search
 
 The built-in magnifier now opens a Game Library search route instead of

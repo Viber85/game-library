@@ -19,8 +19,8 @@ test("Library, Appearance and Dashboard share our own status bar without native 
   assert.match(index,/routerHook\.addRoute\(LIBRARY_ROUTE/);
   assert.match(index,/routerHook\.addRoute\(APPEARANCE_ROUTE/);
   assert.match(index,/routerHook\.addRoute\(DASHBOARD_ROUTE/);
-  assert.match(dash,/<SystemStatusBar searchRef=\{headerSearchRef\}/);
-  assert.match(appearance,/<SystemStatusBar searchRef=\{searchRef\}/);
+  assert.match(dash,/<SystemStatusBar statusRef=\{headerStatusRef\}/);
+  assert.match(appearance,/<SystemStatusBar statusRef=\{statusRef\}/);
   assert.match(css,/html:has\(\.gl-root\.gl-own-status-only\) #header \{/);
   assert.match(css,/visibility:hidden !important;/);
   assert.match(css,/pointer-events:none !important;/);
