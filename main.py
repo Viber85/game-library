@@ -395,10 +395,19 @@ class Plugin:
         except (OSError, RuntimeError, ValueError):
             return {"status": "error", "cover": None, "hero": None}
 
-    async def hltb_times(self, appid: int, name: str):
+    def _hltb_cache_service(self):
         if self._hltb_service is None:
             self._hltb_service = _load_hltb().HltbService(_runtime_cache_path())
-        return await asyncio.to_thread(self._hltb_service.lookup, appid, name)
+        return self._hltb_service
+
+    async def hltb_cached_bulk(self, games: list):
+        """Serve existing local JSON cache to Game Mode without any network."""
+        if not isinstance(games, list) or len(games) > 1000:
+            return {"entries": []}
+        return await asyncio.to_thread(self._hltb_cache_service().cached_bulk, games)
+
+    async def hltb_times(self, appid: int, name: str):
+        return await asyncio.to_thread(self._hltb_cache_service().lookup, appid, name)
 
     async def protondb_tier(self, appid: int):
         if self._protondb_service is None:
