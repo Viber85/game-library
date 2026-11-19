@@ -25,7 +25,7 @@ import { AchievementsCard } from "./AchievementsCard";
 import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
 import { readRunningGame, resumeRunningGame, type RunningGame } from "./runningGame";
 import {
-  consumeDetailsOrigin,rememberDetailsOrigin,
+  consumeDetailsOrigin,peekDetailsOrigin,rememberDetailsOrigin,
   type DetailsOriginRoute,
 } from "./detailsReturn";
 
@@ -286,7 +286,10 @@ export function Dashboard({initialMode="home",originRoute}:
   const actualRoute=originRoute??(initialMode==="library"?
     LIBRARY_ROUTE:"/library/home");
   // Read a single return snapshot only if this exact original route mounts.
-  const [detailsReturn]=useState(()=>consumeDetailsOrigin(actualRoute));
+  const [detailsReturn]=useState(()=>peekDetailsOrigin(actualRoute));
+  useEffect(()=>{
+    if(detailsReturn)consumeDetailsOrigin(actualRoute);
+  },[actualRoute,detailsReturn]);
   const restorePending=useRef(detailsReturn);
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
   const [runningGame,setRunningGame]=useState<RunningGame|null>(()=>
