@@ -15,7 +15,7 @@ import {
 import { DASHBOARD_CSS } from "./theme";
 import {getMissingSteamArt,subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 import { SystemStatusBar } from "./SystemStatusBar";
-import { fallbackTabs, gamesForTab, type SteamTab } from "./tabmaster";
+import { fallbackTabs, gamesForTab, createBatchGamesForTab, type SteamTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
 import {getSortData,primeHltbCache,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
@@ -343,7 +343,7 @@ export function Dashboard({initialMode="home",originRoute}:
       // without a single CAppOverview field changing. Track real member
       // AppIDs separately before suppressing a no-op library rerender.
       const signature=libraryTabSignature(
-        tabsForRefresh.current,next,gamesForTab);
+        tabsForRefresh.current,next,createBatchGamesForTab());
       if(membershipSignature.current!==null&&
          membershipSignature.current!==signature)
         setMembershipRevision(revision=>revision+1);
@@ -383,7 +383,7 @@ export function Dashboard({initialMode="home",originRoute}:
   tabsForRefresh.current=tabs;
   const tabIds = tabs.map(t=>t.id).join("|");
   useEffect(()=>{
-    membershipSignature.current=libraryTabSignature(tabs,games,gamesForTab);
+    membershipSignature.current=libraryTabSignature(tabs,games,createBatchGamesForTab());
   },[tabs,games]);
   useEffect(()=>{
     if(tabs.some(t=>t.id===activeTab))return;
@@ -409,10 +409,13 @@ export function Dashboard({initialMode="home",originRoute}:
   const sortKind=externalSortKind(sort);
   const activeSortKind=useRef(sortKind);
   activeSortKind.current=sortKind;
-  const tabCounts = useMemo(() => new Map(tabs.map(t => {
-    const result = gamesForTab(t, games);
+  const tabCounts = useMemo(() => {
+    const resolve=createBatchGamesForTab();
+    return new Map(tabs.map(t => {
+    const result = resolve(t, games);
     return [t.id, result.supported ? result.games.length : null] as const;
-  })), [tabs, games, membershipRevision]);
+  }));
+  }, [tabs, games, membershipRevision]);
   const tabResult = useMemo(() => gamesForTab(tab, games),
     [tab, games, membershipRevision]);
   const shown=useMemo(()=>sortGames(tabResult.games,sort,getSortData()),

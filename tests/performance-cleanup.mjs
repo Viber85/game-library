@@ -100,7 +100,7 @@ test("Dashboard no longer causes two identical native app-details calls",()=>{
   assert.doesNotMatch(s,/\.RequestAppDetails\(game\.id\)/);
   assert.match(s,/sameLibraryGames\(previous,next\)\?previous:next/);
   assert.match(s,/membershipSignature\.current!==signature/);
-  assert.match(s,/libraryTabSignature\(tabs,games,gamesForTab\)/);
+  assert.match(s,/libraryTabSignature\(tabs,games,createBatchGamesForTab\(\)\)/);
   assert.match(s,/membershipRevision/);
   assert.match(s,/\[tabs, games, membershipRevision\]/);
   assert.match(s,/\[tab, games, membershipRevision\]/);
