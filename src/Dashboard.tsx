@@ -15,11 +15,11 @@ import {
 import { DASHBOARD_CSS } from "./theme";
 import {getMissingSteamArt,subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 import { SystemStatusBar } from "./SystemStatusBar";
-import { fallbackTabs, gamesForTab } from "./tabmaster";
+import { fallbackTabs, gamesForTab, type SteamTab } from "./tabmaster";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
 import {getSortData,primeHltbCache,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
-import {sameLibraryGames} from "./librarySnapshot";
+import {sameLibraryGames,libraryTabSignature} from "./librarySnapshot";
 import {requestSelectedGameDetails} from "./selectedGameDetails";
 import { HowLongToBeatCard } from "./HltbCard";
 import { ProtonDBBadge } from "./ProtonDBBadge";
@@ -321,6 +321,9 @@ export function Dashboard({initialMode="home",originRoute}:
   const [railIndex, setRailIndex] = useState(0);
   const lastRailId=useRef("home");
   const [railExpanded, setRailExpanded] = useState(false);
+  const tabsForRefresh=useRef<SteamTab[]>(fallbackTabs);
+  const membershipSignature=useRef<string|null>(null);
+  const [membershipRevision,setMembershipRevision]=useState(0);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -337,6 +340,15 @@ export function Dashboard({initialMode="home",originRoute}:
   useEffect(() => {
     const refresh=window.setInterval(()=>{
       const next=getLibraryGames();
+      // Installed/Favorites/TabMaster/UnifiedDeck membership can change
+      // without a single CAppOverview field changing. Track real member
+      // AppIDs separately before suppressing a no-op library rerender.
+      const signature=libraryTabSignature(
+        tabsForRefresh.current,next,gamesForTab);
+      if(membershipSignature.current!==null&&
+         membershipSignature.current!==signature)
+        setMembershipRevision(revision=>revision+1);
+      membershipSignature.current=signature;
       setGames(previous=>sameLibraryGames(previous,next)?previous:next);
     },15000);
     const clock=window.setInterval(()=>setTime(new Date()),15000);
@@ -370,7 +382,11 @@ export function Dashboard({initialMode="home",originRoute}:
     pendingGridIndex.current=null;
   },[tabInfo.available]);
   const tabs = tabInfo.available && tabInfo.tabs.length ? tabInfo.tabs : fallbackTabs;
+  tabsForRefresh.current=tabs;
   const tabIds = tabs.map(t=>t.id).join("|");
+  useEffect(()=>{
+    membershipSignature.current=libraryTabSignature(tabs,games,gamesForTab);
+  },[tabs,games]);
   useEffect(()=>{
     if(tabs.some(t=>t.id===activeTab))return;
     // During a Details return, the saved tab can precede TabMaster's async
@@ -396,8 +412,9 @@ export function Dashboard({initialMode="home",originRoute}:
   const tabCounts = useMemo(() => new Map(tabs.map(t => {
     const result = gamesForTab(t, games);
     return [t.id, result.supported ? result.games.length : null] as const;
-  })), [tabs, games]);
-  const tabResult = useMemo(() => gamesForTab(tab, games), [tab, games]);
+  })), [tabs, games, membershipRevision]);
+  const tabResult = useMemo(() => gamesForTab(tab, games),
+    [tab, games, membershipRevision]);
   const shown=useMemo(()=>sortGames(tabResult.games,sort,getSortData()),
     [tabResult.games,sort,metaRevision]);
   const metaProgress=sortKind?
