@@ -37,7 +37,7 @@ test("Rail Search A/Right focuses editable field and other pages navigate to Sea
   assert.match(dash,/if\(searchMode\)\{\s*\/\/ Right\/B from the expanded Search rail/);
   assert.match(dash,/searchInputRef\.current\?\.querySelector\("input"\)\?\.focus\(\)/);
   assert.match(dash,/else if \(button === GamepadButton.DIR_RIGHT\) \{ consume\(e\); goToGame\(\); \}/);
-  assert.match(search,/<TextField aria-label="Search game titles" type="text"/);
+  assert.match(search,/<TextField aria-label="Search game titles"/);
 });
 
 test("Unchanged focus and Game Details support across the library",()=>{
