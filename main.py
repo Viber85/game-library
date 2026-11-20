@@ -143,17 +143,17 @@ def _manual_collection_snapshot(settings):
     """Keep only safe Steam app IDs; never infer finished games or modify Steam."""
     raw = settings.get("manual_collections")
     raw = raw if isinstance(raw, dict) else {}
-    result = {}
+    sections = {}
     for name in ("backlog", "completed"):
         items = raw.get(name, [])
-        result[name] = sorted({
+        sections[name] = sorted({
             item for item in (items if isinstance(items, list) else [])
             if type(item) is int and 0 < item <= 9007199254740991
         })
     # A title must never appear as both planned and finished.
-    completed = set(result["completed"])
-    result["backlog"] = [item for item in result["backlog"] if item not in completed]
-    return result
+    completed = set(sections["completed"])
+    sections["backlog"] = [item for item in sections["backlog"] if item not in completed]
+    return sections
 
 
 
