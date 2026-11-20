@@ -16,9 +16,8 @@ test("Letters are Latin A-Z and #, with Croatian diacritics folded",()=>{
   const examples=new Map([
     ["Hades","H"],["  Čovjek ","C"],["Šuma","S"],
     ["Život","Z"],["Đavolji","D"],["Élite","E"],
-    ["3D Mark","#"],["!Action","#"],[""," # "],
+    ["3D Mark","#"],["!Action","#"],
   ]);
-  examples.delete("");
   for(const [title,letter] of examples)
     assert.equal(letterForTitle(title),letter,title);
   assert.equal(letterForTitle(""),"#");
@@ -44,7 +43,7 @@ test("Phase one is ONLY for dedicated Library full grid sorted A-Z or Z-A",()=>{
     assert.equal(alphabetIndicatorEnabled("library",sort,true),false);
   assert.match(dash,/alphabetIndicatorEnabled\(initialMode,sort,viewAll\)/);
   assert.match(dash,/libraryAlphabetActive&&<LibraryAlphabetIndicator/);
-  assert.match(dash,/games=\{visibleGridGames\}/);
+  assert.match(dash,/games=\{visibleGridGames\} focusedGameId=\{selectedId\}/);
   assert.match(dash,/key=\{tab\.id\+":"\+sort\}/);
   assert.match(dash,/const visibleGridGames = useMemo\(\(\)=>shown\.slice\(0,gridLimit\)/);
 });
