@@ -100,7 +100,9 @@ test("main carousel poster expansion remains responsive and grid is untouched",(
 test("v0.4.12 scales both carousel and selected-game detail safely",()=>{
   const start=css.indexOf("/* v0.4.12 — enlarged dashboard carousel and hero information.");
   assert.ok(start>=0,"New hero-and-carousel design stylesheet must exist");
-  const layout=css.slice(start);
+  const end=css.indexOf("/* v0.4.20 — running game shortcut",start);
+  assert.ok(end>start,"Old carousel scope should end before later components");
+  const layout=css.slice(start,end);
   for(const term of [
     ".gl-main > .gl-strip", "height:306px", "height:274px",
     "width:clamp(151px,13vw,208px)", "height:260px",
