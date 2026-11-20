@@ -1694,4 +1694,71 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-collections-card-top {margin-bottom:5px;}
   .gl-root .gl-collections-intro {padding-bottom:13px;}
 }
+/* v0.5.9-test.9 — manual collection editor, scoped to Collections only. */
+.gl-root .gl-collections-manage {
+  display:flex;align-items:center;gap:15px;min-height:52px;
+  margin:-3px 0 14px;padding:2px 1px;
+}
+.gl-root .gl-collections-add {
+  display:flex;align-items:center;gap:7px;flex:0 0 auto;
+  padding:10px 18px;min-height:42px;border-radius:11px;
+  background:#176195;color:#f4faff;border:1px solid #5bb3e7;
+  font-size:14px;font-weight:750;
+}
+.gl-root .gl-collections-add>svg {font-size:22px;}
+.gl-root .gl-collections-manage>span {
+  color:#a9c7df;font-size:12px;line-height:1.4;
+}
+.gl-root .gl-collections-add:is(.gl-focused,.gpfocus,:focus-visible) {
+  outline:none;border-color:#f0fbff;
+  box-shadow:inset 0 0 0 1px #f0fbff,0 0 14px rgba(31,176,255,.56);
+}
+.gl-root .gl-collections-remove-hint {
+  position:absolute;bottom:4px;left:5px;z-index:2;padding:4px 7px;
+  font-size:11px;font-weight:750;background:rgba(4,20,35,.9);
+  border-radius:7px;color:#d9eeff;
+}
+.gl-root .gl-collections-picker {display:flex;flex-direction:column;min-height:0;}
+.gl-root .gl-collections-picker-search {flex:0 0 auto;margin:1px 1px 6px;}
+.gl-root .gl-collections-picker-note {
+  flex:0 0 auto;padding:3px 4px 9px;font-size:12px;color:#b4d2e7;
+}
+.gl-root .gl-collections-picker-list {
+  display:flex;flex-direction:column;gap:7px;
+  min-height:0;padding:3px 6px 14px;
+}
+.gl-root .gl-collections-picker-row {
+  display:flex;align-items:center;gap:13px;min-width:0;min-height:63px;
+  padding:6px 13px;border:1px solid #345e80;border-radius:10px;
+  background:#0b2948;color:#ecf8ff;outline:none;
+}
+.gl-root .gl-collections-picker-row.gl-collections-selected {
+  background:#103f62;border-color:#579ecc;
+}
+.gl-root .gl-collections-picker-row:is(.gl-focused,.gpfocus,:focus-visible) {
+  outline:none;border-color:#effaff;
+  box-shadow:inset 0 0 0 1px #c7ecff,0 0 13px rgba(32,171,255,.5);
+}
+.gl-root .gl-collections-picker-art {
+  flex:0 0 35px;width:35px;height:48px;overflow:hidden;
+  border-radius:4px;background:#102f49;
+}
+.gl-root .gl-collections-picker-art img {
+  display:block;width:100%;height:100%;object-fit:cover;
+}
+.gl-root .gl-collections-picker-name {
+  flex:1;min-width:0;font-size:14px;font-weight:700;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.gl-root .gl-collections-picker-state {
+  flex:0 0 auto;max-width:35%;text-align:right;
+  font-size:12px;color:#a9dcff;font-weight:750;
+}
+.gl-root .gl-collections-selected .gl-collections-picker-state {color:#baf5d4;}
+@media(max-height:650px) {
+  .gl-root .gl-collections-picker-row {min-height:51px;padding:4px 10px;}
+  .gl-root .gl-collections-picker-art {height:39px;width:29px;flex-basis:29px;}
+  .gl-root .gl-collections-manage {min-height:43px;margin-bottom:8px;}
+}
+
 `;
