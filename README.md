@@ -2,6 +2,14 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.10 — controller focus refinement
+
+The manual Backlog / Completed picker also keeps a correct focus target
+when returning from the permanent left navigation rail. Its loading
+state is explicit until Decky's saved collections arrive. The picker
+reads each game's cover once per rendered row. See test.9 below for
+the complete manual collection feature set.
+
 ## v0.5.9-test.9 — editable Backlog and Completed
 
 Backlog and Completed now have a controller-driven **Add games** action,
