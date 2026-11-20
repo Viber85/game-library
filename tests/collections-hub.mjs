@@ -50,10 +50,26 @@ test("My Collections lists only genuinely custom Steam/TabMaster tabs",()=>{
     ["Survival","RPG Games"]);
 });
 
-test("Backlog and Completed do not guess or claim saved manual membership",()=>{
-  assert.match(page,/count:0,caption:"MANUAL · NEXT PHASE"/);
-  assert.match(page,/Manual game assignment to Backlog and Completed is coming/);
+test("Backlog and Completed provide saved manual membership and do not infer completion",()=>{
+  assert.match(page,/manualGames\(games,manual,manualSection\)/);
+  assert.match(page,/manualLoaded\?manual\.backlog\.length:null/);
+  assert.match(page,/manualLoaded\?manual\.completed\.length:null/);
+  assert.match(page,/void editManual\(picker,game,!added\)/);
+  assert.match(page,/void editManual\(manualSection,game,false\)/);
+  assert.match(page,/TextField aria-label="Find games for collection"/);
+  assert.match(page,/setPicker\(section\)/);
+  assert.match(page,/onOptionsActionDescription=\{manualSection\?/);
   assert.doesNotMatch(page,/achievementsUnlocked===achievementsTotal|playtimeMinutes===0/);
+  assert.doesNotMatch(page,/MANUAL · NEXT PHASE/);
+  const source=read("src/manualCollections.ts");
+  assert.match(source,/get_manual_collections/);
+  assert.match(source,/set_manual_collection/);
+  assert.match(source,/new Set\(state\[section\]\)/);
+  const backend=read("main.py");
+  assert.match(backend,/async def get_manual_collections\(self\)/);
+  assert.match(backend,/async def set_manual_collection\(self, section:/);
+  assert.match(backend,/saved\["manual_collections"\] = state/);
+  assert.match(backend,/state\[other\] = \[item for item in state\[other\] if item != appid\]/);
 });
 
 test("Collections route, exact nav placement, and native header cleanup",()=>{
