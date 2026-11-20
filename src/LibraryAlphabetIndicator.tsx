@@ -5,6 +5,7 @@ import type {LibraryGame} from "./steam";
 
 type Props={
   games:readonly LibraryGame[];
+  focusedGameId:number|undefined;
   descending:boolean;
   scrollRef:RefObject<HTMLDivElement|null>;
   gridRef:RefObject<HTMLDivElement|null>;
@@ -14,7 +15,7 @@ type Props={
  * moves game cards, or makes a network request. Only letter transitions
  * cause this component to update; Dashboard and GameCard do not rerender.
  */
-export function LibraryAlphabetIndicator({games,descending,scrollRef,gridRef}:Props){
+export function LibraryAlphabetIndicator({games,focusedGameId,descending,scrollRef,gridRef}:Props){
   const [letter,setLetter]=useState<string>("#");
   const [popup,setPopup]=useState<string|null>(null);
   const current=useRef<string|null>(null);
@@ -22,6 +23,34 @@ export function LibraryAlphabetIndicator({games,descending,scrollRef,gridRef}:Pr
   const popupTimer=useRef<number|null>(null);
   const scrollFrame=useRef<number|null>(null);
   const order=alphabetLetters(descending);
+
+  // Steam's Focusable can signal a controller focus without a browser
+  // focusin event. The Dashboard already tracks that game's AppID, so this
+  // fallback guarantees accurate D-pad/analog letter changes.
+  const setCurrent=(index:number,announce:boolean)=>{
+    if(index<0||index>=games.length)return;
+    const next=letterForTitle(games[index].title);
+    if(current.current===next)return;
+    const previous=current.current;
+    current.current=next;
+    setLetter(next);
+    if(announce&&previous!==null){
+      setPopup(next);
+      if(popupTimer.current!==null)window.clearTimeout(popupTimer.current);
+      popupTimer.current=window.setTimeout(()=>{
+        setPopup(null);
+        popupTimer.current=null;
+      },850);
+    }
+  };
+
+  useEffect(()=>{
+    if(focusedGameId===undefined)return;
+    const index=games.findIndex(g=>g.id===focusedGameId);
+    if(index<0)return;
+    focusTime.current=Date.now();
+    setCurrent(index,true);
+  },[focusedGameId,games]);
 
   useEffect(()=>{
     const scroll=scrollRef.current;
@@ -39,22 +68,6 @@ export function LibraryAlphabetIndicator({games,descending,scrollRef,gridRef}:Pr
         if(card.getBoundingClientRect().bottom>visibleTop)return i;
       }
       return Math.max(0,children.length-1);
-    };
-    const setCurrent=(index:number,announce:boolean)=>{
-      if(!active||index<0||index>=games.length)return;
-      const next=letterForTitle(games[index].title);
-      if(current.current===next)return;
-      const previous=current.current;
-      current.current=next;
-      setLetter(next);
-      if(announce&&previous!==null){
-        setPopup(next);
-        if(popupTimer.current!==null)window.clearTimeout(popupTimer.current);
-        popupTimer.current=window.setTimeout(()=>{
-          if(active)setPopup(null);
-          popupTimer.current=null;
-        },850);
-      }
     };
     const onFocus=(event:FocusEvent)=>{
       const target=event.target;
