@@ -139,6 +139,23 @@ def _write_preferences(settings):
     temporary.write_text(json.dumps(settings), encoding="utf-8")
     os.replace(temporary, path)
 
+def _manual_collection_snapshot(settings):
+    """Keep only safe Steam app IDs; never infer finished games or modify Steam."""
+    raw = settings.get("manual_collections")
+    raw = raw if isinstance(raw, dict) else {}
+    result = {}
+    for name in ("backlog", "completed"):
+        items = raw.get(name, [])
+        result[name] = sorted({
+            item for item in (items if isinstance(items, list) else [])
+            if type(item) is int and 0 < item <= 9007199254740991
+        })
+    # A title must never appear as both planned and finished.
+    completed = set(result["completed"])
+    result["backlog"] = [item for item in result["backlog"] if item not in completed]
+    return result
+
+
 
 def _builtin_theme_bundle(theme_id):
     """Only read bundled, fixed theme assets; no user-provided paths or CSS."""
@@ -287,6 +304,33 @@ class Plugin:
             return True
         except OSError:
             return False
+
+    async def get_manual_collections(self):
+        """Read user-assigned game status from Decky's persisted settings."""
+        return {"ok": True, "collections": _manual_collection_snapshot(_read_preferences())}
+
+    async def set_manual_collection(self, section: str, appid: int, included: bool):
+        """Atomic preference replacement; Steam/TabMaster collections are untouched."""
+        if type(section) is not str or section not in ("backlog", "completed") or \
+                type(appid) is not int or not (0 < appid <= 9007199254740991) or \
+                type(included) is not bool:
+            return {"ok": False, "reason": "Invalid manual collection change"}
+        try:
+            saved = _read_preferences()
+            state = _manual_collection_snapshot(saved)
+            items = set(state[section])
+            if included:
+                items.add(appid)
+                other = "completed" if section == "backlog" else "backlog"
+                state[other] = [item for item in state[other] if item != appid]
+            else:
+                items.discard(appid)
+            state[section] = sorted(items)
+            saved["manual_collections"] = state
+            _write_preferences(saved)
+            return {"ok": True, "collections": state}
+        except OSError:
+            return {"ok": False, "reason": "Failed to save manual collections"}
 
     async def get_theme_settings(self):
         """Midnight is the built-in default; Off restores native Steam colors."""
