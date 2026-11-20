@@ -20,6 +20,8 @@ import {searchLibraryGames} from "./librarySearch";
 import {SEARCH_ROUTE,rememberSearchOrigin,searchBackRoute,
   readSearchSelection,saveSearchSelection} from "./searchNavigation";
 import {AppearancePage} from "./AppearancePage";
+import {LibraryAlphabetIndicator} from "./LibraryAlphabetIndicator";
+import {alphabetIndicatorEnabled} from "./libraryAlphabet";
 import {CollectionsPage} from "./CollectionsPage";
 import {resetCollectionLocation} from "./collectionsNavigation";
 import {openNativeSteamMenu} from "./nativeSteamMenu";
@@ -274,6 +276,9 @@ export function Dashboard({initialMode="home",originRoute}:
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
   const sort = searchMode?(tabSorts["__search__"]??"alphabetical"):sortForTab(tab,tabSorts);
   const sortKind=externalSortKind(sort);
+  // Phase 1 is visual-only, restricted to the dedicated Library's full grid
+  // with alphabetic sorting. Home, Search and other routes remain unchanged.
+  const libraryAlphabetActive=alphabetIndicatorEnabled(initialMode,sort,viewAll);
   const activeSortKind=useRef(sortKind);
   activeSortKind.current=sortKind;
   const tabCounts = useMemo(() => {
@@ -323,7 +328,8 @@ export function Dashboard({initialMode="home",originRoute}:
   },[sortKind,tab.id,metadataQueryIds,tabResult.supported]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
   const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
-  const visibleGridGames = shown.slice(0,gridLimit);
+  const visibleGridGames = useMemo(()=>shown.slice(0,gridLimit),
+    [shown,gridLimit]);
   /** Save the real origin before handing over to native Steam details. */
   const rememberGameDetails=(game:LibraryGame)=>{
     const focusedIndex=shown.findIndex(entry=>entry.id===game.id);
@@ -893,7 +899,9 @@ export function Dashboard({initialMode="home",originRoute}:
 
         {shown.length > 0 ? (
           viewAll ? (
-            <section className="gl-grid-page" aria-label={"All games: "+tab.title}>
+            <section className={"gl-grid-page"+
+              (libraryAlphabetActive?" gl-alphabet-enabled":"")}
+              aria-label={"All games: "+tab.title}>
               <div className="gl-grid-heading">
                 <div><h2>{initialMode==="library"?"Library · "+tab.title:tab.title}</h2>
                   <span>{shown.length} games · Midnight Library</span></div>
@@ -935,6 +943,10 @@ export function Dashboard({initialMode="home",originRoute}:
                   ))}
                 </div>
               </div>
+              {libraryAlphabetActive&&<LibraryAlphabetIndicator
+                key={tab.id+":"+sort}
+                games={visibleGridGames} descending={sort==="alphabetical-desc"}
+                scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}/>}
               <div className="gl-grid-hint">Y: Sort · Start: Game options · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
             </section>
           ) : (
