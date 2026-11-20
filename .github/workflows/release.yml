@@ -58,6 +58,6 @@ jobs:
           if [[ "$VERSION" == *"-"* ]]; then PREVIEW=(--prerelease); fi
           gh release create "$TAG" "$ZIP" \
             --title "Game Library ${TAG}" \
-            --notes-file docs/release-notes-0.5.9-test.9.md \
+            --notes-file "docs/release-notes-${VERSION}.md" \
             --target "$GITHUB_SHA" \
             "${PREVIEW[@]}"
