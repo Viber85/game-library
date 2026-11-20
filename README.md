@@ -2,6 +2,16 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.11 — alphabet position in Library (Phase 1)
+
+Only when the dedicated full Library grid is sorted A–Z or Z–A, a
+compact right-side alphabet index highlights the current title letter.
+Crossing a letter boundary with D-pad/analog focus or ordinary scrolling
+shows a large floating letter for 850 ms. No new input mapping and no
+fast-jump action: the index is deliberately passive. Number/symbol titles
+use #. Everything else, including Home and the native Steam theme, is
+unchanged.
+
 ## v0.5.9-test.10 — controller focus refinement
 
 The manual Backlog / Completed picker also keeps a correct focus target
