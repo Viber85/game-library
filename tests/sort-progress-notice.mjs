@@ -20,7 +20,7 @@ test("Sort metadata has legible title, real completion count, progress track and
 });
 
 test("Grid status appears in a dedicated row ABOVE the scrolling game covers and B footer",()=>{
-  const page=ui.indexOf('className="gl-grid-page"');
+  const page=ui.indexOf('className={"gl-grid-page"+');
   const header=ui.indexOf('className="gl-grid-heading"',page);
   const slot=ui.indexOf('className="gl-sort-progress-slot gl-sort-progress-grid"',page);
   const scroll=ui.indexOf('className="gl-full-grid-scroll"',page);
