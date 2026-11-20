@@ -945,7 +945,8 @@ export function Dashboard({initialMode="home",originRoute}:
               </div>
               {libraryAlphabetActive&&<LibraryAlphabetIndicator
                 key={tab.id+":"+sort}
-                games={visibleGridGames} descending={sort==="alphabetical-desc"}
+                games={visibleGridGames} focusedGameId={selectedId}
+                descending={sort==="alphabetical-desc"}
                 scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}/>}
               <div className="gl-grid-hint">Y: Sort · Start: Game options · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
             </section>
