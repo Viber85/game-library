@@ -82,7 +82,10 @@ test("Install Play and Game Details have an unmistakable controller focus",()=>{
 });
 
 test("main carousel poster expansion remains responsive and grid is untouched",()=>{
-  const v8=css.slice(css.indexOf("/* v0.4.8 — unmistakable controller focus"));
+  const start=css.indexOf("/* v0.4.8 — unmistakable controller focus");
+  const end=css.indexOf("/* v0.4.12 — enlarged dashboard carousel",start);
+  assert.ok(start>=0&&end>start);
+  const v8=css.slice(start,end);
   assert.match(v8,/\.gl-main > \.gl-strip\s*\{\s*height:285px/);
   assert.match(v8,/height:254px/);
   assert.match(v8,/max-height:730px/);
