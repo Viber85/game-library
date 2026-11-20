@@ -107,9 +107,11 @@ export function LibraryAlphabetIndicator({games,focusedGameId,descending,scrollR
       scroll.removeEventListener("scroll",onScroll);
       window.cancelAnimationFrame(initialFrame);
       if(scrollFrame.current!==null)window.cancelAnimationFrame(scrollFrame.current);
-      if(popupTimer.current!==null)window.clearTimeout(popupTimer.current);
     };
   },[games,scrollRef,gridRef]);
+
+  useEffect(()=>()=>{if(popupTimer.current!==null)
+    window.clearTimeout(popupTimer.current);},[]);
 
   return <>
     <div className="gl-alphabet-rail" aria-hidden="true">
