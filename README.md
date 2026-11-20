@@ -2,6 +2,19 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.9 — editable Backlog and Completed
+
+Backlog and Completed now have a controller-driven **Add games** action,
+an A-Z game picker with SteamOS TextField search, and A to toggle membership.
+Press Y on an assigned poster to remove it. Assigning a game to Completed
+removes it from Backlog and vice versa; no automatic completion guesses.
+
+Manual assignments persist in Decky's settings across Game Mode restarts.
+The existing four-card hub shows saved counts, and Continue Playing,
+My Collections, Search, Appearance, Home, Midnight and native Steam Settings
+retain their earlier behaviour. This prerelease must be tested on-device
+before declaring it stable.
+
 ## v0.5.9-test.8 — Collections landing page
 
 Adds **Collections** to the permanent left rail, between Search and
