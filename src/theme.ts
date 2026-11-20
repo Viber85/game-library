@@ -1761,4 +1761,58 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-collections-manage {min-height:43px;margin-bottom:8px;}
 }
 
+/* v0.5.9-test.11 — passive alphabet indicator for dedicated Library grid.
+ * Never alter native Steam screens, gamepad controls, cover layout on Home,
+ * or the Search/Collections/Appearance routes. */
+.gl-root .gl-grid-page.gl-alphabet-enabled {position:relative;}
+.gl-root .gl-grid-page.gl-alphabet-enabled > .gl-full-grid-scroll {
+  margin-right:34px;
+}
+.gl-root .gl-grid-page.gl-alphabet-enabled .gl-alphabet-rail {
+  position:absolute;z-index:2;right:1px;top:90px;bottom:32px;
+  width:29px;padding:7px 2px;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:space-between;gap:0;
+  border:1px solid rgba(95,173,228,.22);border-radius:12px;
+  background:linear-gradient(180deg,rgba(9,28,52,.84),rgba(5,17,35,.91));
+  pointer-events:none;user-select:none;
+}
+.gl-root .gl-alphabet-rail-letter {
+  flex:1 1 0;min-height:0;display:flex;align-items:center;
+  justify-content:center;width:100%;border-radius:6px;
+  font-size:clamp(8px,1.15vh,12px);font-weight:700;line-height:1;
+  color:rgba(187,214,238,.69);
+}
+.gl-root .gl-alphabet-rail-letter.gl-alphabet-current {
+  color:#041a2b;background:#5ad6ff;
+  box-shadow:0 0 10px rgba(30,186,249,.6);
+}
+.gl-root .gl-alphabet-popup {
+  position:absolute;right:57px;top:53%;z-index:3;
+  width:clamp(72px,9vw,110px);height:clamp(72px,9vw,110px);
+  display:flex;align-items:center;justify-content:center;
+  transform:translateY(-50%) scale(.94);opacity:0;
+  color:#f4faff;font-size:clamp(45px,6vw,76px);
+  line-height:1;font-weight:800;
+  border:1px solid rgba(97,222,255,.86);border-radius:19px;
+  background:linear-gradient(145deg,rgba(19,80,123,.94),rgba(6,24,48,.97));
+  box-shadow:0 0 25px rgba(20,185,246,.34),inset 0 0 20px rgba(48,170,250,.18);
+  pointer-events:none;user-select:none;
+  transition:opacity 160ms ease,transform 160ms ease;
+}
+.gl-root .gl-alphabet-popup.gl-alphabet-popup-visible {
+  opacity:1;transform:translateY(-50%) scale(1);
+}
+@media(max-height:650px) {
+  .gl-root .gl-grid-page.gl-alphabet-enabled .gl-alphabet-rail {
+    top:70px;bottom:30px;width:26px;padding:4px 1px;
+  }
+  .gl-root .gl-grid-page.gl-alphabet-enabled > .gl-full-grid-scroll {
+    margin-right:29px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .gl-root .gl-alphabet-popup {transition:none;}
+}
+
 `;
