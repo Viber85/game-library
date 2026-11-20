@@ -238,14 +238,16 @@ export function CollectionsPage({
       <SystemStatusBar statusRef={headerRef} onStatusButtonDown={event=>{
         if(event.detail?.button===GamepadButton.DIR_DOWN){
           CONSUME(event);
-          (location.section==="home"?tileRefs.current[0]:backRef.current)?.focus();
+          (location.section==="home"?tileRefs.current[0]:
+            picker?pickerBackRef.current:backRef.current)?.focus();
         }
       }}/>
     </header>
     <div className="gl-collections-scroll" ref={scrollRef}>
       {picker?<div className="gl-collections-picker" aria-label={"Choose "+picker+" games"}>
         <div className="gl-collections-detail-heading">
-          <Focusable ref={pickerBackRef} className="gl-grid-back"
+          <Focusable ref={el=>{pickerBackRef.current=el;if(picker)firstRef.current=el;}}
+            className="gl-grid-back"
             focusClassName="gl-focused" noFocusRing
             onActivate={closePicker} onCancelButton={closePicker}
             onButtonDown={(event:GamepadEvent)=>{
@@ -278,6 +280,7 @@ export function CollectionsPage({
         </div>
         {pickerResults.length?<div className="gl-collections-picker-list">
           {pickerResults.map((game,index)=>{
+            const cover=posterCandidates(game)[0];
             const added=manual[picker].includes(game.id);
             const other=picker==="backlog"?"completed":"backlog";
             const elsewhere=manual[other].includes(game.id);
@@ -302,8 +305,7 @@ export function CollectionsPage({
                 }
               }}>
               <div className="gl-collections-picker-art">
-                {posterCandidates(game)[0]&&
-                  <img src={posterCandidates(game)[0]} alt="" loading="lazy"/>}
+                {cover&&<img src={cover} alt="" loading="lazy"/>}
               </div>
               <span className="gl-collections-picker-name">{game.title}</span>
               <span className="gl-collections-picker-state">
@@ -454,7 +456,8 @@ export function CollectionsPage({
           </div>
         ):<div className="gl-collections-empty">
           <MdLibraryBooks aria-hidden="true"/>
-          <h2>{manualSection&&!manualLoaded?"Unable to load games":
+          <h2>{manualSection&&!manualLoaded?
+            (manualError?"Unable to load games":"Loading saved games"):
             location.section==="continue"?"Nothing played recently":
             location.section==="my"&&selectedResult&&!selectedResult.supported?
               "Collection unavailable":"No games here yet"}</h2>
