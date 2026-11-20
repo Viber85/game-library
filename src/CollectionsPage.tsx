@@ -1,9 +1,9 @@
 import {useEffect,useMemo,useRef,useState,type RefObject} from "react";
-import {Focusable,GamepadButton,type GamepadEvent} from "@decky/ui";
+import {Focusable,GamepadButton,TextField,type GamepadEvent} from "@decky/ui";
 import {toaster} from "@decky/api";
 import {
   MdArrowBack,MdCheckCircle,MdChevronRight,MdDoneAll,MdFolder,
-  MdLibraryBooks,MdPlayCircleOutline,MdBookmarkBorder,
+  MdLibraryBooks,MdPlayCircleOutline,MdBookmarkBorder,MdAdd,MdSearch,
 } from "react-icons/md";
 import type {LibraryGame} from "./steam";
 import {posterCandidates} from "./steam";
@@ -11,6 +11,11 @@ import {showNativeGameOptions} from "./nativeGameContextMenu";
 import type {SteamTab} from "./tabmaster";
 import {createBatchGamesForTab} from "./tabmaster";
 import {continuePlayingGames,personalCollectionTabs} from "./collectionViews";
+import {searchLibraryGames} from "./librarySearch";
+import {
+  emptyManualCollections,manualGames,loadManualCollections,changeManualCollection,
+  type ManualSection,
+} from "./manualCollections";
 import {getGridColumnCount,gridNeighbor,canEnterNavigationRail,type GridDirection} from "./gridNavigation";
 import {SystemStatusBar} from "./SystemStatusBar";
 import {
@@ -43,13 +48,19 @@ const CONSUME=(event:GamepadEvent)=>{
 
 /** Dedicated Collections hub, kept separate from Dashboard's proven grid
  * navigation. Continue Playing uses real Steam activity. Manual Backlog and
- * Completed are intentionally empty until manual membership is implemented;
- * never infer completion from missing playtime/achievement metadata.
+ * Completed are persisted in Decky settings, never inferred from playtime
+ * or missing achievements.
  */
 export function CollectionsPage({
   games,tabs,membershipRevision,firstRef,onFocusRail,onOpenGame,onHome,
 }:Props){
   const [location,setLocation]=useState<CollectionLocation>(readCollectionLocation);
+  const [manual,setManual]=useState(emptyManualCollections);
+  const [manualLoaded,setManualLoaded]=useState(false);
+  const [manualError,setManualError]=useState("");
+  const [saving,setSaving]=useState(false);
+  const [picker,setPicker]=useState<ManualSection|null>(null);
+  const [pickerQuery,setPickerQuery]=useState("");
   const headerRef=useRef<HTMLDivElement>(null);
   const tileRefs=useRef<Array<HTMLDivElement|null>>([]);
   const backRef=useRef<HTMLDivElement>(null);
@@ -58,6 +69,10 @@ export function CollectionsPage({
   const gridRef=useRef<HTMLDivElement>(null);
   const scrollRef=useRef<HTMLDivElement>(null);
   const restoreFocus=useRef(location.gameId);
+  const manageRef=useRef<HTMLDivElement>(null);
+  const pickerBackRef=useRef<HTMLDivElement>(null);
+  const pickerInputRef=useRef<HTMLDivElement>(null);
+  const pickerRows=useRef<Array<HTMLDivElement|null>>([]);
 
   const customTabs=useMemo(()=>personalCollectionTabs(tabs),[tabs]);
   const recent=useMemo(()=>continuePlayingGames(games),[games]);
@@ -67,15 +82,27 @@ export function CollectionsPage({
     return createBatchGamesForTab()(selectedTab,games);
   },[selectedTab,games,membershipRevision]);
 
+  const manualSection:ManualSection|null=location.section==="backlog"||
+    location.section==="completed"?location.section:null;
   const entries=location.section==="continue"?recent:
+    manualSection?manualGames(games,manual,manualSection):
     location.section==="my"&&selectedTab&&selectedResult?.supported?
       selectedResult.games:[];
+  const pickerResults=useMemo(()=>{
+    if(!picker)return [];
+    const q=pickerQuery.trim();
+    const matches=q?searchLibraryGames(games,q,"all","all",{epic:null,gog:null}):
+      [...games].sort((a,b)=>a.title.localeCompare(b.title));
+    return matches.slice(0,80);
+  },[games,picker,pickerQuery]);
   const title=location.section==="continue"?"Continue Playing":
     location.section==="backlog"?"Backlog":
     location.section==="completed"?"Completed":
     selectedTab?.title??"My Collections";
 
   const changeLocation=(next:CollectionLocation)=>{
+    setPicker(null);
+    restoreFocus.current=null;
     saveCollectionLocation(next);
     setLocation(next);
     if(scrollRef.current)scrollRef.current.scrollTop=0;
@@ -90,6 +117,32 @@ export function CollectionsPage({
       return;
     }
     changeLocation({section:"home",tabId:null,gameId:null});
+  };
+  const openPicker=(section:ManualSection)=>{
+    if(!manualLoaded)return;
+    setPickerQuery("");
+    setPicker(section);
+  };
+  const closePicker=()=>{
+    setPicker(null);
+    setPickerQuery("");
+    window.requestAnimationFrame(()=>manageRef.current?.focus());
+  };
+  const editManual=async(section:ManualSection,game:LibraryGame,include:boolean)=>{
+    if(saving)return;
+    setSaving(true);
+    try{
+      const response=await changeManualCollection(section,game.id,include);
+      if(!response.ok||!response.collections)
+        throw new Error(response.reason||"Unable to save collection");
+      setManual(response.collections);
+      setManualError("");
+      if(!include&&!picker)window.requestAnimationFrame(()=>manageRef.current?.focus());
+    }catch(error){
+      const message=error instanceof Error?error.message:"Unable to save collection";
+      setManualError(message);
+      toaster.toast({title:"Game Library",body:message});
+    }finally{setSaving(false);}
   };
   const focusGame=(index:number)=>{
     const target=gameRefs.current[index];
@@ -107,7 +160,8 @@ export function CollectionsPage({
     if(!direction)return;
     CONSUME(event);
     const columns=getGridColumnCount(gridRef.current);
-    if(direction==="up"&&index<columns){backRef.current?.focus();return;}
+    if(direction==="up"&&index<columns){
+      (manualSection?manageRef.current:backRef.current)?.focus();return;}
     if(canEnterNavigationRail(index,entries.length,columns,direction)){
       onFocusRail();return;
     }
@@ -135,14 +189,43 @@ export function CollectionsPage({
   useEffect(()=>()=>{
     firstRef.current=null;
   },[]);
+  useEffect(()=>{
+    let active=true;
+    void loadManualCollections().then(response=>{
+      if(!active)return;
+      if(!response.ok||!response.collections)
+        throw new Error(response.reason||"Unable to load saved collections");
+      setManual(response.collections);
+      setManualLoaded(true);
+    }).catch(error=>{
+      if(!active)return;
+      setManualError(error instanceof Error?error.message:"Collection loading failed");
+      setManualLoaded(false);
+    });
+    return ()=>{active=false;};
+  },[]);
+  useEffect(()=>{
+    if(!picker)return;
+    const frame=window.requestAnimationFrame(()=>
+      pickerInputRef.current?.querySelector("input")?.focus());
+    return ()=>window.cancelAnimationFrame(frame);
+  },[picker]);
+  useEffect(()=>{
+    if(!manualLoaded||!manualSection||!restoreFocus.current)return;
+    const index=entries.findIndex(game=>game.id===restoreFocus.current);
+    if(index<0)return;
+    restoreFocus.current=null;
+    const frame=window.requestAnimationFrame(()=>focusGame(index));
+    return ()=>window.cancelAnimationFrame(frame);
+  },[manualLoaded,manualSection,manual]);
 
   const cards:Tile[]=[
     {id:"continue",title:"Continue Playing",description:"Games played in the last 30 days",
       icon:MdPlayCircleOutline,count:recent.length,caption:"AUTO"},
     {id:"backlog",title:"Backlog",description:"Games you plan to play",
-      icon:MdBookmarkBorder,count:0,caption:"MANUAL · NEXT PHASE"},
+      icon:MdBookmarkBorder,count:manualLoaded?manual.backlog.length:null,caption:"MANUAL"},
     {id:"completed",title:"Completed",description:"Games you have finished",
-      icon:MdDoneAll,count:0,caption:"MANUAL · NEXT PHASE"},
+      icon:MdDoneAll,count:manualLoaded?manual.completed.length:null,caption:"MANUAL"},
     {id:"my",title:"My Collections",description:"Your existing Steam / TabMaster groups",
       icon:MdFolder,count:customTabs.length,caption:"LIBRARY GROUPS"},
   ];
@@ -160,7 +243,79 @@ export function CollectionsPage({
       }}/>
     </header>
     <div className="gl-collections-scroll" ref={scrollRef}>
-      {location.section==="home"?<>
+      {picker?<div className="gl-collections-picker" aria-label={"Choose "+picker+" games"}>
+        <div className="gl-collections-detail-heading">
+          <Focusable ref={pickerBackRef} className="gl-grid-back"
+            focusClassName="gl-focused" noFocusRing
+            onActivate={closePicker} onCancelButton={closePicker}
+            onButtonDown={(event:GamepadEvent)=>{
+              if(event.detail?.button===GamepadButton.DIR_LEFT){
+                CONSUME(event);onFocusRail();
+              }else if(event.detail?.button===GamepadButton.DIR_DOWN){
+                CONSUME(event);
+                pickerInputRef.current?.querySelector("input")?.focus();
+              }
+            }}><MdArrowBack/> Back</Focusable>
+          <div className="gl-collections-detail-copy">
+            <h1>{"Add games to "+(picker==="backlog"?"Backlog":"Completed")}</h1>
+            <span>Select to add or remove. Games are saved automatically.</span>
+          </div>
+        </div>
+        <div className="gl-library-search-field gl-collections-picker-search"
+          ref={pickerInputRef}>
+          <MdSearch aria-hidden="true"/>
+          <div className="gl-library-search-native">
+            <TextField aria-label="Find games for collection"
+              style={{width:"100%",minWidth:0}} value={pickerQuery}
+              placeholder="Find a game by title..."
+              onChange={event=>setPickerQuery(event.target.value)}/>
+          </div>
+        </div>
+        <div className="gl-collections-picker-note">
+          {pickerQuery.trim()?"Matching games":"All library games (A–Z)"}
+          {" · showing "+pickerResults.length+" titles"}
+          {saving?" · Saving...":""}
+        </div>
+        {pickerResults.length?<div className="gl-collections-picker-list">
+          {pickerResults.map((game,index)=>{
+            const added=manual[picker].includes(game.id);
+            const other=picker==="backlog"?"completed":"backlog";
+            const elsewhere=manual[other].includes(game.id);
+            return <Focusable key={game.id}
+              ref={el=>{pickerRows.current[index]=el;}}
+              className={"gl-collections-picker-row"+(added?" gl-collections-selected":"")}
+              focusClassName="gl-focused" noFocusRing
+              onActivate={()=>{void editManual(picker,game,!added);}}
+              onCancelButton={closePicker}
+              onOKActionDescription={(added?"Remove ":"Add ")+game.title}
+              onButtonDown={(event:GamepadEvent)=>{
+                const b=event.detail?.button;
+                if(b===GamepadButton.DIR_UP){
+                  CONSUME(event);
+                  if(index===0)pickerInputRef.current?.querySelector("input")?.focus();
+                  else pickerRows.current[index-1]?.focus();
+                }else if(b===GamepadButton.DIR_DOWN){
+                  CONSUME(event);
+                  pickerRows.current[Math.min(index+1,pickerResults.length-1)]?.focus();
+                }else if(b===GamepadButton.DIR_LEFT){
+                  CONSUME(event);onFocusRail();
+                }
+              }}>
+              <div className="gl-collections-picker-art">
+                {posterCandidates(game)[0]&&
+                  <img src={posterCandidates(game)[0]} alt="" loading="lazy"/>}
+              </div>
+              <span className="gl-collections-picker-name">{game.title}</span>
+              <span className="gl-collections-picker-state">
+                {added?"✓ Added":elsewhere?"Move from "+(other==="backlog"?"Backlog":"Completed"):"+ Add"}
+              </span>
+            </Focusable>;
+          })}
+        </div>:<div className="gl-collections-empty">
+          <MdLibraryBooks aria-hidden="true"/>
+          <h2>No matching games</h2><p>Try another title.</p>
+        </div>}
+      </div>:location.section==="home"?<>
         <div className="gl-collections-intro">
           <span className="gl-collections-eyebrow">GAME LIBRARY / ORGANIZE</span>
           <h1>My Collections</h1>
@@ -186,7 +341,7 @@ export function CollectionsPage({
               }}>
               <div className="gl-collections-card-top">
                 <Icon className="gl-collections-card-icon" aria-hidden="true"/>
-                <span className="gl-collections-card-count">{card.count}</span>
+                <span className="gl-collections-card-count">{card.count===null?"—":card.count}</span>
               </div>
               <span className="gl-collections-card-tag">{card.caption}</span>
               <strong>{card.title}</strong>
@@ -207,6 +362,7 @@ export function CollectionsPage({
               else if(b===GamepadButton.DIR_DOWN){CONSUME(event);
                 if(location.section==="my"&&!location.tabId)
                   collectionRefs.current[0]?.focus();
+                else if(manualSection)manageRef.current?.focus();
                 else focusGame(0);
               }
             }}><MdArrowBack/> Back</Focusable>
@@ -219,6 +375,23 @@ export function CollectionsPage({
                 entries.length+" games"}</span>
           </div>
         </div>
+        {manualSection&&<div className="gl-collections-manage">
+          <Focusable ref={manageRef} className="gl-collections-add"
+            focusClassName="gl-focused" noFocusRing
+            onActivate={()=>openPicker(manualSection)}
+            onCancelButton={back}
+            onOKActionDescription="Add games to collection"
+            onButtonDown={(event:GamepadEvent)=>{
+              const b=event.detail?.button;
+              if(b===GamepadButton.DIR_UP){CONSUME(event);backRef.current?.focus();}
+              else if(b===GamepadButton.DIR_DOWN){CONSUME(event);focusGame(0);}
+              else if(b===GamepadButton.DIR_LEFT){CONSUME(event);onFocusRail();}
+            }}>
+            <MdAdd/> Add games
+          </Focusable>
+          <span>{manualError||(!manualLoaded?"Loading saved games...":
+            saving?"Saving...":"Y on a game to remove it")}</span>
+        </div>}
         {location.section==="my"&&!location.tabId?(
           customTabs.length?
           <div className="gl-collections-groups">
@@ -256,6 +429,10 @@ export function CollectionsPage({
                   onOpenGame(game);
                 }}
                 onCancelButton={back}
+                onOptionsButton={manualSection?(event:GamepadEvent)=>{
+                  CONSUME(event);void editManual(manualSection,game,false);
+                }:undefined}
+                onOptionsActionDescription={manualSection?"Remove from "+title:undefined}
                 onMenuButton={(event:GamepadEvent)=>{
                   CONSUME(event);
                   if(!showNativeGameOptions(game.id,event.currentTarget))
@@ -270,26 +447,28 @@ export function CollectionsPage({
                   <span className="gl-poster-name">{game.title}</span>
                   {game.installed&&<MdCheckCircle className="gl-installed-indicator"
                     aria-label="Installed"/>}
+                  {manualSection&&<span className="gl-collections-remove-hint">Y Remove</span>}
                 </div>
               </Focusable>;
             })}
           </div>
         ):<div className="gl-collections-empty">
           <MdLibraryBooks aria-hidden="true"/>
-          <h2>{location.section==="continue"?"Nothing played recently":
+          <h2>{manualSection&&!manualLoaded?"Unable to load games":
+            location.section==="continue"?"Nothing played recently":
             location.section==="my"&&selectedResult&&!selectedResult.supported?
               "Collection unavailable":"No games here yet"}</h2>
-          <p>{location.section==="continue"?
-            "Games played in the last 30 days will appear here automatically.":
-            location.section==="my"?
-              selectedResult?.reason??"The group is empty.":
-              "Manual game assignment to Backlog and Completed is coming in the next phase."}</p>
+          <p>{manualSection?manualError||"Choose Add games to select titles from your library.":
+            location.section==="continue"?
+              "Games played in the last 30 days will appear here automatically.":
+              selectedResult?.reason??"The group is empty."}</p>
         </div>}
       </>}
     </div>
     <footer className="gl-footer">
       <span>GAME LIBRARY · Collections</span>
-      <span>A Select</span><span>B Back</span><span>← Navigation</span>
+      <span>A Select</span><span>B Back</span>
+      {manualSection&&!picker?<span>Y Remove</span>:<span>← Navigation</span>}
     </footer>
   </div>;
 }
