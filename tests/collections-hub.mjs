@@ -58,6 +58,8 @@ test("Backlog and Completed provide saved manual membership and do not infer com
   assert.match(page,/void editManual\(manualSection,game,false\)/);
   assert.match(page,/TextField aria-label="Find games for collection"/);
   assert.match(page,/setPicker\(section\)/);
+  assert.match(page,/picker\?pickerBackRef\.current:backRef\.current/);
+  assert.match(page,/pickerBackRef\.current=el;if\(picker\)firstRef\.current=el/);
   assert.match(page,/onOptionsActionDescription=\{manualSection\?/);
   assert.doesNotMatch(page,/achievementsUnlocked===achievementsTotal|playtimeMinutes===0/);
   assert.doesNotMatch(page,/MANUAL · NEXT PHASE/);
