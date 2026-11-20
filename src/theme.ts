@@ -1714,7 +1714,7 @@ html:has(.gl-root.gl-own-status-only) #header {
   box-shadow:inset 0 0 0 1px #f0fbff,0 0 14px rgba(31,176,255,.56);
 }
 .gl-root .gl-collections-remove-hint {
-  position:absolute;bottom:4px;left:5px;z-index:2;padding:4px 7px;
+  position:absolute;top:5px;left:5px;z-index:2;padding:4px 7px;
   font-size:11px;font-weight:750;background:rgba(4,20,35,.9);
   border-radius:7px;color:#d9eeff;
 }
