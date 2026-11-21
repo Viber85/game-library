@@ -131,6 +131,56 @@ class OwnTabsTests(unittest.TestCase):
                         [{**manual,"id":"custom-manual-rpg2","position":6,
                           "members":list(range(1,2003))}]))["ok"])
 
+    def test_smart_rules_are_atomic_validated_and_migrate_legacy_filter(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            own=pathlib.Path(tmp)/"Game Library"
+            own.mkdir()
+            with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
+                original=asyncio.run(Plugin().get_library_tabs("42"))["tabs"]
+                legacy={"id":"custom-old123","title":"Old filtered tab",
+                        "position":5,"visible":True,"kind":"custom",
+                        "filter":"not-installed","mode":"smart","members":[]}
+                saved=asyncio.run(Plugin().save_library_tabs("42",original+[legacy]))
+                self.assertTrue(saved["ok"],saved)
+                self.assertEqual(saved["tabs"][5]["rules"],[{"type":"not-installed"}])
+                self.assertEqual(saved["tabs"][5]["ruleJoin"],"all")
+                smart=saved["tabs"]
+                smart[5]["rules"]=[{"type":"installed"},{"type":"steam"}]
+                smart[5]["ruleJoin"]="any"
+                smart[5]["forceInclude"]=[3,12]
+                smart[5]["forceExclude"]=[9]
+                saved=asyncio.run(Plugin().save_library_tabs("42",smart))
+                self.assertTrue(saved["ok"],saved)
+                self.assertEqual(saved["tabs"][5]["forceInclude"],[3,12])
+                self.assertEqual(saved["tabs"][5]["forceExclude"],[9])
+                self.assertEqual(saved["tabs"][5]["ruleJoin"],"any")
+                self.assertEqual(asyncio.run(Plugin().get_library_tabs("99"))["tabs"],
+                                 original)
+                invalid_rules=(
+                    [{"type":"unknown"}],
+                    [{"type":"steam"},{"type":"steam"}],
+                    [{"type":4}],
+                    [{"type":"steam","other":True}],
+                    ["steam"],
+                    [{"type":"steam"}]*13,
+                )
+                for rules in invalid_rules:
+                    bad=[dict(t) for t in saved["tabs"]]
+                    bad[5]["rules"]=rules
+                    self.assertFalse(asyncio.run(
+                        Plugin().save_library_tabs("42",bad))["ok"])
+                bad=[dict(t) for t in saved["tabs"]]
+                bad[5]["forceExclude"]=[3]
+                self.assertFalse(asyncio.run(Plugin().save_library_tabs("42",bad))["ok"])
+                bad=[dict(t) for t in saved["tabs"]]
+                bad[0]["rules"]=[{"type":"steam"}]
+                self.assertFalse(asyncio.run(Plugin().save_library_tabs("42",bad))["ok"])
+                bad=[dict(t) for t in saved["tabs"]]
+                bad[5]["ruleJoin"]="neither"
+                self.assertFalse(asyncio.run(Plugin().save_library_tabs("42",bad))["ok"])
+                self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"][5]["rules"],
+                                 [{"type":"installed"},{"type":"steam"}])
+
     def test_ignores_tabmaster_configuration_and_disabled_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=pathlib.Path(tmp)
