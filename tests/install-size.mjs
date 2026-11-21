@@ -35,7 +35,7 @@ test("Only dedicated Library grid shows size badge and does not prefetch 400 gam
   assert.match(ui,/<SteamInstallSizeBadge/);
   assert.match(ui,/<HltbPosterBadge/);
   assert.match(ui,/data-size-active=\{showInstallSize\|\|undefined\}/);
-  assert.match(badge,/if\(storeAppId!==null&&active&&native===null&&nativeRequired===null\)/);
+  assert.match(badge,/if\(storeAppId!==null&&active&&native===null&&nativeRequired===null&&/);
   assert.match(badge,/timer=window\.setTimeout\(load,850\)/);
   assert.match(badge,/if\(reply\.status==="deferred"&&attempts<3\)/);
   assert.match(badge,/return \(\)=>\{mounted=false;if\(timer!==undefined\)window\.clearTimeout\(timer\);\}/);
@@ -115,7 +115,7 @@ test("Installed Non-Steam size comes only from local exact shortcut, never from 
   assert.match(back,/async def nonsteam_install_size\(self, appid: int, title: str, account_id: str = ""\)/);
   assert.match(badge,/const requestNonSteamSize=callable/);
   assert.match(badge,/readNonSteamSize\(game\.id,game\.title,user\)/);
-  assert.match(badge,/if\(storeAppId!==null&&active&&native===null&&nativeRequired===null\)/);
+  assert.match(badge,/if\(storeAppId!==null&&active&&native===null&&nativeRequired===null&&/);
   assert.match(badge,/if\(!game\.nonSteam\|\|!game\.installed\|\|!active\|\|native!==null\)return/);
   assert.match(badge,/source==="flatpak"/);
   assert.match(badge,/AppImage file size/);
@@ -158,7 +158,7 @@ test("HLTB poster uses existing Main + Extras cache and local notifications",()=
 
 test("Only verified cross-store Steam reference IDs enable the estimate; never guess from titles",()=>{
   assert.match(badge,/const referenceAppId=game\.nonSteam&&!game\.installed\?protonDbAppId\(game\):null/);
-  assert.match(badge,/if\(storeAppId!==null&&active&&native===null&&nativeRequired===null\)/);
+  assert.match(badge,/if\(storeAppId!==null&&active&&native===null&&nativeRequired===null&&/);
   assert.match(badge,/void readEstimate\(storeAppId\)/);
   assert.match(badge,/const estimate=storeAppId!==null&&native===null&&remote&&validStoreSize\(remote\)/);
   assert.match(badge,/Steam reference only/);
@@ -185,7 +185,12 @@ test("SteamOS native requirement fills uninstalled Steam titles before Store fal
   assert.match(badge,/typeof game\.requiredBytes==="number"&&game\.requiredBytes>0/);
   assert.match(badge,/nativeRequired===null/);
   assert.match(badge,/requiredGb!==null\?requiredGb:estimate\?\.estimated_gb/);
-  assert.match(badge,/SteamOS required disk space for installation/);
+  assert.match(badge,/Space Required · SteamOS native game details/);
+  assert.match(badge,/requestNativeRequiredInstallBytes\(game.id\)/);
+  assert.match(badge,/requiredGb\.toFixed\(2\)\+" GB"/);
+  assert.match(badge,/nativeRequired\/\(1024\*\*3\)/);
+  assert.match(badge,/requiredGb!==null\?formatted/);
+  assert.match(badge,/nativeDetailsChecked/);
   assert.match(native,/requiredBytes:safeNonnegative\(o\.lDiskSpaceRequiredBytes\)/);
   assert.match(read("src/steam.ts"),/requiredBytes\?: number/);
 });
