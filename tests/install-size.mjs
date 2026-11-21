@@ -113,3 +113,18 @@ test("Non-Steam size comes only from local exact shortcut, no Store fallback",()
   assert.match(packageScript,/cp plugin\.json main\.py updates\.py hltb\.py protondb\.py steamgriddb\.py steam_size\.py nonsteam_size\.py/);
   assert.match(packageScript,/game-library\/nonsteam_size\.py/);
 });
+
+test("Direct Windows game directory measurement is bounded and local",()=>{
+  const local=read("nonsteam_size.py");
+  assert.match(local,/def game_directory\(tokens, shortcut\)/);
+  assert.match(local,/def game_directory_bytes\(folder\)/);
+  assert.match(local,/MAX_GAME_ENTRIES = 150_000/);
+  assert.match(local,/GAME_SCAN_SECONDS = 6.0/);
+  assert.match(local,/if entry.is_symlink\(\):/);
+  assert.match(local,/info.st_dev != device/);
+  assert.match(local,/folder.name.lower\(\) in BROAD_GAME_DIRS/);
+  assert.match(local,/entry.name.lower\(\) not in EXCLUDED_GAME_DIRS/);
+  assert.match(local,/\"source\": \"windows_game\"/);
+  assert.match(badge,/source===\"windows_game\"/);
+  assert.match(badge,/Local game folder size/);
+});
