@@ -79,9 +79,9 @@ test("Backlog and Completed provide saved manual membership and do not infer com
 
 test("Collections route, exact nav placement, and native header cleanup",()=>{
   assert.match(dashboard,/\{ id: "collections", label: "Collections", icon: MdCollectionsBookmark, go: openCollections \}/);
-  const order=[...dashboard.matchAll(/\{ id: "(home|library|search|collections|appearance|steam-menu)"/g)]
+  const order=[...dashboard.matchAll(/\{ id: "(home|library|search|collections|tabs|appearance|settings|steam-menu)"/g)]
     .map(x=>x[1]);
-  assert.deepEqual(order,["home","library","search","collections","appearance","steam-menu"]);
+  assert.deepEqual(order,["home","library","search","collections","tabs","appearance","settings","steam-menu"]);
   assert.match(index,/routerHook\.addRoute\(COLLECTIONS_ROUTE/);
   assert.match(index,/routerHook\.removeRoute\(COLLECTIONS_ROUTE\)/);
   assert.match(dashboard,/collectionsMode\?COLLECTIONS_ROUTE:"\/library\/home"/);
