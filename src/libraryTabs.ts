@@ -3,9 +3,11 @@ import type {LibraryGame} from "./steam";
 /** Original Game Library tab model with self-owned filters and storage. */
 export type TabKind="all"|"installed"|"steam"|"nonsteam"|"favorites"|"custom";
 export type TabFilter="all"|"installed"|"not-installed"|"steam"|"nonsteam"|"favorites";
+export type TabMode="smart"|"manual";
 export type LibraryTab={
   id:string;title:string;position:number;visible:boolean;
   kind:TabKind;filter:TabFilter;
+  mode?:TabMode;members?:number[];
 };
 export const DEFAULT_LIBRARY_TABS:LibraryTab[]=[
   {id:"AllGames",title:"All Games",position:0,visible:true,kind:"all",filter:"all"},
@@ -33,6 +35,10 @@ export function visibleLibraryTabs(tabs:readonly LibraryTab[]):LibraryTab[]{
 export function gamesForLibraryTab(tab:LibraryTab,games:readonly LibraryGame[]):{
   supported:boolean;games:LibraryGame[];reason?:string
 }{
+  if(tab.kind==="custom"&&tab.mode==="manual"){
+    const ids=new Set(tab.members??[]);
+    return {supported:true,games:games.filter(game=>ids.has(game.id))};
+  }
   const filter=tab.kind==="custom"?tab.filter:tab.kind==="all"?"all":tab.kind;
   return {supported:true,games:games.filter(game=>{
     switch(filter){
@@ -58,12 +64,22 @@ export function moveLibraryTab(tabs:readonly LibraryTab[],id:string,offset:numbe
   return ordered.map((tab,i)=>({...tab,position:i}));
 }
 export function changeLibraryTab(tabs:readonly LibraryTab[],id:string,
-  patch:Partial<Pick<LibraryTab,"title"|"visible"|"filter">>):LibraryTab[]{
+  patch:Partial<Pick<LibraryTab,"title"|"visible"|"filter"|"mode"|"members">>):LibraryTab[]{
   return tabs.map(tab=>tab.id===id?{...tab,...patch}:tab);
 }
 export function newLibraryTab(tabs:readonly LibraryTab[],title:string,
-  filter:TabFilter,id:string):LibraryTab[]{
+  filter:TabFilter,id:string,mode:TabMode="smart"):LibraryTab[]{
   return normalizeLibraryTabs([...tabs,{
-    id,title:title.trim(),position:tabs.length,visible:true,kind:"custom" as const,filter,
+    id,title:title.trim(),position:tabs.length,visible:true,kind:"custom" as const,
+    filter,mode,members:[],
   }]);
 }
+
+/** Exact Steam app ID membership; IDs survive temporary library unavailability. */
+export function assignManualGames(tabs:readonly LibraryTab[],id:string,
+  members:readonly number[]):LibraryTab[]{
+  const unique=[...new Set(members.filter(x=>Number.isSafeInteger(x)&&x>0))].sort((a,b)=>a-b);
+  return tabs.map(tab=>tab.id===id&&tab.kind==="custom"&&tab.mode==="manual"
+    ? {...tab,members:unique}:tab);
+}
+
