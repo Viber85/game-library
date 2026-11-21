@@ -116,11 +116,11 @@ class SteamSizeTests(unittest.TestCase):
     def test_decky_rpc_only_uses_bundled_service_and_validates_inputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             service = steam_size.SteamSizeService(pathlib.Path(tmp) / "cache.json")
-            with mock.patch.object(main, "_load_steam_size", return_value=steam_size), \\
-                 mock.patch.object(main, "_steam_size_cache_path",
-                                   return_value=pathlib.Path(tmp) / "cache.json"), \\
-                 mock.patch.object(steam_size, "fetch_store_requirements",
-                                   return_value=response()):
+            with (mock.patch.object(main, "_load_steam_size", return_value=steam_size),
+                  mock.patch.object(main, "_steam_size_cache_path",
+                                    return_value=pathlib.Path(tmp) / "cache.json"),
+                  mock.patch.object(steam_size, "fetch_store_requirements",
+                                    return_value=response())):
                 plugin = main.Plugin()
                 self.assertEqual(asyncio.run(plugin.steam_install_size(0))["status"], "invalid")
                 self.assertEqual(asyncio.run(plugin.steam_install_size(123))["estimated_gb"], 70)
