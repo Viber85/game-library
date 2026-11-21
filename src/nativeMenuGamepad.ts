@@ -78,7 +78,22 @@ export function handleNativeMenuDirection(
   const direction=directionFromButton(event.detail?.button);
   if(!direction)return false;
   const target=event.target;
-  if(!(target instanceof Element)||!scope.contains(target))return false;
+  if(!(target instanceof Element))return false;
+  const consume=()=>{
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  };
+  // The left rail is outside .gl-main. Transfer *Steam* focus into the
+  // actual menu, not just document.activeElement.
+  if(!scope.contains(target)){
+    if(kind==="diagnostics"||direction!=="right"||
+      !target.closest(".gl-sidebar .gl-rail-item"))return false;
+    const entry=scope.querySelector<HTMLElement>(CONTROLS[kind]);
+    if(!entry||!takeNativeGamepadFocus(trees,entry,event.detail!.button!))return false;
+    consume();
+    return true;
+  }
   if(target.closest(".gl-sidebar"))return false;
   const source=target.closest<HTMLElement>(CONTROLS[kind]);
   if(!source)return false;
@@ -86,12 +101,17 @@ export function handleNativeMenuDirection(
   if(source instanceof HTMLInputElement&&
     (direction==="left"||direction==="right"))return false;
   const next=nativeMenuTarget(scope,source,direction,kind);
+  if(!next&&direction==="left"&&kind!=="diagnostics"){
+    const rail=scope.parentElement?.querySelector<HTMLElement>(
+      ".gl-sidebar .gl-rail-item.gl-rail-current");
+    if(rail&&takeNativeGamepadFocus(trees,rail,event.detail!.button!)){
+      consume();return true;
+    }
+  }
   if(!next)return false;
   if(!takeNativeGamepadFocus(trees,next,event.detail!.button!))return false;
   next.scrollIntoView({block:"nearest",inline:"nearest"});
-  event.preventDefault();
-  event.stopPropagation();
-  event.stopImmediatePropagation();
+  consume();
   return true;
 }
 
