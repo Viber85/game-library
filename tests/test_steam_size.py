@@ -41,17 +41,45 @@ class SteamSizeTests(unittest.TestCase):
         result = steam_size.parse_store_response(response(), 123)
         self.assertEqual(result, {
             "status": "estimated", "estimated_gb": 70,
-            "platform": "pc", "requirement": "minimum", "source": "steam_store"
+            "platform": "pc", "requirement": "minimum", "source": "steam_store",
+            "steam_title": "Test Game"
         })
         recommended = response(minimum="CPU: 4 cores")
         found = steam_size.parse_store_response(recommended, 123)
         self.assertEqual(found["estimated_gb"], 100)
         self.assertEqual(found["requirement"], "recommended")
+        self.assertEqual(found["steam_title"], "Test Game")
         linux = response()
         del linux["123"]["data"]["pc_requirements"]
         self.assertEqual(steam_size.parse_store_response(linux, 123)["platform"], "linux")
         self.assertIsNone(steam_size.parse_store_response({"123": {"success": False}}, 123))
         self.assertIsNone(steam_size.parse_store_response(response(), 456))
+
+    def test_store_metadata_title_is_used_for_safe_cross_store_comparisons(self):
+        named = response()
+        self.assertEqual(steam_size.parse_store_response(named, 123)["steam_title"],
+                         "Test Game")
+        named["123"]["data"]["name"] = " An Edition "
+        self.assertEqual(steam_size.parse_store_response(named, 123)["steam_title"],
+                         "An Edition")
+        named["123"]["data"]["name"] = None
+        self.assertEqual(steam_size.parse_store_response(named, 123)["steam_title"],
+                         "")
+
+    def test_legacy_cached_estimate_missing_title_is_refetched(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "size.json"
+            path.write_text(json.dumps({"entries": {"123": {
+                "until": 9999999999,
+                "reply": {"status": "estimated", "estimated_gb": 70,
+                          "source": "steam_store"}}}}), encoding="utf-8")
+            service = steam_size.SteamSizeService(path)
+            with mock.patch.object(steam_size, "fetch_store_requirements",
+                                   return_value=response()) as fetch:
+                fixed = service.lookup(123)
+                self.assertFalse(fixed["cached"])
+                self.assertEqual(fixed["steam_title"], "Test Game")
+                fetch.assert_called_once_with(123)
 
     def test_reject_invalid_ids_without_network_or_cache_changes(self):
         with tempfile.TemporaryDirectory() as tmp:
