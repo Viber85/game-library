@@ -1,6 +1,6 @@
 import type {LibraryGame} from "./steam";
 
-/** Original Game Library tab model; no TabMaster schemas or plugin queries. */
+/** Original Game Library tab model with self-owned filters and storage. */
 export type TabKind="all"|"installed"|"steam"|"nonsteam"|"favorites"|"custom";
 export type TabFilter="all"|"installed"|"not-installed"|"steam"|"nonsteam"|"favorites";
 export type LibraryTab={
@@ -53,7 +53,8 @@ export function moveLibraryTab(tabs:readonly LibraryTab[],id:string,offset:numbe
   const index=ordered.findIndex(tab=>tab.id===id);
   const target=index+offset;
   if(index<0||target<0||target>=ordered.length)return ordered;
-  [ordered[index],ordered[target]]=[ordered[target],ordered[index]];
+  const [moving]=ordered.splice(index,1);
+  ordered.splice(target,0,moving);
   return ordered.map((tab,i)=>({...tab,position:i}));
 }
 export function changeLibraryTab(tabs:readonly LibraryTab[],id:string,
