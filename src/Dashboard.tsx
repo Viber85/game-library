@@ -21,6 +21,7 @@ import {SEARCH_ROUTE,rememberSearchOrigin,searchBackRoute,
   readSearchSelection,saveSearchSelection} from "./searchNavigation";
 import {AppearancePage} from "./AppearancePage";
 import {LibraryAlphabetIndicator} from "./LibraryAlphabetIndicator";
+import {SteamInstallSizeBadge} from "./SteamInstallSizeBadge";
 import {alphabetIndicatorEnabled,isRightEdgeGame} from "./libraryAlphabet";
 import {CollectionsPage} from "./CollectionsPage";
 import {resetCollectionLocation} from "./collectionsNavigation";
@@ -63,6 +64,7 @@ const consume = (e: GamepadEvent) => { e.preventDefault(); e.stopPropagation(); 
 
 function GameCard({
   game, index, onSelect, onMove, onSort, cardRef, activate, onCancel, captureVertical=false,
+  showInstallSize=false, selectedForSize=false,
 }: {
   game: LibraryGame;
   index: number;
@@ -73,6 +75,8 @@ function GameCard({
   activate?: () => void;
   onCancel?: () => void;
   captureVertical?: boolean;
+  showInstallSize?: boolean;
+  selectedForSize?: boolean;
 }) {
   const [coverIndex,setCoverIndex] = useState(0);
   const [remoteCover,setRemoteCover] = useState<string|null>(null);
@@ -131,13 +135,15 @@ function GameCard({
       onOKActionDescription={activate ? "Game details" : gameActionLabel(game)}
       onOptionsActionDescription="Sort games"
     >
-      <div className="gl-poster">
+      <div className="gl-poster" data-size-active={showInstallSize||undefined}>
         {poster ? <img src={poster} alt="" loading="lazy" key={poster}
           onError={() => {
             if(covers[coverIndex])setCoverIndex(n=>n+1);
             else setRemoteCover(null);
           }} /> : null}
         <span className="gl-poster-name">{game.title}</span>
+        {showInstallSize&&<SteamInstallSizeBadge
+          key={"size-"+game.id} game={game} active={selectedForSize}/>}
         {game.installed && <MdCheckCircle className="gl-installed-indicator" aria-label="Installed" />}
       </div>
     </Focusable>
@@ -958,6 +964,8 @@ export function Dashboard({initialMode="home",originRoute}:
                       }}
                       activate={()=>openGameDetails(game)}
                       onSort={showSortMenu}
+                      showInstallSize={initialMode==="library"}
+                      selectedForSize={selectedId===game.id}
                       captureVertical
                       onCancel={exitGrid}
                       onMove={button=>moveInGrid(index,button)}
