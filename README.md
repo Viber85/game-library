@@ -2,6 +2,21 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.2 — advanced Smart Tabs and manual exceptions
+
+Custom Smart Tabs now support multiple local-library conditions combined
+with **ALL (AND)** or **ANY (OR)** rules. The full-screen rule editor
+shows a live matching-game count and offers a controller/touch-friendly
+condition picker. Tab Manager also offers **Always Include** and
+**Always Exclude** game lists with the same proven manual game picker.
+
+Old single-filter Smart Tabs migrate automatically; existing Manual Tabs,
+sidebar routes and per-Steam-account settings remain unchanged.
+This release only filters titles already available in Steam's local
+library; independent storefront connectors come later.
+
+See `docs/release-notes-0.6.2.md` for rules and on-device checks.
+
 ## v0.6.1 — Manual Tabs + left-rail management
 
 Game Library now has dedicated **Tab Manager** and **Settings** entries in
