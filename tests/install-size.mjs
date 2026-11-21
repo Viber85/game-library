@@ -190,6 +190,19 @@ test("SteamOS native requirement fills uninstalled Steam titles before Store fal
   assert.match(read("src/steam.ts"),/requiredBytes\?: number/);
 });
 
+test("Cached Store estimates hydrate uninstalled Steam cards without an HTTP catalogue sweep",()=>{
+  assert.match(badge,/export function hydrateCachedSteamSizes\(ids:readonly number\[\]\)/);
+  assert.match(badge,/const cachedBulk=callable/);
+  assert.match(badge,/"steam_size_cached_bulk"/);
+  assert.match(badge,/\.slice\(0,1000\)/);
+  assert.match(badge,/storeSizeListeners\.get\(item\.appid\)/);
+  assert.match(badge,/if\(hit\)setRemote\(hit\)/);
+  assert.match(ui,/if\(initialMode!=="library"\)return/);
+  assert.match(ui,/void hydrateCachedSteamSizes\(games\.filter\(game=>/);
+  assert.match(ui,/!game\.installed&&!game\.nonSteam/);
+  assert.doesNotMatch(ui,/void readEstimate\(game\.id\)/);
+});
+
 test("Steam reference only appears when linked product title matches the shortcut",()=>{
   assert.equal(normalizedStoreGameTitle("Cyberpunk® 2077"),"cyberpunk 2077");
   assert.equal(sameStoreGameTitle("Cyberpunk 2077","Cyberpunk® 2077"),true);
