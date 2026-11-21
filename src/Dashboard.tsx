@@ -960,7 +960,7 @@ export function Dashboard({initialMode="home",originRoute}:
                       else if(b===GamepadButton.DIR_LEFT){consume(e);focusRail(railIndex);}
                       else if(b===GamepadButton.DIR_DOWN){consume(e);focusGrid(0);}
                       else if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
-                    }
+                    }}
                     onOKActionDescription="Open original Steam library">
                     Steam Library
                   </Focusable>}
@@ -973,7 +973,7 @@ export function Dashboard({initialMode="home",originRoute}:
                         if(initialMode!=="library")focusRail(railIndex);
                       }else if(b===GamepadButton.DIR_DOWN){consume(e);focusGrid(0);}
                       else if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
-                    }
+                    }}
                     onOKActionDescription={initialMode==="library"?"Return Home":"Back to games"}>
                     <MdArrowBack/> {initialMode==="library"?"Home":"Back to carousel"}
                   </Focusable>
