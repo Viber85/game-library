@@ -1,32 +1,52 @@
-import {useEffect,useRef,useState,type RefObject} from "react";
+import {useEffect,useMemo,useRef,useState,type RefObject} from "react";
+import {Focusable,GamepadButton,GamepadEvent} from "@decky/ui";
 import {getGridColumnCount} from "./gridNavigation";
-import {alphabetLetters,letterForTitle} from "./libraryAlphabet";
+import {
+  alphabetLetters,firstGameByLetter,letterForTitle,nextPopulatedLetter,
+} from "./libraryAlphabet";
 import type {LibraryGame} from "./steam";
 
 type Props={
   games:readonly LibraryGame[];
+  allGames:readonly LibraryGame[];
   focusedGameId:number|undefined;
   descending:boolean;
   scrollRef:RefObject<HTMLDivElement|null>;
   gridRef:RefObject<HTMLDivElement|null>;
+  railRef:RefObject<HTMLDivElement|null>;
+  onJumpToGame:(index:number)=>void;
+  onReturnToGame:()=>void;
+  onSort:()=>void;
+  onChangeTab:(direction:-1|1)=>void;
 };
 
-/** Passive on-screen position indicator. It never captures input or focus,
- * moves game cards, or makes a network request. Only letter transitions
- * cause this component to update; Dashboard and GameCard do not rerender.
+/** Native Decky Focusable is entered explicitly from a grid row's last card.
+ * Only this alphabet control handles A/B/up/down while focused. On other
+ * screens (and non-alphabet sorts) the component is not mounted.
  */
-export function LibraryAlphabetIndicator({games,focusedGameId,descending,scrollRef,gridRef}:Props){
+export function LibraryAlphabetIndicator({
+  games,allGames,focusedGameId,descending,scrollRef,gridRef,railRef,
+  onJumpToGame,onReturnToGame,onSort,onChangeTab,
+}:Props){
   const [letter,setLetter]=useState<string>("#");
   const [popup,setPopup]=useState<string|null>(null);
+  const [choosing,setChoosing]=useState(false);
+  const [choice,setChoice]=useState<string|null>(null);
   const current=useRef<string|null>(null);
   const focusTime=useRef(0);
   const popupTimer=useRef<number|null>(null);
   const scrollFrame=useRef<number|null>(null);
-  const order=alphabetLetters(descending);
+  const order=useMemo(()=>alphabetLetters(descending),[descending]);
+  const targets=useMemo(()=>firstGameByLetter(allGames),[allGames]);
 
-  // Steam's Focusable can signal a controller focus without a browser
-  // focusin event. The Dashboard already tracks that game's AppID, so this
-  // fallback guarantees accurate D-pad/analog letter changes.
+  const showPopup=(next:string)=>{
+    setPopup(next);
+    if(popupTimer.current!==null)window.clearTimeout(popupTimer.current);
+    popupTimer.current=window.setTimeout(()=>{
+      setPopup(null);
+      popupTimer.current=null;
+    },850);
+  };
   const setCurrent=(index:number,announce:boolean)=>{
     if(index<0||index>=games.length)return;
     const next=letterForTitle(games[index].title);
@@ -34,14 +54,7 @@ export function LibraryAlphabetIndicator({games,focusedGameId,descending,scrollR
     const previous=current.current;
     current.current=next;
     setLetter(next);
-    if(announce&&previous!==null){
-      setPopup(next);
-      if(popupTimer.current!==null)window.clearTimeout(popupTimer.current);
-      popupTimer.current=window.setTimeout(()=>{
-        setPopup(null);
-        popupTimer.current=null;
-      },850);
-    }
+    if(announce&&previous!==null)showPopup(next);
   };
 
   useEffect(()=>{
@@ -62,7 +75,7 @@ export function LibraryAlphabetIndicator({games,focusedGameId,descending,scrollR
       const columns=Math.max(1,getGridColumnCount(grid));
       const visibleTop=scroll.getBoundingClientRect().top+6;
       const children=grid.children;
-      // Inspect only one card per row (not every card or cover image).
+      // Only inspect one card per rendered row, not every cover.
       for(let i=0;i<children.length;i+=columns){
         const card=children[i];
         if(card.getBoundingClientRect().bottom>visibleTop)return i;
@@ -84,8 +97,8 @@ export function LibraryAlphabetIndicator({games,focusedGameId,descending,scrollR
       scrollFrame.current=window.requestAnimationFrame(()=>{
         scrollFrame.current=null;
         if(!active)return;
-        // Programmatic scrollIntoView immediately follows a focus event;
-        // keep its focused game's letter instead of showing the row above.
+        // Programmatic scrollIntoView follows gamepad focus; retain its game
+        // letter rather than briefly reporting the row above.
         if(Date.now()-focusTime.current<220)return;
         setCurrent(rowIndexAtViewport(),true);
       });
@@ -113,13 +126,76 @@ export function LibraryAlphabetIndicator({games,focusedGameId,descending,scrollR
   useEffect(()=>()=>{if(popupTimer.current!==null)
     window.clearTimeout(popupTimer.current);},[]);
 
+  const onRailFocus=()=>{
+    setChoosing(true);
+    const selected=allGames.find(g=>g.id===focusedGameId);
+    const initial=selected?letterForTitle(selected.title):letter;
+    setChoice(targets.has(initial)?initial:
+      order.find(char=>targets.has(char))??null);
+  };
+  const leaveRail=()=>{
+    setChoosing(false);
+    setChoice(null);
+  };
+  const returnToGrid=()=>{
+    leaveRail();
+    setPopup(null);
+    if(popupTimer.current!==null)window.clearTimeout(popupTimer.current);
+    onReturnToGame();
+  };
+  const jumpToLetter=()=>{
+    const target=choice!==null?targets.get(choice):undefined;
+    if(target===undefined)returnToGrid();
+    else{
+      leaveRail();
+      onJumpToGame(target);
+    }
+  };
+  const onRailButton=(e:GamepadEvent)=>{
+    const button=e.detail?.button;
+    if(button===GamepadButton.DIR_UP||button===GamepadButton.DIR_DOWN){
+      e.preventDefault();e.stopPropagation();
+      const direction: -1|1=button===GamepadButton.DIR_UP?-1:1;
+      const next=nextPopulatedLetter(choice??letter,direction,order,targets);
+      if(next!==(choice??letter)){setChoice(next);showPopup(next);}
+    }else if(button===GamepadButton.DIR_LEFT){
+      e.preventDefault();e.stopPropagation();
+      returnToGrid();
+    }else if(button===GamepadButton.DIR_RIGHT){
+      e.preventDefault();e.stopPropagation();
+      // Last focus column. No implicit wrap into Steam's status bar.
+    }else if(button===GamepadButton.BUMPER_LEFT||
+      button===GamepadButton.BUMPER_RIGHT){
+      e.preventDefault();e.stopPropagation();
+      onChangeTab(button===GamepadButton.BUMPER_LEFT?-1:1);
+    }
+  };
+  const highlighted=choosing?(choice??letter):letter;
+
   return <>
-    <div className="gl-alphabet-rail" aria-hidden="true">
+    <Focusable
+      ref={railRef}
+      className={"gl-alphabet-rail"+(choosing?" gl-alphabet-choosing":"")}
+      focusClassName="gl-alphabet-focused"
+      noFocusRing
+      onGamepadFocus={onRailFocus}
+      onBlur={leaveRail}
+      onActivate={jumpToLetter}
+      onCancelButton={returnToGrid}
+      onButtonDown={onRailButton}
+      onOptionsButton={(e:GamepadEvent)=>{
+        e.preventDefault();e.stopPropagation();onSort();
+      }}
+      onOKActionDescription="Jump to selected letter"
+      onOptionsActionDescription="Sort games"
+      aria-label="Jump to letter">
       {order.map(char=><span key={char}
-        className={"gl-alphabet-rail-letter"+(char===letter?" gl-alphabet-current":"")}>
+        className={"gl-alphabet-rail-letter"+
+          (char===highlighted?" gl-alphabet-current":"")+
+          (!targets.has(char)?" gl-alphabet-unavailable":"")}>
         {char}
       </span>)}
-    </div>
+    </Focusable>
     <div aria-hidden="true" className={"gl-alphabet-popup"+
       (popup!==null?" gl-alphabet-popup-visible":"")}>
       {popup??letter}
