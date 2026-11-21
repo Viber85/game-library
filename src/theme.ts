@@ -1882,30 +1882,36 @@ html:has(.gl-root.gl-own-status-only) #header {
   overflow:hidden;
   max-height:2.4em;
 }
-.gl-root .gl-full-grid .gl-poster-size {
+/* v0.5.9-test.19: compact two-metric row, no textual SIZE / EST labels. */
+.gl-root .gl-full-grid .gl-poster-meta {
   position:absolute;left:9px;right:9px;bottom:9px;
-  z-index:2;display:flex;align-items:center;
+  z-index:2;display:flex;align-items:center;justify-content:space-between;
   gap:5px;min-width:0;
   color:#f0f5fb;white-space:nowrap;
   font-variant-numeric:tabular-nums;
   pointer-events:none;
   text-shadow:0 1px 3px rgba(0,0,0,.85);
 }
-.gl-root .gl-full-grid .gl-poster-size svg {
-  width:15px;height:15px;flex:none;opacity:.87;
+.gl-root .gl-full-grid .gl-poster-size,
+.gl-root .gl-full-grid .gl-poster-hltb {
+  display:flex;align-items:center;gap:3px;min-width:0;
 }
-.gl-root .gl-full-grid .gl-poster-size small {
-  font-size:10px;font-weight:650;letter-spacing:.06em;
-  color:#afbdce;
+.gl-root .gl-full-grid .gl-poster-size svg,
+.gl-root .gl-full-grid .gl-poster-hltb svg {
+  width:13px;height:13px;flex:none;opacity:.87;
 }
-.gl-root .gl-full-grid .gl-poster-size strong {
+.gl-root .gl-full-grid .gl-poster-size strong,
+.gl-root .gl-full-grid .gl-poster-hltb strong {
   margin-left:1px;
   flex:0 0 auto;
-  font-size:clamp(11px,1vw,14px);font-weight:750;
+  font-size:clamp(10px,.9vw,12px);font-weight:700;
 }
 @media(max-height:650px) {
-  .gl-root .gl-full-grid .gl-poster-size {bottom:5px;left:6px;right:6px;gap:3px;}
-  .gl-root .gl-full-grid .gl-poster-size strong {font-size:11px;}
+  .gl-root .gl-full-grid .gl-poster-meta {bottom:5px;left:6px;right:6px;gap:3px;}
+  .gl-root .gl-full-grid .gl-poster-size,
+  .gl-root .gl-full-grid .gl-poster-hltb {gap:2px;}
+  .gl-root .gl-full-grid .gl-poster-size strong,
+  .gl-root .gl-full-grid .gl-poster-hltb strong {font-size:10px;}
   .gl-root .gl-full-grid .gl-poster[data-size-active="true"] .gl-poster-name {
     bottom:25px;font-size:11px;left:7px;right:7px;
   }
