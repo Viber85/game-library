@@ -66,7 +66,12 @@ test("Manager handles creating, renaming, hiding, deleting, filter and navigatio
   assert.match(manager,/newLibraryTab\(items,title,filter,id,createMode\)/);
   assert.match(manager,/selected.kind!=="custom"/);
   assert.match(manager,/GamepadButton.DIR_DOWN/);
-  assert.match(manager,/focusEditorDirection\(current,b===GamepadButton\.DIR_DOWN\?1:-1\)/);
+  assert.match(manager,/focusSpatially\(editorRegionRef\.current,current,direction/);
+  assert.match(manager,/b===GamepadButton\.DIR_LEFT\?"left"/);
+  assert.match(manager,/b===GamepadButton\.DIR_RIGHT\?"right"/);
+  assert.match(manager,/b===GamepadButton\.DIR_UP\?"up"/);
+  assert.match(manager,/b===GamepadButton\.DIR_DOWN\?"down"/);
+  assert.match(manager,/onButtonDown=\{pickerDpad\}/);
   assert.match(manager,/onButtonDown=\{editorDpad\}/);
   assert.match(manager,/onKeyDownCapture=\{editorTextKeyDown\}/);
   assert.match(manager,/TextField aria-label="Tab name"/);
