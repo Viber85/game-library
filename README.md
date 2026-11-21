@@ -2,6 +2,13 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.19 — compact size and HLTB cover metadata
+
+Library covers show a disk icon with size (tilde for Store estimates),
+and a clock icon with Main + Extras hours from the existing HLTB cache.
+Missing entries are looked up on sustained focus. Unavailable data stays
+a dash. The existing layout and size providers are unchanged.
+
 ## v0.5.9-test.18 — local size for direct Windows/Proton shortcuts
 
 Measure the direct EXE game's specific install folder using a bounded
