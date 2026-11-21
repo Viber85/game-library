@@ -5,7 +5,7 @@ import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
   MdLibraryBooks, MdPlayArrow, MdPalette, MdMenu, MdSearch, MdCollectionsBookmark,
-  MdVideogameAsset, MdChevronRight, MdArrowBack,
+  MdVideogameAsset, MdChevronRight, MdArrowBack, MdAdd,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
@@ -27,7 +27,9 @@ import {alphabetIndicatorEnabled,isRightEdgeGame} from "./libraryAlphabet";
 import {CollectionsPage} from "./CollectionsPage";
 import {resetCollectionLocation} from "./collectionsNavigation";
 import {openNativeSteamMenu} from "./nativeSteamMenu";
-import { fallbackTabs, gamesForTab, createBatchGamesForTab, type SteamTab } from "./tabmaster";
+import {DEFAULT_LIBRARY_TABS,createLibraryTabResolver,gamesForLibraryTab,
+  visibleLibraryTabs,type LibraryTab} from "./libraryTabs";
+import {TabManager} from "./TabManager";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
 import {getSortData,primeHltbCache,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
@@ -175,6 +177,7 @@ export function Dashboard({initialMode="home",originRoute}:
   },[searchMode,searchSelection]);
   const {runningGame,setRunningGame}=useRunningGameState();
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
+  const [tabManagerOpen,setTabManagerOpen]=useState(false);
   const [activeTab, setActiveTab] = useState(()=>
     detailsReturn?.tabId??
       (initialMode==="library"?lastSelectedLibraryTab:"AllGames"));
@@ -210,10 +213,11 @@ export function Dashboard({initialMode="home",originRoute}:
   const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
+  const manageTabsRef=useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
   const lastRailId=useRef(collectionsMode?"collections":initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
   const [railExpanded, setRailExpanded] = useState(false);
-  const tabsForRefresh=useRef<SteamTab[]>(fallbackTabs);
+  const tabsForRefresh=useRef<LibraryTab[]>(DEFAULT_LIBRARY_TABS);
   const membershipSignature=useRef<string|null>(null);
   const [membershipRevision,setMembershipRevision]=useState(0);
 
@@ -224,7 +228,7 @@ export function Dashboard({initialMode="home",originRoute}:
       // without a single CAppOverview field changing. Track real member
       // AppIDs separately before suppressing a no-op library rerender.
       const signature=libraryTabSignature(
-        tabsForRefresh.current,next,createBatchGamesForTab());
+        tabsForRefresh.current,next,createLibraryTabResolver());
       if(membershipSignature.current!==null&&
          membershipSignature.current!==signature)
         setMembershipRevision(revision=>revision+1);
@@ -242,49 +246,24 @@ export function Dashboard({initialMode="home",originRoute}:
     setTabInfo(getAutoTabs());
     return unsubscribe;
   }, []);
-  const lastSource=useRef<boolean | null>(null);
-  useEffect(()=>{
-    const prior=lastSource.current;
-    lastSource.current=tabInfo.available;
-    if(prior===null || prior===tabInfo.available)return;
-    // Keep a saved return tab when TabMaster finishes hydrating AFTER native
-    // Game Details has returned. Normal source changes still select tab 1.
-    const snapshot=restorePending.current;
-    const savedTab=tabInfo.available&&snapshot&&
-      tabInfo.tabs.some(t=>t.id===snapshot.tabId)?snapshot.tabId:null;
-    setGames(getLibraryGames());
-    if(savedTab)setActiveTab(savedTab);
-    else setActiveTab(tabInfo.tabs[0]?.id ?? "AllGames");
-    setSelectedId(savedTab?snapshot!.gameId:undefined);
-    setViewAll(savedTab?snapshot!.viewAll:initialMode==="library");
-    setGridLimit(savedTab?snapshot!.gridLimit:60);
-    pendingGridIndex.current=null;
-  },[tabInfo.available]);
-  const tabs = tabInfo.available && tabInfo.tabs.length ? tabInfo.tabs : fallbackTabs;
+  const tabs=visibleLibraryTabs(tabInfo.tabs.length?tabInfo.tabs:DEFAULT_LIBRARY_TABS);
   tabsForRefresh.current=tabs;
   const tabIds = tabs.map(t=>t.id).join("|");
   useEffect(()=>{
-    membershipSignature.current=libraryTabSignature(tabs,games,createBatchGamesForTab());
+    membershipSignature.current=libraryTabSignature(tabs,games,createLibraryTabResolver());
   },[tabs,games]);
   useEffect(()=>{
     if(tabs.some(t=>t.id===activeTab))return;
-    // During a Details return, the saved tab can precede TabMaster's async
-    // hydration. Wait briefly instead of immediately losing the user's tab.
-    if(!tabInfo.available && restorePending.current?.tabId===activeTab){
-      const timer=window.setTimeout(()=>{
-        if(getAutoTabs().available)return;
-        restorePending.current=null; // saved collection truly unavailable
-        setActiveTab(tabs[0]?.id??"AllGames");
-      },2000);
-      return ()=>window.clearTimeout(timer);
-    }
+    // Preserve a saved custom-tab origin while the Steam account loads.
+    if(tabInfo.reason==="Waiting for Steam account"&&
+       restorePending.current?.tabId===activeTab)return;
     // When a tab is actually removed, fall back to first valid native tab.
     setActiveTab(tabs[0]?.id ?? "AllGames");
     setSelectedId(undefined);
     setViewAll(initialMode==="library");
     setGridLimit(60);
     pendingGridIndex.current=null;
-  },[tabIds,activeTab,tabInfo.available]);
+  },[tabIds,activeTab,tabInfo.reason]);
   const tab = tabs.find(t => t.id === activeTab) ?? tabs[0];
   const sort = searchMode?(tabSorts["__search__"]??"alphabetical"):sortForTab(tab,tabSorts);
   const sortKind=externalSortKind(sort);
@@ -294,7 +273,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const activeSortKind=useRef(sortKind);
   activeSortKind.current=sortKind;
   const tabCounts = useMemo(() => {
-    const resolve=createBatchGamesForTab();
+    const resolve=createLibraryTabResolver();
     return new Map(tabs.map(t => {
     const result = resolve(t, games);
     return [t.id, result.supported ? result.games.length : null] as const;
@@ -311,7 +290,7 @@ export function Dashboard({initialMode="home",originRoute}:
       searchSelection.installed,searchMembership):[],
     [searchMode,games,searchSelection,searchMembership]);
   const tabResult = useMemo(()=>searchMode?{supported:true,games:searchResults}:
-    gamesForTab(tab,games),[searchMode,searchResults,tab,games,membershipRevision]);
+    gamesForLibraryTab(tab,games),[searchMode,searchResults,tab,games,membershipRevision]);
   const shown=useMemo(()=>sortGames(tabResult.games,sort,getSortData()),
     [tabResult.games,sort,metaRevision]);
   const metaProgress=sortKind?
@@ -638,7 +617,7 @@ export function Dashboard({initialMode="home",originRoute}:
     target?.focus();
     target?.scrollIntoView({block:"nearest",inline:"nearest"});
   };
-  /** LB/RB move between TabMaster tabs, matching Steam's native bumper shortcuts. */
+  /** L1/R1 move through our own visible tab order. */
   const cycleTab = (direction: number) => {
     if (!tabs.length) return;
     lastGridFocusIndex.current=0;
@@ -878,7 +857,7 @@ export function Dashboard({initialMode="home",originRoute}:
                   if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
                   else if(b===GamepadButton.DIR_DOWN){consume(e);goToGame();}
                   else if(b===GamepadButton.DIR_LEFT){consume(e);index===0?focusRail(0):focusPill(index-1);}
-                  else if(b===GamepadButton.DIR_RIGHT){consume(e);index===tabs.length-1?sortRef.current?.focus():focusPill(index+1);}
+                  else if(b===GamepadButton.DIR_RIGHT){consume(e);index===tabs.length-1?manageTabsRef.current?.focus():focusPill(index+1);}
                 }}
                 onOKActionDescription={item.title}
               >
@@ -887,13 +866,30 @@ export function Dashboard({initialMode="home",originRoute}:
               </Focusable>
             ))}
           </Focusable>
+          <Focusable ref={manageTabsRef} className="gl-sort gl-manage-tabs-trigger"
+            focusClassName="gl-focused" noFocusRing
+            onActivate={()=>{setSortOpen(false);setTabManagerOpen(true);}}
+            onCancelButton={()=>focusPill(tabs.length-1)}
+            onButtonDown={(e:GamepadEvent)=>{
+              if(handleBumper(e))return;
+              if(e.detail?.button===GamepadButton.DIR_LEFT){
+                consume(e);focusPill(tabs.length-1);
+              }else if(e.detail?.button===GamepadButton.DIR_RIGHT){
+                consume(e);sortRef.current?.focus();
+              }else if(e.detail?.button===GamepadButton.DIR_DOWN){
+                consume(e);setSortOpen(false);setTabManagerOpen(true);
+              }
+            }}
+            onOKActionDescription="Manage Library tabs">
+            <MdAdd/> Tabs
+          </Focusable>
           <Focusable ref={sortRef} className="gl-sort" focusClassName="gl-focused" noFocusRing
             onActivate={showSortMenu}
             onOptionsButton={(e:GamepadEvent)=>{consume(e);showSortMenu();}}
             onOptionsActionDescription="Sort games"
             onButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
-              if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);focusPill(tabs.length-1);}
+              if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);manageTabsRef.current?.focus();}
               else if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);showSortMenu();}
             }}
             onOKActionDescription="Choose sorting">
