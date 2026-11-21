@@ -42,17 +42,21 @@ test("Appearance is independent in Game Mode and route is released on dismount",
   assert.match(app,/onCancelButton=\{onBack\}/);
 });
 
-test("Appearance controls show existing live settings in collapsible sections",()=>{
-  assert.match(app,/Section="theme"\|"artwork"\|"updates"/);
-  assert.match(app,/previous===section\.id\?null:section\.id/);
+test("Appearance is a theme-only hub; artwork and updates are managed in Plugin Settings",()=>{
+  assert.match(app,/Theme Hub/);
+  assert.match(app,/setExpanded\(previous=>!previous\)/);
   assert.match(app,/selectBuiltinTheme\(mode\)/);
   assert.match(app,/subscribeThemeStatus\(setStatus\)/);
-  assert.match(app,/SteamGridDBPanel/);
-  assert.match(app,/UpdatesPanel/);
-  assert.match(app,/Additional themes and Color Editor will be added later/);
+  assert.doesNotMatch(app,/SteamGridDBPanel/);
+  assert.doesNotMatch(app,/UpdatesPanel/);
+  assert.match(app,/Color Editor/);
+  assert.match(app,/planned for a future version/);
   assert.doesNotMatch(app,/setCustomColor|setPrimaryColor|hexColorEditor/);
   assert.match(css,/\.gl-root \.gl-appearance-card-heading\.gl-focused/);
   assert.match(css,/\.gl-root \.gl-appearance-theme-option\.gl-focused/);
+  const settings=read("src/PluginSettingsPage.tsx");
+  assert.match(settings,/<SteamGridDBPanel\/>/);
+  assert.match(settings,/<UpdatesPanel\/>/);
 });
 
 test("Decky retains enable switches and diagnostics without duplicated theme/tool panels",()=>{
