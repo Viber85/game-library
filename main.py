@@ -223,6 +223,17 @@ def _steam_size_cache_path():
     return pathlib.Path(directory) / "steam_size_cache.json" if directory else BASE / "steam_size_cache.json"
 
 
+def _load_nonsteam_size():
+    """Load the bundled read-only Flatpak/AppImage shortcut size resolver."""
+    path = BASE / "nonsteam_size.py"
+    spec = importlib.util.spec_from_file_location("game_library_local_nonsteam_size", str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Non-Steam size module missing. Reinstall plugin.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _load_steam_size():
     """Load packaged local size metadata backend without relying on sys.path."""
     path = BASE / "steam_size.py"
@@ -283,6 +294,7 @@ def _tabmaster_enabled():
 
 
 class Plugin:
+    _nonsteam_size_service = None
     _steam_size_service = None
     _hltb_service = None
     _protondb_service = None
@@ -455,6 +467,23 @@ class Plugin:
             return await asyncio.to_thread(self._steamgriddb_service.lookup, title, key)
         except (OSError, RuntimeError, ValueError):
             return {"status": "error", "cover": None, "hero": None}
+
+    def _nonsteam_size_cache_service(self):
+        if self._nonsteam_size_service is None:
+            self._nonsteam_size_service = _load_nonsteam_size().NonSteamSizeService()
+        return self._nonsteam_size_service
+
+    async def nonsteam_install_size(self, appid: int, title: str, account_id: str = ""):
+        """Read exact Steam shortcut and local Flatpak/AppImage bytes only."""
+        if type(appid) is not int or not 0 < appid <= 0xFFFFFFFF or \
+                type(title) is not str or not 0 < len(title) <= 250 or \
+                type(account_id) is not str or len(account_id) > 12:
+            return {"status": "invalid"}
+        try:
+            return await asyncio.to_thread(
+                self._nonsteam_size_cache_service().lookup, appid, title, account_id)
+        except (OSError, RuntimeError, ValueError, TypeError):
+            return {"status": "unavailable"}
 
     def _steam_size_cache_service(self):
         if self._steam_size_service is None:
