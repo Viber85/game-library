@@ -2,6 +2,13 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.18 — local size for direct Windows/Proton shortcuts
+
+Measure the direct EXE game's specific install folder using a bounded
+read-only scan, skipping compatibility prefixes, shader caches, symlinks
+and other mounts. Broad or uncertain paths remain unknown. Existing
+Flatpak, AppImage and Steam providers are unchanged.
+
 ## v0.5.9-test.17 — fix local non-Steam size resolution
 
 Fix the Steam user-home discovery when Decky runs as another user.
