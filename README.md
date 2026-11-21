@@ -2,6 +2,26 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.1 — Manual Tabs + left-rail management
+
+Game Library now has dedicated **Tab Manager** and **Settings** entries in
+its left sidebar. The small Tabs button has been removed from Library's
+top filter row. The Settings page exposes working Steam Home and Midnight
+theme switches, and links to Appearance, updates and source diagnostics.
+The Decky QAM controls remain available as a fallback.
+
+**Manual Tabs** are user-curated lists. In Tab Manager choose Type: Manual
+when creating a custom tab, or switch an existing custom tab to Manual.
+Use Add / Remove Games to find registered Steam and non-Steam titles,
+toggle multiple selections, filter to Selected only, then Save selection.
+Changes persist per Steam account and never change Steam collections.
+Smart Tabs and all 0.6.0 sorting/controller behavior remain intact.
+
+Manual game membership is limited to titles available in Steam's current
+local library. Third-party storefront account integration and remote
+uninstalled-game sizes will be implemented separately. See
+`docs/release-notes-0.6.1.md` for handheld verification.
+
 ## v0.6.0 — original Game Library Tab Engine
 
 The tab strip and its membership filters no longer depend on TabMaster.
