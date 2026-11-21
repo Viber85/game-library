@@ -2,6 +2,25 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.10 — native SteamOS Space Required (not Store estimates)
+
+Game Library now explicitly calls the Steam Game Mode
+`appDetailsStore.RequestAppDetails(appId)` API when an uninstalled
+Steam title is selected, instead of only reading an app-details cache
+that might not have been loaded yet. It then reads the native
+`lDiskSpaceRequiredBytes` value and updates the poster, using the
+same source as Steam's **Space Required** display.
+
+The native required space is shown with Steam-style binary GB and two
+decimal places, without a tilde. Steam Store requirements remain a
+clearly marked **~GB** fallback only where native data is unavailable.
+Requests are focus-driven, deduplicated, and do not sweep the Library.
+Installed-size measurement, other menu navigation and Epic/GOG
+matching are unchanged.
+
+See `docs/release-notes-0.6.10.md` for the test comparing Bright
+Memory: Infinite's native Space Required (10.76 GB) on SteamOS.
+
 ## v0.6.9 — uninstalled Steam games: native required space and cache hydration
 
 The dedicated Library now reads `lDiskSpaceRequiredBytes`, SteamOS's
