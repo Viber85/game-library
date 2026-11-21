@@ -114,9 +114,10 @@ export function SteamInstallSizeBadge({game,active}:{
     const current=readNativeRequiredInstallBytes(game.id);
     if(current!==null)setRequiredFromSteam(current);
     if(!active)return;
-    return subscribeNativeRequiredInstallBytes(game.id,bytes=>{
+    const stop=subscribeNativeRequiredInstallBytes(game.id,bytes=>{
       if(live)setRequiredFromSteam(bytes);
     });
+    return ()=>{live=false;stop();};
   },[game.id,game.installed,game.nonSteam,active]);
 
   useEffect(()=>{
