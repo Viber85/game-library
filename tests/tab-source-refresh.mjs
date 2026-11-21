@@ -9,9 +9,9 @@ const deferred=()=>{
   const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});
   return {promise,resolve,reject};
 };
-const snap=(enabled,tabs=[])=>({available:enabled,tabs,reason:enabled?"":"TabMaster disabled"});
+const snap=(enabled,tabs=[])=>({available:enabled,tabs,reason:enabled?"":"Native tabs unavailable"});
 
-test("automatic tab state updates after Decky re-enables TabMaster without dashboard remount",async()=>{
+test("automatic tab state updates after Decky re-enables native without dashboard remount",async()=>{
   let live=snap(false);
   let calls=0;
   const source=createSourceRefresh(async()=>{calls++;return live;},
@@ -41,7 +41,7 @@ test("automatic tab state updates after Decky re-enables TabMaster without dashb
   assert.equal(calls,3);
 });
 
-test("pending stale disabled response cannot overwrite newly enabled TabMaster tabs",async()=>{
+test("pending stale disabled response cannot overwrite newly enabled native tabs",async()=>{
   const old=deferred();
   const current=snap(true,[{id:"GOG",title:"GOG"}]);
   let calls=0;
@@ -88,8 +88,8 @@ test("failed and stopped requests do not erase last valid tab state",async()=>{
   assert.equal(source.getSnapshot().available,true);
 });
 
-test("plugin owns source monitoring and QAM focus return triggers immediate and delayed refresh",()=>{
-  const root=(p)=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
+test("Plugin owns our tab monitoring; foreground refresh keeps user edits",()=>{
+  const root=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
   const index=root("src/index.tsx");
   const dashboard=root("src/Dashboard.tsx");
   const auto=root("src/autoTabSource.ts");
@@ -98,9 +98,12 @@ test("plugin owns source monitoring and QAM focus return triggers immediate and 
   assert.match(dashboard,/subscribeAutoTabs\(setTabInfo\)/);
   assert.match(dashboard,/setTabInfo\(getAutoTabs\(\)\)/);
   assert.doesNotMatch(dashboard,/loadSteamTabs\(getActiveUserId\(\)\)/);
-  assert.match(dashboard,/setActiveTab\(tabInfo\.tabs\[0\]\?\.id \?\? "AllGames"\)/);
+  assert.match(dashboard,/visibleLibraryTabs\(tabInfo.tabs/);
   assert.match(dashboard,/setGames\(getLibraryGames\(\)\)/);
   assert.match(auto,/POLL_MS=4000/);
+  assert.match(auto,/get_library_tabs/);
+  assert.match(auto,/save_library_tabs/);
+  assert.doesNotMatch(auto,/native|Unifideck/);
   for(const target of [
     'window.addEventListener("focus",onWake)',
     'window.addEventListener("pageshow",onWake)',
