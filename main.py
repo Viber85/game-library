@@ -8,6 +8,17 @@ import re
 
 BASE = pathlib.Path(__file__).resolve().parent
 
+def _load_gog():
+    """Load our own GOG provider, never another installed plugin."""
+    path = BASE / "gog.py"
+    spec = importlib.util.spec_from_file_location("game_library_private_gog", str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Game Library GOG module missing. Reinstall the ZIP.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _load_updater():
     """Load our own packaged module by path, not Python's global import path.
 
@@ -377,7 +388,36 @@ class Plugin:
     _steamgriddb_service = None
 
     async def _main(self):
-        pass
+        self._gog_lock = asyncio.Lock()
+
+    async def get_gog_account(self, account_id: str = ""):
+        """Return sanitized auth state only; never return GOG credentials."""
+        return await asyncio.to_thread(_load_gog().status, account_id)
+
+    async def get_gog_library(self, account_id: str = ""):
+        """Owned GOG products read from Game Library's own local cache."""
+        return await asyncio.to_thread(_load_gog().library, account_id)
+
+    async def connect_gog_account(self, account_id: str, code_or_url: str):
+        """Explicit user-approved code exchange; no password ever enters Decky."""
+        if not hasattr(self, "_gog_lock"):
+            self._gog_lock = asyncio.Lock()
+        async with self._gog_lock:
+            return await asyncio.to_thread(_load_gog().connect, account_id, code_or_url)
+
+    async def sync_gog_library(self, account_id: str):
+        """Refresh complete owned-library snapshot without touching Steam."""
+        if not hasattr(self, "_gog_lock"):
+            self._gog_lock = asyncio.Lock()
+        async with self._gog_lock:
+            return await asyncio.to_thread(_load_gog().sync, account_id)
+
+    async def disconnect_gog_account(self, account_id: str):
+        """Forget only Game Library's own GOG session and cached library."""
+        if not hasattr(self, "_gog_lock"):
+            self._gog_lock = asyncio.Lock()
+        async with self._gog_lock:
+            return await asyncio.to_thread(_load_gog().disconnect, account_id)
 
     async def get_steam_clock_format(self, account_id: str = ""):
         """Read the same 12/24-hour preference used by SteamOS, never change it."""
