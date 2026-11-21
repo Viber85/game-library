@@ -17,6 +17,7 @@ export function readNativeSortFields(value:unknown):NativeSortFields{
     releaseDate:safeNonnegative(o.rt_original_release_date) ??
       safeNonnegative(o.rt_steam_release_date),
     sizeBytes:safeNonnegative(o.size_on_disk),
-    requiredBytes:safeNonnegative(o.lDiskSpaceRequiredBytes),
+    ...(safeNonnegative(o.lDiskSpaceRequiredBytes)!==undefined?
+      {requiredBytes:safeNonnegative(o.lDiskSpaceRequiredBytes)}:{}),
   };
 }
