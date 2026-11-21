@@ -31,7 +31,7 @@ export function visibleLibraryTabs(tabs:readonly LibraryTab[]):LibraryTab[]{
   return normalizeLibraryTabs(tabs).filter(t=>t.visible);
 }
 export function gamesForLibraryTab(tab:LibraryTab,games:readonly LibraryGame[]):{
-  supported:boolean;games:LibraryGame[]
+  supported:boolean;games:LibraryGame[];reason?:string
 }{
   const filter=tab.kind==="custom"?tab.filter:tab.kind==="all"?"all":tab.kind;
   return {supported:true,games:games.filter(game=>{
