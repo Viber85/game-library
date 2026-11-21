@@ -69,7 +69,7 @@ test("Manager handles creating, renaming, hiding, deleting, filter and navigatio
   assert.match(manager,/TextField aria-label="Tab name"/);
   assert.match(dashboard,/<TabManager tabs=\{tabInfo.tabs\} games=\{games\}/);
   assert.doesNotMatch(dashboard,/gl-manage-tabs-trigger|setTabManagerOpen/);
-  assert.match(dashboard,/Navigation.Navigate\(TABS_ROUTE\)/);
+  assert.match(read("src/PluginSettingsPage.tsx"),/Navigation.Navigate\("\/game-library\/tabs"\)/);
   assert.match(dashboard,/const cycleTab = \(direction: number\)/);
 });
 
