@@ -2,6 +2,24 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.8 — safer Install Size comparison for uninstalled games
+
+Library cards keep the same minimal storage icon + GB value.
+Installed Steam and Non-Steam sizes continue to come from local
+Steam metadata, exact EXE folders, Flatpak or AppImage.
+
+For uninstalled Non-Steam games with an existing linked Steam AppID,
+the selected card can now display an **~GB Steam reference** if the
+Steam product title matches the shortcut. Different titles, editions,
+missing links, or unavailable metadata are shown as **—**, not guessed.
+Steam references are not represented as real Epic/GOG sizes, and no
+additional authentication or bulk lookups are needed.
+
+Native Epic and GOG product-specific estimates require our own
+storefront connectors, which remain the next phase.
+
+See `docs/release-notes-0.6.8.md` for the scope and on-device tests.
+
 ## v0.6.7 — complete Diagnostics and My Collections navigation
 
 Completes the Game Mode four-direction controller audit for the remaining
