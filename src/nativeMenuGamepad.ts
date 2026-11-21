@@ -16,6 +16,7 @@ const CONTROLS:Record<MenuType,string>={
   ].join(","),
   settings:[
     ".gl-plugin-setting-row",".gl-tab-manager-action",
+    ".gl-plugin-settings-tool-content",
     ".gl-plugin-settings-tool-content button",
     ".gl-plugin-settings-tool-content [role='button']",
     ".gl-plugin-settings-tool-content input",
