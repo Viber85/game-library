@@ -2,10 +2,12 @@ import {callable} from "@decky/api";
 import {useEffect,useState} from "react";
 import {MdStorage} from "react-icons/md";
 import {getActiveUserId,protonDbAppId,type LibraryGame} from "./steam";
+import {sameStoreGameTitle} from "./installSizeReference";
 
 export type StoreSizeReply={
   status:"estimated"|"unavailable"|"rate_limited"|"error"|"invalid"|"deferred";
   estimated_gb?:number;
+  steam_title?:string;
   source?:"steam_store";
   platform?:"pc"|"linux";
   requirement?:"minimum"|"recommended";
@@ -91,7 +93,8 @@ export function SteamInstallSizeBadge({game,active}:{
 }){
   // Cross-store Steam requirements are only a comparison for an already
   // verified Steam AppID. A similarly named game is NOT sufficient evidence.
-  // This never reads TabMaster/UnifiedDeck or assumes a store based on titles.
+  // A source may have linked an AppID in Steam overview metadata, but we
+  // never call another plugin or guess a product from its title.
   const referenceAppId=game.nonSteam&&!game.installed?protonDbAppId(game):null;
   const storeAppId=!game.nonSteam?game.id:referenceAppId;
   const [remote,setRemote]=useState<StoreSizeReply|null>(
@@ -148,7 +151,8 @@ export function SteamInstallSizeBadge({game,active}:{
     typeof nonSteam.size_bytes==="number"&&nonSteam.size_bytes>0?
       nonSteam.size_bytes:null;
   const nonSteamGb=nonSteamBytes!==null?nonSteamBytes/1_000_000_000:null;
-  const estimate=storeAppId!==null&&native===null&&remote&&validStoreSize(remote)?
+  const estimate=storeAppId!==null&&native===null&&remote&&validStoreSize(remote)&&
+    (!game.nonSteam||sameStoreGameTitle(game.title,remote.steam_title))?
     remote:null;
   const value=nativeGb!==null?nativeGb:
     nonSteamGb!==null?nonSteamGb:estimate?.estimated_gb;
@@ -175,7 +179,9 @@ export function SteamInstallSizeBadge({game,active}:{
       (estimate.requirement==="recommended"?"recommended":"minimum")+
       "); not an exact download or installed size":
     game.nonSteam&&!game.installed?
-      "Uninstalled non-Steam title · no verified store product ID. Epic/GOG store-size integration is not available yet":
+      storeAppId===null?
+        "Uninstalled non-Steam title · no verified store product ID. Epic/GOG store-size integration is not available yet":
+        "No verified title match for the linked Steam reference. Store-specific Epic/GOG size integration is not available yet":
     game.nonSteam?
       "Local size unknown · "+(nonSteam?.reason==="shortcut_not_found"?
         "Steam shortcut not found":nonSteam?.reason==="flatpak_size_unavailable"?
