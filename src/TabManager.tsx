@@ -6,9 +6,11 @@ import {MdAdd,MdArrowBack,MdArrowDownward,MdArrowUpward,MdCheckBox,
 import type {LibraryGame} from "./steam";
 import {posterCandidates} from "./steam";
 import {normalizeSearchText} from "./librarySearch";
-import type {LibraryTab,TabFilter,TabMode} from "./libraryTabs";
+import type {LibraryTab,TabFilter,TabMode,SmartJoin,SmartRule} from "./libraryTabs";
+import {SmartTabEditor} from "./SmartTabEditor";
 import {OWN_FILTERS,changeLibraryTab,moveLibraryTab,newLibraryTab,
-  normalizeLibraryTabs,assignManualGames} from "./libraryTabs";
+  normalizeLibraryTabs,assignManualGames,assignSmartExceptions,
+  gamesForLibraryTab,smartRulesForTab} from "./libraryTabs";
 import {saveOwnTabs} from "./autoTabSource";
 
 type Props={
@@ -21,7 +23,8 @@ type Props={
 const stop=(e:GamepadEvent)=>{e.preventDefault();e.stopPropagation();};
 const label=(tab:LibraryTab)=>tab.kind==="custom"?
   tab.mode==="manual"?"Manual · "+(tab.members?.length??0)+" games":
-  "Smart · "+(OWN_FILTERS.find(f=>f.id===tab.filter)?.title??"All games"):
+  "Smart · "+smartRulesForTab(tab).length+" rules · "+
+    (tab.ruleJoin==="any"?"OR":"AND"):
   tab.kind==="all"?"All games":tab.kind;
 export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
   const [items,setItems]=useState(()=>normalizeLibraryTabs(tabs));
@@ -33,6 +36,8 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [picker,setPicker]=useState(false);
+  const [pickerTarget,setPickerTarget]=useState<"manual"|"include"|"exclude">("manual");
+  const [smartEditor,setSmartEditor]=useState(false);
   const [pickerQuery,setPickerQuery]=useState("");
   const [pickerSelected,setPickerSelected]=useState<number[]>([]);
   const [pickerShowSelected,setPickerShowSelected]=useState(false);
@@ -53,8 +58,8 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
   },[]);
   // The parent sidebar's Right/B action targets the currently visible page.
   useEffect(()=>{
-    firstRef.current=picker?pickerBackRef.current:backRef.current;
-  },[picker]);
+    if(!smartEditor)firstRef.current=picker?pickerBackRef.current:backRef.current;
+  },[picker,smartEditor]);
 
   const focusRow=(index:number)=>{
     const row=rowRefs.current[Math.max(0,Math.min(items.length-1,index))];
@@ -112,9 +117,14 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
     else if(b===GamepadButton.DIR_LEFT){stop(e);onFocusRail();}
     else if(b===GamepadButton.DIR_RIGHT){stop(e);editorRef.current?.focus();}
   };
-  const openPicker=()=>{
-    if(!selected||selected.kind!=="custom"||selected.mode!=="manual")return;
-    setPickerQuery("");setPickerSelected(selected.members??[]);
+  const openPicker=(target:"manual"|"include"|"exclude")=>{
+    if(!selected||selected.kind!=="custom")return;
+    if(target==="manual"&&selected.mode!=="manual")return;
+    if(target!=="manual"&&selected.mode==="manual")return;
+    setPickerTarget(target);
+    setPickerQuery("");
+    setPickerSelected(target==="manual"?selected.members??[]:
+      target==="include"?selected.forceInclude??[]:selected.forceExclude??[]);
     setPickerShowSelected(false);setPickerLimit(80);setPicker(true);setError("");
     window.requestAnimationFrame(()=>pickerBackRef.current?.focus());
   };
@@ -123,9 +133,24 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
     window.requestAnimationFrame(()=>editorRef.current?.focus());
   };
   const applyPicker=async()=>{
-    if(!selected||selected.mode!=="manual")return;
-    const saved=await commit(assignManualGames(items,selected.id,pickerSelected));
+    if(!selected||selected.kind!=="custom")return;
+    const next=pickerTarget==="manual"?
+      assignManualGames(items,selected.id,pickerSelected):
+      assignSmartExceptions(items,selected.id,pickerTarget,pickerSelected);
+    const saved=await commit(next);
     if(saved)leavePicker();
+  };
+  const openSmartEditor=()=>{
+    if(!selected||selected.kind!=="custom"||selected.mode==="manual")return;
+    setError("");setSmartEditor(true);
+  };
+  const closeSmartEditor=()=>{
+    setSmartEditor(false);
+    window.requestAnimationFrame(()=>editorRef.current?.focus());
+  };
+  const saveSmartRules=(rules:SmartRule[],ruleJoin:SmartJoin):Promise<boolean>=>{
+    if(!selected||selected.kind!=="custom")return Promise.resolve(false);
+    return commit(changeLibraryTab(items,selected.id,{rules,ruleJoin}));
   };
   const selectedSet=useMemo(()=>new Set(pickerSelected),[pickerSelected]);
   const results=useMemo(()=>{
@@ -151,6 +176,10 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
 
   return <div className="gl-tab-manager gl-tab-manager-page" aria-label="Manage Library tabs">
     <div className="gl-tab-manager-shell">
+      {smartEditor&&selected?.kind==="custom"?
+        <SmartTabEditor tab={selected} games={games} onSave={saveSmartRules}
+          onClose={closeSmartEditor} onFocusRail={onFocusRail} firstRef={firstRef}/>:
+      <>
       <header className="gl-tab-manager-header">
         <Focusable ref={el=>{backRef.current=el;if(!picker)firstRef.current=el;}}
           className="gl-tab-manager-action" focusClassName="gl-focused" noFocusRing
@@ -162,7 +191,9 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
           }}
           onOKActionDescription="Return to Library"><MdArrowBack/> Back</Focusable>
         <div><h2>{picker?"Select Games":"Manage Tabs"}</h2>
-          <p>Game Library · {picker?"Manual membership":"Own tab engine"}</p></div>
+          <p>Game Library · {picker?pickerTarget==="manual"?"Manual membership":
+            pickerTarget==="include"?"Smart · Always include":"Smart · Always exclude":
+            "Own tab engine"}</p></div>
       </header>
       {picker?
         <div className="gl-tab-game-picker">
@@ -173,7 +204,10 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
             <Focusable className="gl-tab-manager-action gl-tab-manager-primary"
               focusClassName="gl-focused" noFocusRing onActivate={()=>void applyPicker()}
               onCancelButton={leavePicker}><MdDone/> Save selection · {pickerSelected.length}</Focusable>
-            <span className="gl-tab-manager-note">Changes are saved only when you confirm.</span>
+            <span className="gl-tab-manager-note">{pickerTarget==="manual"?
+              "Manual game membership":pickerTarget==="include"?
+              "Games always included, regardless of rules":
+              "Games always excluded, regardless of rules"}. Save to confirm.</span>
           </div>
           <div className="gl-tab-picker-search">
             <MdSearch/>
@@ -273,18 +307,32 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
               </Focusable>}
               {selected?.kind==="custom"&&selected.mode==="manual"&&
                 <Focusable className="gl-tab-manager-action gl-tab-manager-primary"
-                  focusClassName="gl-focused" noFocusRing onActivate={openPicker}
+                  focusClassName="gl-focused" noFocusRing onActivate={()=>openPicker("manual")}
                   onCancelButton={onClose}>
                   <MdListAlt/> Add / Remove Games ({selected.members?.length??0})
                 </Focusable>}
-              {selected?.kind==="custom"&&selected.mode!=="manual"&&
-                <Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
-                  noFocusRing
-                  onActivate={()=>void commit(changeLibraryTab(items,selected.id,{
-                    filter:OWN_FILTERS[(OWN_FILTERS.findIndex(f=>f.id===selected.filter)+1)%OWN_FILTERS.length].id
-                  }))} onCancelButton={onClose}>
-                  <MdTune/> Filter: {OWN_FILTERS.find(f=>f.id===selected.filter)?.title}
-                </Focusable>}
+              {selected?.kind==="custom"&&selected.mode!=="manual"&&<>
+                <Focusable className="gl-tab-manager-action gl-tab-manager-primary"
+                  focusClassName="gl-focused" noFocusRing onActivate={openSmartEditor}
+                  onCancelButton={onClose}>
+                  <MdTune/> Edit Smart Rules ({smartRulesForTab(selected).length})
+                </Focusable>
+                <Focusable className="gl-tab-manager-action"
+                  focusClassName="gl-focused" noFocusRing
+                  onActivate={()=>openPicker("include")} onCancelButton={onClose}>
+                  <MdListAlt/> Always Include ({selected.forceInclude?.length??0})
+                </Focusable>
+                <Focusable className="gl-tab-manager-action"
+                  focusClassName="gl-focused" noFocusRing
+                  onActivate={()=>openPicker("exclude")} onCancelButton={onClose}>
+                  <MdListAlt/> Always Exclude ({selected.forceExclude?.length??0})
+                </Focusable>
+                <div className="gl-tab-manager-rule-preview">
+                  {gamesForLibraryTab(selected,games).games.length} matching games ·
+                  {smartRulesForTab(selected).length} rules ·
+                  {selected.ruleJoin==="any"?" OR":" AND"}
+                </div>
+              </>}
               {selected?.kind==="custom"&&<Focusable className="gl-tab-manager-action gl-tab-manager-danger"
                 focusClassName="gl-focused" noFocusRing onActivate={remove} onCancelButton={onClose}>
                 <MdDeleteOutline/> Delete
@@ -319,6 +367,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
               Manual tabs store exact game IDs without modifying Steam collections.</p>
           </div>
         </div>}
+      </>}
     </div>
   </div>;
 }
