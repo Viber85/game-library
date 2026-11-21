@@ -76,8 +76,10 @@ test("Install Play and Game Details have an unmistakable controller focus",()=>{
   assert.match(v8,/transform:translateY\(-2px\)/);
   assert.match(v8,/\.gl-button\.gl-primary:not\(\.gl-focused\):not\(:focus-visible\)/);
   assert.match(v8,/\.gl-button:not\(\.gl-primary\):is\(\.gl-focused,\.gpfocus,:focus-visible,:focus-within\)/);
-  assert.match(ui,/<Focusable className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing/);
-  assert.match(ui,/<Focusable className="gl-button" focusClassName="gl-focused" noFocusRing/);
+  assert.match(ui,/className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing/);
+  assert.match(ui,/homeActionRefs\.current\[1\]\?\.focus\(\)/);
+  assert.match(ui,/className="gl-button" focusClassName="gl-focused" noFocusRing/);
+  assert.match(ui,/homeActionRefs\.current\[0\]\?\.focus\(\)/);
   assert.match(v8,/prefers-reduced-motion:reduce/);
 });
 
