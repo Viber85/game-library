@@ -40,8 +40,12 @@ export function AppearancePage({firstRef,onFocusRail,onBack}:Props){
       e.preventDefault();e.stopPropagation();onFocusRail();
     }else if(b===GamepadButton.DIR_DOWN&&expanded){
       e.preventDefault();e.stopPropagation();options.current[0]?.focus();
-    }else if(b===GamepadButton.DIR_RIGHT&&!expanded){
-      e.preventDefault();e.stopPropagation();setExpanded(true);
+    }else if(b===GamepadButton.DIR_RIGHT){
+      e.preventDefault();e.stopPropagation();
+      if(expanded)options.current[0]?.focus();
+      else setExpanded(true);
+    }else if(b===GamepadButton.DIR_UP){
+      e.preventDefault();e.stopPropagation();statusRef.current?.focus();
     }
   };
   return <div className="gl-appearance" aria-label="Theme Hub">
@@ -87,13 +91,17 @@ export function AppearancePage({firstRef,onFocusRail,onBack}:Props){
                   onButtonDown={(e:GamepadEvent)=>{
                     const b=e.detail?.button;
                     if(b===GamepadButton.DIR_LEFT){
-                      e.preventDefault();e.stopPropagation();onFocusRail();
-                    }else if(b===GamepadButton.DIR_UP){
                       e.preventDefault();e.stopPropagation();
-                      optionIndex===0?header.current?.focus():options.current[0]?.focus();
+                      optionIndex===0?onFocusRail():options.current[0]?.focus();
+                    }else if(b===GamepadButton.DIR_RIGHT){
+                      e.preventDefault();e.stopPropagation();
+                      options.current[Math.min(optionIndex+1,1)]?.focus();
+                    }else if(b===GamepadButton.DIR_UP){
+                      e.preventDefault();e.stopPropagation();header.current?.focus();
                     }else if(b===GamepadButton.DIR_DOWN){
                       e.preventDefault();e.stopPropagation();
-                      optionIndex===0?options.current[1]?.focus():header.current?.focus();
+                      // The Color Editor is planned, not a focusable button.
+                      options.current[optionIndex]?.focus();
                     }
                   }}
                   onOKActionDescription={"Use "+title+" theme"}>
