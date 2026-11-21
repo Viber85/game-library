@@ -31,6 +31,7 @@ import {DEFAULT_LIBRARY_TABS,createLibraryTabResolver,gamesForLibraryTab,
   visibleLibraryTabs,type LibraryTab} from "./libraryTabs";
 import {TabManager} from "./TabManager";
 import {PluginSettingsPage} from "./PluginSettingsPage";
+import {GogLibraryPage} from "./GogLibraryPage";
 import {useNativeMenuGamepad} from "./nativeMenuGamepad";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
@@ -57,6 +58,9 @@ const APPEARANCE_ROUTE = "/game-library/appearance";
 const COLLECTIONS_ROUTE="/game-library/collections";
 const TABS_ROUTE="/game-library/tabs";
 const PLUGIN_SETTINGS_ROUTE="/game-library/plugin-settings";
+const GOG_TAB:LibraryTab={
+  id:"GOG",title:"GOG",position:999,visible:true,kind:"all",filter:"all",
+};
 let lastSelectedLibraryTab="AllGames";
 const rememberedSorts:Record<string,Sort>={};
 
@@ -270,7 +274,11 @@ export function Dashboard({initialMode="home",originRoute}:
     setTabInfo(getAutoTabs());
     return unsubscribe;
   }, []);
-  const tabs=useMemo(()=>visibleLibraryTabs(tabInfo.tabs.length?tabInfo.tabs:DEFAULT_LIBRARY_TABS),[tabInfo.tabs]);
+  const tabs=useMemo(()=>{
+    const own=visibleLibraryTabs(tabInfo.tabs.length?tabInfo.tabs:DEFAULT_LIBRARY_TABS);
+    // GOG stays independent of Steam AppIDs and saved Smart/Manual tab data.
+    return initialMode==="library"?[...own,GOG_TAB]:own;
+  },[tabInfo.tabs,initialMode]);
   tabsForRefresh.current=tabs;
   const tabIds = tabs.map(t=>t.id).join("|");
   useEffect(()=>{
@@ -299,8 +307,8 @@ export function Dashboard({initialMode="home",originRoute}:
   const tabCounts = useMemo(() => {
     const resolve=createLibraryTabResolver();
     return new Map(tabs.map(t => {
-    const result = resolve(t, games);
-    return [t.id, result.supported ? result.games.length : null] as const;
+    const result = t.id==="GOG"?null:resolve(t, games);
+    return [t.id, result?.supported ? result.games.length : null] as const;
   }));
   }, [tabs, games, membershipRevision]);
   // Search is global; the currently selected Library tab does not
@@ -314,6 +322,7 @@ export function Dashboard({initialMode="home",originRoute}:
       searchSelection.installed,searchMembership):[],
     [searchMode,games,searchSelection,searchMembership]);
   const tabResult = useMemo(()=>searchMode?{supported:true,games:searchResults}:
+    tab.id==="GOG"?{supported:true,games:[]}:
     gamesForLibraryTab(tab,games),[searchMode,searchResults,tab,games,membershipRevision]);
   const shown=useMemo(()=>sortGames(tabResult.games,sort,getSortData()),
     [tabResult.games,sort,metaRevision]);
@@ -955,7 +964,8 @@ export function Dashboard({initialMode="home",originRoute}:
               total={metaProgress.total}/>
           </div>}
 
-        {shown.length > 0 ? (
+        {tab.id==="GOG" ? <GogLibraryPage onFocusRail={()=>focusRail(railIndex)}/> :
+          shown.length > 0 ? (
           viewAll ? (
             <section className={"gl-grid-page"+
               (libraryAlphabetActive?" gl-alphabet-enabled":"")}
