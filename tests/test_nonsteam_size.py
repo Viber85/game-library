@@ -129,6 +129,67 @@ class NonSteamSizeTests(unittest.TestCase):
             self.assertIsNone(nonsteam_size.flatpak_installed_bytes("invalid; touch /tmp/x"))
             run.assert_not_called()
 
+    def test_direct_windows_game_counts_folder_excludes_prefix_and_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = pathlib.Path(tmp)
+            folder = home / "Games" / "Example Game"
+            folder.mkdir(parents=True)
+            exe = folder / "Example.exe"
+            exe.write_bytes(b"x" * 1000)
+            data = folder / "Data"
+            data.mkdir()
+            (data / "assets.pak").write_bytes(b"a" * 2000)
+            prefix = folder / "pfx"
+            prefix.mkdir()
+            (prefix / "other.bin").write_bytes(b"x" * 9999)
+            outside = home / "private.bin"
+            outside.write_bytes(b"x" * 5000)
+            (folder / "linked.bin").symlink_to(outside)
+            shortcut = {"exe": '"' + str(exe) + '"', "launchoptions": "",
+                        "startdir": '"' + str(folder) + '"', "_home": str(home)}
+            tokens = nonsteam_size.command_tokens(shortcut)
+            self.assertEqual(nonsteam_size.game_directory(tokens, shortcut), folder)
+            self.assertEqual(nonsteam_size.game_directory_bytes(folder), 3000)
+            service = nonsteam_size.NonSteamSizeService()
+            with mock.patch.object(nonsteam_size, "matching_shortcut", return_value=shortcut):
+                self.assertEqual(service.lookup(0xFEDCBA98, "Example", "123"),
+                    {"status": "ok", "source": "windows_game", "size_bytes": 3000})
+
+    def test_unreal_binary_folder_climbs_only_known_game_structure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = pathlib.Path(tmp)
+            folder = home / "Games" / "Project"
+            binary = folder / "Binaries" / "Win64"
+            binary.mkdir(parents=True)
+            exe = binary / "Project.exe"
+            exe.write_bytes(b"x" * 10)
+            content = folder / "Content"
+            content.mkdir()
+            (content / "data.pak").write_bytes(b"x" * 20)
+            shortcut = {"_home": str(home)}
+            self.assertEqual(nonsteam_size.game_directory([str(exe)], shortcut), folder)
+            self.assertEqual(nonsteam_size.game_directory_bytes(folder), 30)
+
+    def test_reject_broad_roots_unrelated_system_paths_and_wrappers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = pathlib.Path(tmp)
+            broad = home / "Games"
+            broad.mkdir()
+            exe = broad / "game.exe"
+            exe.write_bytes(b"x")
+            self.assertIsNone(nonsteam_size.game_directory([str(exe)], {"_home": str(home)}))
+            folder = broad / "Example"
+            folder.mkdir()
+            target = folder / "game.exe"
+            target.write_bytes(b"x")
+            self.assertIsNone(nonsteam_size.game_directory(["/usr/bin/bash", str(target)],
+                                                          {"_home": str(home)}))
+            self.assertIsNone(nonsteam_size.game_directory([str(target)], {"_home": "/different"}))
+            self.assertIsNone(nonsteam_size.game_directory([str(folder / "missing.exe")],
+                                                          {"_home": str(home)}))
+            with mock.patch.object(nonsteam_size, "MAX_GAME_ENTRIES", 0):
+                self.assertIsNone(nonsteam_size.game_directory_bytes(folder))
+
     def test_local_lookup_caches_and_never_queries_steam_store(self):
         item = {"appid": 81234567, "appname": "App",
                 "exe": '"/usr/bin/flatpak"',
