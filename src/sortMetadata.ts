@@ -37,6 +37,18 @@ const ranks:Record<string,number>={
 const inflight=new Map<string,Promise<number|null>>();
 const bulkInflight=new Map<string,Promise<void>>();
 const hltbTitles=new Map<number,string>();
+const hltbListeners=new Map<number,Set<()=>void>>();
+function notifyHltb(id:number){
+  for(const listener of hltbListeners.get(id)??[])listener();
+}
+export function subscribeCardHltb(id:number,listener:()=>void):()=>void{
+  const listeners=hltbListeners.get(id)??new Set<()=>void>();
+  listeners.add(listener);hltbListeners.set(id,listeners);
+  return ()=>{listeners.delete(listener);if(!listeners.size)hltbListeners.delete(id);};
+}
+export function cardHltbHours(game:LibraryGame):number|null{
+  return hltbTitles.get(game.id)===game.title.trim()?cached.hltb.get(game.id)??null:null;
+}
 const hltbReady=new Map<number,{title:string;until:number}>();
 
 const HLTB_RETRY_MS=5*60_000;
@@ -59,6 +71,7 @@ function ensureTitle(g:LibraryGame):void{
   hltbTitles.set(g.id,title);
   cached.hltb.delete(g.id);
   hltbReady.delete(g.id);
+  notifyHltb(g.id);
 }
 function markHltbReady(g:LibraryGame,seconds:number):void{
   const duration=Math.min(MAX_TTL_MS,Math.max(1000,seconds*1000));
@@ -99,6 +112,7 @@ export function primeHltbCache(
              Number.isFinite(entry.expires_in)&&entry.expires_in>0)
             markHltbReady(original,entry.expires_in);
           else hltbReady.delete(entry.id); // stale: keep value, refresh
+          notifyHltb(entry.id);
         }
       }
     })().finally(()=>bulkInflight.delete(key));
@@ -169,9 +183,26 @@ async function fetchOnce(g:LibraryGame,kind:ExternalSortKind):Promise<number|nul
   const key=kind+":"+g.id+":"+g.title;
   const old=inflight.get(key);
   if(old)return old;
-  const next=lookup(g,kind).finally(()=>inflight.delete(key));
+  const next=lookup(g,kind).finally(()=>{
+    inflight.delete(key);
+    if(kind==="hltb")notifyHltb(g.id);
+  });
   inflight.set(key,next);
   return next;
+}
+
+/** Focused cover and sorting share the same cache and in-flight requests.
+ * Existing disk prewarm supplies all cached covers; only focused misses
+ * need another lookup when not already being filled by a sort.
+ */
+export async function loadCardHltb(game:LibraryGame):Promise<number|null>{
+  if(readyHltb(game))return cardHltbHours(game);
+  await primeHltbCache([game]);
+  if(readyHltb(game))return cardHltbHours(game);
+  // Don't start another title while the HLTB sort / another card is busy.
+  if([...inflight.keys()].some(key=>key.startsWith("hltb:")&&key!=="hltb:"+game.id+":"+game.title))
+    return cardHltbHours(game);
+  return fetchOnce(game,"hltb");
 }
 
 /**
