@@ -93,10 +93,13 @@ test("Non-Steam size comes only from local exact shortcut, no Store fallback",()
   assert.match(service,/shortcut_path\(account_id\)/);
   assert.match(service,/s\.get\("appid"\) == appid/);
   assert.match(service,/s\.get\("appname", ""\)\.strip\(\)\.casefold\(\) == title/);
+  assert.match(service,/def steam_homes\(\):/);
+  assert.match(service,/DECKY_USER_HOME/);
+  assert.match(service,/kwargs\.update\(user=uid, group=gid, extra_groups=\[\]\)/);
   assert.match(service,/subprocess\.run\(/);
   assert.match(service,/shell=False/);
   assert.match(service,/--show-size/);
-  assert.match(service,/appimage_file\(tokens\)/);
+  assert.match(service,/appimage_file\(tokens, shortcut\.get\("_home"\)\)/);
   assert.match(service,/path\.stat\(\)\.st_size/);
   assert.match(service,/FLATPAK_ID\.fullmatch\(app\)/);
   assert.doesNotMatch(service,/os\.system|subprocess\.Popen|shutil\.rmtree|os\.walk/);
