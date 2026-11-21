@@ -2,6 +2,20 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.14 — native Steam size + Store estimate (trial)
+
+On the dedicated Library grid Steam covers, a compact SIZE label uses
+Valve's local `size_on_disk` for installed titles. When native disk usage
+is missing, focusing a cover for 850 ms performs one rate-limited public
+Steam Store requirements lookup and shows `EST. ~70 GB` (illustrative)
+if available. This is an **estimate of required free space**, not an exact
+download or depot installation size. Data is cached on disk, missing data
+stays unknown, and no entire-library Store fetch starts in the background.
+
+No HLTB-on-cover redesign yet; it remains a separate next step. Existing
+SteamOS/Decky focus, Library alphabet navigation, Home and Search stay
+unchanged. See `docs/release-notes-0.5.9-test.14.md` for device checks.
+
 ## v0.5.9-test.13 — touchscreen alphabet navigation
 
 The right-side Library A–Z rail now reacts to touch as well as gamepad
