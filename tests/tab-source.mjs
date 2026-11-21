@@ -66,6 +66,9 @@ test("Manager handles creating, renaming, hiding, deleting, filter and navigatio
   assert.match(manager,/newLibraryTab\(items,title,filter,id,createMode\)/);
   assert.match(manager,/selected.kind!=="custom"/);
   assert.match(manager,/GamepadButton.DIR_DOWN/);
+  assert.match(manager,/focusEditorDirection\(current,b===GamepadButton\.DIR_DOWN\?1:-1\)/);
+  assert.match(manager,/onButtonDown=\{editorDpad\}/);
+  assert.match(manager,/onKeyDownCapture=\{editorTextKeyDown\}/);
   assert.match(manager,/TextField aria-label="Tab name"/);
   assert.match(dashboard,/<TabManager tabs=\{tabInfo.tabs\} games=\{games\}/);
   assert.doesNotMatch(dashboard,/gl-manage-tabs-trigger|setTabManagerOpen/);
@@ -160,4 +163,18 @@ test("Smart editor is reachable from Settings Tab Manager with live preview",()=
   assert.match(editor,/ANY · OR/);
   assert.match(editor,/Save Rules/);
   assert.doesNotMatch(editor,/TabMaster|Unifideck/);
+});
+
+test("Appearance and Settings keep independently navigable theme and provider tools",()=>{
+  const appearance=read("src/AppearancePage.tsx");
+  const settings=read("src/PluginSettingsPage.tsx");
+  assert.match(appearance,/Theme Hub/);
+  assert.match(appearance,/Color Editor/);
+  assert.doesNotMatch(appearance,/SteamGridDBPanel|UpdatesPanel/);
+  assert.match(settings,/<SteamGridDBPanel\/>/);
+  assert.match(settings,/<UpdatesPanel\/>/);
+  assert.match(settings,/openTool\("steamgriddb"\)/);
+  assert.match(settings,/openTool\("updates"\)/);
+  assert.match(settings,/GENERAL_ROWS=5/);
+  assert.match(settings,/focus\(toolLastIndex\)/);
 });
