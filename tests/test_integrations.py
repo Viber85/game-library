@@ -55,78 +55,69 @@ class UpdateTests(unittest.TestCase):
         self.assertIn("updates.py missing", result["error"])
 
 
-class TabMasterTests(unittest.TestCase):
-    def test_active_account_only_and_tab_order(self):
+class OwnTabsTests(unittest.TestCase):
+    def test_saved_per_account_without_peer_plugins(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root=pathlib.Path(tmp)
-            own=root / "Game Library"
+            own=pathlib.Path(tmp)/"Game Library"
             own.mkdir()
-            # Decky stores disabled_plugins in settings/loader.json; an
-            # existing TabMaster/settings.json is not enough to be active.
-            (root / "loader.json").write_text(json.dumps({"disabled_plugins":[]}))
-            tabmaster=root / "TabMaster"
-            tabmaster.mkdir()
-            settings=tabmaster / "settings.json"
-            settings.write_text(json.dumps({"usersDict":{
-                "42":{"tabs":{
-                    "GOG":{"title":"GOG","position":2,"filters":[{"type":"collection","params":{"id":"gog"},"inverted":False}]},
-                    "AllGames":{"title":"ALL GAMES","position":0},
-                    "Epic":{"title":"EPIC","position":1},
-                    "Hidden":{"title":"Hidden","position":-1}
-                }},
-                "99":{"tabs":{"Other":{"title":"Private","position":0}}}
-            }}))
             with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
-                actual=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
-                self.assertTrue(actual["available"])
-                self.assertEqual([t["title"] for t in actual["tabs"]],["ALL GAMES","EPIC","GOG"])
-                other=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265771"))
-                self.assertFalse(other["available"])
-                self.assertEqual(other["tabs"],[])
-                # Disable TabMaster without touching its saved configuration.
-                (root / "loader.json").write_text(
-                    json.dumps({"disabled_plugins":["TabMaster","Other Plugin"]}))
-                disabled=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
-                self.assertFalse(disabled["available"])
-                self.assertEqual(disabled["tabs"],[])
-                self.assertIn("disabled",disabled["reason"].lower())
-                self.assertEqual(disabled["mode"],"auto")
-                # Enable it again and confirm the same tabs are restored.
-                (root / "loader.json").write_text(json.dumps({"disabled_plugins":[]}))
-                back=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
-                self.assertTrue(back["available"])
-                self.assertEqual([t["title"] for t in back["tabs"]],["ALL GAMES","EPIC","GOG"])
-                # Obsolete v0.4.13 manual selection must never disable
-                # Auto even if older settings still contain that value.
-                (own/"game_library.json").write_text(json.dumps({"tab_source":"steam"}))
-                legacy=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
-                self.assertTrue(legacy["available"])
-                self.assertEqual(legacy["mode"],"auto")
+                original=asyncio.run(Plugin().get_library_tabs("42"))
+                self.assertTrue(original["ok"])
+                self.assertEqual([t["id"] for t in original["tabs"]],
+                    ["AllGames","Installed","Steam","NonSteam","Favorites"])
+                tabs=original["tabs"]
+                tabs[0]["title"]="Every game"
+                tabs[1]["visible"]=False
+                tabs.append({"id":"custom-rpg123","title":"RPG", "kind":"custom",
+                             "filter":"not-installed","position":5,"visible":True})
+                saved=asyncio.run(Plugin().save_library_tabs("42",tabs))
+                self.assertTrue(saved["ok"], saved)
+                self.assertEqual(len(asyncio.run(Plugin().get_library_tabs("42"))["tabs"]),6)
+                self.assertEqual(asyncio.run(Plugin().get_library_tabs("99"))["tabs"][0]["title"],"All Games")
+                persisted=json.loads((own/"game_library.json").read_text())
+                self.assertIn("42",persisted["tabs_by_user"])
+                self.assertNotIn("99",persisted["tabs_by_user"])
+                self.assertEqual(persisted["tabs_by_user"]["42"][5]["filter"],"not-installed")
+                self.assertEqual(asyncio.run(Plugin().get_dashboard_settings()),
+                                 {"default_home":True})
+                self.assertTrue(asyncio.run(Plugin().set_dashboard_settings(False)))
+                self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"][0]["title"],
+                                 "Every game")
 
-    def test_auto_is_permanent_and_missing_loader_state_fails_closed(self):
+    def test_invalid_tab_changes_fail_closed_and_preserve_last_good(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            own=pathlib.Path(tmp)/"Game Library"
+            own.mkdir()
+            with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
+                tabs=asyncio.run(Plugin().get_library_tabs("42"))["tabs"]
+                failures=[tabs[:-1],
+                          [{**tab,"visible":False} for tab in tabs],
+                          [{**tab,"filter":"not-installed"} if tab["id"]=="Steam" else tab for tab in tabs],
+                          tabs+[dict(tabs[0])],
+                          [{**tab,"position":0} for tab in tabs]]
+                for invalid in failures:
+                    self.assertFalse(asyncio.run(
+                        Plugin().save_library_tabs("42",invalid))["ok"])
+                self.assertFalse(asyncio.run(Plugin().save_library_tabs("../",tabs))["ok"])
+                self.assertFalse(asyncio.run(Plugin().get_library_tabs(""))["ok"])
+                self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"],tabs)
+                self.assertFalse((own/"game_library.json").exists())
+
+    def test_ignores_tabmaster_configuration_and_disabled_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=pathlib.Path(tmp)
             own=root/"Game Library"
             own.mkdir()
-            tabs=root/"TabMaster"
-            tabs.mkdir()
-            (tabs/"settings.json").write_text(json.dumps({"usersDict":{
-                "42":{"tabs":{"AllGames":{"title":"All Games","position":0}}}
-            }}))
+            peer=root/"TabMaster"
+            peer.mkdir()
+            (peer/"settings.json").write_text('{"usersDict":{"42":{"tabs":{"X":{}}}}}')
+            (root/"loader.json").write_text('{"disabled_plugins":["TabMaster","Unifideck"]}')
             with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
-                self.assertNotIn("tab_source",asyncio.run(Plugin().get_dashboard_settings()))
-                missing=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
-                self.assertFalse(missing["available"])
-                self.assertIn("loader",missing["reason"].lower())
-                (root/"loader.json").write_text("{oops")
-                corrupt=asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))
-                self.assertFalse(corrupt["available"])
+                response=asyncio.run(Plugin().get_library_tabs("42"))
+                self.assertTrue(response["ok"])
+                self.assertEqual(len(response["tabs"]),5)
+                self.assertFalse(hasattr(Plugin(),"get_tabmaster_tabs"))
                 self.assertFalse(hasattr(Plugin(),"set_tab_source"))
-                (root/"loader.json").write_text(json.dumps({"disabled_plugins":[]}))
-                self.assertTrue(asyncio.run(Plugin().get_tabmaster_tabs("76561197960265770"))["available"])
-                self.assertTrue(asyncio.run(Plugin().set_dashboard_settings(False)))
-                self.assertEqual(asyncio.run(Plugin().get_dashboard_settings()),
-                                 {"default_home":False})
 
 
 if __name__=="__main__":
