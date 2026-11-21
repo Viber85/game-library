@@ -2,6 +2,23 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.16 — local SIZE for non-Steam Flatpak / AppImage
+
+The Library SIZE badge now resolves **installed non-Steam Steam shortcuts**
+to the active user's local `shortcuts.vdf`, requiring an exact Steam
+shortcut AppID and title. Direct `flatpak run <AppID>` shortcuts use
+`flatpak info --show-size` to report installed app size; direct
+`.AppImage` shortcuts show their actual image-file size. Shared
+Flatpak runtimes, per-user data, AppImage extraction caches and unrelated
+launcher installation folders are **not** counted. Other unknown or
+wrapper-based shortcuts display `SIZE —`, not an invented number.
+The lookup is delayed until focus, cached for 15 minutes (misses 2),
+and cannot change Steam files, launch anything or scan folders.
+
+Steam Store estimates, controller focus, touch A–Z rail and all other
+screens remain unchanged. See `docs/release-notes-0.5.9-test.16.md`
+for on-device checks.
+
 ## v0.5.9-test.15 — Library SIZE card polish
 
 Three visual fixes to the Library-only SIZE badges after on-device testing:
