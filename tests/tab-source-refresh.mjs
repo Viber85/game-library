@@ -103,7 +103,7 @@ test("Plugin owns our tab monitoring; foreground refresh keeps user edits",()=>{
   assert.match(auto,/POLL_MS=4000/);
   assert.match(auto,/get_library_tabs/);
   assert.match(auto,/save_library_tabs/);
-  assert.doesNotMatch(auto,/native|Unifideck/);
+  assert.doesNotMatch(auto,/loadSteamTabs|TabMaster|Unifideck/);
   for(const target of [
     'window.addEventListener("focus",onWake)',
     'window.addEventListener("pageshow",onWake)',
