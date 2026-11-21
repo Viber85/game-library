@@ -107,7 +107,8 @@ test("Text input preserves left/right caret movement and only Up/Down exits",()=
   for(const file of ["src/TabManager.tsx","src/LibrarySearchToolbar.tsx",
     "src/CollectionsPage.tsx"]){
     const content=read(file);
-    assert.match(content,/event\.key!=="ArrowUp"&&event\.key!=="ArrowDown"/);
+    assert.match(content,/event\.key!=="ArrowUp"/);
+    assert.match(content,/event\.key!=="ArrowDown"/);
     assert.match(content,/event\.target instanceof HTMLInputElement/);
   }
   assert.match(read("src/PluginSettingsPage.tsx"),
