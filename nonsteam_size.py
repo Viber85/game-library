@@ -7,6 +7,7 @@ installed size (excluding shared runtimes and user data).
 """
 import os
 import pathlib
+import pwd
 import re
 import shlex
 import shutil
@@ -94,35 +95,52 @@ def parse_binary_shortcuts(blob):
         return []
 
 
-def shortcut_path(account_id):
-    """Find ONLY the current user's Steam shortcut file, never search the disk."""
-    home = pathlib.Path.home()
-    roots = [home / ".local/share/Steam/userdata", home / ".steam/steam/userdata"]
-    candidates = []
-    if isinstance(account_id, str) and re.fullmatch(r"[0-9]{1,12}", account_id):
-        user = str(int(account_id))
-        candidates = [root / user / "config/shortcuts.vdf" for root in roots]
-    elif account_id == "":
-        # If Steam client has not supplied a user yet, use a fallback only
-        # when exactly one shortcuts.vdf is present in Steam's user folders.
-        for root in roots:
-            try:
-                candidates.extend(root.glob("[0-9]*/config/shortcuts.vdf"))
-            except OSError:
-                continue
-        candidates = sorted(set(str(p.resolve()) for p in candidates))
-        if len(candidates) != 1:
-            return None
-    else:
-        return None
-    for candidate in candidates:
+def steam_homes():
+    """Decky can run as root while Steam belongs to a normal OS account."""
+    homes = []
+    configured = os.environ.get("DECKY_USER_HOME")
+    if configured:
+        homes.append(pathlib.Path(configured))
+    user = os.environ.get("DECKY_USER")
+    if user:
         try:
-            p = pathlib.Path(candidate)
-            if p.is_file() and p.stat().st_size <= MAX_VDF:
-                return p
-        except OSError:
-            continue
-    return None
+            homes.append(pathlib.Path(pwd.getpwnam(user).pw_dir))
+        except KeyError:
+            pass
+    homes.append(pathlib.Path.home())
+    try:
+        homes.extend(p for p in sorted(pathlib.Path("/home").iterdir())[:32]
+                     if p.is_dir() and not p.is_symlink())
+    except OSError:
+        pass
+    return list(dict.fromkeys(homes))
+
+
+def shortcut_path(account_id):
+    """Find an unambiguous active Steam account in standard userdata paths."""
+    if not isinstance(account_id, str) or (account_id and
+            not re.fullmatch(r"[0-9]{1,12}", account_id)):
+        return None
+    matches = {}
+    for home in steam_homes():
+        for root in (home / ".local/share/Steam/userdata",
+                     home / ".steam/steam/userdata",
+                     home / ".steam/root/userdata",
+                     home / ".var/app/com.valvesoftware.Steam/.local/share/Steam/userdata"):
+            if account_id:
+                paths = [root / str(int(account_id)) / "config/shortcuts.vdf"]
+            else:
+                try:
+                    paths = list(root.glob("[0-9]*/config/shortcuts.vdf"))[:64]
+                except OSError:
+                    continue
+            for path in paths:
+                try:
+                    if path.is_file() and path.stat().st_size <= MAX_VDF:
+                        matches[str(path.resolve())] = path
+                except OSError:
+                    continue
+    return next(iter(matches.values())) if len(matches) == 1 else None
 
 
 def matching_shortcut(appid, title, account_id):
@@ -137,10 +155,23 @@ def matching_shortcut(appid, title, account_id):
         entries = parse_binary_shortcuts(path.read_bytes())
     except OSError:
         return None
-    # A shortcut's assigned ID, not a guessed Store AppID/title match.
-    match = [s for s in entries if s.get("appid") == appid and
-             s.get("appname", "").strip().casefold() == title.strip().casefold()]
-    return match[0] if len(match) == 1 else None
+    # A unique assigned ID is authoritative even if Steam's display title
+    # has changed. Duplicate IDs require a unique matching title.
+    matches = [s for s in entries if s.get("appid") == appid]
+    if len(matches) != 1:
+        matches = [s for s in matches if
+                   s.get("appname", "").strip().casefold() == title.strip().casefold()]
+    if len(matches) != 1:
+        return None
+    match = dict(matches[0])
+    try:
+        owner = pwd.getpwuid(path.stat().st_uid)
+        match["_home"] = owner.pw_dir
+        match["_uid"] = owner.pw_uid
+        match["_gid"] = owner.pw_gid
+    except (KeyError, OSError):
+        pass
+    return match
 
 
 def command_tokens(shortcut):
@@ -188,16 +219,17 @@ def flatpak_id(tokens):
     return None
 
 
-def appimage_file(tokens):
+def appimage_file(tokens, home=None):
     if not tokens:
         return None
     # Do not follow arbitrary shell wrapper scripts or attempt to resolve
     # relative paths whose working directory might be ambiguous.
     raw = tokens[0].strip()
+    home = home or str(pathlib.Path.home())
     if raw.startswith("$HOME/"):
-        raw = str(pathlib.Path.home()) + raw[5:]
+        raw = home + raw[5:]
     if raw.startswith("~/"):
-        raw = str(pathlib.Path.home()) + raw[1:]
+        raw = home + raw[1:]
     if not raw.lower().endswith(".appimage") or not raw.startswith("/"):
         return None
     path = pathlib.Path(raw)
@@ -231,17 +263,29 @@ def parse_flatpak_size(output):
     return size if 0 < size <= SIZE_MAX else None
 
 
-def flatpak_installed_bytes(app):
+def flatpak_installed_bytes(app, shortcut=None):
     if not FLATPAK_ID.fullmatch(app):
         return None
-    binary = shutil.which("flatpak")
-    if not binary:
+    binary = "/usr/bin/flatpak"
+    if not pathlib.Path(binary).is_file():
         return None
+    shortcut = shortcut or {}
+    home = shortcut.get("_home")
+    uid, gid = shortcut.get("_uid"), shortcut.get("_gid")
+    env = {"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"}
+    kwargs = {}
+    if isinstance(home, str) and home.startswith("/"):
+        env.update(HOME=home, XDG_DATA_HOME=home + "/.local/share",
+                   XDG_CONFIG_HOME=home + "/.config")
+    if os.geteuid() == 0 and type(uid) is int and uid > 0 and type(gid) is int:
+        # Do not use root's Flatpak user installation or run user-controlled code.
+        kwargs.update(user=uid, group=gid, extra_groups=[])
     for scope in ("--user", "--system"):
         try:
             done = subprocess.run(
-                [binary, "info", scope, "--app", "--show-size", app],
-                shell=False, capture_output=True, text=True, timeout=5, check=False)
+                [binary, "info", scope, "--show-size", "app/" + app],
+                shell=False, capture_output=True, text=True, timeout=5, check=False,
+                env=env, **kwargs)
         except (OSError, subprocess.TimeoutExpired):
             continue
         if done.returncode == 0:
@@ -270,17 +314,20 @@ class NonSteamSizeService:
             if hit and hit[0] > now:
                 return dict(hit[1])
             shortcut = matching_shortcut(appid, title, account_id)
-            result = {"status": "unavailable"}
+            result = {"status": "unavailable", "reason": "shortcut_not_found"}
             if shortcut:
+                result = {"status": "unavailable", "reason": "unsupported_target"}
                 tokens = command_tokens(shortcut)
                 app = flatpak_id(tokens)
                 if app is not None:
-                    size = flatpak_installed_bytes(app)
-                    if size is not None:
+                    size = flatpak_installed_bytes(app, shortcut)
+                    if size is None:
+                        result = {"status": "unavailable", "reason": "flatpak_size_unavailable"}
+                    else:
                         result = {"status": "ok", "source": "flatpak",
                                   "size_bytes": size}
                 else:
-                    size = appimage_file(tokens)
+                    size = appimage_file(tokens, shortcut.get("_home"))
                     if size is not None:
                         result = {"status": "ok", "source": "appimage",
                                   "size_bytes": size}
