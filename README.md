@@ -2,6 +2,20 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.15 — Library SIZE card polish
+
+Three visual fixes to the Library-only SIZE badges after on-device testing:
+- The cover's base ::after overlay had `inset:0`; setting its height alone
+  left the new gradient at the **top**. The Library override now uses
+  `inset:auto 0 0; height:32%` and fades upward from the cover's bottom.
+- Hide the old round Installed checkmark on SIZE-enabled Library covers.
+  Home carousel, Search and other places retain their previous behavior.
+- Keep the icon, SIZE/EST. label and GB value together left-aligned;
+  no `margin-left:auto` pushing the value to the far right.
+
+No changes to estimated-size sources, cache, HLTB, sorting, tab controls,
+controller focus or the alphabet jump rail.
+
 ## v0.5.9-test.14 — native Steam size + Store estimate (trial)
 
 On the dedicated Library grid Steam covers, a compact SIZE label uses
