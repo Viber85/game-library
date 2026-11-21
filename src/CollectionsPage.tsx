@@ -8,8 +8,8 @@ import {
 import type {LibraryGame} from "./steam";
 import {posterCandidates} from "./steam";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
-import type {SteamTab} from "./tabmaster";
-import {createBatchGamesForTab} from "./tabmaster";
+import type {LibraryTab} from "./libraryTabs";
+import {createLibraryTabResolver} from "./libraryTabs";
 import {continuePlayingGames,personalCollectionTabs} from "./collectionViews";
 import {searchLibraryGames} from "./librarySearch";
 import {
@@ -25,7 +25,7 @@ import {
 
 type Props={
   games:LibraryGame[];
-  tabs:SteamTab[];
+  tabs:LibraryTab[];
   membershipRevision:number;
   firstRef:RefObject<HTMLDivElement|null>;
   onFocusRail:()=>void;
@@ -79,7 +79,7 @@ export function CollectionsPage({
   const selectedTab=customTabs.find(tab=>tab.id===location.tabId)??null;
   const selectedResult=useMemo(()=>{
     if(!selectedTab)return null;
-    return createBatchGamesForTab()(selectedTab,games);
+    return createLibraryTabResolver()(selectedTab,games);
   },[selectedTab,games,membershipRevision]);
 
   const manualSection:ManualSection|null=location.section==="backlog"||
@@ -226,7 +226,7 @@ export function CollectionsPage({
       icon:MdBookmarkBorder,count:manualLoaded?manual.backlog.length:null,caption:"MANUAL"},
     {id:"completed",title:"Completed",description:"Games you have finished",
       icon:MdDoneAll,count:manualLoaded?manual.completed.length:null,caption:"MANUAL"},
-    {id:"my",title:"My Collections",description:"Your existing Steam / TabMaster groups",
+    {id:"my",title:"My Collections",description:"Your custom Game Library tabs",
       icon:MdFolder,count:customTabs.length,caption:"LIBRARY GROUPS"},
   ];
 
