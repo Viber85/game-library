@@ -2,6 +2,15 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.17 — fix local non-Steam size resolution
+
+Fix the Steam user-home discovery when Decky runs as another user.
+Use the actual shortcut owner's Flatpak installation, a supported
+Flatpak size query, and the correct home for AppImage paths. Match
+unique shortcut IDs without requiring the displayed title to match.
+Report lookup failure reasons. Wrapped external games still require a
+separate verified install-location resolver.
+
 ## v0.5.9-test.16 — local SIZE for non-Steam Flatpak / AppImage
 
 The Library SIZE badge now resolves **installed non-Steam Steam shortcuts**
