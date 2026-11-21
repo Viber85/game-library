@@ -35,7 +35,23 @@ export function LibrarySearchToolbar({query,source,installed,onQuery,onSource,
   onInstalled,onFocusRail,onFocusResults,onBack,inputRef,firstFilterRef,autoFocus}:Props){
   const sources=useRef<Array<HTMLDivElement|null>>([]);
   const availability=useRef<Array<HTMLDivElement|null>>([]);
+  const clearRef=useRef<HTMLDivElement>(null);
   const focusInput=()=>inputRef.current?.querySelector("input")?.focus();
+  const searchTextArrows=(event:React.KeyboardEvent<HTMLDivElement>)=>{
+    if(event.key!=="ArrowDown"&&event.key!=="ArrowUp")return;
+    if(!(event.target instanceof HTMLInputElement))return;
+    event.preventDefault();event.stopPropagation();
+    if(event.key==="ArrowDown")sources.current[0]?.focus();
+  };
+  const handleClear=(event:GamepadEvent)=>{
+    const button=event.detail?.button;
+    if(button===GamepadButton.DIR_LEFT||button===GamepadButton.DIR_UP){
+      event.preventDefault();event.stopPropagation();focusInput();
+    }else if(button===GamepadButton.DIR_RIGHT||
+      button===GamepadButton.DIR_DOWN){
+      event.preventDefault();event.stopPropagation();sources.current[0]?.focus();
+    }
+  };
   useEffect(()=>{
     if(!autoFocus)return;
     const frame=window.requestAnimationFrame(()=>focusInput());
@@ -59,7 +75,8 @@ export function LibrarySearchToolbar({query,source,installed,onQuery,onSource,
   };
   return <div className="gl-library-search-controls" aria-label="Search filters">
     <div className="gl-library-search-field-row">
-      <div ref={inputRef} className="gl-library-search-field">
+      <div ref={inputRef} className="gl-library-search-field"
+        onKeyDownCapture={searchTextArrows}>
         <MdSearch aria-hidden="true"/>
         <div className="gl-library-search-native">
           <TextField aria-label="Search game titles"
@@ -68,8 +85,9 @@ export function LibrarySearchToolbar({query,source,installed,onQuery,onSource,
             onChange={event=>onQuery(event.target.value)} />
         </div>
       </div>
-      {query&&<Focusable className="gl-library-search-clear" focusClassName="gl-focused"
+      {query&&<Focusable ref={clearRef} className="gl-library-search-clear" focusClassName="gl-focused"
         noFocusRing onActivate={()=>{onQuery("");focusInput();}} onCancelButton={onBack}
+        onButtonDown={handleClear}
         onOKActionDescription="Clear search"><MdClose/> Clear</Focusable>}
     </div>
     <div className="gl-library-search-filter-row">
