@@ -18,6 +18,7 @@ import {
 } from "./manualCollections";
 import {getGridColumnCount,gridNeighbor,canEnterNavigationRail,type GridDirection} from "./gridNavigation";
 import {SystemStatusBar} from "./SystemStatusBar";
+import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {
   readCollectionLocation,saveCollectionLocation,type CollectionSection,
   type CollectionLocation,
@@ -151,11 +152,24 @@ export function CollectionsPage({
       toaster.toast({title:"Game Library",body:message});
     }finally{setSaving(false);}
   };
-  const focusGame=(index:number)=>{
-    const target=gameRefs.current[index];
-    if(!target)return;
-    target.focus();
-    target.scrollIntoView({block:"nearest",inline:"nearest"});
+  const focusGame=(index:number,button:GamepadButton=GamepadButton.DIR_DOWN)=>{
+    focusNativeMenuControl(gameRefs.current[index],button);
+  };
+  const focusCollection=(index:number,button:GamepadButton)=>{
+    focusNativeMenuControl(collectionRefs.current[index],button);
+  };
+  // Use the same Decky Focusable.onMove callback as the working Library.
+  const movePersonalCollection=(index:number,tabId:string,button:GamepadButton)=>{
+    if(button===GamepadButton.DIR_LEFT){
+      onFocusRail();
+    }else if(button===GamepadButton.DIR_RIGHT){
+      changeLocation({section:"my",tabId,gameId:null});
+    }else if(button===GamepadButton.DIR_UP){
+      if(index>0)focusCollection(index-1,button);
+      else focusNativeMenuControl(backRef.current,button);
+    }else if(button===GamepadButton.DIR_DOWN){
+      if(index<customTabs.length-1)focusCollection(index+1,button);
+    }
   };
   const handleGridDirection=(event:GamepadEvent,index:number)=>{
     const button=event.detail?.button;
@@ -173,7 +187,7 @@ export function CollectionsPage({
       onFocusRail();return;
     }
     const next=gridNeighbor(index,entries.length,columns,direction);
-    focusGame(next);
+    focusGame(next,button);
   };
 
   // Focus the new view's first control after React commits the card change.
@@ -188,7 +202,7 @@ export function CollectionsPage({
         if(selectedIndex>=0){
           restoreFocus.current=null;
           focusGame(selectedIndex);
-        }else backRef.current?.focus();
+        }else focusNativeMenuControl(backRef.current,GamepadButton.DIR_DOWN);
       }
     });
     return ()=>window.cancelAnimationFrame(frame);
@@ -371,7 +385,7 @@ export function CollectionsPage({
               if(b===GamepadButton.DIR_LEFT){CONSUME(event);onFocusRail();}
               else if(b===GamepadButton.DIR_DOWN){CONSUME(event);
                 if(location.section==="my"&&!location.tabId)
-                  collectionRefs.current[0]?.focus();
+                  focusCollection(0,b);
                 else if(manualSection)manageRef.current?.focus();
                 else focusGame(0);
               }
@@ -411,18 +425,8 @@ export function CollectionsPage({
               className="gl-collections-group" focusClassName="gl-focused" noFocusRing
               onActivate={()=>changeLocation({section:"my",tabId:tab.id,gameId:null})}
               onCancelButton={back}
-              onButtonDown={(e:GamepadEvent)=>{
-                const b=e.detail?.button;
-                if(b===GamepadButton.DIR_LEFT){CONSUME(e);onFocusRail();}
-                else if(b===GamepadButton.DIR_UP){CONSUME(e);index?
-                  collectionRefs.current[index-1]?.focus():backRef.current?.focus();}
-                else if(b===GamepadButton.DIR_DOWN){CONSUME(e);
-                  collectionRefs.current[Math.min(index+1,customTabs.length-1)]?.focus();}
-                else if(b===GamepadButton.DIR_RIGHT){
-                  CONSUME(e);
-                  changeLocation({section:"my",tabId:tab.id,gameId:null});
-                }
-              }}>
+              onMove={button=>movePersonalCollection(index,tab.id,button)}
+              onOKActionDescription={"Open "+tab.title+" collection"}>
               <MdFolder aria-hidden="true"/><strong>{tab.title}</strong>
               <MdChevronRight aria-hidden="true"/>
             </Focusable>)}
