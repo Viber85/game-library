@@ -5,6 +5,7 @@ import {MdAdd,MdArrowBack,MdCheck,MdClose,MdDeleteOutline,
 import type {LibraryGame} from "./steam";
 import type {LibraryTab,SmartJoin,SmartRule,SmartRuleType} from "./libraryTabs";
 import {SMART_RULES,gamesForLibraryTab,smartRulesForTab} from "./libraryTabs";
+import {focusSpatially,type FocusDirection} from "./spatialFocus";
 
 type Props={
   tab:LibraryTab;
@@ -23,6 +24,7 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
   const [choosingIndex,setChoosingIndex]=useState<number|null>(null);
   const [error,setError]=useState("");
   const backRef=useRef<HTMLDivElement>(null);
+  const editorRoot=useRef<HTMLDivElement>(null);
   const rowRefs=useRef<Array<HTMLDivElement|null>>([]);
   const optionRefs=useRef<Array<HTMLDivElement|null>>([]);
   useEffect(()=>{
@@ -34,6 +36,22 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
     const frame=window.requestAnimationFrame(()=>optionRefs.current[0]?.focus());
     return ()=>window.cancelAnimationFrame(frame);
   },[choosingIndex]);
+  // Explicit focus graph for buttons, AND/OR choices, condition selectors,
+  // and the 2-column condition list. Only move to the rail at the left edge.
+  const directional=(e:GamepadEvent)=>{
+    const b=e.detail?.button;
+    const direction:FocusDirection|undefined=
+      b===GamepadButton.DIR_LEFT?"left":
+      b===GamepadButton.DIR_RIGHT?"right":
+      b===GamepadButton.DIR_UP?"up":
+      b===GamepadButton.DIR_DOWN?"down":undefined;
+    if(!direction)return;
+    stop(e);
+    const moved=focusSpatially(editorRoot.current,e.currentTarget as HTMLElement,
+      direction,".gl-tab-manager-action,.gl-tab-smart-choice,.gl-tab-smart-rule-picker,.gl-tab-smart-option");
+    if(!moved&&direction==="left")onFocusRail();
+    else if(!moved&&direction==="up")backRef.current?.focus();
+  };
   const available=SMART_RULES.filter(x=>!rules.some(rule=>rule.type===x.id));
   const count=useMemo(()=>gamesForLibraryTab({...tab,mode:"smart",rules,ruleJoin:join},games).games.length,
     [games,tab,rules,join]);
@@ -60,18 +78,16 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
       setError(e instanceof Error?e.message:"Unable to save rules");
     }finally{setBusy(false);}
   };
-  return <div className="gl-tab-smart-editor">
+  return <div className="gl-tab-smart-editor" ref={editorRoot}>
     <div className="gl-tab-smart-heading">
       <Focusable ref={el=>{backRef.current=el;firstRef.current=el;}}
         className="gl-tab-manager-action" focusClassName="gl-focused" noFocusRing
         onActivate={onClose} onCancelButton={onClose}
-        onButtonDown={(e:GamepadEvent)=>{
-          if(e.detail?.button===GamepadButton.DIR_LEFT){stop(e);onFocusRail();}
-        }}><MdArrowBack/> Back</Focusable>
+        onButtonDown={directional}><MdArrowBack/> Back</Focusable>
       <div><h3>Smart Rules</h3><p>{tab.title}</p></div>
       <Focusable className="gl-tab-manager-action gl-tab-manager-primary"
         focusClassName="gl-focused" noFocusRing
-        onActivate={()=>void save()} onCancelButton={onClose}>
+        onActivate={()=>void save()} onCancelButton={onClose} onButtonDown={directional}>
         <MdCheck/> Save Rules
       </Focusable>
     </div>
@@ -85,10 +101,10 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
         <span className="gl-tab-manager-caption">MATCH CONDITIONS</span>
         <Focusable className={"gl-tab-smart-choice"+(join==="all"?" gl-tab-smart-choice-active":"")}
           focusClassName="gl-focused" noFocusRing onActivate={()=>setJoin("all")}
-          onCancelButton={onClose}>ALL · AND</Focusable>
+          onCancelButton={onClose} onButtonDown={directional}>ALL · AND</Focusable>
         <Focusable className={"gl-tab-smart-choice"+(join==="any"?" gl-tab-smart-choice-active":"")}
           focusClassName="gl-focused" noFocusRing onActivate={()=>setJoin("any")}
-          onCancelButton={onClose}>ANY · OR</Focusable>
+          onCancelButton={onClose} onButtonDown={directional}>ANY · OR</Focusable>
       </div>
       <div className="gl-tab-smart-rules">
         {rules.map((rule,index)=>
@@ -97,7 +113,8 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
             <Focusable ref={el=>{rowRefs.current[index]=el;}}
               className="gl-tab-smart-rule-picker" focusClassName="gl-focused"
               noFocusRing onActivate={()=>setChoosingIndex(current=>current===index?null:index)}
-              onCancelButton={choosingIndex===index?()=>closeChoices(index):onClose}>
+              onCancelButton={choosingIndex===index?()=>closeChoices(index):onClose}
+              onButtonDown={directional}>
               <strong>{label(rule.type)}</strong>
               <span>{choosingIndex===index?"Select below":"Change condition"}</span>
               <MdSettingsSuggest/>
@@ -105,7 +122,8 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
             <Focusable className="gl-tab-manager-action gl-tab-manager-danger"
               focusClassName="gl-focused" noFocusRing
               onActivate={()=>{setChoosingIndex(null);setRules(current=>current.filter((_,i)=>i!==index));}}
-              onCancelButton={onClose} onOKActionDescription={"Remove "+label(rule.type)}>
+              onCancelButton={onClose} onButtonDown={directional}
+              onOKActionDescription={"Remove "+label(rule.type)}>
               <MdDeleteOutline/> Remove
             </Focusable>
             {choosingIndex===index&&<div className="gl-tab-smart-options"
@@ -117,16 +135,7 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
                   focusClassName="gl-focused" noFocusRing
                   onActivate={()=>select(index,item.id)}
                   onCancelButton={()=>closeChoices(index)}
-                  onButtonDown={(e:GamepadEvent)=>{
-                    if(e.detail?.button===GamepadButton.DIR_UP){
-                      stop(e);
-                      optionIndex===0?rowRefs.current[index]?.focus():
-                        optionRefs.current[optionIndex-1]?.focus();
-                    }else if(e.detail?.button===GamepadButton.DIR_DOWN){
-                      stop(e);
-                      optionRefs.current[Math.min(optionIndex+1,availableAt(index).length-1)]?.focus();
-                    }
-                  }}>
+                  onButtonDown={directional}>
                   {item.title}{item.id===rule.type?<MdCheck/>:null}
                 </Focusable>)}
             </div>}
@@ -137,7 +146,8 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
         </div>}
       </div>
       <Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
-        noFocusRing onActivate={add} onCancelButton={onClose}>
+        noFocusRing onActivate={add} onCancelButton={onClose}
+        onButtonDown={directional}>
         <MdAdd/> {available.length?"Add condition":"All conditions used"}
       </Focusable>
       <p className="gl-tab-manager-note">
@@ -149,7 +159,8 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
       {error&&<p role="alert" className="gl-tab-manager-error">{error}</p>}
       {busy&&<p className="gl-tab-manager-note">Saving rules…</p>}
       <Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
-        noFocusRing onActivate={onClose} onCancelButton={onClose}>
+        noFocusRing onActivate={onClose} onCancelButton={onClose}
+        onButtonDown={directional}>
         <MdClose/> Cancel
       </Focusable>
     </div>
