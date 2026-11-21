@@ -3,6 +3,7 @@ import {useEffect,useState} from "react";
 import {MdStorage} from "react-icons/md";
 import {getActiveUserId,protonDbAppId,type LibraryGame} from "./steam";
 import {sameStoreGameTitle} from "./installSizeReference";
+import {readNativeRequiredInstallBytes,subscribeNativeRequiredInstallBytes} from "./steamNativeRequiredSize";
 
 export type StoreSizeReply={
   status:"estimated"|"unavailable"|"rate_limited"|"error"|"invalid"|"deferred";
@@ -100,13 +101,28 @@ export function SteamInstallSizeBadge({game,active}:{
   const [remote,setRemote]=useState<StoreSizeReply|null>(
     ()=>storeAppId!==null?localStoreCache.get(storeAppId)??null:null);
   const [nonSteam,setNonSteam]=useState<NonSteamSizeReply|null>(null);
+  const [requiredFromSteam,setRequiredFromSteam]=useState<number|null>(()=>
+    !game.nonSteam&&!game.installed?readNativeRequiredInstallBytes(game.id):null);
   const native=game.installed&&typeof game.sizeBytes==="number"&&
     Number.isFinite(game.sizeBytes)&&game.sizeBytes>0?game.sizeBytes:null;
+  const nativeRequired=!game.nonSteam&&!game.installed?
+    (typeof game.requiredBytes==="number"&&game.requiredBytes>0?
+      game.requiredBytes:requiredFromSteam):null;
+  useEffect(()=>{
+    if(game.nonSteam||game.installed)return;
+    let live=true;
+    const current=readNativeRequiredInstallBytes(game.id);
+    if(current!==null)setRequiredFromSteam(current);
+    if(!active)return;
+    return subscribeNativeRequiredInstallBytes(game.id,bytes=>{
+      if(live)setRequiredFromSteam(bytes);
+    });
+  },[game.id,game.installed,game.nonSteam,active]);
 
   useEffect(()=>{
     let mounted=true;
     let timer:number|undefined;
-    if(storeAppId!==null&&active&&native===null){
+    if(storeAppId!==null&&active&&native===null&&nativeRequired===null){
       let attempts=0;
       const load=()=>{
         attempts++;
@@ -126,7 +142,7 @@ export function SteamInstallSizeBadge({game,active}:{
       setRemote(storeAppId!==null?localStoreCache.get(storeAppId)??null:null);
     }
     return ()=>{mounted=false;if(timer!==undefined)window.clearTimeout(timer);};
-  },[storeAppId,active,native]);
+  },[storeAppId,active,native,nativeRequired]);
 
   useEffect(()=>{
     if(!game.nonSteam||!game.installed||!active||native!==null)return;
@@ -151,15 +167,18 @@ export function SteamInstallSizeBadge({game,active}:{
     typeof nonSteam.size_bytes==="number"&&nonSteam.size_bytes>0?
       nonSteam.size_bytes:null;
   const nonSteamGb=nonSteamBytes!==null?nonSteamBytes/1_000_000_000:null;
+  const requiredGb=nativeRequired!==null?nativeRequired/1_000_000_000:null;
   const estimate=storeAppId!==null&&native===null&&remote&&validStoreSize(remote)&&
     (!game.nonSteam||sameStoreGameTitle(game.title,remote.steam_title))?
     remote:null;
   const value=nativeGb!==null?nativeGb:
-    nonSteamGb!==null?nonSteamGb:estimate?.estimated_gb;
+    nonSteamGb!==null?nonSteamGb:
+    requiredGb!==null?requiredGb:estimate?.estimated_gb;
   const formatted=value!==undefined&&value!==null?
     value<.1?Math.max(1,Math.round(value*1000))+" MB":
     (value<10?value.toFixed(1):Math.round(value).toString())+" GB":null;
   const text=nativeGb!==null||nonSteamGb!==null?formatted:
+    requiredGb!==null?"~"+formatted:
     estimate?"~"+formatted:"—";
   const title=nonSteamGb!==null?
     nonSteam?.source==="flatpak"?
@@ -169,6 +188,8 @@ export function SteamInstallSizeBadge({game,active}:{
         "AppImage file size · excludes downloaded data and extracted cache":
     nativeGb!==null?
     "Installed size · Steam local size_on_disk":
+    requiredGb!==null?
+    "SteamOS required disk space for installation; may change with updates and selected components":
     estimate?game.nonSteam?
       "Steam reference only · estimated storage requirement for the matching Steam release ("+
       (estimate.platform==="linux"?"Linux":"Windows / Proton")+", "+
