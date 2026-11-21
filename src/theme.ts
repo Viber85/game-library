@@ -2218,4 +2218,35 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-tab-smart-rule .gl-tab-manager-action{padding:7px;}
 }
 
+
+/* v0.6.4: Theme Hub is visual-only; provider tools live in Plugin Settings. */
+.gl-root .gl-theme-hub-planned{
+  opacity:.65;
+  border-style:dashed;
+}
+.gl-root .gl-theme-hub-planned .gl-appearance-card-heading{
+  cursor:default;
+}
+.gl-root .gl-theme-hub-soon{
+  margin-left:auto;padding:5px 10px;
+  flex:none;border:1px solid #436276;border-radius:100px;
+  color:#b2c8db;background:#1a344a;
+  font-size:11px;font-weight:700;
+}
+.gl-root .gl-plugin-settings-tool{
+  flex:1;min-height:0;overflow-y:auto;
+}
+.gl-root .gl-plugin-settings-tool-content{
+  min-width:0;padding:8px 14px 28px;
+  border:1px solid #294965;border-radius:12px;
+  background:#11263a;
+}
+.gl-root .gl-plugin-settings-tool-content :is(input,button){
+  max-width:100%;
+}
+@media(max-width:680px){
+  .gl-root .gl-theme-hub-soon{padding:4px 6px;font-size:10px;}
+  .gl-root .gl-plugin-settings-tool-content{padding:6px;}
+}
+
 `;
