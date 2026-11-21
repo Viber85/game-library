@@ -2,6 +2,25 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.9 — uninstalled Steam games: native required space and cache hydration
+
+The dedicated Library now reads `lDiskSpaceRequiredBytes`, SteamOS's
+own disk space required for an uninstalled Steam game, before trying
+the public Steam Store requirements. It reacts to Steam app-details
+updates for the selected game and labels the requirement **~GB**
+rather than treating it as installed bytes.
+
+Previously cached Store estimates are hydrated into the Library with
+one local RPC instead of leaving all unselected game cards blank.
+Old negative cache entries are invalidated once, without clearing
+valid size estimates. The Store fallback is still requested only
+after a focused card's existing delay.
+
+Installed Steam, installed Non-Steam, HLTB, navigation and theme logic
+remain unchanged. Games with no locally known size and no public
+Storage requirement continue to show **—**. See
+`docs/release-notes-0.6.9.md` for device verification.
+
 ## v0.6.8 — safer Install Size comparison for uninstalled games
 
 Library cards keep the same minimal storage icon + GB value.
