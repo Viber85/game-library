@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import {useNativeMenuGamepad} from "./nativeMenuGamepad";
-import { Focusable, Navigation } from "@decky/ui";
+import {useNativeMenuGamepad,focusNativeMenuControl} from "./nativeMenuGamepad";
+import { Focusable, Navigation, GamepadButton } from "@decky/ui";
 import { getLibraryGames } from "./steam";
 import {
   collectLibraryDiagnostics,formatLibraryDiagnostics,
@@ -46,6 +46,14 @@ const DIAGNOSTICS_CSS=String.raw`
   border-radius:12px;border:1px solid #274b69;background:#10253c;
   padding:16px;min-width:0;
 }
+.gl-library-diag .ld-panel-focus {
+  cursor:default;min-height:150px;max-height:65vh;overflow-y:auto;
+  scrollbar-color:#4e86b0 transparent;
+}
+.gl-library-diag .ld-panel-focus:is(.ld-focused,.gpfocus,:focus-visible) {
+  outline:3px solid #fff;outline-offset:2px;
+  box-shadow:0 0 0 5px #159cec;
+}
 .gl-library-diag .ld-panel h2 {font-size:17px;margin:0 0 11px;}
 .gl-library-diag .ld-stat {
   display:flex;justify-content:space-between;gap:12px;
@@ -68,7 +76,35 @@ const DIAGNOSTICS_CSS=String.raw`
 
 export function LibraryDiagnostics(){
   const menuRoot=useRef<HTMLDivElement>(null);
+  const buttonRefs=useRef<Array<HTMLDivElement|null>>([]);
+  const panelRefs=useRef<Array<HTMLDivElement|null>>([]);
   useNativeMenuGamepad("diagnostics",menuRoot);
+  const focusButton=(index:number,button:GamepadButton)=>
+    focusNativeMenuControl(buttonRefs.current[index],button);
+  const focusPanel=(index:number,button:GamepadButton)=>
+    focusNativeMenuControl(panelRefs.current[index],button);
+  const moveToolbar=(index:number,button:GamepadButton)=>{
+    if(button===GamepadButton.DIR_LEFT&&index>0)
+      focusButton(index-1,button);
+    else if(button===GamepadButton.DIR_RIGHT&&index<2)
+      focusButton(index+1,button);
+    else if(button===GamepadButton.DIR_DOWN)
+      focusPanel(index===2?1:0,button);
+    // At the toolbar's edges, leave navigation to Steam.
+  };
+  const movePanel=(index:number,button:GamepadButton)=>{
+    if(button===GamepadButton.DIR_LEFT&&index===1)
+      focusPanel(0,button);
+    else if(button===GamepadButton.DIR_RIGHT&&index===0)
+      focusPanel(1,button);
+    else if(button===GamepadButton.DIR_UP){
+      const panel=panelRefs.current[index];
+      if(panel&&panel.scrollTop>1)panel.scrollBy({top:-120});
+      else focusButton(index===0?0:2,button);
+    }else if(button===GamepadButton.DIR_DOWN){
+      panelRefs.current[index]?.scrollBy({top:120});
+    }
+  };
   const [report,setReport]=useState<LibraryDiagnostic|null>(()=>{
     try{return snapshot();}catch{return null;}
   });
@@ -100,19 +136,27 @@ export function LibraryDiagnostics(){
       are included in the report.
     </p>
     <div className="ld-toolbar">
-      <Focusable className="ld-button" focusClassName="ld-focused"
-        preferredFocus noFocusRing onActivate={refresh}
+      <Focusable ref={el=>{buttonRefs.current[0]=el;}}
+        className="ld-button" focusClassName="ld-focused"
+        preferredFocus noFocusRing onActivate={refresh} onCancelButton={back}
+        onMove={button=>moveToolbar(0,button)}
         onOKActionDescription="Refresh Steam library diagnostics">Refresh</Focusable>
-      <Focusable className="ld-button" focusClassName="ld-focused"
-        noFocusRing onActivate={copy}
+      <Focusable ref={el=>{buttonRefs.current[1]=el;}}
+        className="ld-button" focusClassName="ld-focused"
+        noFocusRing onActivate={copy} onCancelButton={back}
+        onMove={button=>moveToolbar(1,button)}
         onOKActionDescription="Copy aggregate diagnostic report">Copy report</Focusable>
-      <Focusable className="ld-button" focusClassName="ld-focused"
-        noFocusRing onActivate={back}
+      <Focusable ref={el=>{buttonRefs.current[2]=el;}}
+        className="ld-button" focusClassName="ld-focused"
+        noFocusRing onActivate={back} onCancelButton={back}
+        onMove={button=>moveToolbar(2,button)}
         onOKActionDescription="Back to Game Library">Back</Focusable>
     </div>
     {message&&<p className="ld-error">{message}</p>}
     {report ? <div className="ld-grid">
-      <section className="ld-panel">
+      <Focusable ref={el=>{panelRefs.current[0]=el;}} 
+        className="ld-panel ld-panel-focus" focusClassName="ld-focused" noFocusRing
+        onMove={button=>movePanel(0,button)} onCancelButton={back}>
         <h2>What Game Library actually sees</h2>
         <div className="ld-stat"><span>Candidate IDs</span><strong>{report.candidateRows}</strong></div>
         <div className="ld-stat"><span>Displayed games</span><strong>{report.displayedGames}</strong></div>
@@ -130,11 +174,13 @@ export function LibraryDiagnostics(){
         <p className="ld-note">Compare Installed and Favorites with the original
           Steam Library. If the counts differ, photograph this overview
           and the source report alongside it.</p>
-      </section>
-      <section className="ld-panel">
+      </Focusable>
+      <Focusable ref={el=>{panelRefs.current[1]=el;}}
+        className="ld-panel ld-panel-focus" focusClassName="ld-focused" noFocusRing
+        onMove={button=>movePanel(1,button)} onCancelButton={back}>
         <h2>Native Steam sources (counts only)</h2>
         <pre className="ld-report">{formatLibraryDiagnostics(report)}</pre>
-      </section>
+      </Focusable>
     </div>:<p className="ld-error">Could not inspect the Steam library.
       Choose Refresh when Steam Game Mode has finished loading.</p>}
   </div>;
