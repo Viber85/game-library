@@ -72,12 +72,12 @@ test("rejected provider requests are evicted for retries",async()=>{
 });
 
 test("Dashboard gets a fresh collection batch for refresh and per-tab counts",()=>{
-  const tab=read("src/tabmaster.ts"),ui=read("src/Dashboard.tsx");
+  const tab=read("src/libraryTabs.ts"),ui=read("src/Dashboard.tsx");
   assert.match(tab,/createCollectionLookupBatch\(COLLECTION_SOURCE\)/);
   assert.match(tab,/matchFilter\(f,depth\+1,lookups\)/);
-  assert.match(ui,/tabsForRefresh\.current,next,createBatchGamesForTab\(\)\)/);
-  assert.match(ui,/libraryTabSignature\(tabs,games,createBatchGamesForTab\(\)\)/);
-  assert.match(ui,/const resolve=createBatchGamesForTab\(\)/);
+  assert.match(ui,/tabsForRefresh\.current,next,createLibraryTabResolver\(\)\)/);
+  assert.match(ui,/libraryTabSignature\(tabs,games,createLibraryTabResolver\(\)\)/);
+  assert.match(ui,/const resolve=createLibraryTabResolver\(\)/);
   assert.match(ui,/\[searchMode,searchResults,tab,games,membershipRevision\]/);
 });
 
