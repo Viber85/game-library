@@ -1,21 +1,35 @@
-import { getActiveUserId } from "./steam";
-import { loadSteamTabs, type SteamTab } from "./tabmaster";
-import { createSourceRefresh } from "./tabSourceRefresh";
+import {callable} from "@decky/api";
+import {getActiveUserId} from "./steam";
+import {DEFAULT_LIBRARY_TABS,type LibraryTab} from "./libraryTabs";
+import {createSourceRefresh} from "./tabSourceRefresh";
 
+/** Game Library's own tab definitions. No TabMaster or peer plugin RPC. */
 export type AutoTabSnapshot={
   available:boolean;
   reason:string;
-  tabs:SteamTab[];
-  mode?:string;
+  tabs:LibraryTab[];
+  mode:"native";
 };
+type TabReply={ok:boolean;reason?:string;tabs?:LibraryTab[]};
+const loadTabs=callable<[string],TabReply>("get_library_tabs");
+const persistTabs=callable<[string,LibraryTab[]],TabReply>("save_library_tabs");
 
 const initial:AutoTabSnapshot={
-  available:false,reason:"Checking TabMaster status…",tabs:[],mode:"auto"
+  available:true,reason:"Waiting for Steam account",tabs:DEFAULT_LIBRARY_TABS,
+  mode:"native",
 };
+async function readLibraryTabs():Promise<AutoTabSnapshot>{
+  const account=getActiveUserId();
+  if(!account)return initial;
+  const saved=await loadTabs(account);
+  return saved?.ok&&Array.isArray(saved.tabs)?
+    {available:true,reason:"",tabs:saved.tabs,mode:"native"}:
+    {available:true,reason:saved?.reason??"Unable to read saved tabs",
+     tabs:DEFAULT_LIBRARY_TABS,mode:"native"};
+}
 const sync=createSourceRefresh<AutoTabSnapshot>(
-  ()=>loadSteamTabs(getActiveUserId()),
-  initial,
-  state=>JSON.stringify([state.available,state.reason,state.tabs,state.mode]),
+  readLibraryTabs,initial,
+  state=>JSON.stringify([state.reason,state.tabs,state.mode]),
 );
 
 const POLL_MS=4000;
@@ -25,11 +39,6 @@ let interval:number|undefined;
 let followUp:number|undefined;
 let lastWake=0;
 
-/** The Steam QAM keeps Game Mode on the same page. On returning from QAM,
- * focusin may fire even when window.focus/visibilitychange do not. A delayed
- * second read covers TabMaster/UnifiedDeck mounting their Steam collections
- * after Decky removes them from disabled_plugins.
- */
 function onWake(){
   if(!running)return;
   const now=Date.now();
@@ -57,7 +66,6 @@ export function startAutoTabSource(){
   document.addEventListener("focusin",onWake);
   document.addEventListener("visibilitychange",onVisible);
 }
-
 export function stopAutoTabSource(){
   if(!running)return;
   running=false;
@@ -70,7 +78,14 @@ export function stopAutoTabSource(){
   interval=followUp=undefined;
   sync.stop();
 }
-
 export const getAutoTabs=()=>sync.getSnapshot();
 export const subscribeAutoTabs=(listener:(value:AutoTabSnapshot)=>void)=>
   sync.subscribe(listener);
+
+export async function saveOwnTabs(tabs:LibraryTab[]):Promise<void>{
+  const account=getActiveUserId();
+  if(!account)throw new Error("Wait until the Steam account is ready");
+  const reply=await persistTabs(account,tabs);
+  if(!reply?.ok)throw new Error(reply?.reason||"Saving tabs failed");
+  await sync.refresh();
+}
