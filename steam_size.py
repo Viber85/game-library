@@ -15,6 +15,7 @@ import time
 import urllib.error
 import urllib.request
 
+CACHE_SCHEMA = 2
 POSITIVE_TTL = 30 * 86400
 NEGATIVE_TTL = 24 * 3600
 ERROR_TTL = 10 * 60
@@ -124,7 +125,18 @@ class SteamSizeService:
                 return {}
             raw = json.loads(self.path.read_text(encoding="utf-8"))
             items = raw.get("entries", {})
-            return items if isinstance(items, dict) else {}
+            if not isinstance(items, dict):
+                return {}
+            if raw.get("schema") != CACHE_SCHEMA:
+                # Older versions could cache missing requirements for 24 h.
+                # Preserve successful estimates while allowing fresh retries
+                # for negative responses, without erasing the user's game data.
+                return {
+                    key: value for key, value in items.items()
+                    if isinstance(value, dict) and isinstance(value.get("reply"), dict)
+                    and value["reply"].get("status") == "estimated"
+                }
+            return items
         except (OSError, ValueError, TypeError, AttributeError):
             return {}
 
@@ -132,7 +144,7 @@ class SteamSizeService:
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             tmp = self.path.with_suffix(".tmp")
-            tmp.write_text(json.dumps({"entries": self.entries}),
+            tmp.write_text(json.dumps({"schema": CACHE_SCHEMA, "entries": self.entries}),
                            encoding="utf-8")
             os.replace(tmp, self.path)
         except OSError:
