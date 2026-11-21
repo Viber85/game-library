@@ -7,15 +7,16 @@ const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const dash=read("src/Dashboard.tsx"),app=read("src/AppearancePage.tsx");
 const entry=read("src/index.tsx"),css=read("src/theme.ts");
 
-test("Rail includes Tab Manager and Settings after Collections, with running game first",()=>{
+test("Rail keeps Appearance and Settings in left navigation, with Tab Manager nested under Settings",()=>{
   assert.match(dash,/\.\.\.\(runningGame \? \[\{/);
-  const ids=[...dash.matchAll(/\{ id: "(home|library|search|collections|tabs|appearance|settings|steam-menu|store|downloads|power)"/g)].map(m=>m[1]);
-  assert.deepEqual(ids,["home","library","search","collections","tabs","appearance","settings","steam-menu"]);
+  const ids=[...dash.matchAll(/\{ id: "(home|library|search|collections|appearance|settings|steam-menu|store|downloads|power)"/g)].map(m=>m[1]);
+  assert.deepEqual(ids,["home","library","search","collections","appearance","settings","steam-menu"]);
   assert.match(dash,/id:"running",label:runningGame.title/);
   assert.match(dash,/Navigation\.Navigate\(APPEARANCE_ROUTE\)/);
   assert.match(dash,/\{ id: "search", label: "Search", icon: MdSearch, go: openLocalSearch \}/);
   assert.match(dash,/openNativeSteamMenu\(Navigation\)/);
-  assert.match(dash,/Navigation.Navigate\(TABS_ROUTE\)/);
+  assert.doesNotMatch(dash,/\{ id: "tabs", label: "Tab Manager"/);
+  assert.match(read("src/PluginSettingsPage.tsx"),/Navigation.Navigate\("\/game-library\/tabs"\)/);
   assert.match(dash,/Navigation.Navigate\(PLUGIN_SETTINGS_ROUTE\)/);
 });
 
