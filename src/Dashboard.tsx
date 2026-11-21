@@ -224,7 +224,7 @@ export function Dashboard({initialMode="home",originRoute}:
   useEffect(() => {
     const refresh=window.setInterval(()=>{
       const next=getLibraryGames();
-      // Installed/Favorites/TabMaster/UnifiedDeck membership can change
+      // Installed/Favorites membership can change
       // without a single CAppOverview field changing. Track real member
       // AppIDs separately before suppressing a no-op library rerender.
       const signature=libraryTabSignature(
@@ -279,7 +279,7 @@ export function Dashboard({initialMode="home",originRoute}:
     return [t.id, result.supported ? result.games.length : null] as const;
   }));
   }, [tabs, games, membershipRevision]);
-  // The search is GLOBAL; the currently selected TabMaster tab does not
+  // Search is global; the currently selected Library tab does not
   // exclude Steam or Unifideck games from the searchable inventory.
   const searchMembership=useMemo(()=>searchMode?{
     epic:getUnifideckCollectionIds("Epic"),
