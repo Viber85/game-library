@@ -2,6 +2,24 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.4 — two-axis Tab Manager and dedicated Theme Hub
+
+The Tab Manager edit panel now supports **Up/Down** controller focus
+between wrapped rows of buttons and create-tab controls in addition to
+the existing Left/Right navigation.
+
+**Appearance** is now the **Theme Hub**, retaining the functional
+Midnight and Steam Default themes. Color Editor is shown as a planned
+feature, not an implemented editor.
+
+The fully working **SteamGridDB Integration** and **Updates** panels
+have moved from Appearance into dedicated subpages of **Plugin Settings**.
+Their existing provider settings, API-key safety, update checks and
+installer remain in place. Settings also retains Tab Manager, the
+Steam Home preference and library diagnostics.
+
+See `docs/release-notes-0.6.4.md` for the on-device test checklist.
+
 ## v0.6.3 — Tab Manager under Plugin Settings
 
 The main left rail has only the primary destinations: **Appearance**
