@@ -72,6 +72,13 @@ export function CollectionsPage({
   const manageRef=useRef<HTMLDivElement>(null);
   const pickerBackRef=useRef<HTMLDivElement>(null);
   const pickerInputRef=useRef<HTMLDivElement>(null);
+  const pickerInputKeys=(event:React.KeyboardEvent<HTMLDivElement>)=>{
+    if(event.key!=="ArrowUp"&&event.key!=="ArrowDown")return;
+    if(!(event.target instanceof HTMLInputElement))return;
+    event.preventDefault();event.stopPropagation();
+    if(event.key==="ArrowUp")pickerBackRef.current?.focus();
+    else pickerRows.current[0]?.focus();
+  };
   const pickerRows=useRef<Array<HTMLDivElement|null>>([]);
 
   const customTabs=useMemo(()=>personalCollectionTabs(tabs),[tabs]);
@@ -253,7 +260,8 @@ export function CollectionsPage({
             onButtonDown={(event:GamepadEvent)=>{
               if(event.detail?.button===GamepadButton.DIR_LEFT){
                 CONSUME(event);onFocusRail();
-              }else if(event.detail?.button===GamepadButton.DIR_DOWN){
+              }else if(event.detail?.button===GamepadButton.DIR_DOWN||
+                event.detail?.button===GamepadButton.DIR_RIGHT){
                 CONSUME(event);
                 pickerInputRef.current?.querySelector("input")?.focus();
               }
@@ -264,7 +272,7 @@ export function CollectionsPage({
           </div>
         </div>
         <div className="gl-library-search-field gl-collections-picker-search"
-          ref={pickerInputRef}>
+          ref={pickerInputRef} onKeyDownCapture={pickerInputKeys}>
           <MdSearch aria-hidden="true"/>
           <div className="gl-library-search-native">
             <TextField aria-label="Find games for collection"
@@ -386,7 +394,8 @@ export function CollectionsPage({
             onButtonDown={(event:GamepadEvent)=>{
               const b=event.detail?.button;
               if(b===GamepadButton.DIR_UP){CONSUME(event);backRef.current?.focus();}
-              else if(b===GamepadButton.DIR_DOWN){CONSUME(event);focusGame(0);}
+              else if(b===GamepadButton.DIR_DOWN||
+                b===GamepadButton.DIR_RIGHT){CONSUME(event);focusGame(0);}
               else if(b===GamepadButton.DIR_LEFT){CONSUME(event);onFocusRail();}
             }}>
             <MdAdd/> Add games
@@ -409,6 +418,10 @@ export function CollectionsPage({
                   collectionRefs.current[index-1]?.focus():backRef.current?.focus();}
                 else if(b===GamepadButton.DIR_DOWN){CONSUME(e);
                   collectionRefs.current[Math.min(index+1,customTabs.length-1)]?.focus();}
+                else if(b===GamepadButton.DIR_RIGHT){
+                  CONSUME(e);
+                  changeLocation({section:"my",tabId:tab.id,gameId:null});
+                }
               }}>
               <MdFolder aria-hidden="true"/><strong>{tab.title}</strong>
               <MdChevronRight aria-hidden="true"/>
