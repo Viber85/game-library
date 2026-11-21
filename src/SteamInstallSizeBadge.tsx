@@ -21,12 +21,18 @@ export type NonSteamSizeReply={
 
 const requestNonSteamSize=callable<[number,string,string],NonSteamSizeReply>(
   "nonsteam_install_size");
-const nonSteamCache=new Map<string,NonSteamSizeReply>();
+const nonSteamCache=new Map<string,{reply:NonSteamSizeReply;until:number}>();
+const getNonSteamCached=(key:string):NonSteamSizeReply|null=>{
+  const item=nonSteamCache.get(key);
+  if(!item)return null;
+  if(item.until<=Date.now()){nonSteamCache.delete(key);return null;}
+  return item.reply;
+};
 const nonSteamPending=new Map<string,Promise<NonSteamSizeReply>>();
 const nonSteamKey=(id:number,title:string,user:string)=>user+":"+id+":"+title;
 function readNonSteamSize(id:number,title:string,user:string):Promise<NonSteamSizeReply>{
   const key=nonSteamKey(id,title,user);
-  const cached=nonSteamCache.get(key);
+  const cached=getNonSteamCached(key);
   if(cached)return Promise.resolve(cached);
   const inflight=nonSteamPending.get(key);
   if(inflight)return inflight;
@@ -34,7 +40,9 @@ function readNonSteamSize(id:number,title:string,user:string):Promise<NonSteamSi
     const reply:NonSteamSizeReply=result?.status==="ok"&&
       typeof result.size_bytes==="number"&&Number.isFinite(result.size_bytes)&&
       result.size_bytes>0?result:{status:"unavailable"};
-    nonSteamCache.set(key,reply);
+    nonSteamCache.set(key,{
+      reply,until:Date.now()+(reply.status==="ok"?15*60_000:2*60_000)
+    });
     return reply;
   },()=>({status:"unavailable"} as NonSteamSizeReply))
     .finally(()=>nonSteamPending.delete(key));
@@ -113,7 +121,7 @@ export function SteamInstallSizeBadge({game,active}:{
     let mounted=true;
     const user=getActiveUserId();
     const key=nonSteamKey(game.id,game.title,user);
-    const cached=nonSteamCache.get(key);
+    const cached=getNonSteamCached(key);
     if(cached){
       setNonSteam(cached);
       return;
@@ -136,6 +144,7 @@ export function SteamInstallSizeBadge({game,active}:{
   const value=nativeGb!==null?nativeGb:
     nonSteamGb!==null?nonSteamGb:estimate?.estimated_gb;
   const formatted=value!==undefined&&value!==null?
+    value<.1?Math.max(1,Math.round(value*1000))+" MB":
     (value<10?value.toFixed(1):Math.round(value).toString())+" GB":null;
   const label=nativeGb!==null?"SIZE":estimate?"EST.":"SIZE";
   const text=nativeGb!==null||nonSteamGb!==null?formatted:
