@@ -106,7 +106,7 @@ test("Non-Steam size comes only from local exact shortcut, no Store fallback",()
   assert.match(badge,/if\(!game\.nonSteam&&active&&native===null\)/);
   assert.match(badge,/if\(!game\.nonSteam\|\|!game\.installed\|\|!active\|\|native!==null\)return/);
   assert.match(badge,/source==="flatpak"/);
-  assert.match(badge,/source==="appimage"/);
+  assert.match(badge,/AppImage file size/);
   assert.match(packageScript,/cp plugin\.json main\.py updates\.py hltb\.py protondb\.py steamgriddb\.py steam_size\.py nonsteam_size\.py/);
   assert.match(packageScript,/game-library\/nonsteam_size\.py/);
 });
