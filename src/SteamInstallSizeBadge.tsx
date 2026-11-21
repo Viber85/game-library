@@ -70,9 +70,10 @@ export function hydrateCachedSteamSizes(ids:readonly number[]):Promise<void>{
   const valid=[...new Set(ids.filter(id=>
     Number.isSafeInteger(id)&&id>0&&id<=0xffffffff))].slice(0,1000);
   if(!valid.length)return Promise.resolve();
+  const allowed=new Set(valid);
   inflightBulk=cachedBulk(valid).then(result=>{
     for(const item of result?.entries??[]){
-      if(!valid.includes(item.appid)||!validStoreSize(item))continue;
+      if(!allowed.has(item.appid)||!validStoreSize(item))continue;
       localStoreCache.set(item.appid,item);
       for(const cb of storeSizeListeners.get(item.appid)??[])cb(item);
     }
