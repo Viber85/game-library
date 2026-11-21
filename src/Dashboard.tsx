@@ -21,7 +21,7 @@ import {SEARCH_ROUTE,rememberSearchOrigin,searchBackRoute,
   readSearchSelection,saveSearchSelection} from "./searchNavigation";
 import {AppearancePage} from "./AppearancePage";
 import {LibraryAlphabetIndicator} from "./LibraryAlphabetIndicator";
-import {SteamInstallSizeBadge} from "./SteamInstallSizeBadge";
+import {SteamInstallSizeBadge,hydrateCachedSteamSizes} from "./SteamInstallSizeBadge";
 import {HltbPosterBadge} from "./HltbPosterBadge";
 import {alphabetIndicatorEnabled,isRightEdgeGame} from "./libraryAlphabet";
 import {CollectionsPage} from "./CollectionsPage";
@@ -184,6 +184,13 @@ export function Dashboard({initialMode="home",originRoute}:
   },[actualRoute,detailsReturn]);
   const restorePending=useRef(detailsReturn);
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
+  useEffect(()=>{
+    if(initialMode!=="library")return;
+    // One local cached-bulk call only; never hit the Steam Store for each
+    // library cover or block controller navigation.
+    void hydrateCachedSteamSizes(games.filter(game=>
+      !game.installed&&!game.nonSteam).map(game=>game.id));
+  },[initialMode,games.length]);
   const [searchSelection,setSearchSelection]=useState(readSearchSelection);
   useEffect(()=>{
     if(searchMode)saveSearchSelection(searchSelection);
