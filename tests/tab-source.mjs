@@ -3,7 +3,7 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 import {
   DEFAULT_LIBRARY_TABS,visibleLibraryTabs,gamesForLibraryTab,
-  moveLibraryTab,changeLibraryTab,newLibraryTab
+  moveLibraryTab,changeLibraryTab,newLibraryTab,assignManualGames
 } from "../src/libraryTabs.ts";
 
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
@@ -62,10 +62,39 @@ test("Manager handles creating, renaming, hiding, deleting, filter and navigatio
   assert.match(manager,/moveLibraryTab\(items,selected.id,-1\)/);
   assert.match(manager,/moveLibraryTab\(items,selected.id,1\)/);
   assert.match(manager,/changeLibraryTab\(items,selected.id,\{visible:!selected.visible\}\)/);
-  assert.match(manager,/newLibraryTab\(items,title,filter,id\)/);
+  assert.match(manager,/newLibraryTab\(items,title,filter,id,createMode\)/);
   assert.match(manager,/selected.kind!=="custom"/);
   assert.match(manager,/GamepadButton.DIR_DOWN/);
   assert.match(manager,/TextField aria-label="Tab name"/);
-  assert.match(dashboard,/onActivate=\{\(\)=>\{setSortOpen\(false\);setTabManagerOpen\(true\);\}\}/);
+  assert.match(dashboard,/<TabManager tabs=\{tabInfo.tabs\} games=\{games\}/);
+  assert.doesNotMatch(dashboard,/gl-manage-tabs-trigger|setTabManagerOpen/);
+  assert.match(dashboard,/Navigation.Navigate\(TABS_ROUTE\)/);
   assert.match(dashboard,/const cycleTab = \(direction: number\)/);
+});
+
+test("Manual tabs persist selected app IDs and leave native library untouched",()=>{
+  const manual=newLibraryTab(DEFAULT_LIBRARY_TABS,"My RPG","all","custom-my-rpg1","manual");
+  assert.equal(manual[5].mode,"manual");
+  assert.deepEqual(gamesForLibraryTab(manual[5],games).games,[]);
+  const selected=assignManualGames(manual,manual[5].id,[4,2,4,999]);
+  assert.deepEqual(selected[5].members,[2,4,999]);
+  assert.deepEqual(gamesForLibraryTab(selected[5],games).games.map(g=>g.id),[2,4]);
+  assert.deepEqual(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[0],games).games.map(g=>g.id),
+    [1,2,3,4]);
+  assert.match(read("src/TabManager.tsx"),/Find games for manual tab/);
+  assert.match(read("src/TabManager.tsx"),/Save selection/);
+  assert.match(read("src/TabManager.tsx"),/Selected only/);
+});
+
+test("Manual selection and settings are reached through permanent left rail routes",()=>{
+  const index=read("src/index.tsx");
+  assert.match(index,/routerHook.addRoute\(TABS_ROUTE/);
+  assert.match(index,/routerHook.addRoute\(PLUGIN_SETTINGS_ROUTE/);
+  assert.match(index,/routerHook.removeRoute\(TABS_ROUTE\)/);
+  assert.match(index,/routerHook.removeRoute\(PLUGIN_SETTINGS_ROUTE\)/);
+  assert.match(dashboard,/id: "tabs", label: "Tab Manager"/);
+  assert.match(dashboard,/id: "settings", label: "Settings"/);
+  assert.match(dashboard,/<PluginSettingsPage firstRef=\{settingsEntryRef\}/);
+  assert.match(read("src/PluginSettingsPage.tsx"),/Use as Steam Home/);
+  assert.match(read("src/PluginSettingsPage.tsx"),/notifyHomeSetting\(value\)/);
 });
