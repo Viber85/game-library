@@ -2,6 +2,25 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.7 — complete Diagnostics and My Collections navigation
+
+Completes the Game Mode four-direction controller audit for the remaining
+screens: **Library Diagnostics** and **Collections → My Collections**.
+
+Diagnostics now has native-focus navigation across the toolbar and two
+readable report panels. My Collections now uses Decky's supported
+`Focusable.onButtonDown` callbacks and native Steam focus transfer for
+four-direction list movement and opening a selected group. Neither
+change touches the already working Home, Library or Search controllers.
+
+**Permanent development rule:** every new or updated custom Game Library
+menu requires both D-pad and left-analogue navigation in all four
+directions and regression coverage in `tests/native-gamepad-focus.mjs`.
+Automated checks run in CI, followed by handheld testing for actual
+SteamOS focus behavior.
+
+See `docs/release-notes-0.6.7.md` for the full verification checklist.
+
 ## v0.6.6 — native SteamOS gamepad focus
 
 **Fixes menu focus at its source.** Prior code called the browser's
