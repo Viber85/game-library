@@ -1,33 +1,30 @@
 import {useEffect,useRef,useState} from "react";
-import {Focusable,GamepadButton,type GamepadEvent,Navigation} from "@decky/ui";
-import {MdCheckCircle,MdExpandLess,MdExpandMore,MdPalette,MdWallpaper,MdSystemUpdate} from "react-icons/md";
+import {Focusable,GamepadButton,type GamepadEvent} from "@decky/ui";
+import {MdCheckCircle,MdExpandLess,MdExpandMore,MdPalette,MdColorLens} from "react-icons/md";
 import {subscribeThemeStatus,themeRuntimeStatus,type ThemeStatus} from "./builtinThemeRuntime";
 import {selectBuiltinTheme} from "./themeController";
-import {SteamGridDBPanel} from "./SteamGridDBPanel";
-import {UpdatesPanel} from "./UpdatesPanel";
 import {SystemStatusBar} from "./SystemStatusBar";
 
-type Section="theme"|"artwork"|"updates";
 type Props={
   firstRef:{current:HTMLDivElement|null};
   onFocusRail:()=>void;
   onBack:()=>void;
 };
 
-/** Controller-first Game Mode appearance screen. Color Editor is postponed. */
+/** Theme Hub: only visual themes. Integrations and updates live in Plugin Settings. */
 export function AppearancePage({firstRef,onFocusRail,onBack}:Props){
   const [status,setStatus]=useState<ThemeStatus>(themeRuntimeStatus);
-  const [expanded,setExpanded]=useState<Section|null>("theme");
+  const [expanded,setExpanded]=useState(true);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
-  const headers=useRef<Array<HTMLDivElement|null>>([]);
+  const header=useRef<HTMLDivElement>(null);
   const options=useRef<Array<HTMLDivElement|null>>([]);
   const statusRef=useRef<HTMLDivElement>(null);
   useEffect(()=>subscribeThemeStatus(setStatus),[]);
   useEffect(()=>{
-    const frame=window.requestAnimationFrame(()=>headers.current[0]?.focus());
-    return ()=>window.cancelAnimationFrame(frame);
+    const frame=window.requestAnimationFrame(()=>header.current?.focus());
+    return ()=>{window.cancelAnimationFrame(frame);firstRef.current=null;};
   },[]);
   const choose=(mode:"midnight"|"off")=>{
     if(busy||status.selected===mode)return;
@@ -37,112 +34,96 @@ export function AppearancePage({firstRef,onFocusRail,onBack}:Props){
     }).catch(e=>setError("Unable to change theme: "+String(e)))
       .finally(()=>setBusy(false));
   };
-  const focusHeader=(index:number)=>headers.current[Math.max(0,Math.min(index,2))]?.focus();
-  const headerDirection=(event:GamepadEvent,index:number,section:Section)=>{
-    const button=event.detail?.button;
-    if(button===GamepadButton.DIR_LEFT){
-      event.preventDefault();event.stopPropagation();onFocusRail();
-    }else if(button===GamepadButton.DIR_UP){
-      event.preventDefault();event.stopPropagation();focusHeader(index-1);
-    }else if(button===GamepadButton.DIR_DOWN){
-      // Decky's native ToggleField / ButtonItem controls inside Artwork and
-      // Updates own their own focus tree. Let Steam handle Down into them.
-      if(expanded===section&&section!=="theme")return;
-      event.preventDefault();event.stopPropagation();
-      if(expanded===section&&section==="theme")options.current[0]?.focus();
-      else focusHeader(index+1);
-    }else if(button===GamepadButton.DIR_RIGHT&&expanded!==section){
-      event.preventDefault();event.stopPropagation();setExpanded(section);
+  const onHeaderDirection=(e:GamepadEvent)=>{
+    const b=e.detail?.button;
+    if(b===GamepadButton.DIR_LEFT){
+      e.preventDefault();e.stopPropagation();onFocusRail();
+    }else if(b===GamepadButton.DIR_DOWN&&expanded){
+      e.preventDefault();e.stopPropagation();options.current[0]?.focus();
+    }else if(b===GamepadButton.DIR_RIGHT&&!expanded){
+      e.preventDefault();e.stopPropagation();setExpanded(true);
     }
   };
-  const cards:Array<{id:Section;title:string;description:string;icon:typeof MdPalette}>=[
-    {id:"theme",title:"Theme",description:"Game Library and native SteamOS theme",icon:MdPalette},
-    {id:"artwork",title:"Artwork",description:"SteamGridDB covers and hero images",icon:MdWallpaper},
-    {id:"updates",title:"Updates",description:"Game Library releases and installation",icon:MdSystemUpdate},
-  ];
-  return <div className="gl-appearance" aria-label="Appearance settings">
+  return <div className="gl-appearance" aria-label="Theme Hub">
     <header className="gl-header gl-library-topbar" aria-label="Appearance navigation">
       <div className="gl-topbar-titles"><span className="gl-topbar-current">Appearance</span></div>
       <SystemStatusBar statusRef={statusRef}
         onStatusButtonDown={(e:GamepadEvent)=>{
           if(e.detail?.button===GamepadButton.DIR_DOWN){
-            e.preventDefault();e.stopPropagation();focusHeader(0);
+            e.preventDefault();e.stopPropagation();header.current?.focus();
           }
         }}/>
     </header>
     <div className="gl-appearance-scroll">
       <div className="gl-appearance-intro">
         <span className="gl-appearance-overline">GAME LIBRARY / CUSTOMIZATION</span>
-        <h1>Appearance</h1>
-        <p>Theme, artwork and updates in one place.</p>
+        <h1>Theme Hub</h1>
+        <p>System themes now. Custom color palettes in a future update.</p>
       </div>
       <div className="gl-appearance-cards">
-        {cards.map((section,index)=>{
-          const opened=expanded===section.id;
-          const Icon=section.icon;
-          return <section className={"gl-appearance-card"+(opened?" gl-appearance-card-open":"")}
-            key={section.id}>
-            <Focusable
-              ref={el=>{headers.current[index]=el;if(index===0)firstRef.current=el;}}
-              className="gl-appearance-card-heading" focusClassName="gl-focused" noFocusRing
-              onActivate={()=>setExpanded(previous=>previous===section.id?null:section.id)}
-              onCancelButton={onBack}
-              onButtonDown={(e:GamepadEvent)=>headerDirection(e,index,section.id)}
-              onOKActionDescription={opened?"Collapse "+section.title:"Expand "+section.title}>
-              <Icon className="gl-appearance-card-icon"/>
-              <span className="gl-appearance-heading-copy"><strong>{section.title}</strong>
-                <small>{section.description}</small></span>
-              {opened?<MdExpandLess className="gl-appearance-chevron"/>:
-                <MdExpandMore className="gl-appearance-chevron"/>}
-            </Focusable>
-            {opened&&<div className="gl-appearance-card-body">
-              {section.id==="theme"&&<>
-                <div className="gl-appearance-theme-options">
-                  {(["midnight","off"] as const).map((mode,optionIndex)=>{
-                    const selected=status.selected===mode;
-                    const title=mode==="midnight"?"Midnight":"Steam Default";
-                    return <Focusable key={mode}
-                      ref={el=>{options.current[optionIndex]=el;}}
-                      className={"gl-appearance-theme-option"+(selected?" gl-appearance-theme-selected":"")}
-                      focusClassName="gl-focused" noFocusRing
-                      onActivate={()=>choose(mode)}
-                      onCancelButton={onBack}
-                      onButtonDown={(e:GamepadEvent)=>{
-                        const b=e.detail?.button;
-                        if(b===GamepadButton.DIR_LEFT){
-                          e.preventDefault();e.stopPropagation();onFocusRail();
-                        }else if(b===GamepadButton.DIR_UP){
-                          e.preventDefault();e.stopPropagation();
-                          optionIndex===0?focusHeader(0):options.current[0]?.focus();
-                        }else if(b===GamepadButton.DIR_DOWN){
-                          e.preventDefault();e.stopPropagation();
-                          optionIndex===0?options.current[1]?.focus():focusHeader(1);
-                        }
-                      }}
-                      onOKActionDescription={"Use "+title+" theme"}>
-                      <span className={"gl-appearance-swatch"+(mode==="off"?" gl-appearance-swatch-steam":"")}/>
-                      <span className="gl-appearance-choice-copy"><strong>{title}</strong>
-                        <small>{mode==="midnight"?"Navy and cyan Game Mode theme":"Valve's original system colors"}</small></span>
-                      {selected&&<MdCheckCircle className="gl-appearance-selected-check"/>}
-                    </Focusable>;
-                  })}
-                </div>
-                <p className="gl-appearance-note">{busy?"Applying theme…":
-                  status.selected==="midnight"
-                    ?"Midnight active · "+status.appliedTabs+" Steam UI windows verified"
-                    :"Steam Default active"}</p>
-                <p className="gl-appearance-note">Additional themes and Color Editor will be added later.</p>
-                {notice&&<p className="gl-appearance-success" role="status">{notice}</p>}
-                {error&&<p className="gl-appearance-error" role="alert">{error}</p>}
-              </>}
-              {section.id==="artwork"&&<SteamGridDBPanel/>}
-              {section.id==="updates"&&<UpdatesPanel/>}
-            </div>}
-          </section>;
-        })}
+        <section className={"gl-appearance-card"+(expanded?" gl-appearance-card-open":"")}>
+          <Focusable
+            ref={el=>{header.current=el;firstRef.current=el;}}
+            className="gl-appearance-card-heading" focusClassName="gl-focused" noFocusRing
+            onActivate={()=>setExpanded(previous=>!previous)}
+            onCancelButton={onBack} onButtonDown={onHeaderDirection}
+            onOKActionDescription={expanded?"Collapse Theme":"Expand Theme"}>
+            <MdPalette className="gl-appearance-card-icon"/>
+            <span className="gl-appearance-heading-copy"><strong>Theme</strong>
+              <small>Choose Game Library and native SteamOS colors</small></span>
+            {expanded?<MdExpandLess className="gl-appearance-chevron"/>:
+              <MdExpandMore className="gl-appearance-chevron"/>}
+          </Focusable>
+          {expanded&&<div className="gl-appearance-card-body">
+            <div className="gl-appearance-theme-options">
+              {(["midnight","off"] as const).map((mode,optionIndex)=>{
+                const selected=status.selected===mode;
+                const title=mode==="midnight"?"Midnight":"Steam Default";
+                return <Focusable key={mode}
+                  ref={el=>{options.current[optionIndex]=el;}}
+                  className={"gl-appearance-theme-option"+(selected?" gl-appearance-theme-selected":"")}
+                  focusClassName="gl-focused" noFocusRing
+                  onActivate={()=>choose(mode)} onCancelButton={onBack}
+                  onButtonDown={(e:GamepadEvent)=>{
+                    const b=e.detail?.button;
+                    if(b===GamepadButton.DIR_LEFT){
+                      e.preventDefault();e.stopPropagation();onFocusRail();
+                    }else if(b===GamepadButton.DIR_UP){
+                      e.preventDefault();e.stopPropagation();
+                      optionIndex===0?header.current?.focus():options.current[0]?.focus();
+                    }else if(b===GamepadButton.DIR_DOWN){
+                      e.preventDefault();e.stopPropagation();
+                      optionIndex===0?options.current[1]?.focus():header.current?.focus();
+                    }
+                  }}
+                  onOKActionDescription={"Use "+title+" theme"}>
+                  <span className={"gl-appearance-swatch"+(mode==="off"?" gl-appearance-swatch-steam":"")}/>
+                  <span className="gl-appearance-choice-copy"><strong>{title}</strong>
+                    <small>{mode==="midnight"?"Navy and cyan Game Mode theme":"Valve's original system colors"}</small></span>
+                  {selected&&<MdCheckCircle className="gl-appearance-selected-check"/>}
+                </Focusable>;
+              })}
+            </div>
+            <p className="gl-appearance-note">{busy?"Applying theme…":
+              status.selected==="midnight"
+                ?"Midnight active · "+status.appliedTabs+" Steam UI windows verified"
+                :"Steam Default active"}</p>
+            {notice&&<p className="gl-appearance-success" role="status">{notice}</p>}
+            {error&&<p className="gl-appearance-error" role="alert">{error}</p>}
+          </div>}
+        </section>
+        <section className="gl-appearance-card gl-theme-hub-planned"
+          aria-label="Color Editor planned">
+          <div className="gl-appearance-card-heading">
+            <MdColorLens className="gl-appearance-card-icon"/>
+            <span className="gl-appearance-heading-copy"><strong>Color Editor</strong>
+              <small>Custom color palettes · planned for a future version</small></span>
+            <span className="gl-theme-hub-soon">Planned</span>
+          </div>
+        </section>
       </div>
     </div>
-    <footer className="gl-footer"><span>GAME LIBRARY · Appearance</span>
+    <footer className="gl-footer"><span>GAME LIBRARY · Theme Hub</span>
       <span>A Select</span><span>B Home</span><span>← Navigation</span></footer>
   </div>;
 }
