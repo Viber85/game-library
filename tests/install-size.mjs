@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
+import {sameStoreGameTitle,normalizedStoreGameTitle} from "../src/installSizeReference.ts";
 
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const ui=read("src/Dashboard.tsx");
@@ -95,7 +96,7 @@ test("v0.5.9-test.15: SIZE gradient anchors to the bottom third, not top half",(
   assert.doesNotMatch(ui,/\{game\.installed && <MdCheckCircle/);
 });
 
-test("Non-Steam size comes only from local exact shortcut, no Store fallback",()=>{
+test("Installed Non-Steam size comes only from local exact shortcut, never from Steam reference",()=>{
   const service=read("nonsteam_size.py");
   assert.match(service,/parse_binary_shortcuts\(blob\)/);
   assert.match(service,/shortcut_path\(account_id\)/);
@@ -172,4 +173,18 @@ test("Only verified cross-store Steam reference IDs enable the estimate; never g
   assert.match(badge,/if\(!game\.nonSteam\|\|!game\.installed\|\|!active\|\|native!==null\)return/);
   assert.match(badge,/readNonSteamSize\(game\.id,game\.title,user\)/);
   assert.match(badge,/const nonSteamGb=nonSteamBytes!==null/);
+});
+
+test("Steam reference only appears when linked product title matches the shortcut",()=>{
+  assert.equal(normalizedStoreGameTitle("Cyberpunk® 2077"),"cyberpunk 2077");
+  assert.equal(sameStoreGameTitle("Cyberpunk 2077","Cyberpunk® 2077"),true);
+  assert.equal(sameStoreGameTitle("Baldur's Gate 3","Baldur’s Gate 3"),true);
+  assert.equal(sameStoreGameTitle("Horizon Zero Dawn","Horizon Forbidden West"),false);
+  assert.equal(sameStoreGameTitle("Cyberpunk 2077","Cyberpunk 2077: Ultimate Edition"),false);
+  assert.equal(sameStoreGameTitle("Cyberpunk 2077",undefined),false);
+  assert.equal(sameStoreGameTitle("Cyberpunk 2077",""),false);
+  assert.equal(sameStoreGameTitle("Game","G".repeat(201)),false);
+  assert.match(badge,/sameStoreGameTitle\(game\.title,remote\.steam_title\)/);
+  assert.match(service,/reply\.get\("status"\) == "estimated" and not reply\.get\("steam_title"\)/);
+  assert.match(service,/"steam_title": title\[:180\]/);
 });
