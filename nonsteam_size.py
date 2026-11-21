@@ -1,16 +1,16 @@
 """Read-only local sizes for Steam non-Steam shortcuts.
 
 Steam's binary shortcuts.vdf identifies the exact executable/Flatpak app ID.
-No shell scripts, installs, downloads or directory crawls are executed.
-An AppImage result is the image file size; a Flatpak result is the app's
-installed size (excluding shared runtimes and user data).
+No shell scripts, installs or downloads are executed.
+AppImage and Flatpak use their existing local size providers. Direct Windows
+EXE shortcuts use a bounded, read-only scan of the game directory only.
 """
 import os
 import pathlib
 import pwd
 import re
 import shlex
-import shutil
+import stat
 import struct
 import subprocess
 import threading
@@ -295,8 +295,132 @@ def flatpak_installed_bytes(app, shortcut=None):
     return None
 
 
+# Avoid measuring a whole drive, home, game library or Wine prefix.
+BROAD_GAME_DIRS = {"", "games", "gaming", "downloads", "desktop", "documents",
+                   "applications", "steam", "steamapps", "common", "compatdata",
+                   "pfx", "drive_c", "program files", "program files (x86)",
+                   "windows", "system32", "users", "dosdevices", "programdata",
+                   "appdata", ".local", ".steam", ".config", ".var", "bin",
+                   "binaries", "win32", "win64", "x86", "x64"}
+EXCLUDED_GAME_DIRS = {"pfx", "compatdata", "shadercache", "dosdevices",
+                      "drive_c", "windows", ".cache", ".git"}
+MAX_GAME_ENTRIES = 150_000
+GAME_SCAN_SECONDS = 6.0
+
+
+def local_shortcut_path(raw, home):
+    if not isinstance(raw, str):
+        return None
+    raw = raw.strip().strip('"')
+    if raw.startswith("$HOME/") and home:
+        raw = home + raw[5:]
+    elif raw.startswith("~/") and home:
+        raw = home + raw[1:]
+    if not raw.startswith("/"):
+        return None
+    return pathlib.Path(raw)
+
+
+def game_directory(tokens, shortcut):
+    """Identify a specific game directory, never a broad storage root.
+
+    A direct EXE target is required; a nested Unreal Engine Binaries/Win64
+    target may use a game root only when a sibling Content directory exists.
+    Otherwise measure the executable's immediate directory (or a specific
+    StartDir that directly contains it). No launcher/script interpretation.
+    """
+    if not tokens or not tokens[0].lower().endswith(".exe"):
+        return None
+    try:
+        home = shortcut.get("_home")
+        target = local_shortcut_path(tokens[0], home)
+        if target is None or target.is_symlink():
+            return None
+        target = target.resolve(strict=True)
+        if not target.is_file() or target.name.lower() in {
+            "explorer.exe", "wineboot.exe", "cmd.exe", "unins000.exe",
+            "uninstall.exe", "setup.exe", "msiexec.exe"
+        }:
+            return None
+        folder = target.parent
+        # Unreal Engine games often use Game/Binaries/Win64/Game.exe.
+        # Only climb this explicit structure with actual game Content data.
+        if (folder.name.lower() in {"win64", "win32"} and
+                folder.parent.name.lower() == "binaries"):
+            project = folder.parent.parent
+            if (project / "Content").is_dir():
+                folder = project
+        # A specific configured StartDir can be the game root when the EXE
+        # sits in its conventional bin/ or Binaries/Win64 subtree.
+        start = local_shortcut_path(shortcut.get("startdir", ""), home)
+        if start is not None and start.is_dir():
+            start = start.resolve(strict=True)
+            if folder != start and folder.is_relative_to(start):
+                suffix = tuple(p.lower() for p in folder.relative_to(start).parts)
+                if suffix in (("bin",), ("bin", "x64"), ("bin", "win64"),
+                              ("binaries", "win64"), ("binaries", "win32")):
+                    folder = start
+        if folder.name.lower() in BROAD_GAME_DIRS or folder.is_mount():
+            return None
+        # Only the Steam user's home or a specific removable-media game
+        # directory. Never read an arbitrary system/root directory.
+        roots = []
+        if home:
+            roots.append((pathlib.Path(home).resolve(), 2))
+        roots.extend((pathlib.Path(p), depth) for p, depth in
+                     (("/run/media", 3), ("/media", 2), ("/mnt", 2)))
+        if not any(folder.is_relative_to(base) and
+                   len(folder.relative_to(base).parts) >= depth
+                   for base, depth in roots):
+            return None
+        return folder
+    except (OSError, RuntimeError, ValueError, TypeError):
+        return None
+
+
+def game_directory_bytes(folder):
+    """Measure apparent file bytes; no symlinks, mount crossing or broad scans.
+
+    Stop after a strict time/entry limit rather than report a partial total.
+    Count hard-linked files only once. Exclude nested Proton/Wine prefixes.
+    """
+    try:
+        device = folder.stat().st_dev
+        deadline = time.monotonic() + GAME_SCAN_SECONDS
+        stack = [folder]
+        seen_links = set()
+        total = count = 0
+        while stack:
+            with os.scandir(stack.pop()) as entries:
+                for entry in entries:
+                    count += 1
+                    if count > MAX_GAME_ENTRIES or time.monotonic() >= deadline:
+                        return None
+                    if entry.is_symlink():
+                        continue
+                    info = entry.stat(follow_symlinks=False)
+                    if info.st_dev != device:
+                        continue
+                    if stat.S_ISDIR(info.st_mode):
+                        if (entry.name.lower() not in EXCLUDED_GAME_DIRS and
+                                not pathlib.Path(entry.path).is_mount()):
+                            stack.append(pathlib.Path(entry.path))
+                    elif stat.S_ISREG(info.st_mode):
+                        if info.st_nlink > 1:
+                            key = (info.st_dev, info.st_ino)
+                            if key in seen_links:
+                                continue
+                            seen_links.add(key)
+                        total += info.st_size
+                        if total > SIZE_MAX:
+                            return None
+        return total if total > 0 else None
+    except (OSError, ValueError, RuntimeError):
+        return None
+
+
 class NonSteamSizeService:
-    """Local-only TTL cache. Never start Flatpak installations or scan folders."""
+    """Local-only TTL cache. Scan only a bounded, identified game directory."""
     def __init__(self):
         self.lock = threading.Lock()
         self.cache = {}
@@ -331,6 +455,14 @@ class NonSteamSizeService:
                     if size is not None:
                         result = {"status": "ok", "source": "appimage",
                                   "size_bytes": size}
+                    elif tokens and tokens[0].lower().endswith(".exe"):
+                        folder = game_directory(tokens, shortcut)
+                        size = game_directory_bytes(folder) if folder else None
+                        if size is not None:
+                            result = {"status": "ok", "source": "windows_game",
+                                      "size_bytes": size}
+                        else:
+                            result = {"status": "unavailable", "reason": "game_folder_unavailable"}
             # Local executables can be replaced. Keep positive results
             # for only 15 minutes, and misses for 2 minutes.
             ttl = 900 if result["status"] == "ok" else 120
