@@ -286,22 +286,30 @@ def _own_tab_validate(tabs):
         tab_id, title = tab.get("id"), tab.get("title")
         position, visible = tab.get("position"), tab.get("visible")
         kind, rule = tab.get("kind"), tab.get("filter")
+        mode = tab.get("mode", "smart")
+        members = tab.get("members", [])
         if (not isinstance(tab_id, str) or
             (tab_id not in builtin and not re.fullmatch(r"custom-[a-z0-9-]{4,50}", tab_id)) or
             tab_id in seen or not isinstance(title, str) or
             not 1 <= len(title.strip()) <= 45 or
             any(ord(char) < 32 for char in title) or
             type(position) is not int or not 0 <= position < 40 or
-            type(visible) is not bool or rule not in OWN_TAB_FILTERS):
+            type(visible) is not bool or type(kind) is not str or
+            type(rule) is not str or rule not in OWN_TAB_FILTERS or
+            mode not in ("smart", "manual") or
+            not isinstance(members, list) or len(members) > 2000 or
+            any(type(item) is not int or not 0 < item <= 9007199254740991
+                for item in members) or len(set(members)) != len(members)):
             raise ValueError("Invalid tab field")
         if tab_id in builtin:
-            if kind != builtin[tab_id] or rule != kind:
+            if kind != builtin[tab_id] or rule != kind or mode != "smart" or members:
                 raise ValueError("Built-in tab has an invalid filter")
         elif kind != "custom":
             raise ValueError("Custom tab has an invalid kind")
         seen.add(tab_id)
         output.append({"id": tab_id, "title": title.strip(), "position": position,
-                       "visible": visible, "kind": kind, "filter": rule})
+                       "visible": visible, "kind": kind, "filter": rule,
+                       "mode": mode, "members": sorted(members)})
     if not set(builtin).issubset(seen):
         raise ValueError("Missing built-in tab")
     if not any(tab["visible"] for tab in output):
