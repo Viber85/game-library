@@ -84,7 +84,7 @@ test("Collections route, exact nav placement, and native header cleanup",()=>{
   assert.deepEqual(order,["home","library","search","collections","tabs","appearance","settings","steam-menu"]);
   assert.match(index,/routerHook\.addRoute\(COLLECTIONS_ROUTE/);
   assert.match(index,/routerHook\.removeRoute\(COLLECTIONS_ROUTE\)/);
-  assert.match(dashboard,/collectionsMode\?COLLECTIONS_ROUTE:"\/library\/home"/);
+  assert.match(dashboard,/collectionsMode\?COLLECTIONS_ROUTE:\s*tabsMode\?TABS_ROUTE:settingsMode\?PLUGIN_SETTINGS_ROUTE:"\/library\/home"/);
   assert.match(dashboard,/<CollectionsPage key=\{collectionsPageRevision\}/);
   assert.match(page,/<SystemStatusBar statusRef=\{headerRef\}/);
   assert.match(css,/html:has\(\.gl-root\.gl-own-status-only\) #header/);
