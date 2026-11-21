@@ -1,13 +1,18 @@
 import type {LibraryGame} from "./steam";
 
-/** Original Game Library tab model with self-owned filters and storage. */
+/** Game Library's native tab definitions; independent of other Decky plugins. */
 export type TabKind="all"|"installed"|"steam"|"nonsteam"|"favorites"|"custom";
 export type TabFilter="all"|"installed"|"not-installed"|"steam"|"nonsteam"|"favorites";
 export type TabMode="smart"|"manual";
+export type SmartRuleType=Exclude<TabFilter,"all">|"not-favorites"|"played";
+export type SmartJoin="all"|"any";
+export type SmartRule={type:SmartRuleType};
 export type LibraryTab={
   id:string;title:string;position:number;visible:boolean;
   kind:TabKind;filter:TabFilter;
   mode?:TabMode;members?:number[];
+  rules?:SmartRule[];ruleJoin?:SmartJoin;
+  forceInclude?:number[];forceExclude?:number[];
 };
 export const DEFAULT_LIBRARY_TABS:LibraryTab[]=[
   {id:"AllGames",title:"All Games",position:0,visible:true,kind:"all",filter:"all"},
@@ -24,13 +29,38 @@ export const OWN_FILTERS:{id:TabFilter;title:string}[]=[
   {id:"nonsteam",title:"Non-Steam"},
   {id:"favorites",title:"Favorites"},
 ];
-
+export const SMART_RULES:{id:SmartRuleType;title:string}[]=[
+  {id:"installed",title:"Installed"},
+  {id:"not-installed",title:"Not installed"},
+  {id:"steam",title:"Steam games"},
+  {id:"nonsteam",title:"Non-Steam games"},
+  {id:"favorites",title:"Favorites"},
+  {id:"not-favorites",title:"Not favorited"},
+  {id:"played",title:"Played before"},
+];
 export function normalizeLibraryTabs(tabs:readonly LibraryTab[]):LibraryTab[]{
   return [...tabs].sort((a,b)=>a.position-b.position||a.title.localeCompare(b.title))
     .map((tab,i)=>({...tab,position:i}));
 }
 export function visibleLibraryTabs(tabs:readonly LibraryTab[]):LibraryTab[]{
   return normalizeLibraryTabs(tabs).filter(t=>t.visible);
+}
+/** A legacy 0.6.0/0.6.1 single filter becomes one Smart rule on read. */
+export function smartRulesForTab(tab:LibraryTab):SmartRule[]{
+  if(tab.rules!==undefined)return tab.rules;
+  return tab.filter==="all"?[]:[{type:tab.filter}];
+}
+export function matchesSmartRule(game:LibraryGame,rule:SmartRule):boolean{
+  switch(rule.type){
+    case "installed":return game.installed;
+    case "not-installed":return !game.installed;
+    case "steam":return !game.nonSteam;
+    case "nonsteam":return game.nonSteam;
+    case "favorites":return game.favorite;
+    case "not-favorites":return !game.favorite;
+    // Only positive Steam history is reliable for all Steam/non-Steam IDs.
+    case "played":return game.lastPlayed>0||game.playtimeMinutes>0;
+  }
 }
 export function gamesForLibraryTab(tab:LibraryTab,games:readonly LibraryGame[]):{
   supported:boolean;games:LibraryGame[];reason?:string
@@ -39,7 +69,21 @@ export function gamesForLibraryTab(tab:LibraryTab,games:readonly LibraryGame[]):
     const ids=new Set(tab.members??[]);
     return {supported:true,games:games.filter(game=>ids.has(game.id))};
   }
-  const filter=tab.kind==="custom"?tab.filter:tab.kind==="all"?"all":tab.kind;
+  if(tab.kind==="custom"){
+    const rules=smartRulesForTab(tab);
+    const include=new Set(tab.forceInclude??[]);
+    const exclude=new Set(tab.forceExclude??[]);
+    const join=tab.ruleJoin==="any"?"any":"all";
+    return {supported:true,games:games.filter(game=>{
+      if(exclude.has(game.id))return false;
+      if(include.has(game.id))return true;
+      if(!rules.length)return true;
+      return join==="all"?
+        rules.every(rule=>matchesSmartRule(game,rule)):
+        rules.some(rule=>matchesSmartRule(game,rule));
+    })};
+  }
+  const filter=tab.kind==="all"?"all":tab.kind;
   return {supported:true,games:games.filter(game=>{
     switch(filter){
       case "installed":return game.installed;
@@ -64,7 +108,8 @@ export function moveLibraryTab(tabs:readonly LibraryTab[],id:string,offset:numbe
   return ordered.map((tab,i)=>({...tab,position:i}));
 }
 export function changeLibraryTab(tabs:readonly LibraryTab[],id:string,
-  patch:Partial<Pick<LibraryTab,"title"|"visible"|"filter"|"mode"|"members">>):LibraryTab[]{
+  patch:Partial<Pick<LibraryTab,"title"|"visible"|"filter"|"mode"|"members"|
+    "rules"|"ruleJoin"|"forceInclude"|"forceExclude">>):LibraryTab[]{
   return tabs.map(tab=>tab.id===id?{...tab,...patch}:tab);
 }
 export function newLibraryTab(tabs:readonly LibraryTab[],title:string,
@@ -72,9 +117,10 @@ export function newLibraryTab(tabs:readonly LibraryTab[],title:string,
   return normalizeLibraryTabs([...tabs,{
     id,title:title.trim(),position:tabs.length,visible:true,kind:"custom" as const,
     filter,mode,members:[],
+    rules:filter==="all"?[]:[{type:filter}],ruleJoin:"all" as const,
+    forceInclude:[],forceExclude:[],
   }]);
 }
-
 /** Exact Steam app ID membership; IDs survive temporary library unavailability. */
 export function assignManualGames(tabs:readonly LibraryTab[],id:string,
   members:readonly number[]):LibraryTab[]{
@@ -82,4 +128,17 @@ export function assignManualGames(tabs:readonly LibraryTab[],id:string,
   return tabs.map(tab=>tab.id===id&&tab.kind==="custom"&&tab.mode==="manual"
     ? {...tab,members:unique}:tab);
 }
-
+/** Force a game into / out of a Smart tab without altering its normal rules. */
+export function assignSmartExceptions(tabs:readonly LibraryTab[],id:string,
+  target:"include"|"exclude",members:readonly number[]):LibraryTab[]{
+  const unique=[...new Set(members.filter(x=>Number.isSafeInteger(x)&&x>0))].sort((a,b)=>a-b);
+  const selected=new Set(unique);
+  return tabs.map(tab=>{
+    if(tab.id!==id||tab.kind!=="custom"||tab.mode==="manual")return tab;
+    return target==="include"?
+      {...tab,forceInclude:unique,
+        forceExclude:(tab.forceExclude??[]).filter(x=>!selected.has(x))}:
+      {...tab,forceExclude:unique,
+        forceInclude:(tab.forceInclude??[]).filter(x=>!selected.has(x))};
+  });
+}
