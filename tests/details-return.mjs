@@ -125,13 +125,12 @@ test("Fullscreen grid and Home restore tab, selected game, batch size, scroll an
   assert.match(dashboard,/if\(detailsReturn\)consumeDetailsOrigin\(actualRoute\);/);
 });
 
-test("Restored Steam/Epic/GOG tabs are not overwritten while TabMaster hydrates",()=>{
-  assert.match(dashboard,/const savedTab=tabInfo\.available&&snapshot&&/);
-  assert.match(dashboard,/tabInfo\.tabs\.some\(t=>t\.id===snapshot\.tabId\)/);
-  assert.match(dashboard,/if\(savedTab\)setActiveTab\(savedTab\);/);
-  assert.match(dashboard,/!tabInfo\.available && restorePending\.current\?\.tabId===activeTab/);
-  assert.match(dashboard,/const timer=window\.setTimeout\(\(\)=>\{/);
-  assert.match(dashboard,/if\(getAutoTabs\(\)\.available\)return;/);
+test("Saved custom tab survives Steam login and restores correct focus",()=>{
+  assert.match(dashboard,/restorePending\.current/);
+  assert.match(dashboard,/tabInfo\.reason==="Waiting for Steam account"/);
+  assert.match(dashboard,/restorePending\.current\?\.tabId===activeTab/);
+  assert.match(dashboard,/if\(tabs\.some\(t=>t\.id===activeTab\)\)return/);
+  assert.match(dashboard,/setActiveTab\(tabs\[0\]\?\.id \?\? "AllGames"\)/);
   assert.match(dashboard,/\[initialMode,viewAll,tab\.id,activeTab,shown\.length,gridLimit\]/);
 });
 
