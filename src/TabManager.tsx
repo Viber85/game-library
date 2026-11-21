@@ -44,6 +44,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
   const [pickerLimit,setPickerLimit]=useState(80);
   const rowRefs=useRef<Array<HTMLDivElement|null>>([]);
   const editorRef=useRef<HTMLDivElement>(null);
+  const editorRegionRef=useRef<HTMLDivElement>(null);
   const backRef=useRef<HTMLDivElement>(null);
   const inputRef=useRef<HTMLDivElement>(null);
   const pickerBackRef=useRef<HTMLDivElement>(null);
@@ -109,6 +110,48 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
     if(!selected||selected.kind!=="custom")return;
     setSelectedId(items.find(t=>t.id!==selected.id)?.id??"AllGames");
     void commit(items.filter(t=>t.id!==selected.id).map((t,i)=>({...t,position:i})));
+  };
+  /** Navigate the wrapping editor controls in two dimensions, using their
+   * real layout coordinates rather than assuming one fixed-width button row. */
+  const focusEditorDirection=(current:HTMLElement,direction:1|-1)=>{
+    const candidates=[...editorRegionRef.current?.querySelectorAll<HTMLElement>(
+      ".gl-tab-manager-action, input"
+    )??[]].filter(el=>el.getClientRects().length>0&&
+      !el.hasAttribute("disabled")&&
+      el.getAttribute("aria-disabled")!=="true");
+    const target=candidates.find(el=>el===current||el.contains(current))??current;
+    const at=candidates.indexOf(target);
+    const from=target.getBoundingClientRect();
+    const centerX=(from.left+from.right)/2;
+    const centerY=(from.top+from.bottom)/2;
+    const other=candidates.filter(el=>el!==target).map(el=>{
+      const rect=el.getBoundingClientRect();
+      return {el,x:(rect.left+rect.right)/2,y:(rect.top+rect.bottom)/2};
+    }).filter(item=>(item.y-centerY)*direction>8)
+      .sort((a,b)=>{
+        // Prefer the nearest row; within it prefer the closest column.
+        const rowA=Math.abs(a.y-centerY),rowB=Math.abs(b.y-centerY);
+        return Math.abs(rowA-rowB)>12?
+          rowA-rowB:Math.abs(a.x-centerX)-Math.abs(b.x-centerX);
+      });
+    const next=other[0]?.el??candidates[at+direction];
+    if(next){next.focus();next.scrollIntoView({block:"nearest"});}
+    else if(direction<0){focusRow(items.findIndex(tab=>tab.id===selected?.id));}
+  };
+  const editorDpad=(e:GamepadEvent)=>{
+    const b=e.detail?.button;
+    if(b!==GamepadButton.DIR_UP&&b!==GamepadButton.DIR_DOWN)return;
+    const current=e.currentTarget as HTMLElement;
+    if(!current)return;
+    stop(e);
+    focusEditorDirection(current,b===GamepadButton.DIR_DOWN?1:-1);
+  };
+  const editorTextKeyDown=(event:React.KeyboardEvent<HTMLDivElement>)=>{
+    // Steam sometimes forwards analogue/D-pad input to TextField as arrow keys.
+    if(event.key!=="ArrowUp"&&event.key!=="ArrowDown")return;
+    if(!(event.target instanceof HTMLInputElement))return;
+    event.preventDefault();event.stopPropagation();
+    focusEditorDirection(event.target,event.key==="ArrowDown"?1:-1);
   };
   const rowButton=(e:GamepadEvent,index:number)=>{
     const b=e.detail?.button;
@@ -189,7 +232,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
             else if(e.detail?.button===GamepadButton.DIR_DOWN){stop(e);
               picker?pickerBackRef.current?.focus():focusRow(0);}
           }}
-          onOKActionDescription="Return to Library"><MdArrowBack/> Back</Focusable>
+          onOKActionDescription="Return to Plugin Settings"><MdArrowBack/> Back</Focusable>
         <div><h2>{picker?"Select Games":"Manage Tabs"}</h2>
           <p>Game Library · {picker?pickerTarget==="manual"?"Manual membership":
             pickerTarget==="include"?"Smart · Always include":"Smart · Always exclude":
@@ -275,7 +318,8 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
               <span>{label(tab)}{!tab.visible?" · Hidden":""}</span>
             </Focusable>)}
           </div>
-          <div className="gl-tab-manager-editor">
+          <div className="gl-tab-manager-editor" ref={editorRegionRef}
+            onKeyDownCapture={editorTextKeyDown}>
             <span className="gl-tab-manager-caption">SELECTED TAB</span>
             <h3>{selected?.title??"No tab selected"}</h3>
             <p>{selected?.kind==="custom"?(selected.mode==="manual"?"Manual Tab":"Smart Tab"):"Built-in tab"}
@@ -284,47 +328,47 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
               <Focusable ref={editorRef} className="gl-tab-manager-action"
                 focusClassName="gl-focused" noFocusRing
                 onActivate={()=>selected&&void commit(moveLibraryTab(items,selected.id,-1))}
-                onCancelButton={onClose}><MdArrowUpward/> Move up</Focusable>
+                onCancelButton={onClose} onButtonDown={editorDpad}><MdArrowUpward/> Move up</Focusable>
               <Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
                 noFocusRing onActivate={()=>selected&&void commit(moveLibraryTab(items,selected.id,1))}
-                onCancelButton={onClose}><MdArrowDownward/> Move down</Focusable>
+                onCancelButton={onClose} onButtonDown={editorDpad}><MdArrowDownward/> Move down</Focusable>
               <Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
                 noFocusRing onActivate={()=>selected&&void commit(changeLibraryTab(items,selected.id,{visible:!selected.visible}))}
-                onCancelButton={onClose}>
+                onCancelButton={onClose} onButtonDown={editorDpad}>
                 {selected?.visible?<MdVisibilityOff/>:<MdVisibility/>}
                 {selected?.visible?"Hide":"Show"}
               </Focusable>
               <Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
-                noFocusRing onActivate={rename} onCancelButton={onClose}>
+                noFocusRing onActivate={rename} onCancelButton={onClose} onButtonDown={editorDpad}>
                 <MdEdit/> Rename
               </Focusable>
               {selected?.kind==="custom"&&<Focusable className="gl-tab-manager-action"
                 focusClassName="gl-focused" noFocusRing
                 onActivate={()=>void commit(changeLibraryTab(items,selected.id,{
                   mode:selected.mode==="manual"?"smart":"manual"
-                }))} onCancelButton={onClose}>
+                }))} onCancelButton={onClose} onButtonDown={editorDpad}>
                 <MdTune/> Switch to {selected.mode==="manual"?"Smart":"Manual"}
               </Focusable>}
               {selected?.kind==="custom"&&selected.mode==="manual"&&
                 <Focusable className="gl-tab-manager-action gl-tab-manager-primary"
                   focusClassName="gl-focused" noFocusRing onActivate={()=>openPicker("manual")}
-                  onCancelButton={onClose}>
+                  onCancelButton={onClose} onButtonDown={editorDpad}>
                   <MdListAlt/> Add / Remove Games ({selected.members?.length??0})
                 </Focusable>}
               {selected?.kind==="custom"&&selected.mode!=="manual"&&<>
                 <Focusable className="gl-tab-manager-action gl-tab-manager-primary"
                   focusClassName="gl-focused" noFocusRing onActivate={openSmartEditor}
-                  onCancelButton={onClose}>
+                  onCancelButton={onClose} onButtonDown={editorDpad}>
                   <MdTune/> Edit Smart Rules ({smartRulesForTab(selected).length})
                 </Focusable>
                 <Focusable className="gl-tab-manager-action"
                   focusClassName="gl-focused" noFocusRing
-                  onActivate={()=>openPicker("include")} onCancelButton={onClose}>
+                  onActivate={()=>openPicker("include")} onCancelButton={onClose} onButtonDown={editorDpad}>
                   <MdListAlt/> Always Include ({selected.forceInclude?.length??0})
                 </Focusable>
                 <Focusable className="gl-tab-manager-action"
                   focusClassName="gl-focused" noFocusRing
-                  onActivate={()=>openPicker("exclude")} onCancelButton={onClose}>
+                  onActivate={()=>openPicker("exclude")} onCancelButton={onClose} onButtonDown={editorDpad}>
                   <MdListAlt/> Always Exclude ({selected.forceExclude?.length??0})
                 </Focusable>
                 <div className="gl-tab-manager-rule-preview">
@@ -334,7 +378,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
                 </div>
               </>}
               {selected?.kind==="custom"&&<Focusable className="gl-tab-manager-action gl-tab-manager-danger"
-                focusClassName="gl-focused" noFocusRing onActivate={remove} onCancelButton={onClose}>
+                focusClassName="gl-focused" noFocusRing onActivate={remove} onCancelButton={onClose} onButtonDown={editorDpad}>
                 <MdDeleteOutline/> Delete
               </Focusable>}
             </div>
@@ -346,20 +390,20 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
               </div>
               {!editing&&<Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
                 noFocusRing onActivate={()=>setCreateMode(v=>v==="manual"?"smart":"manual")}
-                onCancelButton={onClose}>
+                onCancelButton={onClose} onButtonDown={editorDpad}>
                 <MdTune/> Type: {createMode==="manual"?"Manual":"Smart"}
               </Focusable>}
               {!editing&&createMode==="smart"&&
                 <Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
-                  noFocusRing onActivate={cycleFilter} onCancelButton={onClose}>
+                  noFocusRing onActivate={cycleFilter} onCancelButton={onClose} onButtonDown={editorDpad}>
                   <MdTune/> Filter: {OWN_FILTERS.find(f=>f.id===filter)?.title}
                 </Focusable>}
               <Focusable className="gl-tab-manager-action gl-tab-manager-primary"
                 focusClassName="gl-focused" noFocusRing onActivate={changeName}
-                onCancelButton={onClose}><MdAdd/>{editing?"Save name":"Add tab"}</Focusable>
+                onCancelButton={onClose} onButtonDown={editorDpad}><MdAdd/>{editing?"Save name":"Add tab"}</Focusable>
               {editing&&<Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
                 noFocusRing onActivate={()=>{setEditing(false);setDraft("");}}
-                onCancelButton={onClose}>Cancel rename</Focusable>}
+                onCancelButton={onClose} onButtonDown={editorDpad}>Cancel rename</Focusable>}
             </div>
             {busy&&<p className="gl-tab-manager-note">Saving tabs…</p>}
             {error&&<p className="gl-tab-manager-error" role="alert">{error}</p>}
