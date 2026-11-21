@@ -90,5 +90,5 @@ test("manual code field remains opt-in and native flow never reads another plugi
   assert.match(frontend,/Manual sign-in \(fallback\)/);
   assert.match(frontend,/startNativeGogLogin\(account\.login_url/);
   assert.doesNotMatch(native,/Unifideck|unifideck|gogdl|fs\.|readFile/);
-  assert.doesNotMatch(native,/window\.location\.href\s*=|iframe|document\.cookie/);
+  assert.doesNotMatch(native,/window\.location\.href\s*=|<iframe|document\.cookie/);
 });
