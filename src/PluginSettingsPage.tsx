@@ -61,6 +61,13 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
     if(b===GamepadButton.DIR_LEFT){stop(e);onFocusRail();}
     else if(b===GamepadButton.DIR_UP){stop(e);index===0?statusRef.current?.focus():focus(index-1);}
     else if(b===GamepadButton.DIR_DOWN){stop(e);focus(index+1);}
+    else if(b===GamepadButton.DIR_RIGHT&&index>0){
+      stop(e);
+      if(index===1)openTabs();
+      else if(index===2)openTool("steamgriddb");
+      else if(index===3)openTool("updates");
+      else Navigation.Navigate("/game-library/library-diagnostics");
+    }
   };
   const toggleHome=()=>{
     if(busy||!loaded)return;
@@ -108,7 +115,11 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
             onActivate={closeTool} onCancelButton={closeTool}
             onButtonDown={(e:GamepadEvent)=>{
               if(e.detail?.button===GamepadButton.DIR_LEFT){stop(e);onFocusRail();}
-              else if(e.detail?.button===GamepadButton.DIR_DOWN){
+              else if(e.detail?.button===GamepadButton.DIR_UP){
+                stop(e);statusRef.current?.focus();
+              }
+              else if(e.detail?.button===GamepadButton.DIR_DOWN||
+                e.detail?.button===GamepadButton.DIR_RIGHT){
                 const target=toolContentRef.current?.querySelector<HTMLElement>(
                   "button, input, [tabindex='0']");
                 if(target){stop(e);target.focus();}
@@ -121,9 +132,15 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
             "Check for Game Library releases and install verified updates.":
             "Configure missing cover and hero artwork with your personal API key."}</p>
         </div>
-        <div className="gl-plugin-settings-tool-content" ref={toolContentRef}>
+        <Focusable className="gl-plugin-settings-tool-content" ref={toolContentRef}
+          flow-children="column" onCancelButton={closeTool}
+          onButtonDown={(e:GamepadEvent)=>{
+            if(e.detail?.button===GamepadButton.DIR_LEFT){
+              stop(e);toolBackRef.current?.focus();
+            }
+          }}>
           {activeTool==="updates"?<UpdatesPanel/>:<SteamGridDBPanel/>}
-        </div>
+        </Focusable>
       </section>
       :
       <section className="gl-plugin-settings-body">
