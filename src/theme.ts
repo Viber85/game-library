@@ -1858,4 +1858,53 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-grid-page.gl-alphabet-enabled > .gl-full-grid-scroll {margin-right:45px;}
 }
 
+/* v0.5.9-test.14 — Library SIZE / estimated Steam Store minimum.
+ * Only dedicated Library cards; Home strip and Search grid are untouched.
+ * Keep native card dimensions, gamepad focus and Phase 1-3 alphabet rail. */
+.gl-root .gl-full-grid .gl-poster[data-size-active="true"]::after {
+  content:"";
+  position:absolute;left:0;right:0;bottom:0;height:95px;
+  pointer-events:none;
+  background:linear-gradient(0deg,rgba(3,8,18,.98),rgba(3,8,18,.64) 62%,transparent);
+  z-index:0;
+}
+.gl-root .gl-full-grid .gl-poster[data-size-active="true"] .gl-poster-name {
+  bottom:37px;
+  left:10px;right:10px;z-index:1;
+  font-size:clamp(12px,1vw,14px);
+  line-height:1.16;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+  max-height:2.4em;
+}
+.gl-root .gl-full-grid .gl-poster-size {
+  position:absolute;left:9px;right:9px;bottom:9px;
+  z-index:2;display:flex;align-items:center;
+  gap:5px;min-width:0;
+  color:#f0f5fb;white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+  pointer-events:none;
+  text-shadow:0 1px 3px rgba(0,0,0,.85);
+}
+.gl-root .gl-full-grid .gl-poster-size svg {
+  width:15px;height:15px;flex:none;opacity:.87;
+}
+.gl-root .gl-full-grid .gl-poster-size small {
+  font-size:10px;font-weight:650;letter-spacing:.06em;
+  color:#afbdce;
+}
+.gl-root .gl-full-grid .gl-poster-size strong {
+  margin-left:auto;
+  font-size:clamp(11px,1vw,14px);font-weight:750;
+}
+@media(max-height:650px) {
+  .gl-root .gl-full-grid .gl-poster-size {bottom:5px;left:6px;right:6px;gap:3px;}
+  .gl-root .gl-full-grid .gl-poster-size strong {font-size:11px;}
+  .gl-root .gl-full-grid .gl-poster[data-size-active="true"] .gl-poster-name {
+    bottom:28px;font-size:11px;left:7px;right:7px;
+  }
+}
+
 `;
