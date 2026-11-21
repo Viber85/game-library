@@ -1,4 +1,4 @@
-"""Game Library: read-only TabMaster integration and safe update discovery."""
+"""Game Library: independent SteamOS library and update discovery."""
 import asyncio
 import importlib.util
 import json
@@ -255,42 +255,81 @@ def _load_protondb():
     return module
 
 
-def _tabmaster_path():
-    settings_dir = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR", "")
-    if not settings_dir:
+OWN_TAB_BUILTINS = (
+    ("AllGames", "All Games", "all"),
+    ("Installed", "Installed", "installed"),
+    ("Steam", "Steam", "steam"),
+    ("NonSteam", "Non-Steam", "nonsteam"),
+    ("Favorites", "Favorites", "favorites"),
+)
+OWN_TAB_FILTERS = {"all", "installed", "not-installed", "steam", "nonsteam", "favorites"}
+
+
+def _own_tab_defaults():
+    return [
+        {"id": key, "title": title, "position": i, "visible": True,
+         "kind": kind, "filter": kind}
+        for i, (key, title, kind) in enumerate(OWN_TAB_BUILTINS)
+    ]
+
+
+def _own_tab_validate(tabs):
+    """Only our own strict per-user schema; never read/import peer-plugin configs."""
+    if not isinstance(tabs, list) or not 5 <= len(tabs) <= 40:
+        raise ValueError("Invalid tab list")
+    seen = set()
+    output = []
+    builtin = {row[0]: row[2] for row in OWN_TAB_BUILTINS}
+    for tab in tabs:
+        if not isinstance(tab, dict):
+            raise ValueError("Invalid tab item")
+        tab_id, title = tab.get("id"), tab.get("title")
+        position, visible = tab.get("position"), tab.get("visible")
+        kind, rule = tab.get("kind"), tab.get("filter")
+        if (not isinstance(tab_id, str) or
+            (tab_id not in builtin and not re.fullmatch(r"custom-[a-z0-9-]{4,50}", tab_id)) or
+            tab_id in seen or not isinstance(title, str) or
+            not 1 <= len(title.strip()) <= 45 or
+            any(ord(char) < 32 for char in title) or
+            type(position) is not int or not 0 <= position < 40 or
+            type(visible) is not bool or rule not in OWN_TAB_FILTERS):
+            raise ValueError("Invalid tab field")
+        if tab_id in builtin:
+            if kind != builtin[tab_id] or rule != kind:
+                raise ValueError("Built-in tab has an invalid filter")
+        elif kind != "custom":
+            raise ValueError("Custom tab has an invalid kind")
+        seen.add(tab_id)
+        output.append({"id": tab_id, "title": title.strip(), "position": position,
+                       "visible": visible, "kind": kind, "filter": rule})
+    if not set(builtin).issubset(seen):
+        raise ValueError("Missing built-in tab")
+    if not any(tab["visible"] for tab in output):
+        raise ValueError("At least one tab must remain visible")
+    if len({tab["position"] for tab in output}) != len(output):
+        raise ValueError("Duplicate tab order")
+    output.sort(key=lambda tab: tab["position"])
+    for index, tab in enumerate(output):
+        tab["position"] = index
+    return output
+
+
+def _own_tab_account(account_id):
+    if (not isinstance(account_id, str) or
+        not re.fullmatch(r"[1-9][0-9]{0,11}", account_id)):
         return None
-    root = pathlib.Path(settings_dir).resolve().parent
-    # Read only the explicitly named peer plugin's settings, never walk the file system.
-    path = root / "TabMaster" / "settings.json"
-    return path if path.is_file() else None
+    return account_id
 
 
-def _tabmaster_enabled():
-    """Decky's loader.json is authoritative for the disabled plugin list.
-
-    Merely having TabMaster/settings.json is NOT proof that the plugin runs.
-    When the Decky state is missing or malformed, fail closed rather than
-    mistakenly treating an old TabMaster configuration as active.
-    """
-    settings_dir = os.environ.get("DECKY_PLUGIN_SETTINGS_DIR", "")
-    if not settings_dir:
-        return False, "Decky plugin status unavailable"
-    root = pathlib.Path(settings_dir).resolve().parent
-    loader = root / "loader.json"
-    try:
-        if not loader.is_file() or loader.stat().st_size > 2_000_000:
-            return False, "Decky loader state unavailable"
-        saved = json.loads(loader.read_text(encoding="utf-8"))
-        if not isinstance(saved, dict):
-            return False, "Invalid Decky loader state"
-        disabled = saved.get("disabled_plugins", [])
-        if not isinstance(disabled, list) or not all(isinstance(name, str) for name in disabled):
-            return False, "Invalid Decky disabled plugin list"
-        if "TabMaster" in disabled:
-            return False, "TabMaster disabled in Decky Loader"
-        return True, ""
-    except (OSError, ValueError, TypeError):
-        return False, "Unable to read Decky plugin state"
+def _own_tab_read(account_id):
+    saved = _read_preferences().get("tabs_by_user", {})
+    profile = saved.get(account_id) if isinstance(saved, dict) else None
+    if profile is not None:
+        try:
+            return _own_tab_validate(profile)
+        except ValueError:
+            pass
+    return _own_tab_defaults()
 
 
 class Plugin:
@@ -339,7 +378,7 @@ class Plugin:
         return {"ok": True, "collections": _manual_collection_snapshot(_read_preferences())}
 
     async def set_manual_collection(self, section: str, appid: int, included: bool):
-        """Atomic preference replacement; Steam/TabMaster collections are untouched."""
+        """Atomic preference replacement; native Steam collections are untouched."""
         if type(section) is not str or section not in ("backlog", "completed") or \
                 type(appid) is not int or not (0 < appid <= 9007199254740991) or \
                 type(included) is not bool:
@@ -575,62 +614,30 @@ class Plugin:
         except (OSError, ValueError, TypeError) as exc:
             return {"version": "", "error": type(exc).__name__}
 
-    async def get_tabmaster_tabs(self, user_id: str = ""):
-        """Read TabMaster's active-user tab *definitions*, never edit its settings.
+    async def get_library_tabs(self, account_id: str = ""):
+        """Read self-owned tabs, scoped to the active Steam account."""
+        account = _own_tab_account(account_id)
+        if account is None:
+            return {"ok": False, "reason": "Active Steam account unavailable",
+                    "tabs": _own_tab_defaults()}
+        return {"ok": True, "tabs": _own_tab_read(account)}
 
-        Custom filters are returned to the frontend only for supported local evaluation;
-        unsupported filters are not approximated as full-game collections.
-        """
-        # Auto is built in, not a user-configurable setting. Obsolete saved
-        # "tab_source" values from v0.4.13 are deliberately ignored.
-        mode = "auto"
-        enabled, reason = _tabmaster_enabled()
-        if not enabled:
-            return {"available": False, "reason": reason, "tabs": [], "mode": mode}
-        path = _tabmaster_path()
-        if not path:
-            return {"available": False, "reason": "TabMaster settings not found", "tabs": [], "mode": mode}
-        if not isinstance(user_id, str) or not re.fullmatch(r"[0-9]{1,20}", user_id):
-            return {"available": False, "reason": "Active Steam account not detected", "tabs": [], "mode": mode}
+    async def save_library_tabs(self, account_id: str, tabs: list):
+        """Persist strict validated tabs atomically without touching Steam."""
+        account = _own_tab_account(account_id)
+        if account is None:
+            return {"ok": False, "reason": "Steam account unavailable"}
         try:
-            if path.stat().st_size > 2_000_000:
-                raise ValueError("TabMaster settings too large")
-            data = json.loads(path.read_text(encoding="utf-8"))
-            users = data.get("usersDict", {})
-            account_id = str(int(user_id) & 0xffffffff)
-            user = users.get(account_id) if isinstance(users, dict) else None
-            if not isinstance(user, dict):
-                return {"available": False, "reason": "TabMaster profile not found for this Steam account", "tabs": [], "mode": mode}
-            defs = user.get("tabs", {})
-            if not isinstance(defs, dict):
-                raise ValueError("invalid tab definitions")
-            output = []
-            for key, val in defs.items():
-                if not isinstance(val, dict) or not isinstance(key, str):
-                    continue
-                position = val.get("position", -1)
-                if type(position) is not int or position < 0:
-                    continue
-                title = val.get("title", key)
-                if not isinstance(title, str) or not title.strip():
-                    continue
-                filters = val.get("filters")
-                # Only carry a bounded subset, to avoid moving arbitrary plugin settings to the UI.
-                if not isinstance(filters, list):
-                    filters = None
-                if filters and len(filters) > 40:
-                    filters = None
-                output.append({
-                    "id": key[:128],
-                    "title": title[:80],
-                    "position": position,
-                    "filters": filters,
-                    "filtersMode": val.get("filtersMode", "and") if val.get("filtersMode") in ("and", "or") else "and",
-                })
-            output.sort(key=lambda entry: (entry["position"], entry["title"]))
-            return {"available": bool(output), "tabs": output[:50], "reason": "" if output else "TabMaster has no visible tabs", "mode": mode}
-        except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
-            return {"available": False, "reason": "Unable to read TabMaster settings: " + type(exc).__name__, "tabs": [], "mode": mode}
+            valid = _own_tab_validate(tabs)
+            saved = _read_preferences()
+            profiles = saved.get("tabs_by_user", {})
+            profiles = dict(profiles) if isinstance(profiles, dict) else {}
+            profiles[account] = valid
+            saved["tabs_by_user"] = profiles
+            _write_preferences(saved)
+            return {"ok": True, "tabs": valid}
+        except (ValueError, OSError) as error:
+            return {"ok": False, "reason": str(error)[:120]}
 
     async def validate_github_releases(self, release_json: str):
         try:
