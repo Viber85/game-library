@@ -144,7 +144,8 @@ function GameCard({
         <span className="gl-poster-name">{game.title}</span>
         {showInstallSize&&<SteamInstallSizeBadge
           key={"size-"+game.id} game={game} active={selectedForSize}/>}
-        {game.installed && <MdCheckCircle className="gl-installed-indicator" aria-label="Installed" />}
+        {game.installed && !showInstallSize &&
+          <MdCheckCircle className="gl-installed-indicator" aria-label="Installed" />}
       </div>
     </Focusable>
   );
