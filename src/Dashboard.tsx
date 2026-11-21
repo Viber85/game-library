@@ -108,7 +108,7 @@ function GameCard({
     const b = e.detail?.button;
     // Select/View is intentionally not mapped inside Game Library.
     if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT ||
-        b === GamepadButton.DIR_UP || (captureVertical && b === GamepadButton.DIR_DOWN) ||
+        b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN ||
         b === GamepadButton.BUMPER_LEFT ||
         b === GamepadButton.BUMPER_RIGHT) {
       consume(e);
@@ -220,6 +220,10 @@ export function Dashboard({initialMode="home",originRoute}:
   const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
+  const searchBackRef=useRef<HTMLDivElement>(null);
+  const nativeLibraryRef=useRef<HTMLDivElement>(null);
+  const libraryBackRef=useRef<HTMLDivElement>(null);
+  const homeActionRefs=useRef<Array<HTMLDivElement|null>>([]);
   const [railIndex, setRailIndex] = useState(0);
   const lastRailId=useRef(tabsMode?"settings":settingsMode?"settings":collectionsMode?"collections":initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
   const [railExpanded, setRailExpanded] = useState(false);
@@ -780,12 +784,25 @@ export function Dashboard({initialMode="home",originRoute}:
             <div className="gl-grid-header-actions">
               <Focusable ref={sortRef} className="gl-grid-back" focusClassName="gl-focused"
                 noFocusRing onActivate={showSortMenu}
-                onCancelButton={exitGrid} onOKActionDescription="Sort search results">
+                onCancelButton={exitGrid} onOKActionDescription="Sort search results"
+                onButtonDown={(e:GamepadEvent)=>{
+                  const b=e.detail?.button;
+                  if(b===GamepadButton.DIR_RIGHT){consume(e);searchBackRef.current?.focus();}
+                  else if(b===GamepadButton.DIR_LEFT){consume(e);firstSearchFilterRef.current?.focus();}
+                  else if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
+                  else if(b===GamepadButton.DIR_DOWN){consume(e);focusGrid(0);}
+                }}>
                 Sort · {sortLabel(sort)}
               </Focusable>
-              <Focusable className="gl-grid-back" focusClassName="gl-focused"
+              <Focusable ref={searchBackRef} className="gl-grid-back" focusClassName="gl-focused"
                 noFocusRing onActivate={exitGrid} onCancelButton={exitGrid}
-                onOKActionDescription="Return to previous Game Library page">
+                onOKActionDescription="Return to previous Game Library page"
+                onButtonDown={(e:GamepadEvent)=>{
+                  const b=e.detail?.button;
+                  if(b===GamepadButton.DIR_LEFT){consume(e);sortRef.current?.focus();}
+                  else if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
+                  else if(b===GamepadButton.DIR_DOWN){consume(e);focusGrid(0);}
+                }}>
                 <MdArrowBack/> Back
               </Focusable>
             </div>
@@ -934,13 +951,29 @@ export function Dashboard({initialMode="home",originRoute}:
                   <span>{shown.length} games · Midnight Library</span></div>
                 <div className="gl-grid-header-actions">
                   {initialMode==="library"&&<Focusable
+                    ref={nativeLibraryRef}
                     className="gl-grid-back gl-native-library" noFocusRing focusClassName="gl-focused"
                     onActivate={()=>Navigation.Navigate("/library")}
+                    onButtonDown={(e:GamepadEvent)=>{
+                      const b=e.detail?.button;
+                      if(b===GamepadButton.DIR_RIGHT){consume(e);libraryBackRef.current?.focus();}
+                      else if(b===GamepadButton.DIR_LEFT){consume(e);focusRail(railIndex);}
+                      else if(b===GamepadButton.DIR_DOWN){consume(e);focusGrid(0);}
+                      else if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
+                    }
                     onOKActionDescription="Open original Steam library">
                     Steam Library
                   </Focusable>}
-                  <Focusable className="gl-grid-back" noFocusRing focusClassName="gl-focused"
+                  <Focusable ref={libraryBackRef} className="gl-grid-back" noFocusRing focusClassName="gl-focused"
                     onActivate={exitGrid} onCancelButton={exitGrid}
+                    onButtonDown={(e:GamepadEvent)=>{
+                      const b=e.detail?.button;
+                      if(b===GamepadButton.DIR_LEFT){consume(e);
+                        (initialMode==="library"?nativeLibraryRef.current:null)?.focus();
+                        if(initialMode!=="library")focusRail(railIndex);
+                      }else if(b===GamepadButton.DIR_DOWN){consume(e);focusGrid(0);}
+                      else if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
+                    }
                     onOKActionDescription={initialMode==="library"?"Return Home":"Back to games"}>
                     <MdArrowBack/> {initialMode==="library"?"Home":"Back to carousel"}
                   </Focusable>
@@ -997,6 +1030,10 @@ export function Dashboard({initialMode="home",originRoute}:
                   onSelect={() => setSelectedId(game.id)}
                   onSort={showSortMenu}
                   onMove={button=>{
+                    if(button===GamepadButton.DIR_DOWN){
+                      homeActionRefs.current[0]?.focus();
+                      return;
+                    }
                     if(button===GamepadButton.DIR_LEFT)index===0?focusRail(railIndex):goToGame(index-1);
                     else if(button===GamepadButton.DIR_RIGHT) {
                       if (index===previewGames.length-1 && shown.length>INITIAL_GAME_COUNT) viewMoreRef.current?.focus();
@@ -1018,6 +1055,9 @@ export function Dashboard({initialMode="home",originRoute}:
                     const b=e.detail?.button;
                     if(b===GamepadButton.DIR_LEFT){consume(e);goToGame(previewGames.length-1);}
                     else if(b===GamepadButton.DIR_UP){consume(e);focusPill(tabs.indexOf(tab));}
+                    else if(b===GamepadButton.DIR_DOWN){
+                      consume(e);homeActionRefs.current[0]?.focus();
+                    }
                     else if(handleBumper(e))return;
                   }}>
                   <MdChevronRight size={42}/>
@@ -1042,12 +1082,28 @@ export function Dashboard({initialMode="home",originRoute}:
                   <AchievementsCard key={"achievements-"+selected.id} game={selected}/>
                 </div>
                 <Focusable className="gl-actions" flow-children="row">
-                  <Focusable className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing
-                    onActivate={() => runGameAction(selected)} onOKActionDescription={gameActionLabel(selected)}>
+                  <Focusable ref={el=>{homeActionRefs.current[0]=el;}}
+                    className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing
+                    onActivate={() => runGameAction(selected)} onOKActionDescription={gameActionLabel(selected)}
+                    onButtonDown={(e:GamepadEvent)=>{
+                      const b=e.detail?.button;
+                      if(b===GamepadButton.DIR_RIGHT){consume(e);homeActionRefs.current[1]?.focus();}
+                      else if(b===GamepadButton.DIR_LEFT||b===GamepadButton.DIR_UP){
+                        consume(e);goToGame(Math.max(0,previewGames.findIndex(g=>g.id===selected.id)));
+                      }
+                    }} onCancelButton={()=>goToGame()}>
                     {selected.installed ? <MdPlayArrow /> : <MdDownload />} {gameActionLabel(selected)}
                   </Focusable>
-                  <Focusable className="gl-button" focusClassName="gl-focused" noFocusRing
-                    onActivate={() => openGameDetails(selected)} onOKActionDescription="Game details">
+                  <Focusable ref={el=>{homeActionRefs.current[1]=el;}}
+                    className="gl-button" focusClassName="gl-focused" noFocusRing
+                    onActivate={() => openGameDetails(selected)} onOKActionDescription="Game details"
+                    onButtonDown={(e:GamepadEvent)=>{
+                      const b=e.detail?.button;
+                      if(b===GamepadButton.DIR_LEFT){consume(e);homeActionRefs.current[0]?.focus();}
+                      else if(b===GamepadButton.DIR_UP){consume(e);
+                        goToGame(Math.max(0,previewGames.findIndex(g=>g.id===selected.id)));
+                      }
+                    }} onCancelButton={()=>goToGame()}>
                     <MdInfo /> Game Details
                   </Focusable>
 
