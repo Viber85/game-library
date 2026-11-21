@@ -1,8 +1,9 @@
-import {useEffect,useMemo,useRef,useState,type RefObject} from "react";
+import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent,type RefObject} from "react";
 import {Focusable,GamepadButton,GamepadEvent} from "@decky/ui";
 import {getGridColumnCount} from "./gridNavigation";
 import {
   alphabetLetters,firstGameByLetter,letterForTitle,nextPopulatedLetter,
+  letterAtRailPosition,nearestPopulatedLetter,
 } from "./libraryAlphabet";
 import type {LibraryGame} from "./steam";
 
@@ -36,6 +37,10 @@ export function LibraryAlphabetIndicator({
   const focusTime=useRef(0);
   const popupTimer=useRef<number|null>(null);
   const scrollFrame=useRef<number|null>(null);
+  const activePointer=useRef<{id:number;letter:string|null}|null>(null);
+  // A touch may also synthesize a click. Do not let Decky's onActivate
+  // jump a second time after our pointer-up already committed the jump.
+  const suppressTouchActivateUntil=useRef(0);
   const order=useMemo(()=>alphabetLetters(descending),[descending]);
   const targets=useMemo(()=>firstGameByLetter(allGames),[allGames]);
 
@@ -144,6 +149,7 @@ export function LibraryAlphabetIndicator({
     onReturnToGame();
   };
   const jumpToLetter=()=>{
+    if(activePointer.current||Date.now()<suppressTouchActivateUntil.current)return;
     const target=choice!==null?targets.get(choice):undefined;
     if(target===undefined)returnToGrid();
     else{
@@ -170,6 +176,75 @@ export function LibraryAlphabetIndicator({
       onChangeTab(button===GamepadButton.BUMPER_LEFT?-1:1);
     }
   };
+  /** A tap commits its letter on release; a drag previews each letter
+   * crossed, then commits on release. Pointer capture keeps tracking even
+   * when the user's finger leaves the narrow right-side rail.
+   */
+  const letterUnderPointer=(event:ReactPointerEvent<HTMLDivElement>):string|null=>{
+    const node=event.currentTarget;
+    const rect=node.getBoundingClientRect();
+    const computed=window.getComputedStyle(node);
+    const raw=letterAtRailPosition(event.clientY,rect.top,rect.height,order,
+      parseFloat(computed.paddingTop)||0,parseFloat(computed.paddingBottom)||0);
+    return raw===null?null:nearestPopulatedLetter(raw,order,targets);
+  };
+  const previewPointerLetter=(next:string)=>{
+    const pointer=activePointer.current;
+    if(!pointer||pointer.letter===next)return;
+    pointer.letter=next;
+    setChoosing(true);
+    setChoice(next);
+    showPopup(next);
+  };
+  const onRailPointerDown=(event:ReactPointerEvent<HTMLDivElement>)=>{
+    if(!event.isPrimary||event.button!==0||activePointer.current)return;
+    const next=letterUnderPointer(event);
+    if(next===null)return;
+    event.preventDefault();
+    event.stopPropagation();
+    activePointer.current={id:event.pointerId,letter:null};
+    suppressTouchActivateUntil.current=Date.now()+650;
+    if(typeof event.currentTarget.setPointerCapture==="function"){
+      try{event.currentTarget.setPointerCapture(event.pointerId);}catch{}
+    }
+    previewPointerLetter(next);
+  };
+  const onRailPointerMove=(event:ReactPointerEvent<HTMLDivElement>)=>{
+    if(activePointer.current?.id!==event.pointerId)return;
+    const next=letterUnderPointer(event);
+    if(next!==null)previewPointerLetter(next);
+  };
+  const onRailPointerUp=(event:ReactPointerEvent<HTMLDivElement>)=>{
+    const pointer=activePointer.current;
+    if(!pointer||pointer.id!==event.pointerId)return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect=event.currentTarget.getBoundingClientRect();
+    // Deliberately releasing well outside the rail cancels the jump.
+    const outside=event.clientX<rect.left-24||event.clientX>rect.right+24;
+    const next=outside?null:letterUnderPointer(event);
+    const selected=outside?null:(next??pointer.letter);
+    activePointer.current=null;
+    suppressTouchActivateUntil.current=Date.now()+650;
+    if(typeof event.currentTarget.releasePointerCapture==="function"){
+      try{event.currentTarget.releasePointerCapture(event.pointerId);}catch{}
+    }
+    if(selected!==null){
+      const target=targets.get(selected);
+      if(target!==undefined){
+        leaveRail();
+        onJumpToGame(target);
+        return;
+      }
+    }
+    leaveRail();
+  };
+  const onRailPointerCancel=(event:ReactPointerEvent<HTMLDivElement>)=>{
+    if(activePointer.current?.id!==event.pointerId)return;
+    activePointer.current=null;
+    suppressTouchActivateUntil.current=Date.now()+650;
+    leaveRail(); // interrupted swipe must never open an unrelated game
+  };
   const highlighted=choosing?(choice??letter):letter;
 
   return <>
@@ -183,6 +258,10 @@ export function LibraryAlphabetIndicator({
       onActivate={jumpToLetter}
       onCancelButton={returnToGrid}
       onButtonDown={onRailButton}
+      onPointerDown={onRailPointerDown}
+      onPointerMove={onRailPointerMove}
+      onPointerUp={onRailPointerUp}
+      onPointerCancel={onRailPointerCancel}
       onOptionsButton={(e:GamepadEvent)=>{
         e.preventDefault();e.stopPropagation();onOpenSort();
       }}
