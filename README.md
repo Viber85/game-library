@@ -2,6 +2,27 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.6 — native SteamOS gamepad focus
+
+**Fixes menu focus at its source.** Prior code called the browser's
+`HTMLElement.focus()`, but Steam Game Mode uses a separate gamepad
+navigation tree. For affected custom menus, Game Library now listens to
+native `vgp_ondirection` events and uses Decky's
+`getGamepadNavigationTrees()` / `BTakeFocus()` to transfer **real
+Steam controller focus** between our controls.
+
+The scope is Tab Manager, Smart Rules, Manual game picker, Plugin
+Settings and integrations, Appearance, Collections and diagnostics.
+**Home, Library and Search are unchanged.** A native focus transfer
+that fails simply leaves the preexisting navigation behavior intact.
+Saved tabs, game membership, metadata and artwork are unaffected.
+
+Unit tests now cover the Steam navigation-tree operation as well as
+button geometry, focus targeting and scope isolation. Real device
+confirmation of the native focus tree is still required.
+
+See `docs/release-notes-0.6.6.md` for tests on the handheld.
+
 ## v0.6.5 — four-direction Game Mode navigation overhaul
 
 Custom menus now use explicit D-pad and analogue navigation on all
