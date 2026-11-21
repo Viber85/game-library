@@ -147,6 +147,11 @@ class SteamSizeService:
         reply = value.get("reply")
         if not isinstance(reply, dict):
             return None
+        # 0.6.8 includes Steam's official product name. Legacy positive
+        # entries lack it, so refetch ONLY on selection to validate cross-
+        # storefront comparisons rather than accepting a stale unknown title.
+        if reply.get("status") == "estimated" and not reply.get("steam_title"):
+            return None
         return {**reply, "cached": True}
 
     def lookup(self, appid):
