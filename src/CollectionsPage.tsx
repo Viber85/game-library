@@ -416,7 +416,7 @@ export function CollectionsPage({
           </div>:<div className="gl-collections-empty">
             <MdFolder aria-hidden="true"/>
             <h2>No personal groups yet</h2>
-            <p>Steam and TabMaster collections are still available in Library.
+            <p>Game Library custom tabs are available in Library.
               Creating your own Game Library collections comes next.</p>
           </div>
         ):entries.length?(
