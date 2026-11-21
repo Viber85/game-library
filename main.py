@@ -218,6 +218,22 @@ def _runtime_cache_path():
     return pathlib.Path(directory) / "hltb_cache.json" if directory else BASE / "hltb_cache.json"
 
 
+def _steam_size_cache_path():
+    directory = os.environ.get("DECKY_PLUGIN_RUNTIME_DIR") or os.environ.get("DECKY_PLUGIN_SETTINGS_DIR")
+    return pathlib.Path(directory) / "steam_size_cache.json" if directory else BASE / "steam_size_cache.json"
+
+
+def _load_steam_size():
+    """Load packaged local size metadata backend without relying on sys.path."""
+    path = BASE / "steam_size.py"
+    spec = importlib.util.spec_from_file_location("game_library_local_steam_size", str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Steam size helper missing. Reinstall plugin.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _load_protondb():
     """Load packaged module by file path, irrespective of Decky's sys.path."""
     spec = importlib.util.spec_from_file_location("game_library_local_protondb", str(BASE / "protondb.py"))
@@ -267,6 +283,7 @@ def _tabmaster_enabled():
 
 
 class Plugin:
+    _steam_size_service = None
     _hltb_service = None
     _protondb_service = None
     _protondb_name_resolver = None
@@ -438,6 +455,30 @@ class Plugin:
             return await asyncio.to_thread(self._steamgriddb_service.lookup, title, key)
         except (OSError, RuntimeError, ValueError):
             return {"status": "error", "cover": None, "hero": None}
+
+    def _steam_size_cache_service(self):
+        if self._steam_size_service is None:
+            self._steam_size_service = _load_steam_size().SteamSizeService(
+                _steam_size_cache_path())
+        return self._steam_size_service
+
+    async def steam_size_cached_bulk(self, appids: list):
+        """Read-only local cache: never fetch hundreds of Store appdetails."""
+        if not isinstance(appids, list) or len(appids) > 1000:
+            return {"entries": []}
+        try:
+            return await asyncio.to_thread(self._steam_size_cache_service().cached_bulk, appids)
+        except (OSError, RuntimeError, ValueError):
+            return {"entries": []}
+
+    async def steam_install_size(self, appid: int):
+        """Selected Steam title only; Steam Store requirements are estimates."""
+        if type(appid) is not int or not 1 <= appid <= 0xFFFFFFFF:
+            return {"status": "invalid"}
+        try:
+            return await asyncio.to_thread(self._steam_size_cache_service().lookup, appid)
+        except (OSError, RuntimeError, ValueError):
+            return {"status": "error"}
 
     def _hltb_cache_service(self):
         if self._hltb_service is None:
