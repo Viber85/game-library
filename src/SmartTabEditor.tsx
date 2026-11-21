@@ -20,22 +20,33 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
   const [rules,setRules]=useState<SmartRule[]>(()=>smartRulesForTab(tab));
   const [join,setJoin]=useState<SmartJoin>(tab.ruleJoin==="any"?"any":"all");
   const [busy,setBusy]=useState(false);
+  const [choosingIndex,setChoosingIndex]=useState<number|null>(null);
   const [error,setError]=useState("");
   const backRef=useRef<HTMLDivElement>(null);
   const rowRefs=useRef<Array<HTMLDivElement|null>>([]);
+  const optionRefs=useRef<Array<HTMLDivElement|null>>([]);
   useEffect(()=>{
     const frame=window.requestAnimationFrame(()=>backRef.current?.focus());
     return ()=>window.cancelAnimationFrame(frame);
   },[]);
+  useEffect(()=>{
+    if(choosingIndex===null)return;
+    const frame=window.requestAnimationFrame(()=>optionRefs.current[0]?.focus());
+    return ()=>window.cancelAnimationFrame(frame);
+  },[choosingIndex]);
   const available=SMART_RULES.filter(x=>!rules.some(rule=>rule.type===x.id));
   const count=useMemo(()=>gamesForLibraryTab({...tab,mode:"smart",rules,ruleJoin:join},games).games.length,
     [games,tab,rules,join]);
-  const cycle=(index:number)=>{
-    const used=new Set(rules.filter((_,i)=>i!==index).map(x=>x.type));
-    const allowed=SMART_RULES.filter(x=>!used.has(x.id));
-    const at=allowed.findIndex(x=>x.id===rules[index].type);
-    const next=allowed[(at+1)%allowed.length];
-    if(next)setRules(prev=>prev.map((rule,i)=>i===index?{type:next.id}:rule));
+  const availableAt=(index:number)=>SMART_RULES.filter(x=>
+    !rules.some((rule,i)=>i!==index&&rule.type===x.id));
+  const select=(index:number,type:SmartRuleType)=>{
+    setRules(prev=>prev.map((rule,i)=>i===index?{type}:rule));
+    setChoosingIndex(null);
+    window.requestAnimationFrame(()=>rowRefs.current[index]?.focus());
+  };
+  const closeChoices=(index:number)=>{
+    setChoosingIndex(null);
+    window.requestAnimationFrame(()=>rowRefs.current[index]?.focus());
   };
   const add=()=>{
     if(available.length>=1)setRules(prev=>[...prev,{type:available[0].id}]);
@@ -85,17 +96,40 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
             <span className="gl-tab-smart-rule-number">{index+1}</span>
             <Focusable ref={el=>{rowRefs.current[index]=el;}}
               className="gl-tab-smart-rule-picker" focusClassName="gl-focused"
-              noFocusRing onActivate={()=>cycle(index)} onCancelButton={onClose}>
+              noFocusRing onActivate={()=>setChoosingIndex(current=>current===index?null:index)}
+              onCancelButton={choosingIndex===index?()=>closeChoices(index):onClose}>
               <strong>{label(rule.type)}</strong>
-              <span>Choose condition</span>
+              <span>{choosingIndex===index?"Select below":"Change condition"}</span>
               <MdSettingsSuggest/>
             </Focusable>
             <Focusable className="gl-tab-manager-action gl-tab-manager-danger"
               focusClassName="gl-focused" noFocusRing
-              onActivate={()=>setRules(current=>current.filter((_,i)=>i!==index))}
+              onActivate={()=>{setChoosingIndex(null);setRules(current=>current.filter((_,i)=>i!==index));}}
               onCancelButton={onClose} onOKActionDescription={"Remove "+label(rule.type)}>
               <MdDeleteOutline/> Remove
             </Focusable>
+            {choosingIndex===index&&<div className="gl-tab-smart-options"
+              aria-label="Available Smart conditions">
+              {availableAt(index).map((item,optionIndex)=>
+                <Focusable key={item.id}
+                  ref={el=>{optionRefs.current[optionIndex]=el;}}
+                  className={"gl-tab-smart-option"+(item.id===rule.type?" gl-tab-smart-option-current":"")}
+                  focusClassName="gl-focused" noFocusRing
+                  onActivate={()=>select(index,item.id)}
+                  onCancelButton={()=>closeChoices(index)}
+                  onButtonDown={(e:GamepadEvent)=>{
+                    if(e.detail?.button===GamepadButton.DIR_UP){
+                      stop(e);
+                      optionIndex===0?rowRefs.current[index]?.focus():
+                        optionRefs.current[optionIndex-1]?.focus();
+                    }else if(e.detail?.button===GamepadButton.DIR_DOWN){
+                      stop(e);
+                      optionRefs.current[Math.min(optionIndex+1,availableAt(index).length-1)]?.focus();
+                    }
+                  }}>
+                  {item.title}{item.id===rule.type?<MdCheck/>:null}
+                </Focusable>)}
+            </div>}
           </div>
         )}
         {!rules.length&&<div className="gl-tab-smart-empty">
@@ -107,7 +141,7 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
         <MdAdd/> {available.length?"Add condition":"All conditions used"}
       </Focusable>
       <p className="gl-tab-manager-note">
-        Select a condition to cycle through the available rules.
+        Select a condition to choose from the available rules.
         Repeated conditions are prevented. With AND, every condition
         must match; OR accepts any. Manual Include/Exclude overrides are
         configured in Tab Manager and always take priority.
