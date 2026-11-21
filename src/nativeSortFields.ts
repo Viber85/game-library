@@ -2,7 +2,7 @@
  * Do not invent addition dates for entries without rt_purchased_time.
  * Time fields are Unix seconds; size_on_disk is bytes, not MiB.
  */
-type NativeSortFields={addedAt?:number;releaseDate?:number;sizeBytes?:number};
+type NativeSortFields={addedAt?:number;releaseDate?:number;sizeBytes?:number;requiredBytes?:number};
 function safeNonnegative(v:unknown):number|undefined{
   const n=typeof v==="number"?v:
     typeof v==="bigint"?Number(v):
@@ -17,5 +17,6 @@ export function readNativeSortFields(value:unknown):NativeSortFields{
     releaseDate:safeNonnegative(o.rt_original_release_date) ??
       safeNonnegative(o.rt_steam_release_date),
     sizeBytes:safeNonnegative(o.size_on_disk),
+    requiredBytes:safeNonnegative(o.lDiskSpaceRequiredBytes),
   };
 }
