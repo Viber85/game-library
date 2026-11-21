@@ -42,6 +42,7 @@ export function LibrarySearchToolbar({query,source,installed,onQuery,onSource,
     if(!(event.target instanceof HTMLInputElement))return;
     event.preventDefault();event.stopPropagation();
     if(event.key==="ArrowDown")sources.current[0]?.focus();
+    else onFocusRail();
   };
   const handleClear=(event:GamepadEvent)=>{
     const button=event.detail?.button;
