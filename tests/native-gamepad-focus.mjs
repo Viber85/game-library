@@ -105,3 +105,53 @@ test("Native destinations include every requested custom-menu family",()=>{
     ".gl-collections-group",".gl-collections-picker-row",".ld-button",
   ])assert.ok(src.includes(selector), "Missing native menu focus target: "+selector);
 });
+
+
+test("Library Diagnostics exposes four-way native focus for toolbar and report panels",()=>{
+  const panel=read("src/LibraryDiagnostics.tsx");
+  const bridge=read("src/nativeMenuGamepad.ts");
+  assert.match(panel,/useNativeMenuGamepad\("diagnostics",menuRoot\)/);
+  assert.match(bridge,/diagnostics:"\.ld-button,\.ld-panel-focus"/);
+  assert.match(panel,/onButtonDown=\{onToolbarButton\(0\)\}/);
+  assert.match(panel,/onButtonDown=\{onToolbarButton\(1\)\}/);
+  assert.match(panel,/onButtonDown=\{onToolbarButton\(2\)\}/);
+  assert.match(panel,/onButtonDown=\{onPanelButton\(0\)\}/);
+  assert.match(panel,/onButtonDown=\{onPanelButton\(1\)\}/);
+  for(const direction of ["DIR_LEFT","DIR_RIGHT","DIR_UP","DIR_DOWN"])
+    assert.match(panel,new RegExp("GamepadButton\\."+direction));
+  assert.match(panel,/focusNativeMenuControl\(buttonRefs\.current\[index\],button\)/);
+  assert.match(panel,/focusNativeMenuControl\(panelRefs\.current\[index\],button\)/);
+  assert.doesNotMatch(panel,/onMove=\{/);
+});
+
+test("My Collections list handles every direction through supported native focus",()=>{
+  const page=read("src/CollectionsPage.tsx");
+  const bridge=read("src/nativeMenuGamepad.ts");
+  assert.match(page,/const movePersonalCollection=\(index:number,tabId:string,button:GamepadButton\)/);
+  assert.match(page,/onButtonDown=\{\(event:GamepadEvent\)=>\{\s*const button=event\.detail\?\.button/);
+  assert.match(page,/movePersonalCollection\(index,tab\.id,button\)/);
+  assert.match(page,/if\(index>0\)focusCollection\(index-1,button\)/);
+  assert.match(page,/if\(index<customTabs\.length-1\)focusCollection\(index\+1,button\)/);
+  assert.match(page,/changeLocation\(\{section:"my",tabId,gameId:null\}\)/);
+  assert.match(page,/focusNativeMenuControl\(collectionRefs\.current\[index\],button\)/);
+  assert.match(page,/focusNativeMenuControl\(gameRefs\.current\[index\],button\)/);
+  assert.match(bridge,/source\.closest\("\.gl-collections-group"\)/);
+  assert.doesNotMatch(page,/onMove=\{button=>movePersonalCollection/);
+});
+
+test("Every new menu must support all four directions in CI",()=>{
+  const bridge=read("src/nativeMenuGamepad.ts");
+  const settings=read("src/PluginSettingsPage.tsx");
+  const appearance=read("src/AppearancePage.tsx");
+  const manager=read("src/TabManager.tsx");
+  const smart=read("src/SmartTabEditor.tsx");
+  for(const kind of ["tabs","settings","appearance","collections","diagnostics"])
+    assert.match(bridge,new RegExp("\\b"+kind+":"));
+  for(const direction of ["DIR_LEFT","DIR_RIGHT","DIR_UP","DIR_DOWN"]){
+    assert.match(bridge,new RegExp("GamepadButton\\."+direction));
+    assert.match(manager,new RegExp("GamepadButton\\."+direction));
+    assert.match(smart,new RegExp("GamepadButton\\."+direction));
+    assert.match(settings,new RegExp("GamepadButton\\."+direction));
+    assert.match(appearance,new RegExp("GamepadButton\\."+direction));
+  }
+});
