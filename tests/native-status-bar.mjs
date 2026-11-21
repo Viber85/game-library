@@ -33,7 +33,8 @@ test("No global Steam UI suppression, observers or changes to Appearance",()=>{
   assert.doesNotMatch(added,/MutationObserver|querySelector|\.BasicUI|#Footer|display:none|body\.|class\*=/);
   assert.doesNotMatch(added,/\.gl-topbar-status\s*\{/);
   assert.doesNotMatch(dash,/new MutationObserver|querySelectorAll<HTMLElement>\(selector\)/);
-  assert.match(appearance,/Theme, artwork and updates in one place\./);
+  assert.match(appearance,/Theme Hub/);
+  assert.doesNotMatch(appearance,/SteamGridDBPanel|UpdatesPanel/);
 });
 
 test("Previous native focus and controller behavior are unchanged",()=>{
