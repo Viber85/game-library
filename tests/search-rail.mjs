@@ -8,10 +8,10 @@ const status=read("src/SystemStatusBar.tsx");
 const app=read("src/AppearancePage.tsx");
 const search=read("src/LibrarySearchToolbar.tsx");
 
-test("Search remains persistent while Tab Manager and Settings join the left rail",()=>{
-  const items=[...dash.matchAll(/\{ id: "(home|library|search|collections|tabs|appearance|settings|steam-menu)"/g)]
+test("Search remains persistent while Settings and Appearance stay in the left rail",()=>{
+  const items=[...dash.matchAll(/\{ id: "(home|library|search|collections|appearance|settings|steam-menu)"/g)]
     .map(match=>match[1]);
-  assert.deepEqual(items,["home","library","search","collections","tabs","appearance","settings","steam-menu"]);
+  assert.deepEqual(items,["home","library","search","collections","appearance","settings","steam-menu"]);
   assert.match(dash,/\{ id: "search", label: "Search", icon: MdSearch, go: openLocalSearch \}/);
   assert.match(dash,/searchMode\?"search":initialMode==="library"\?"library":"home"/);
   assert.match(dash,/searchMode\?"search":initialMode==="library"\?"library":"home"/);
