@@ -14,6 +14,8 @@ const packageScript=read("scripts/package.sh");
 test("Existing native Steam size_on_disk remains authoritative for installed games",()=>{
   assert.match(native,/sizeBytes:safeNonnegative\(o\.size_on_disk\)/);
   assert.match(badge,/const native=game\.installed&&typeof game\.sizeBytes==="number"/);
+  assert.match(badge,/const referenceAppId=game\.nonSteam&&!game\.installed\?protonDbAppId\(game\):null/);
+  assert.match(badge,/const storeAppId=!game\.nonSteam\?game\.id:referenceAppId/);
   assert.doesNotMatch(badge,/<small>|const label=/);
   assert.match(badge,/<MdStorage aria-hidden="true"\/>/);
   assert.match(badge,/<strong>\{text\}<\/strong>/);
@@ -32,7 +34,7 @@ test("Only dedicated Library grid shows size badge and does not prefetch 400 gam
   assert.match(ui,/<SteamInstallSizeBadge/);
   assert.match(ui,/<HltbPosterBadge/);
   assert.match(ui,/data-size-active=\{showInstallSize\|\|undefined\}/);
-  assert.match(badge,/if\(!game\.nonSteam&&active&&native===null\)/);
+  assert.match(badge,/if\(storeAppId!==null&&active&&native===null\)/);
   assert.match(badge,/timer=window\.setTimeout\(load,850\)/);
   assert.match(badge,/if\(reply\.status==="deferred"&&attempts<3\)/);
   assert.match(badge,/return \(\)=>\{mounted=false;if\(timer!==undefined\)window\.clearTimeout\(timer\);\}/);
@@ -112,7 +114,7 @@ test("Non-Steam size comes only from local exact shortcut, no Store fallback",()
   assert.match(back,/async def nonsteam_install_size\(self, appid: int, title: str, account_id: str = ""\)/);
   assert.match(badge,/const requestNonSteamSize=callable/);
   assert.match(badge,/readNonSteamSize\(game\.id,game\.title,user\)/);
-  assert.match(badge,/if\(!game\.nonSteam&&active&&native===null\)/);
+  assert.match(badge,/if\(storeAppId!==null&&active&&native===null\)/);
   assert.match(badge,/if\(!game\.nonSteam\|\|!game\.installed\|\|!active\|\|native!==null\)return/);
   assert.match(badge,/source==="flatpak"/);
   assert.match(badge,/AppImage file size/);
@@ -151,4 +153,23 @@ test("HLTB poster uses existing Main + Extras cache and local notifications",()=
   assert.match(css,/\.gl-root \.gl-full-grid \.gl-poster-meta\s*\{/);
   assert.match(css,/justify-content:space-between/);
   assert.doesNotMatch(poster,/requestHltbTimes|callable/);
+});
+
+test("Only verified cross-store Steam reference IDs enable the estimate; never guess from titles",()=>{
+  assert.match(badge,/const referenceAppId=game\.nonSteam&&!game\.installed\?protonDbAppId\(game\):null/);
+  assert.match(badge,/if\(storeAppId!==null&&active&&native===null\)/);
+  assert.match(badge,/void readEstimate\(storeAppId\)/);
+  assert.match(badge,/const estimate=storeAppId!==null&&native===null&&remote&&validStoreSize\(remote\)/);
+  assert.match(badge,/Steam reference only/);
+  assert.match(badge,/Epic \/ GOG versions may differ/);
+  assert.match(badge,/no verified store product ID/);
+  assert.match(badge,/Epic\/GOG store-size integration is not available yet/);
+  assert.match(badge,/estimate\?"~"\+formatted:"—"/);
+  assert.doesNotMatch(badge,/fetch\(|autoGuess|queryByName|game\.title\.toLowerCase/);
+  // Installed non-Steam shortcuts must still use only their actual local
+  // source: no remote Steam estimate may override a local measurement.
+  assert.match(badge,/game\.nonSteam&&!game\.installed\?protonDbAppId\(game\):null/);
+  assert.match(badge,/if\(!game\.nonSteam\|\|!game\.installed\|\|!active\|\|native!==null\)return/);
+  assert.match(badge,/readNonSteamSize\(game\.id,game\.title,user\)/);
+  assert.match(badge,/const nonSteamGb=nonSteamBytes!==null/);
 });
