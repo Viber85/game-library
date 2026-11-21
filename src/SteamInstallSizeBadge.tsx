@@ -17,6 +17,7 @@ export type NonSteamSizeReply={
   status:"ok"|"unavailable"|"invalid";
   size_bytes?:number;
   source?:"flatpak"|"appimage";
+  reason?:"shortcut_not_found"|"unsupported_target"|"flatpak_size_unavailable";
 };
 
 const requestNonSteamSize=callable<[number,string,string],NonSteamSizeReply>(
@@ -39,7 +40,9 @@ function readNonSteamSize(id:number,title:string,user:string):Promise<NonSteamSi
   const pending=requestNonSteamSize(id,title,user).then(result=>{
     const reply:NonSteamSizeReply=result?.status==="ok"&&
       typeof result.size_bytes==="number"&&Number.isFinite(result.size_bytes)&&
-      result.size_bytes>0?result:{status:"unavailable"};
+      result.size_bytes>0?result:{status:"unavailable",reason:result?.reason};
+    if(reply.status!=="ok"&&reply.reason)
+      console.info("[game-library] non-Steam size unavailable:",reply.reason);
     nonSteamCache.set(key,{
       reply,until:Date.now()+(reply.status==="ok"?15*60_000:2*60_000)
     });
@@ -160,7 +163,10 @@ export function SteamInstallSizeBadge({game,active}:{
       (estimate.requirement==="recommended"?"recommended":"minimum")+
       "); not an exact download or installed size":
     game.nonSteam?
-      "Local size unknown · supports direct Flatpak and AppImage shortcuts":
+      "Local size unknown · "+(nonSteam?.reason==="shortcut_not_found"?
+        "Steam shortcut not found":nonSteam?.reason==="flatpak_size_unavailable"?
+        "Flatpak size unavailable":nonSteam?.reason==="unsupported_target"?
+        "Unsupported shortcut target":"select game to inspect its local shortcut"):
       "Storage size unknown · select this game to check Steam Store requirements";
   return <span className="gl-poster-size" title={title} aria-label={title}>
     <MdStorage aria-hidden="true"/>
