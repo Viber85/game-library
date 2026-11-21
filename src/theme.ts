@@ -2166,8 +2166,25 @@ html:has(.gl-root.gl-own-status-only) #header {
 }
 .gl-root .gl-tab-smart-rules{width:100%;display:flex;flex-direction:column;gap:8px;}
 .gl-root .gl-tab-smart-rule{
-  width:100%;display:flex;gap:8px;align-items:center;
+  width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   padding:8px 10px;background:#12293c;border:1px solid #2b4d66;border-radius:9px;
+}
+.gl-root .gl-tab-smart-options{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;width:100%;flex:1 1 100%;
+  border-top:1px solid #2e4d63;padding-top:8px;
+}
+.gl-root .gl-tab-smart-option{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  cursor:pointer;border-radius:7px;background:#1a3951;border:1px solid #345874;
+  padding:9px 11px;color:#d4edfa;font-size:12px;font-weight:650;
+}
+.gl-root .gl-tab-smart-option-current{
+  border-color:#64afdc;background:#245477;color:#ffffff;
+}
+.gl-root .gl-tab-smart-option svg{flex:none;}
+.gl-root .gl-tab-smart-option:is(.gl-focused,.gpfocus,:focus-visible){
+  outline:2px solid #effaff;outline-offset:2px;box-shadow:0 0 0 3px #2385b4;
 }
 .gl-root .gl-tab-smart-rule-number{
   width:23px;height:23px;flex:none;border-radius:50%;
