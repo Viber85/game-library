@@ -12,6 +12,7 @@ import {OWN_FILTERS,changeLibraryTab,moveLibraryTab,newLibraryTab,
   normalizeLibraryTabs,assignManualGames,assignSmartExceptions,
   gamesForLibraryTab,smartRulesForTab} from "./libraryTabs";
 import {saveOwnTabs} from "./autoTabSource";
+import {focusSpatially,type FocusDirection} from "./spatialFocus";
 
 type Props={
   tabs:LibraryTab[];
@@ -45,6 +46,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
   const rowRefs=useRef<Array<HTMLDivElement|null>>([]);
   const editorRef=useRef<HTMLDivElement>(null);
   const editorRegionRef=useRef<HTMLDivElement>(null);
+  const pickerRegionRef=useRef<HTMLDivElement>(null);
   const backRef=useRef<HTMLDivElement>(null);
   const inputRef=useRef<HTMLDivElement>(null);
   const pickerBackRef=useRef<HTMLDivElement>(null);
@@ -111,47 +113,57 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
     setSelectedId(items.find(t=>t.id!==selected.id)?.id??"AllGames");
     void commit(items.filter(t=>t.id!==selected.id).map((t,i)=>({...t,position:i})));
   };
-  /** Navigate the wrapping editor controls in two dimensions, using their
-   * real layout coordinates rather than assuming one fixed-width button row. */
-  const focusEditorDirection=(current:HTMLElement,direction:1|-1)=>{
-    const candidates=[...editorRegionRef.current?.querySelectorAll<HTMLElement>(
-      ".gl-tab-manager-action, input"
-    )??[]].filter(el=>el.getClientRects().length>0&&
-      !el.hasAttribute("disabled")&&
-      el.getAttribute("aria-disabled")!=="true");
-    const target=candidates.find(el=>el===current||el.contains(current))??current;
-    const at=candidates.indexOf(target);
-    const from=target.getBoundingClientRect();
-    const centerX=(from.left+from.right)/2;
-    const centerY=(from.top+from.bottom)/2;
-    const other=candidates.filter(el=>el!==target).map(el=>{
-      const rect=el.getBoundingClientRect();
-      return {el,x:(rect.left+rect.right)/2,y:(rect.top+rect.bottom)/2};
-    }).filter(item=>(item.y-centerY)*direction>8)
-      .sort((a,b)=>{
-        // Prefer the nearest row; within it prefer the closest column.
-        const rowA=Math.abs(a.y-centerY),rowB=Math.abs(b.y-centerY);
-        return Math.abs(rowA-rowB)>12?
-          rowA-rowB:Math.abs(a.x-centerX)-Math.abs(b.x-centerX);
-      });
-    const next=other[0]?.el??candidates[at+direction];
-    if(next){next.focus();next.scrollIntoView({block:"nearest"});}
-    else if(direction<0){focusRow(items.findIndex(tab=>tab.id===selected?.id));}
+  // Steam Gamepad focus does not reliably infer horizontal neighbors when
+  // actions are laid out using flex-wrap; explicitly resolve all four axes.
+  const moveEditor=(current:HTMLElement,direction:FocusDirection)=>{
+    const moved=focusSpatially(editorRegionRef.current,current,direction,
+      ".gl-tab-manager-action, input");
+    if(moved)return;
+    if(direction==="left")
+      focusRow(Math.max(0,items.findIndex(tab=>tab.id===selected?.id)));
+    else if(direction==="up")backRef.current?.focus();
   };
   const editorDpad=(e:GamepadEvent)=>{
     const b=e.detail?.button;
-    if(b!==GamepadButton.DIR_UP&&b!==GamepadButton.DIR_DOWN)return;
-    const current=e.currentTarget as HTMLElement;
-    if(!current)return;
+    const direction:FocusDirection|undefined=
+      b===GamepadButton.DIR_LEFT?"left":
+      b===GamepadButton.DIR_RIGHT?"right":
+      b===GamepadButton.DIR_UP?"up":
+      b===GamepadButton.DIR_DOWN?"down":undefined;
+    if(!direction)return;
     stop(e);
-    focusEditorDirection(current,b===GamepadButton.DIR_DOWN?1:-1);
+    moveEditor(e.currentTarget as HTMLElement,direction);
   };
   const editorTextKeyDown=(event:React.KeyboardEvent<HTMLDivElement>)=>{
-    // Steam sometimes forwards analogue/D-pad input to TextField as arrow keys.
+    // Preserve left/right caret movement while typing the tab name.
     if(event.key!=="ArrowUp"&&event.key!=="ArrowDown")return;
     if(!(event.target instanceof HTMLInputElement))return;
     event.preventDefault();event.stopPropagation();
-    focusEditorDirection(event.target,event.key==="ArrowDown"?1:-1);
+    moveEditor(event.target,event.key==="ArrowDown"?"down":"up");
+  };
+  const pickerDpad=(e:GamepadEvent)=>{
+    const b=e.detail?.button;
+    const direction:FocusDirection|undefined=
+      b===GamepadButton.DIR_LEFT?"left":
+      b===GamepadButton.DIR_RIGHT?"right":
+      b===GamepadButton.DIR_UP?"up":
+      b===GamepadButton.DIR_DOWN?"down":undefined;
+    if(!direction)return;
+    stop(e);
+    const moved=focusSpatially(pickerRegionRef.current,
+      e.currentTarget as HTMLElement,direction,
+      ".gl-tab-manager-action, .gl-tab-picker-game, input");
+    if(!moved&&direction==="left")onFocusRail();
+    else if(!moved&&direction==="up")pickerBackRef.current?.focus();
+  };
+  const pickerInputKeys=(event:React.KeyboardEvent<HTMLDivElement>)=>{
+    if(event.key!=="ArrowUp"&&event.key!=="ArrowDown")return;
+    if(!(event.target instanceof HTMLInputElement))return;
+    event.preventDefault();event.stopPropagation();
+    const direction:FocusDirection=event.key==="ArrowDown"?"down":"up";
+    const moved=focusSpatially(pickerRegionRef.current,event.target,direction,
+      ".gl-tab-manager-action, .gl-tab-picker-game, input");
+    if(!moved&&direction==="up")pickerBackRef.current?.focus();
   };
   const rowButton=(e:GamepadEvent,index:number)=>{
     const b=e.detail?.button;
@@ -215,6 +227,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
     }else if(b===GamepadButton.DIR_DOWN){stop(e);
       pickerRows.current[Math.min(index+1,shown.length-1)]?.focus();
     }else if(b===GamepadButton.DIR_LEFT){stop(e);onFocusRail();}
+    else if(b===GamepadButton.DIR_RIGHT){pickerDpad(e);}
   };
 
   return <div className="gl-tab-manager gl-tab-manager-page" aria-label="Manage Library tabs">
@@ -231,6 +244,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
             if(e.detail?.button===GamepadButton.DIR_LEFT){stop(e);onFocusRail();}
             else if(e.detail?.button===GamepadButton.DIR_DOWN){stop(e);
               picker?pickerBackRef.current?.focus():focusRow(0);}
+            else if(e.detail?.button===GamepadButton.DIR_RIGHT){stop(e);focusRow(0);}
           }}
           onOKActionDescription="Return to Plugin Settings"><MdArrowBack/> Back</Focusable>
         <div><h2>{picker?"Select Games":"Manage Tabs"}</h2>
@@ -239,14 +253,15 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
             "Own tab engine"}</p></div>
       </header>
       {picker?
-        <div className="gl-tab-game-picker">
+        <div className="gl-tab-game-picker" ref={pickerRegionRef}
+          onKeyDownCapture={pickerInputKeys}>
           <div className="gl-tab-picker-toolbar">
             <Focusable ref={pickerBackRef} className="gl-tab-manager-action"
               focusClassName="gl-focused" noFocusRing onActivate={leavePicker}
-              onCancelButton={leavePicker}><MdClose/> Cancel</Focusable>
+              onCancelButton={leavePicker} onButtonDown={pickerDpad}><MdClose/> Cancel</Focusable>
             <Focusable className="gl-tab-manager-action gl-tab-manager-primary"
               focusClassName="gl-focused" noFocusRing onActivate={()=>void applyPicker()}
-              onCancelButton={leavePicker}><MdDone/> Save selection · {pickerSelected.length}</Focusable>
+              onCancelButton={leavePicker} onButtonDown={pickerDpad}><MdDone/> Save selection · {pickerSelected.length}</Focusable>
             <span className="gl-tab-manager-note">{pickerTarget==="manual"?
               "Manual game membership":pickerTarget==="include"?
               "Games always included, regardless of rules":
@@ -261,7 +276,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
             </div>
             <Focusable className="gl-tab-manager-action" focusClassName="gl-focused"
               noFocusRing onActivate={()=>{setPickerShowSelected(v=>!v);setPickerLimit(80);}}
-              onCancelButton={leavePicker}>
+              onCancelButton={leavePicker} onButtonDown={pickerDpad}>
               {pickerShowSelected?"Show all":"Selected only"} ({pickerSelected.length})
             </Focusable>
           </div>
@@ -294,7 +309,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
               className="gl-tab-manager-action gl-tab-picker-more"
               focusClassName="gl-focused" noFocusRing
               onActivate={()=>setPickerLimit(n=>n+80)}
-              onCancelButton={leavePicker}>
+              onCancelButton={leavePicker} onButtonDown={pickerDpad}>
               Show more games ({results.length-pickerLimit} remaining)
             </Focusable>}
           </div>
