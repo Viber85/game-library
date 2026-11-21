@@ -59,7 +59,9 @@ test("New provider is packaged, no Steam custom artwork overwrites",()=>{
   assert.doesNotMatch(dashboard,/WriteCustom|SetCustom|StoreCustomArt|SaveHero/);
   assert.doesNotMatch(art,/writeFile|localStorage|fetch\(/);
   const appearance=read("src/AppearancePage.tsx");
+  const settings=read("src/PluginSettingsPage.tsx");
   const index=read("src/index.tsx");
-  assert.match(appearance,/<SteamGridDBPanel\/>/);
+  assert.match(settings,/<SteamGridDBPanel\/>/);
+  assert.doesNotMatch(appearance,/SteamGridDBPanel|UpdatesPanel/);
   assert.doesNotMatch(index,/<SteamGridDBPanel \/>/);
 });
