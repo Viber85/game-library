@@ -5,7 +5,7 @@ import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
   MdLibraryBooks, MdPlayArrow, MdPalette, MdMenu, MdSearch, MdCollectionsBookmark,
-  MdVideogameAsset, MdChevronRight, MdArrowBack, MdSettings, MdViewList,
+  MdVideogameAsset, MdChevronRight, MdArrowBack, MdSettings,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
@@ -221,7 +221,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
-  const lastRailId=useRef(tabsMode?"tabs":settingsMode?"settings":collectionsMode?"collections":initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
+  const lastRailId=useRef(tabsMode?"settings":settingsMode?"settings":collectionsMode?"collections":initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
   const [railExpanded, setRailExpanded] = useState(false);
   const tabsForRefresh=useRef<LibraryTab[]>(DEFAULT_LIBRARY_TABS);
   const membershipSignature=useRef<string|null>(null);
@@ -381,7 +381,6 @@ export function Dashboard({initialMode="home",originRoute}:
     { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate(LIBRARY_ROUTE) },
     { id: "search", label: "Search", icon: MdSearch, go: openLocalSearch },
     { id: "collections", label: "Collections", icon: MdCollectionsBookmark, go: openCollections },
-    { id: "tabs", label: "Tab Manager", icon: MdViewList, go: () => Navigation.Navigate(TABS_ROUTE) },
     { id: "appearance", label: "Appearance", icon: MdPalette, go: () => Navigation.Navigate(APPEARANCE_ROUTE) },
     { id: "settings", label: "Settings", icon: MdSettings, go: () => Navigation.Navigate(PLUGIN_SETTINGS_ROUTE) },
     { id: "steam-menu", label: "Steam Menu", icon: MdMenu, go: () => {
@@ -688,7 +687,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 key={action.id}
                 ref={el => { railRefs.current[index] = el; }}
                 className={"gl-rail-item"+(action.id==="running"?" gl-running-item":"")+
-                  (action.id===(tabsMode?"tabs":settingsMode?"settings":collectionsMode?"collections":initialMode==="appearance"?"appearance":
+                  (action.id===(tabsMode?"settings":settingsMode?"settings":collectionsMode?"collections":initialMode==="appearance"?"appearance":
                     searchMode?"search":initialMode==="library"?"library":"home")?" gl-rail-current":"")}
                 focusClassName="gl-focused"
                 noFocusRing
@@ -746,7 +745,7 @@ export function Dashboard({initialMode="home",originRoute}:
               onBack={()=>Navigation.Navigate("/library/home")}/>
           : tabsMode ? <TabManager tabs={tabInfo.tabs} games={games}
               firstRef={tabsEntryRef} onFocusRail={()=>focusRail(railIndex)}
-              onClose={()=>Navigation.Navigate(LIBRARY_ROUTE)}/>
+              onClose={()=>Navigation.Navigate(PLUGIN_SETTINGS_ROUTE)}/>
           : settingsMode ? <PluginSettingsPage firstRef={settingsEntryRef}
               onFocusRail={()=>focusRail(railIndex)}
               onBack={()=>Navigation.Navigate("/library/home")}/>
