@@ -40,10 +40,37 @@ class NonSteamSizeTests(unittest.TestCase):
                     nonsteam_size.matching_shortcut(0xFEDCBA98, "Chiaki", "123"))
                 self.assertIsNone(
                     nonsteam_size.matching_shortcut(0xFEDCBA99, "Chiaki", "123"))
-                self.assertIsNone(
-                    nonsteam_size.matching_shortcut(0xFEDCBA98, "Another game", "123"))
+                self.assertIsNotNone(
+                    nonsteam_size.matching_shortcut(0xFEDCBA98, "Renamed game", "123"))
         self.assertEqual(nonsteam_size.parse_binary_shortcuts(data[:14]), [])
         self.assertEqual(nonsteam_size.parse_binary_shortcuts(b"A" * (4_000_001)), [])
+
+    def test_shortcut_discovery_uses_actual_steam_home_not_backend_home(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            steam_home = root / "gamer"
+            path = steam_home / ".local/share/Steam/userdata/123/config/shortcuts.vdf"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(shortcut_blob(0xFEDCBA98, "App", "/games/App.AppImage"))
+            with mock.patch.object(nonsteam_size, "steam_homes",
+                                   return_value=[root / "root", steam_home]):
+                self.assertEqual(nonsteam_size.shortcut_path("123"), path)
+                self.assertEqual(nonsteam_size.shortcut_path(""), path)
+                self.assertIsNone(nonsteam_size.shortcut_path("999"))
+                self.assertIsNone(nonsteam_size.shortcut_path("../123"))
+
+    def test_flatpak_uses_shortcut_owners_home_and_drops_root(self):
+        done = mock.Mock(returncode=0, stdout="12345")
+        with (mock.patch.object(nonsteam_size.pathlib.Path, "is_file", return_value=True),
+              mock.patch.object(nonsteam_size.os, "geteuid", return_value=0),
+              mock.patch.object(nonsteam_size.subprocess, "run", return_value=done) as run):
+            self.assertEqual(nonsteam_size.flatpak_installed_bytes(
+                "org.example.App", {"_home": "/home/gamer", "_uid": 1000, "_gid": 1000}), 12345)
+            self.assertEqual(run.call_args.kwargs["env"]["HOME"], "/home/gamer")
+            self.assertEqual(run.call_args.kwargs["env"]["XDG_DATA_HOME"], "/home/gamer/.local/share")
+            self.assertEqual(run.call_args.kwargs["user"], 1000)
+            self.assertEqual(run.call_args.kwargs["group"], 1000)
+            self.assertFalse(run.call_args.kwargs["shell"])
 
     def test_flatpak_detection_requires_real_run_and_valid_application_id(self):
         self.assertEqual(nonsteam_size.flatpak_id(
@@ -87,15 +114,15 @@ class NonSteamSizeTests(unittest.TestCase):
         self.assertIsNone(nonsteam_size.parse_flatpak_size("not installed"))
         self.assertIsNone(nonsteam_size.parse_flatpak_size("4 PiB"))
         completed = mock.Mock(returncode=0, stdout="1.5 GB")
-        with (mock.patch.object(nonsteam_size.shutil, "which", return_value="/usr/bin/flatpak"),
+        with (mock.patch.object(nonsteam_size.pathlib.Path, "is_file", return_value=True),
               mock.patch.object(nonsteam_size.subprocess, "run",
                                 return_value=completed) as run):
             self.assertEqual(nonsteam_size.flatpak_installed_bytes(
                 "re.chiaki.Chiaki4deck"), 1500000000)
             args, kwargs = run.call_args
             self.assertEqual(args[0],
-                             ["/usr/bin/flatpak", "info", "--user", "--app",
-                              "--show-size", "re.chiaki.Chiaki4deck"])
+                             ["/usr/bin/flatpak", "info", "--user",
+                              "--show-size", "app/re.chiaki.Chiaki4deck"])
             self.assertFalse(kwargs["shell"])
             self.assertEqual(kwargs["timeout"], 5)
         with mock.patch.object(nonsteam_size.subprocess, "run") as run:
