@@ -58,7 +58,27 @@ function readNonSteamSize(id:number,title:string,user:string):Promise<NonSteamSi
 
 const requestSteamStore=callable<[number],StoreSizeReply>("steam_install_size");
 const localStoreCache=new Map<number,StoreSizeReply>();
+const storeSizeListeners=new Map<number,Set<(reply:StoreSizeReply)=>void>>();
 const pending=new Map<number,Promise<StoreSizeReply>>();
+const cachedBulk=callable<[number[]],{entries?:Array<{appid:number}&StoreSizeReply>}>(
+  "steam_size_cached_bulk");
+let inflightBulk:Promise<void>|null=null;
+/** Only hydrate the plugin's own on-disk cache. This performs no Store HTTP
+ * request and makes previously resolved uninstalled sizes visible on return. */
+export function hydrateCachedSteamSizes(ids:readonly number[]):Promise<void>{
+  if(inflightBulk)return inflightBulk;
+  const valid=[...new Set(ids.filter(id=>
+    Number.isSafeInteger(id)&&id>0&&id<=0xffffffff))].slice(0,1000);
+  if(!valid.length)return Promise.resolve();
+  inflightBulk=cachedBulk(valid).then(result=>{
+    for(const item of result?.entries??[]){
+      if(!valid.includes(item.appid)||!validStoreSize(item))continue;
+      localStoreCache.set(item.appid,item);
+      for(const cb of storeSizeListeners.get(item.appid)??[])cb(item);
+    }
+  }).catch(()=>{}).finally(()=>{inflightBulk=null;});
+  return inflightBulk;
+}
 
 function validStoreSize(result:StoreSizeReply):boolean{
   return result.status==="estimated"&&
@@ -75,7 +95,10 @@ function readEstimate(id:number):Promise<StoreSizeReply>{
   const started=requestSteamStore(id).then(result=>{
     const valid=result&&typeof result.status==="string";
     const reply:StoreSizeReply=valid?result:{status:"error"};
-    if(reply.status!=="deferred")localStoreCache.set(id,reply);
+    if(reply.status!=="deferred"){
+      localStoreCache.set(id,reply);
+      for(const cb of storeSizeListeners.get(id)??[])cb(reply);
+    }
     return reply;
   },()=>({status:"error"} as StoreSizeReply))
     .finally(()=>pending.delete(id));
@@ -101,6 +124,19 @@ export function SteamInstallSizeBadge({game,active}:{
   const [remote,setRemote]=useState<StoreSizeReply|null>(
     ()=>storeAppId!==null?localStoreCache.get(storeAppId)??null:null);
   const [nonSteam,setNonSteam]=useState<NonSteamSizeReply|null>(null);
+  useEffect(()=>{
+    if(storeAppId===null)return;
+    const callback=(reply:StoreSizeReply)=>setRemote(reply);
+    const listeners=storeSizeListeners.get(storeAppId)??new Set<(reply:StoreSizeReply)=>void>();
+    listeners.add(callback);
+    storeSizeListeners.set(storeAppId,listeners);
+    const hit=localStoreCache.get(storeAppId);
+    if(hit)setRemote(hit);
+    return ()=>{
+      listeners.delete(callback);
+      if(!listeners.size)storeSizeListeners.delete(storeAppId);
+    };
+  },[storeAppId]);
   const [requiredFromSteam,setRequiredFromSteam]=useState<number|null>(()=>
     !game.nonSteam&&!game.installed?readNativeRequiredInstallBytes(game.id):null);
   const native=game.installed&&typeof game.sizeBytes==="number"&&
