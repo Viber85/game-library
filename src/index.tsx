@@ -10,6 +10,7 @@ import { BuiltinThemePanel } from "./BuiltinThemePanel";
 import { startBuiltInThemeRuntime, stopBuiltInThemeRuntime } from "./builtinThemeRuntime";
 import { loadDefaultTheme } from "./themeController";
 import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
+import {subscribeHomeSetting} from "./pluginSettingsEvents";
 import {returnDestinationFromHome,clearDetailsOrigin} from "./detailsReturn";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
@@ -17,6 +18,8 @@ const LIBRARY_ROUTE = "/game-library/library";
 const APPEARANCE_ROUTE = "/game-library/appearance";
 const SEARCH_ROUTE = "/game-library/search";
 const COLLECTIONS_ROUTE="/game-library/collections";
+const TABS_ROUTE="/game-library/tabs";
+const PLUGIN_SETTINGS_ROUTE="/game-library/plugin-settings";
 const LIBRARY_DIAGNOSTICS_ROUTE = "/game-library/library-diagnostics";
 const HOME_ROUTE = "/library/home";
 const getSettings = callable<[], { default_home: boolean }>("get_dashboard_settings");
@@ -148,6 +151,9 @@ function ControlPanel() {
 
 export default definePlugin(() => {
   unloaded = false;
+  const stopHomeSync=subscribeHomeSetting(enabled=>{
+    defaultHome=enabled;updateHomePatch();emit();
+  });
   routerHook.addRoute(DASHBOARD_ROUTE,
     ()=> <Dashboard originRoute={DASHBOARD_ROUTE}/>, { exact: true });
   routerHook.addRoute(LIBRARY_ROUTE, ()=> <Dashboard initialMode="library"/>,
@@ -158,9 +164,10 @@ export default definePlugin(() => {
     {exact:true});
   routerHook.addRoute(COLLECTIONS_ROUTE,()=> <Dashboard initialMode="collections"/>,
     {exact:true});
+  routerHook.addRoute(TABS_ROUTE,()=> <Dashboard initialMode="tabs"/>,{exact:true});
+  routerHook.addRoute(PLUGIN_SETTINGS_ROUTE,()=> <Dashboard initialMode="settings"/>,{exact:true});
   routerHook.addRoute(LIBRARY_DIAGNOSTICS_ROUTE, LibraryDiagnostics, { exact: true });
-  // Tab synchronization belongs to the plugin, not the dashboard route. Decky
-  // can hide/unmount Game Mode while enabling TabMaster and UnifiedDeck.
+  // Own tab synchronization belongs to the plugin, not an individual route.
   startAutoTabSource();
   // Built-in Midnight system colors are applied automatically as soon as
   // Decky loads this plugin; CSS Loader is not needed or consulted.
@@ -186,6 +193,7 @@ export default definePlugin(() => {
     onDismount() {
       unloaded = true;
       stopAutoTabSource();
+      stopHomeSync();
       stopBuiltInThemeRuntime();
       clearDetailsOrigin();
       listeners.clear();
@@ -198,6 +206,8 @@ export default definePlugin(() => {
       routerHook.removeRoute(APPEARANCE_ROUTE);
       routerHook.removeRoute(SEARCH_ROUTE);
       routerHook.removeRoute(COLLECTIONS_ROUTE);
+      routerHook.removeRoute(TABS_ROUTE);
+      routerHook.removeRoute(PLUGIN_SETTINGS_ROUTE);
       routerHook.removeRoute(LIBRARY_DIAGNOSTICS_ROUTE);
     },
   };
