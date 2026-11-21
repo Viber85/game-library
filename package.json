@@ -1,6 +1,6 @@
 {
   "name": "game-library",
-  "version": "0.6.10",
+  "version": "0.6.11-test.1",
   "private": true,
   "type": "module",
   "scripts": {
