@@ -2020,4 +2020,98 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-tab-manager-actions {gap:5px;margin:8px 0;}
 }
 
+
+/* Game Library 0.6.1: dedicated rail pages and manual membership picker. */
+.gl-root .gl-main > .gl-tab-manager-page {
+  position:relative;inset:auto;z-index:2;flex:1;width:100%;height:100%;
+  padding:0 16px 18px;min-width:0;min-height:0;
+  background:transparent;backdrop-filter:none;align-items:stretch;
+  justify-content:stretch;
+}
+.gl-root .gl-tab-manager-page .gl-tab-manager-shell {
+  width:100%;height:100%;min-height:0;max-height:none;
+  border-radius:12px;background:#0b1725;
+}
+.gl-root .gl-tab-manager-page .gl-tab-manager-layout {min-height:0;}
+.gl-root .gl-tab-game-picker {
+  flex:1;display:flex;flex-direction:column;min-height:0;padding:16px 20px;
+  overflow:hidden;background:#0d1c2c;
+}
+.gl-root .gl-tab-picker-toolbar {
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-bottom:10px;
+}
+.gl-root .gl-tab-picker-toolbar .gl-tab-manager-note {margin:0 0 0 auto;}
+.gl-root .gl-tab-picker-search {
+  display:flex;align-items:center;gap:10px;padding:9px 0 12px;
+}
+.gl-root .gl-tab-picker-search > svg {font-size:22px;flex:none;color:#89b8db;}
+.gl-root .gl-tab-picker-search > div:has(input) {flex:1;min-width:0;}
+.gl-root .gl-tab-picker-list {
+  flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;
+  gap:5px;padding:5px 9px 8px 4px;scrollbar-color:#45657e transparent;
+}
+.gl-root .gl-tab-picker-game {
+  display:flex;flex:none;align-items:center;gap:11px;min-height:60px;
+  padding:6px 12px 6px 8px;border:1px solid #28455e;background:#132b40;
+  border-radius:9px;cursor:pointer;color:#edf6ff;
+}
+.gl-root .gl-tab-picker-game.gl-tab-picker-checked {background:#1c3f56;border-color:#4384af;}
+.gl-root .gl-tab-picker-game > img,
+.gl-root .gl-tab-picker-no-cover {
+  width:33px;height:46px;object-fit:cover;border-radius:4px;flex:none;
+  background:#203b52;
+}
+.gl-root .gl-tab-picker-no-cover {display:flex;align-items:center;justify-content:center;}
+.gl-root .gl-tab-picker-game-text {flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.gl-root .gl-tab-picker-game-text strong {
+  font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.gl-root .gl-tab-picker-game-text span {font-size:11px;color:#a0bfd4;}
+.gl-root .gl-tab-picker-check {font-size:23px;color:#6fc9f3;flex:none;}
+.gl-root .gl-tab-picker-game:not(.gl-tab-picker-checked) .gl-tab-picker-check {color:#698297;}
+.gl-root .gl-tab-picker-game:is(.gl-focused,.gpfocus,:focus-visible) {
+  outline:2px solid #e6f9ff;outline-offset:1px;box-shadow:0 0 0 4px #1d82b8;
+}
+.gl-root .gl-tab-picker-more {width:100%;margin:8px 0;}
+.gl-root .gl-tab-picker-empty {
+  text-align:center;padding:28px 10px;color:#9ab6cb;font-size:14px;
+}
+.gl-root .gl-tab-picker-footer {
+  padding:10px 0 0;font-size:11px;color:#8fb1c9;border-top:1px solid #254156;
+}
+.gl-root .gl-plugin-settings {
+  width:100%;height:100%;overflow-y:auto;min-height:0;
+  color:#eaf6ff;background:#081725;padding:0 22px 30px;
+}
+.gl-root .gl-plugin-settings-body {
+  max-width:870px;margin:22px auto 0;display:flex;flex-direction:column;gap:10px;
+}
+.gl-root .gl-settings-title {display:flex;flex-wrap:wrap;align-items:center;gap:9px 15px;padding-bottom:14px;}
+.gl-root .gl-settings-title h2 {font-size:23px;font-weight:800;margin:0;}
+.gl-root .gl-settings-title p {width:100%;font-size:12px;margin:0;color:#adc4d5;}
+.gl-root .gl-plugin-setting-row {
+  display:flex;align-items:center;gap:14px;
+  min-height:70px;padding:13px 20px;
+  background:#132b40;border:1px solid #294965;border-radius:10px;
+  color:#edf7ff;cursor:pointer;
+}
+.gl-root .gl-plugin-setting-row > svg {font-size:24px;flex:none;color:#8bbbd9;}
+.gl-root .gl-plugin-setting-row > div {flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.gl-root .gl-plugin-setting-row strong {font-size:15px;font-weight:750;}
+.gl-root .gl-plugin-setting-row span {font-size:11px;color:#9ab9d1;line-height:1.4;}
+.gl-root .gl-plugin-setting-row svg.gl-setting-toggle-on {color:#66c5ec;}
+.gl-root .gl-plugin-setting-row:is(.gl-focused,.gpfocus,:focus-visible) {
+  outline:2px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px #1b82b5;
+}
+.gl-root .gl-plugin-settings .gl-tab-manager-caption {margin:12px 0 2px;}
+@media(max-width:680px) {
+  .gl-root .gl-main > .gl-tab-manager-page {padding:0 6px 8px;}
+  .gl-root .gl-tab-game-picker {padding:9px;}
+  .gl-root .gl-tab-picker-toolbar .gl-tab-manager-note {display:none;}
+  .gl-root .gl-tab-picker-search {flex-wrap:wrap;}
+  .gl-root .gl-tab-picker-search > div:has(input) {flex-basis:65%;}
+  .gl-root .gl-plugin-settings {padding:0 8px 14px;}
+  .gl-root .gl-plugin-setting-row {padding:10px;min-height:58px;gap:9px;}
+}
+
 `;
