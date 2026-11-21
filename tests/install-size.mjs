@@ -17,7 +17,9 @@ test("Existing native Steam size_on_disk remains authoritative for installed gam
   assert.match(badge,/nativeGb!==null\?"SIZE":estimate\?"EST\.":"SIZE"/);
   assert.match(badge,/Installed size · Steam local size_on_disk/);
   assert.match(badge,/not an exact download or installed size/);
-  assert.match(badge,/if\(game\.nonSteam\)return null/);
+  assert.match(badge,/nonSteamGb!==null/);
+  assert.match(badge,/getActiveUserId\(\)/);
+  assert.doesNotMatch(badge,/if\(game\.nonSteam\)return null/);
   assert.doesNotMatch(badge,/steam:\/\/install|Navigation\.Navigate|RequestAppDetails/);
 });
 
@@ -83,4 +85,28 @@ test("v0.5.9-test.15: SIZE gradient anchors to the bottom third, not top half",(
   assert.match(ui,/\{game\.installed && !showInstallSize &&/);
   assert.match(ui,/showInstallSize&&<SteamInstallSizeBadge/);
   assert.doesNotMatch(ui,/\{game\.installed && <MdCheckCircle/);
+});
+
+test("Non-Steam size comes only from local exact shortcut, no Store fallback",()=>{
+  const service=read("nonsteam_size.py");
+  assert.match(service,/parse_binary_shortcuts\(blob\)/);
+  assert.match(service,/shortcut_path\(account_id\)/);
+  assert.match(service,/s\.get\("appid"\) == appid/);
+  assert.match(service,/s\.get\("appname", ""\)\.strip\(\)\.casefold\(\) == title/);
+  assert.match(service,/subprocess\.run\(/);
+  assert.match(service,/shell=False/);
+  assert.match(service,/--show-size/);
+  assert.match(service,/appimage_file\(tokens\)/);
+  assert.match(service,/path\.stat\(\)\.st_size/);
+  assert.match(service,/FLATPAK_ID\.fullmatch\(app\)/);
+  assert.doesNotMatch(service,/os\.system|subprocess\.Popen|shutil\.rmtree|os\.walk/);
+  assert.match(back,/async def nonsteam_install_size\(self, appid: int, title: str, account_id: str = ""\)/);
+  assert.match(badge,/const requestNonSteamSize=callable/);
+  assert.match(badge,/readNonSteamSize\(game\.id,game\.title,user\)/);
+  assert.match(badge,/if\(!game\.nonSteam&&active&&native===null\)/);
+  assert.match(badge,/if\(!game\.nonSteam\|\|!game\.installed\|\|!active\|\|native!==null\)return/);
+  assert.match(badge,/source==="flatpak"/);
+  assert.match(badge,/source==="appimage"/);
+  assert.match(packageScript,/cp plugin\.json main\.py updates\.py hltb\.py protondb\.py steamgriddb\.py steam_size\.py nonsteam_size\.py/);
+  assert.match(packageScript,/game-library\/nonsteam_size\.py/);
 });
