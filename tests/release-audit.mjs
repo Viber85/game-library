@@ -57,12 +57,12 @@ test("Game Mode long-lived observers still clean up at mount/unmount",()=>{
   assert.match(runtime,/stopTimer\(\)/);
 });
 
-test("0.6.7 validates native four-way focus in Diagnostics and Collections",()=>{
+test("0.6.8 validates Install Size references while preserving controller navigation",()=>{
   const pkg=JSON.parse(read("package.json"));
   const dash=read("src/Dashboard.tsx");
   const css=read("system-theme/settings-gamepad-focus.css");
   const theme=read("src/builtinThemeRuntime.ts");
-  assert.equal(pkg.version,"0.6.7");
+  assert.equal(pkg.version,"0.6.8");
   assert.match(dash,/function GameCard\(/);
   assert.match(dash,/onMenuButton=\{\(e:GamepadEvent\)=>\{/);
   assert.match(dash,/onMove=\{button=>moveInGrid\(index,button\)\}/);
