@@ -46,6 +46,6 @@ test("Unchanged focus and Game Details support across the library",()=>{
   assert.match(dash,/onCancel=\{exitGrid\} onSort=\{showSortMenu\}/);
   assert.match(dash,/if\(searchMode\)Navigation.Navigate\(searchBackRoute\(\)\)/);
   assert.match(dash,/focusRail\(railIndex\)/);
-  assert.match(app,/Theme, artwork and updates in one place\./);
+  assert.match(app,/Theme Hub/);
   assert.match(read("system-theme/settings-gamepad-focus.css"),/background:#163a5e !important/);
 });
