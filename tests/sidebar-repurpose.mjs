@@ -7,14 +7,16 @@ const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const dash=read("src/Dashboard.tsx"),app=read("src/AppearancePage.tsx");
 const entry=read("src/index.tsx"),css=read("src/theme.ts");
 
-test("Rail has exactly agreed five entries, with running game first only if active",()=>{
+test("Rail includes Tab Manager and Settings after Collections, with running game first",()=>{
   assert.match(dash,/\.\.\.\(runningGame \? \[\{/);
-  const ids=[...dash.matchAll(/\{ id: "(home|library|search|collections|appearance|steam-menu|store|downloads|settings|power)"/g)].map(m=>m[1]);
-  assert.deepEqual(ids,["home","library","search","collections","appearance","steam-menu"]);
+  const ids=[...dash.matchAll(/\{ id: "(home|library|search|collections|tabs|appearance|settings|steam-menu|store|downloads|power)"/g)].map(m=>m[1]);
+  assert.deepEqual(ids,["home","library","search","collections","tabs","appearance","settings","steam-menu"]);
   assert.match(dash,/id:"running",label:runningGame.title/);
   assert.match(dash,/Navigation\.Navigate\(APPEARANCE_ROUTE\)/);
   assert.match(dash,/\{ id: "search", label: "Search", icon: MdSearch, go: openLocalSearch \}/);
   assert.match(dash,/openNativeSteamMenu\(Navigation\)/);
+  assert.match(dash,/Navigation.Navigate\(TABS_ROUTE\)/);
+  assert.match(dash,/Navigation.Navigate\(PLUGIN_SETTINGS_ROUTE\)/);
 });
 
 test("Native Steam menu bridge opens native menu without synthesized keypresses",()=>{
