@@ -1858,18 +1858,21 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-grid-page.gl-alphabet-enabled > .gl-full-grid-scroll {margin-right:45px;}
 }
 
-/* v0.5.9-test.14 — Library SIZE / estimated Steam Store minimum.
+/* v0.5.9-test.15 — Library card visual alignment hotfix (native size source unchanged).
+ * v0.5.9-test.14 — Library SIZE / estimated Steam Store minimum.
  * Only dedicated Library cards; Home strip and Search grid are untouched.
  * Keep native card dimensions, gamepad focus and Phase 1-3 alphabet rail. */
 .gl-root .gl-full-grid .gl-poster[data-size-active="true"]::after {
   content:"";
-  position:absolute;left:0;right:0;bottom:0;height:95px;
+  /* The original .gl-poster::after has inset:0. Override its TOP
+   * explicitly, otherwise the fixed-height overlay starts at the cover top. */
+  position:absolute;inset:auto 0 0;height:32%;
   pointer-events:none;
-  background:linear-gradient(0deg,rgba(3,8,18,.98),rgba(3,8,18,.64) 62%,transparent);
+  background:linear-gradient(0deg,rgba(3,8,18,.98) 0%,rgba(3,8,18,.78) 36%,transparent 100%);
   z-index:0;
 }
 .gl-root .gl-full-grid .gl-poster[data-size-active="true"] .gl-poster-name {
-  bottom:37px;
+  bottom:28px;
   left:10px;right:10px;z-index:1;
   font-size:clamp(12px,1vw,14px);
   line-height:1.16;
@@ -1896,14 +1899,15 @@ html:has(.gl-root.gl-own-status-only) #header {
   color:#afbdce;
 }
 .gl-root .gl-full-grid .gl-poster-size strong {
-  margin-left:auto;
+  margin-left:1px;
+  flex:0 0 auto;
   font-size:clamp(11px,1vw,14px);font-weight:750;
 }
 @media(max-height:650px) {
   .gl-root .gl-full-grid .gl-poster-size {bottom:5px;left:6px;right:6px;gap:3px;}
   .gl-root .gl-full-grid .gl-poster-size strong {font-size:11px;}
   .gl-root .gl-full-grid .gl-poster[data-size-active="true"] .gl-poster-name {
-    bottom:28px;font-size:11px;left:7px;right:7px;
+    bottom:25px;font-size:11px;left:7px;right:7px;
   }
 }
 
