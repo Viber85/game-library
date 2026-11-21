@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import test from "node:test";
 import {
   requiredInstallBytes,readNativeRequiredInstallBytes,
@@ -53,6 +54,16 @@ test("Native app-details changes update only the selected card and unregister on
     if(old===undefined)delete globalThis.window;
     else globalThis.window=old;
   }
+});
+
+test("Steam native Space Required retains two decimals in binary GB (10.76 GB reference)",()=>{
+  const bytes=11_552_803_635;
+  assert.equal((bytes/(1024**3)).toFixed(2)+" GB","10.76 GB");
+  const badgeSource=new URL("../src/SteamInstallSizeBadge.tsx",import.meta.url);
+  const source=readFileSync(badgeSource,"utf8");
+  assert.match(source,/nativeRequired\/\(1024\*\*3\)/);
+  assert.match(source,/requiredGb\.toFixed\(2\)\+" GB"/);
+  assert.match(source,/requiredGb!==null\?formatted/);
 });
 
 test("Cold uninstalled Steam game explicitly loads app details before reading Space Required",async()=>{
