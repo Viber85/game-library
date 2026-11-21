@@ -16,8 +16,8 @@ export type StoreSizeReply={
 export type NonSteamSizeReply={
   status:"ok"|"unavailable"|"invalid";
   size_bytes?:number;
-  source?:"flatpak"|"appimage";
-  reason?:"shortcut_not_found"|"unsupported_target"|"flatpak_size_unavailable";
+  source?:"flatpak"|"appimage"|"windows_game";
+  reason?:"shortcut_not_found"|"unsupported_target"|"flatpak_size_unavailable"|"game_folder_unavailable";
 };
 
 const requestNonSteamSize=callable<[number,string,string],NonSteamSizeReply>(
@@ -155,7 +155,9 @@ export function SteamInstallSizeBadge({game,active}:{
   const title=nonSteamGb!==null?
     nonSteam?.source==="flatpak"?
       "Flatpak app installed size · excludes shared runtimes and user data":
-      "AppImage file size · excludes downloaded data and extracted cache":
+      nonSteam?.source==="windows_game"?
+        "Local game folder size · excludes Proton prefix, shader cache and linked files":
+        "AppImage file size · excludes downloaded data and extracted cache":
     nativeGb!==null?
     "Installed size · Steam local size_on_disk":
     estimate?"Estimated storage requirement from Steam Store ("+
@@ -166,7 +168,8 @@ export function SteamInstallSizeBadge({game,active}:{
       "Local size unknown · "+(nonSteam?.reason==="shortcut_not_found"?
         "Steam shortcut not found":nonSteam?.reason==="flatpak_size_unavailable"?
         "Flatpak size unavailable":nonSteam?.reason==="unsupported_target"?
-        "Unsupported shortcut target":"select game to inspect its local shortcut"):
+        "Unsupported shortcut target":nonSteam?.reason==="game_folder_unavailable"?
+        "Game folder unavailable or too broad":"select game to inspect its local shortcut"):
       "Storage size unknown · select this game to check Steam Store requirements";
   return <span className="gl-poster-size" title={title} aria-label={title}>
     <MdStorage aria-hidden="true"/>
