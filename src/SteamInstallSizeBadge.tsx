@@ -149,7 +149,6 @@ export function SteamInstallSizeBadge({game,active}:{
   const formatted=value!==undefined&&value!==null?
     value<.1?Math.max(1,Math.round(value*1000))+" MB":
     (value<10?value.toFixed(1):Math.round(value).toString())+" GB":null;
-  const label=nativeGb!==null?"SIZE":estimate?"EST.":"SIZE";
   const text=nativeGb!==null||nonSteamGb!==null?formatted:
     estimate?"~"+formatted:"—";
   const title=nonSteamGb!==null?
@@ -173,6 +172,6 @@ export function SteamInstallSizeBadge({game,active}:{
       "Storage size unknown · select this game to check Steam Store requirements";
   return <span className="gl-poster-size" title={title} aria-label={title}>
     <MdStorage aria-hidden="true"/>
-    <small>{label}</small><strong>{text}</strong>
+    <strong>{text}</strong>
   </span>;
 }
