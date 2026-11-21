@@ -21,7 +21,7 @@ import {SEARCH_ROUTE,rememberSearchOrigin,searchBackRoute,
   readSearchSelection,saveSearchSelection} from "./searchNavigation";
 import {AppearancePage} from "./AppearancePage";
 import {LibraryAlphabetIndicator} from "./LibraryAlphabetIndicator";
-import {alphabetIndicatorEnabled} from "./libraryAlphabet";
+import {alphabetIndicatorEnabled,isRightEdgeGame} from "./libraryAlphabet";
 import {CollectionsPage} from "./CollectionsPage";
 import {resetCollectionLocation} from "./collectionsNavigation";
 import {openNativeSteamMenu} from "./nativeSteamMenu";
@@ -194,6 +194,8 @@ export function Dashboard({initialMode="home",originRoute}:
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridLayoutRef = useRef<HTMLDivElement>(null);
   const fullGridScrollRef = useRef<HTMLDivElement>(null);
+  const alphabetRailRef = useRef<HTMLDivElement>(null);
+  const alphabetReturnGridIndex = useRef<number|null>(null);
   const pendingGridIndex = useRef<number | null>(null);
   const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
   const viewMoreRef = useRef<HTMLDivElement>(null);
@@ -448,6 +450,22 @@ export function Dashboard({initialMode="home",originRoute}:
     if(target>=gridLimit)return;
     if(commitGridFocus(target))pendingGridIndex.current=null;
   },[viewAll,gridLimit,shown.length,activeTab,sort]);
+  const enterAlphabet=(index:number)=>{
+    if(!libraryAlphabetActive)return;
+    alphabetReturnGridIndex.current=index;
+    alphabetRailRef.current?.focus();
+  };
+  const leaveAlphabet=()=>{
+    const index=alphabetReturnGridIndex.current??lastGridFocusIndex.current;
+    alphabetReturnGridIndex.current=null;
+    focusGrid(index);
+  };
+  const jumpFromAlphabet=(index:number)=>{
+    alphabetReturnGridIndex.current=null;
+    // focusGrid retains existing progressive 60-card loading. It focuses
+    // the requested target only after that batch has actually rendered.
+    focusGrid(index);
+  };
   const moveInGrid = (index:number, button:GamepadButton) => {
     if(searchMode&&(button===GamepadButton.BUMPER_LEFT||
       button===GamepadButton.BUMPER_RIGHT))return;
@@ -469,6 +487,11 @@ export function Dashboard({initialMode="home",originRoute}:
       // free-form spatial focus search. Right/B returns to the same game.
       lastGridFocusIndex.current=index;
       focusRail(railIndex);
+      return;
+    }
+    if(libraryAlphabetActive&&direction==="right"&&
+       isRightEdgeGame(index,shown.length,columns)){
+      enterAlphabet(index);
       return;
     }
     const target=gridNeighbor(index,shown.length,columns,direction);
@@ -945,9 +968,15 @@ export function Dashboard({initialMode="home",originRoute}:
               </div>
               {libraryAlphabetActive&&<LibraryAlphabetIndicator
                 key={tab.id+":"+sort}
-                games={visibleGridGames} focusedGameId={selectedId}
+                games={visibleGridGames} allGames={shown}
+                focusedGameId={selectedId}
                 descending={sort==="alphabetical-desc"}
-                scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}/>}
+                scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}
+                railRef={alphabetRailRef}
+                onJumpToGame={jumpFromAlphabet}
+                onReturnToGame={leaveAlphabet}
+                onSort={showSortMenu}
+                onChangeTab={cycleTab}/>}
               <div className="gl-grid-hint">Y: Sort · Start: Game options · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
             </section>
           ) : (
