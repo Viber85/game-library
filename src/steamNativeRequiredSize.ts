@@ -8,7 +8,7 @@ export function requiredInstallBytes(value:unknown):number|null{
   const raw=fields.lDiskSpaceRequiredBytes;
   const n=typeof raw==="number"?raw:
     typeof raw==="bigint"?Number(raw):
-    typeof raw==="string"&&/^\\d+$/.test(raw)?Number(raw):NaN;
+    typeof raw==="string"&&/^\d+$/.test(raw)?Number(raw):NaN;
   return Number.isSafeInteger(n)&&n>0&&n<=3_000_000_000_000?n:null;
 }
 export function readNativeRequiredInstallBytes(appId:number):number|null{
