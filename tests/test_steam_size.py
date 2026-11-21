@@ -118,6 +118,24 @@ class SteamSizeTests(unittest.TestCase):
             self.assertIn("123", saved["entries"])
             self.assertIn("234", saved["entries"])
 
+    def test_old_negative_cache_is_invalidated_but_valid_estimates_survive(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "size.json"
+            path.write_text(json.dumps({"entries": {
+                "123": {"until": 9999999999, "reply": {
+                    "status": "estimated", "estimated_gb": 70,
+                    "steam_title": "Test Game"}},
+                "234": {"until": 9999999999, "reply": {"status": "unavailable"}},
+            }}), encoding="utf-8")
+            service=steam_size.SteamSizeService(path)
+            self.assertIn("123", service.entries)
+            self.assertNotIn("234", service.entries)
+            with mock.patch.object(steam_size, "fetch_store_requirements",
+                                   return_value=response()):
+                self.assertEqual(service.lookup(234)["status"], "unavailable")
+            saved=json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(saved["schema"], steam_size.CACHE_SCHEMA)
+
     def test_throttles_focused_lookup_without_queueing_many_requests(self):
         with tempfile.TemporaryDirectory() as tmp:
             service = steam_size.SteamSizeService(pathlib.Path(tmp) / "cache.json")
