@@ -15,6 +15,7 @@ export interface LibraryGame {
   addedAt?: number;
   releaseDate?: number;
   sizeBytes?: number;
+  requiredBytes?: number;
   achievementsUnlocked?: number;
   achievementsTotal?: number;
   poster?: string;
