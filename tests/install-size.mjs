@@ -14,7 +14,9 @@ const packageScript=read("scripts/package.sh");
 test("Existing native Steam size_on_disk remains authoritative for installed games",()=>{
   assert.match(native,/sizeBytes:safeNonnegative\(o\.size_on_disk\)/);
   assert.match(badge,/const native=game\.installed&&typeof game\.sizeBytes==="number"/);
-  assert.match(badge,/nativeGb!==null\?"SIZE":estimate\?"EST\.":"SIZE"/);
+  assert.doesNotMatch(badge,/<small>|const label=/);
+  assert.match(badge,/<MdStorage aria-hidden="true"\/>/);
+  assert.match(badge,/<strong>\{text\}<\/strong>/);
   assert.match(badge,/Installed size · Steam local size_on_disk/);
   assert.match(badge,/not an exact download or installed size/);
   assert.match(badge,/nonSteamGb!==null/);
@@ -26,7 +28,9 @@ test("Existing native Steam size_on_disk remains authoritative for installed gam
 test("Only dedicated Library grid shows size badge and does not prefetch 400 games",()=>{
   assert.match(ui,/showInstallSize=\{initialMode==="library"\}/);
   assert.match(ui,/selectedForSize=\{selectedId===game\.id\}/);
-  assert.match(ui,/showInstallSize&&<SteamInstallSizeBadge/);
+  assert.match(ui,/showInstallSize&&<div className="gl-poster-meta">/);
+  assert.match(ui,/<SteamInstallSizeBadge/);
+  assert.match(ui,/<HltbPosterBadge/);
   assert.match(ui,/data-size-active=\{showInstallSize\|\|undefined\}/);
   assert.match(badge,/if\(!game\.nonSteam&&active&&native===null\)/);
   assert.match(badge,/timer=window\.setTimeout\(load,850\)/);
@@ -77,13 +81,15 @@ test("v0.5.9-test.15: SIZE gradient anchors to the bottom third, not top half",(
   assert.match(rule,/height:32%/);
   assert.doesNotMatch(rule,/height:95px|top:0/);
   assert.match(rule,/linear-gradient\(0deg/);
-  const sizeValue=css.match(/\.gl-root \.gl-full-grid \.gl-poster-size strong\s*\{([^}]*)\}/)?.[1];
+  const sizeValue=css.match(/\.gl-root \.gl-full-grid \.gl-poster-size strong,\s*\.gl-root \.gl-full-grid \.gl-poster-hltb strong\s*\{([^}]*)\}/)?.[1];
   assert.ok(sizeValue,"SIZE value alignment missing");
   assert.match(sizeValue,/margin-left:1px/);
   assert.doesNotMatch(sizeValue,/margin-left:auto/);
   assert.match(sizeValue,/flex:0 0 auto/);
   assert.match(ui,/\{game\.installed && !showInstallSize &&/);
-  assert.match(ui,/showInstallSize&&<SteamInstallSizeBadge/);
+  assert.match(ui,/showInstallSize&&<div className="gl-poster-meta">/);
+  assert.match(ui,/<SteamInstallSizeBadge/);
+  assert.match(ui,/<HltbPosterBadge/);
   assert.doesNotMatch(ui,/\{game\.installed && <MdCheckCircle/);
 });
 
@@ -127,4 +133,22 @@ test("Direct Windows game directory measurement is bounded and local",()=>{
   assert.match(local,/\"source\": \"windows_game\"/);
   assert.match(badge,/source===\"windows_game\"/);
   assert.match(badge,/Local game folder size/);
+});
+
+test("HLTB poster uses existing Main + Extras cache and local notifications",()=>{
+  const poster=read("src/HltbPosterBadge.tsx");
+  const cache=read("src/sortMetadata.ts");
+  assert.match(poster,/subscribeCardHltb\(game.id,refresh\)/);
+  assert.match(poster,/return unsubscribe/);
+  assert.match(poster,/if\(!active\)return/);
+  assert.match(poster,/loadCardHltb\(game\)/);
+  assert.match(poster,/HowLongToBeat · Main \+ Extras/);
+  assert.match(poster,/<MdAccessTime aria-hidden="true"\/>/);
+  assert.match(cache,/cardHltbHours\(game:LibraryGame\)/);
+  assert.match(cache,/notifyHltb\(entry.id\)/);
+  assert.match(cache,/return fetchOnce\(game,"hltb"\)/);
+  assert.match(cache,/if\(readyHltb\(game\)\)return cardHltbHours\(game\)/);
+  assert.match(css,/\.gl-root \.gl-full-grid \.gl-poster-meta\s*\{/);
+  assert.match(css,/justify-content:space-between/);
+  assert.doesNotMatch(poster,/requestHltbTimes|callable/);
 });
