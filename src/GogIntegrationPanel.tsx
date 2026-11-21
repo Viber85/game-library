@@ -1,7 +1,8 @@
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {callable} from "@decky/api";
 import {ButtonItem,Navigation,PanelSection,PanelSectionRow,TextField} from "@decky/ui";
 import {getActiveUserId} from "./steam";
+import {startNativeGogLogin,type GogLoginSession} from "./gogNativeLogin";
 
 export type GogAccount={
   ok:boolean;connected:boolean;username?:string;count?:number;
@@ -17,11 +18,15 @@ const disconnect=callable<[string],Reply>("disconnect_gog_account");
 export function GogIntegrationPanel(){
   const [account,setAccount]=useState<GogAccount|null>(null);
   const [draft,setDraft]=useState("");
+  const [manual,setManual]=useState(false);
+  const [nativeOpen,setNativeOpen]=useState(false);
+  const nativeSession=useRef<GogLoginSession|null>(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
   const steamId=getActiveUserId()||"";
 
+  useEffect(()=>()=>{nativeSession.current?.cancel();nativeSession.current=null;},[]);
   useEffect(()=>{
     let active=true;
     if(!steamId){setError("Sign in to Steam before connecting GOG.");return;}
@@ -38,16 +43,57 @@ export function GogIntegrationPanel(){
     setAccount(current);
     if(!current.ok)throw new Error(current.reason||"Unable to load account.");
   };
-  const signIn=()=>{
-    if(busy||!steamId||!draft.trim())return;
-    const submitted=draft.trim();
+  const completeSignIn=(submitted:string)=>{
+    if(!steamId||!submitted)return;
+    nativeSession.current?.cancel();
+    nativeSession.current=null;
+    setNativeOpen(false);
     setDraft("");setBusy(true);setError("");setNotice("");
     void connect(steamId,submitted).then(async reply=>{
       if(!reply.ok)throw new Error(reply.reason||"GOG sign-in failed.");
       await reload();
+      setManual(false);
       setNotice(reply.warning||"GOG account connected. Owned games are available in Library > GOG.");
-    }).catch(e=>setError(e instanceof Error?e.message:"Sign-in failed."))
-      .finally(()=>setBusy(false));
+    }).catch(e=>{
+      setError(e instanceof Error?e.message:"Sign-in failed.");
+      setManual(true);
+    }).finally(()=>setBusy(false));
+  };
+  const openNativeSignIn=()=>{
+    if(busy||nativeOpen||!steamId||!account?.login_url)return;
+    setError("");setNotice("");
+    const result=startNativeGogLogin(account.login_url,
+      code=>{
+        nativeSession.current=null;
+        setNativeOpen(false);
+        completeSignIn(code);
+      },
+      reason=>{
+        nativeSession.current=null;
+        setNativeOpen(false);
+        setManual(true);
+        setError(reason==="timeout"?
+          "GOG sign-in timed out. Try again, or use the manual option.":
+          "The Steam sign-in browser closed before GOG authorized the connection. Retry or use manual sign-in.");
+      });
+    if(result.ok){
+      nativeSession.current=result.session;
+      setNativeOpen(true);
+      setNotice("GOG sign-in opened in Steam. Complete login in that window; Game Library will detect the result automatically.");
+    }else{
+      setManual(true);
+      setError(result.reason+" Use the manual option below.");
+    }
+  };
+  const cancelNativeSignIn=()=>{
+    nativeSession.current?.cancel();
+    nativeSession.current=null;
+    setNativeOpen(false);
+    setNotice("Sign-in cancelled.");
+  };
+  const signIn=()=>{
+    if(busy||!steamId||!draft.trim())return;
+    completeSignIn(draft.trim());
   };
   const sync=()=>{
     if(busy||!steamId)return;
@@ -85,24 +131,47 @@ export function GogIntegrationPanel(){
     </PanelSectionRow>
     {!account?.connected&&<>
       <PanelSectionRow><div style={{fontSize:12,opacity:.85,lineHeight:1.5}}>
-        1. Open the GOG sign-in page and log in to GOG in your browser.
-        2. After signing in, copy the entire URL from the GOG login-success page
-        (it contains <code>code=</code>). Paste it below and choose Connect.
-        Do not paste your GOG password. The code is single-use.
+        Connect with GOG in Steam's own secure browser window.
+        After you sign in, Game Library reads the success URL and completes
+        authorization automatically. Your GOG password is never sent to Game Library.
       </div></PanelSectionRow>
       <PanelSectionRow>
-        <ButtonItem layout="below" disabled={busy||!account?.login_url} onClick={()=>{
-          if(account?.login_url)Navigation.NavigateToExternalWeb(account.login_url);
-        }}>Open GOG sign-in page</ButtonItem>
+        <ButtonItem layout="below" disabled={busy||nativeOpen||!steamId||!account?.login_url}
+          onClick={openNativeSignIn}>
+          {nativeOpen?"GOG sign-in window open…":"Connect GOG automatically"}
+        </ButtonItem>
       </PanelSectionRow>
+      {nativeOpen&&<PanelSectionRow>
+        <ButtonItem layout="below" onClick={cancelNativeSignIn}>
+          Cancel GOG sign-in
+        </ButtonItem>
+      </PanelSectionRow>}
       <PanelSectionRow>
-        <TextField label="GOG login-success URL or authorization code"
-          value={draft} disabled={busy} onChange={event=>setDraft(event.target.value)}/>
+        <ButtonItem layout="below" disabled={busy} onClick={()=>setManual(value=>!value)}>
+          {manual?"Hide manual sign-in":"Manual sign-in (fallback)"}
+        </ButtonItem>
       </PanelSectionRow>
-      <PanelSectionRow>
-        <ButtonItem layout="below" disabled={busy||!steamId||draft.trim().length<12}
-          onClick={signIn}>{busy?"Connecting…":"Connect GOG account"}</ButtonItem>
-      </PanelSectionRow>
+      {manual&&<>
+        <PanelSectionRow><div style={{fontSize:12,opacity:.85,lineHeight:1.5}}>
+          If this SteamOS build cannot open the monitored browser, open GOG
+          below, sign in normally, then paste the resulting GOG success URL
+          containing <code>code=</code> here. Never paste your password.
+        </div></PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem layout="below" disabled={busy||!account?.login_url} onClick={()=>{
+            if(account?.login_url)Navigation.NavigateToExternalWeb(account.login_url);
+          }}>Open GOG sign-in in the regular browser</ButtonItem>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <TextField label="GOG login-success URL or one-use code"
+            value={draft} bIsPassword disabled={busy||nativeOpen}
+            onChange={event=>setDraft(event.target.value)}/>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem layout="below" disabled={busy||nativeOpen||!steamId||draft.trim().length<12}
+            onClick={signIn}>{busy?"Connecting…":"Connect with code"}</ButtonItem>
+        </PanelSectionRow>
+      </>}
     </>}
     {account?.connected&&<>
       <PanelSectionRow><ButtonItem layout="below" disabled={busy} onClick={sync}>
@@ -114,7 +183,7 @@ export function GogIntegrationPanel(){
         Disconnect GOG and delete local credentials</ButtonItem></PanelSectionRow>
     </>}
     <PanelSectionRow><div style={{fontSize:12,opacity:.78,lineHeight:1.5}}>
-      Independent integration. Tokens are stored in Game Library's own restricted
+      Independent integration using Steam's native browser. Tokens are stored in Game Library's own restricted
       settings folder for this Steam account. Existing Steam games and other
       plugins are not modified. Installation and launching come in a later phase.
     </div></PanelSectionRow>
