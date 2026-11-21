@@ -65,3 +65,22 @@ test("Steam Store fallback is explicitly estimated and not used as actual size s
   assert.match(read("src/Dashboard.tsx"),/onMove=\{button=>moveInGrid\(index,button\)\}/);
   assert.match(read("src/Dashboard.tsx"),/libraryAlphabetActive&&<LibraryAlphabetIndicator/);
 });
+
+test("v0.5.9-test.15: SIZE gradient anchors to the bottom third, not top half",()=>{
+  const rule=css.match(/\.gl-root \.gl-full-grid \.gl-poster\[data-size-active="true"\]::after\s*\{([^}]*)\}/)?.[1];
+  assert.ok(rule,"Library size overlay missing");
+  // Base .gl-poster::after uses inset:0; height alone did not reposition it.
+  assert.match(css,/\.gl-poster::after\s*\{[^}]*inset:0/);
+  assert.match(rule,/inset:auto 0 0/);
+  assert.match(rule,/height:32%/);
+  assert.doesNotMatch(rule,/height:95px|top:0/);
+  assert.match(rule,/linear-gradient\(0deg/);
+  const sizeValue=css.match(/\.gl-root \.gl-full-grid \.gl-poster-size strong\s*\{([^}]*)\}/)?.[1];
+  assert.ok(sizeValue,"SIZE value alignment missing");
+  assert.match(sizeValue,/margin-left:1px/);
+  assert.doesNotMatch(sizeValue,/margin-left:auto/);
+  assert.match(sizeValue,/flex:0 0 auto/);
+  assert.match(ui,/\{game\.installed && !showInstallSize &&/);
+  assert.match(ui,/showInstallSize&&<SteamInstallSizeBadge/);
+  assert.doesNotMatch(ui,/\{game\.installed && <MdCheckCircle/);
+});
