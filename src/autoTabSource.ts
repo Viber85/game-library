@@ -3,7 +3,7 @@ import {getActiveUserId} from "./steam";
 import {DEFAULT_LIBRARY_TABS,type LibraryTab} from "./libraryTabs";
 import {createSourceRefresh} from "./tabSourceRefresh";
 
-/** Game Library's own tab definitions. No TabMaster or peer plugin RPC. */
+/** Game Library's own tab definitions and private backend persistence. */
 export type AutoTabSnapshot={
   available:boolean;
   reason:string;
