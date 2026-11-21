@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import {useNativeMenuGamepad} from "./nativeMenuGamepad";
 import { Focusable, Navigation } from "@decky/ui";
 import { getLibraryGames } from "./steam";
 import {
@@ -66,6 +67,8 @@ const DIAGNOSTICS_CSS=String.raw`
 `;
 
 export function LibraryDiagnostics(){
+  const menuRoot=useRef<HTMLDivElement>(null);
+  useNativeMenuGamepad("diagnostics",menuRoot);
   const [report,setReport]=useState<LibraryDiagnostic|null>(()=>{
     try{return snapshot();}catch{return null;}
   });
@@ -88,7 +91,7 @@ export function LibraryDiagnostics(){
     });
   };
   const back=()=>Navigation.Navigate(DASHBOARD_ROUTE);
-  return <div className="gl-library-diag">
+  return <div className="gl-library-diag" ref={menuRoot}>
     <style>{DIAGNOSTICS_CSS}</style>
     <h1 className="ld-title">Library data diagnostics</h1>
     <p className="ld-help">
