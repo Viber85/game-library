@@ -135,7 +135,8 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
         <Focusable className="gl-plugin-settings-tool-content" ref={toolContentRef}
           flow-children="column" onCancelButton={closeTool}
           onButtonDown={(e:GamepadEvent)=>{
-            if(e.detail?.button===GamepadButton.DIR_LEFT){
+            if(e.detail?.button===GamepadButton.DIR_LEFT &&
+              !(e.target instanceof HTMLInputElement)){
               stop(e);toolBackRef.current?.focus();
             }
           }}>
