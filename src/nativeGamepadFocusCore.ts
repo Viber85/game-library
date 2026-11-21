@@ -1,4 +1,4 @@
-import {directionalNeighbor,type FocusDirection} from "./spatialFocus";
+import {directionalNeighbor,type FocusDirection} from "./spatialFocus.ts";
 
 export type SteamFocusNode={
   Element?:HTMLElement|null;
