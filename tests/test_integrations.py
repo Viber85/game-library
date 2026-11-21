@@ -103,6 +103,34 @@ class OwnTabsTests(unittest.TestCase):
                 self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"],tabs)
                 self.assertFalse((own/"game_library.json").exists())
 
+    def test_manual_membership_is_per_user_and_is_validated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            own=pathlib.Path(tmp)/"Game Library"
+            own.mkdir()
+            with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
+                original=asyncio.run(Plugin().get_library_tabs("42"))["tabs"]
+                self.assertEqual(len(original),5)
+                manual={"id":"custom-manual-rpg","title":"My RPG",
+                        "position":5,"visible":True,"kind":"custom",
+                        "filter":"all","mode":"manual","members":[4,2,999]}
+                saved=asyncio.run(Plugin().save_library_tabs("42",original+[manual]))
+                self.assertTrue(saved["ok"],saved)
+                self.assertEqual(saved["tabs"][5]["members"],[2,4,999])
+                self.assertEqual(saved["tabs"][5]["mode"],"manual")
+                self.assertEqual(len(asyncio.run(Plugin().get_library_tabs("99"))["tabs"]),5)
+                changed=saved["tabs"]
+                for invalid_members in ([0],[True],[2,2],[3.5],[9007199254740992]):
+                    broken=[dict(t) for t in changed]
+                    broken[5]["members"]=invalid_members
+                    self.assertFalse(asyncio.run(
+                        Plugin().save_library_tabs("42",broken))["ok"])
+                self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"][5]["members"],
+                                 [2,4,999])
+                self.assertFalse(asyncio.run(
+                    Plugin().save_library_tabs("42",changed+
+                        [{**manual,"id":"custom-manual-rpg2","position":6,
+                          "members":list(range(1,2003))}]))["ok"])
+
     def test_ignores_tabmaster_configuration_and_disabled_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=pathlib.Path(tmp)
