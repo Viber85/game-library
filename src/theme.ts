@@ -1815,4 +1815,22 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-alphabet-popup {transition:none;}
 }
 
+/* v0.5.9-test.12 — controller focus for the existing Library alphabet rail.
+ * Keep its footprint, grid width, native Steam UI and Phase 1 popup intact. */
+.gl-root .gl-grid-page.gl-alphabet-enabled .gl-alphabet-rail.gl-alphabet-focused,
+.gl-root .gl-grid-page.gl-alphabet-enabled .gl-alphabet-rail:focus-visible {
+  outline:2px solid #e5f8ff;
+  outline-offset:2px;
+  border-color:#b8eaff;
+  box-shadow:0 0 0 2px rgba(42,170,246,.35),0 0 20px rgba(42,178,255,.48);
+}
+.gl-root .gl-alphabet-rail-letter.gl-alphabet-unavailable {
+  color:rgba(168,186,206,.23);
+}
+.gl-root .gl-alphabet-rail.gl-alphabet-choosing .gl-alphabet-current {
+  color:#051e35;
+  background:#d2f4ff;
+  box-shadow:0 0 0 1px #e5faff,0 0 12px rgba(45,202,255,.76);
+}
+
 `;
