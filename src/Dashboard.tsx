@@ -5,7 +5,7 @@ import { Focusable, GamepadButton, GamepadEvent, Navigation } from "@decky/ui";
 import {
   MdAccessTime, MdCheckCircle, MdDownload, MdGridView, MdHome, MdInfo,
   MdLibraryBooks, MdPlayArrow, MdPalette, MdMenu, MdSearch, MdCollectionsBookmark,
-  MdVideogameAsset, MdChevronRight, MdArrowBack, MdAdd,
+  MdVideogameAsset, MdChevronRight, MdArrowBack, MdSettings, MdViewList,
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
@@ -30,6 +30,7 @@ import {openNativeSteamMenu} from "./nativeSteamMenu";
 import {DEFAULT_LIBRARY_TABS,createLibraryTabResolver,gamesForLibraryTab,
   visibleLibraryTabs,type LibraryTab} from "./libraryTabs";
 import {TabManager} from "./TabManager";
+import {PluginSettingsPage} from "./PluginSettingsPage";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
 import {getSortData,primeHltbCache,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
@@ -53,6 +54,8 @@ const INITIAL_GAME_COUNT = 15;
 const LIBRARY_ROUTE = "/game-library/library";
 const APPEARANCE_ROUTE = "/game-library/appearance";
 const COLLECTIONS_ROUTE="/game-library/collections";
+const TABS_ROUTE="/game-library/tabs";
+const PLUGIN_SETTINGS_ROUTE="/game-library/plugin-settings";
 let lastSelectedLibraryTab="AllGames";
 const rememberedSorts:Record<string,Sort>={};
 
@@ -158,12 +161,15 @@ function GameCard({
 
 
 export function Dashboard({initialMode="home",originRoute}:
-  {initialMode?:"home"|"library"|"appearance"|"search"|"collections";originRoute?:DetailsOriginRoute}={}) {
+  {initialMode?:"home"|"library"|"appearance"|"search"|"collections"|"tabs"|"settings";originRoute?:DetailsOriginRoute}={}) {
   const searchMode=initialMode==="search";
   const collectionsMode=initialMode==="collections";
+  const tabsMode=initialMode==="tabs";
+  const settingsMode=initialMode==="settings";
   const actualRoute=originRoute??(initialMode==="library"?
     LIBRARY_ROUTE:initialMode==="appearance"?APPEARANCE_ROUTE:
-      searchMode?SEARCH_ROUTE:collectionsMode?COLLECTIONS_ROUTE:"/library/home");
+      searchMode?SEARCH_ROUTE:collectionsMode?COLLECTIONS_ROUTE:
+      tabsMode?TABS_ROUTE:settingsMode?PLUGIN_SETTINGS_ROUTE:"/library/home");
   // Read a single return snapshot only if this exact original route mounts.
   const [detailsReturn]=useState(()=>peekDetailsOrigin(actualRoute));
   useEffect(()=>{
@@ -177,7 +183,6 @@ export function Dashboard({initialMode="home",originRoute}:
   },[searchMode,searchSelection]);
   const {runningGame,setRunningGame}=useRunningGameState();
   const [tabInfo, setTabInfo] = useState<AutoTabSnapshot>(()=>getAutoTabs());
-  const [tabManagerOpen,setTabManagerOpen]=useState(false);
   const [activeTab, setActiveTab] = useState(()=>
     detailsReturn?.tabId??
       (initialMode==="library"?lastSelectedLibraryTab:"AllGames"));
@@ -202,6 +207,8 @@ export function Dashboard({initialMode="home",originRoute}:
   const firstSearchFilterRef=useRef<HTMLDivElement>(null);
   const appearanceEntryRef=useRef<HTMLDivElement>(null);
   const collectionsEntryRef=useRef<HTMLDivElement>(null);
+  const tabsEntryRef=useRef<HTMLDivElement>(null);
+  const settingsEntryRef=useRef<HTMLDivElement>(null);
   const [collectionsPageRevision,setCollectionsPageRevision]=useState(0);
   const gameRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fullGridRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -213,9 +220,8 @@ export function Dashboard({initialMode="home",originRoute}:
   const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
-  const manageTabsRef=useRef<HTMLDivElement>(null);
   const [railIndex, setRailIndex] = useState(0);
-  const lastRailId=useRef(collectionsMode?"collections":initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
+  const lastRailId=useRef(tabsMode?"tabs":settingsMode?"settings":collectionsMode?"collections":initialMode==="appearance"?"appearance":searchMode?"search":initialMode==="library"?"library":"home");
   const [railExpanded, setRailExpanded] = useState(false);
   const tabsForRefresh=useRef<LibraryTab[]>(DEFAULT_LIBRARY_TABS);
   const membershipSignature=useRef<string|null>(null);
@@ -375,7 +381,9 @@ export function Dashboard({initialMode="home",originRoute}:
     { id: "library", label: "Library", icon: MdLibraryBooks, go: () => Navigation.Navigate(LIBRARY_ROUTE) },
     { id: "search", label: "Search", icon: MdSearch, go: openLocalSearch },
     { id: "collections", label: "Collections", icon: MdCollectionsBookmark, go: openCollections },
+    { id: "tabs", label: "Tab Manager", icon: MdViewList, go: () => Navigation.Navigate(TABS_ROUTE) },
     { id: "appearance", label: "Appearance", icon: MdPalette, go: () => Navigation.Navigate(APPEARANCE_ROUTE) },
+    { id: "settings", label: "Settings", icon: MdSettings, go: () => Navigation.Navigate(PLUGIN_SETTINGS_ROUTE) },
     { id: "steam-menu", label: "Steam Menu", icon: MdMenu, go: () => {
       if(!openNativeSteamMenu(Navigation))toaster.toast({
         title:"Game Library",
@@ -493,6 +501,8 @@ export function Dashboard({initialMode="home",originRoute}:
       collectionsEntryRef.current?.focus();
       return;
     }
+    if(tabsMode){tabsEntryRef.current?.focus();return;}
+    if(settingsMode){settingsEntryRef.current?.focus();return;}
     if(initialMode==="appearance"){
       appearanceEntryRef.current?.focus();
       return;
@@ -636,7 +646,7 @@ export function Dashboard({initialMode="home",originRoute}:
     window.requestAnimationFrame(() => focusPill(nextIndex));
   };
   const handleBumper = (e:GamepadEvent):boolean => {
-    if(initialMode==="appearance"||searchMode||collectionsMode)return false;
+    if(initialMode==="appearance"||searchMode||collectionsMode||tabsMode||settingsMode)return false;
     if (e.detail?.button === GamepadButton.BUMPER_LEFT) {
       consume(e);cycleTab(-1);return true;
     }
@@ -678,7 +688,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 key={action.id}
                 ref={el => { railRefs.current[index] = el; }}
                 className={"gl-rail-item"+(action.id==="running"?" gl-running-item":"")+
-                  (action.id===(collectionsMode?"collections":initialMode==="appearance"?"appearance":
+                  (action.id===(tabsMode?"tabs":settingsMode?"settings":collectionsMode?"collections":initialMode==="appearance"?"appearance":
                     searchMode?"search":initialMode==="library"?"library":"home")?" gl-rail-current":"")}
                 focusClassName="gl-focused"
                 noFocusRing
@@ -732,6 +742,12 @@ export function Dashboard({initialMode="home",originRoute}:
               }}/>
           : initialMode==="appearance"
           ? <AppearancePage firstRef={appearanceEntryRef}
+              onFocusRail={()=>focusRail(railIndex)}
+              onBack={()=>Navigation.Navigate("/library/home")}/>
+          : tabsMode ? <TabManager tabs={tabInfo.tabs} games={games}
+              firstRef={tabsEntryRef} onFocusRail={()=>focusRail(railIndex)}
+              onClose={()=>Navigation.Navigate(LIBRARY_ROUTE)}/>
+          : settingsMode ? <PluginSettingsPage firstRef={settingsEntryRef}
               onFocusRail={()=>focusRail(railIndex)}
               onBack={()=>Navigation.Navigate("/library/home")}/>
           : searchMode ? <>
@@ -857,7 +873,7 @@ export function Dashboard({initialMode="home",originRoute}:
                   if(b===GamepadButton.DIR_UP){consume(e);headerStatusRef.current?.focus();}
                   else if(b===GamepadButton.DIR_DOWN){consume(e);goToGame();}
                   else if(b===GamepadButton.DIR_LEFT){consume(e);index===0?focusRail(0):focusPill(index-1);}
-                  else if(b===GamepadButton.DIR_RIGHT){consume(e);index===tabs.length-1?manageTabsRef.current?.focus():focusPill(index+1);}
+                  else if(b===GamepadButton.DIR_RIGHT){consume(e);index===tabs.length-1?sortRef.current?.focus():focusPill(index+1);}
                 }}
                 onOKActionDescription={item.title}
               >
@@ -866,30 +882,13 @@ export function Dashboard({initialMode="home",originRoute}:
               </Focusable>
             ))}
           </Focusable>
-          <Focusable ref={manageTabsRef} className="gl-sort gl-manage-tabs-trigger"
-            focusClassName="gl-focused" noFocusRing
-            onActivate={()=>{setSortOpen(false);setTabManagerOpen(true);}}
-            onCancelButton={()=>focusPill(tabs.length-1)}
-            onButtonDown={(e:GamepadEvent)=>{
-              if(handleBumper(e))return;
-              if(e.detail?.button===GamepadButton.DIR_LEFT){
-                consume(e);focusPill(tabs.length-1);
-              }else if(e.detail?.button===GamepadButton.DIR_RIGHT){
-                consume(e);sortRef.current?.focus();
-              }else if(e.detail?.button===GamepadButton.DIR_DOWN){
-                consume(e);setSortOpen(false);setTabManagerOpen(true);
-              }
-            }}
-            onOKActionDescription="Manage Library tabs">
-            <MdAdd/> Tabs
-          </Focusable>
           <Focusable ref={sortRef} className="gl-sort" focusClassName="gl-focused" noFocusRing
             onActivate={showSortMenu}
             onOptionsButton={(e:GamepadEvent)=>{consume(e);showSortMenu();}}
             onOptionsActionDescription="Sort games"
             onButtonDown={(e:GamepadEvent)=>{
               if(handleBumper(e))return;
-              if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);manageTabsRef.current?.focus();}
+              if(e.detail?.button===GamepadButton.DIR_LEFT){consume(e);focusPill(tabs.length-1);}
               else if(e.detail?.button===GamepadButton.DIR_DOWN){consume(e);showSortMenu();}
             }}
             onOKActionDescription="Choose sorting">
@@ -1075,8 +1074,6 @@ export function Dashboard({initialMode="home",originRoute}:
 
         <footer className="gl-footer"><span>STEAM · Menu</span><span>L1 / R1 · Tabs</span><span>A Select</span><span>B Back</span><span>← Navigation</span></footer>
         </>}
-        {tabManagerOpen&&<TabManager tabs={tabInfo.tabs}
-          onClose={()=>{setTabManagerOpen(false);window.requestAnimationFrame(()=>manageTabsRef.current?.focus());}}/>}
       </div>
     </div>
   );
