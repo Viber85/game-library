@@ -87,16 +87,24 @@ test("Manual tabs persist selected app IDs and leave native library untouched",(
   assert.match(read("src/TabManager.tsx"),/Selected only/);
 });
 
-test("Manual selection and settings are reached through permanent left rail routes",()=>{
+test("Manual selection and Tab Manager are accessed from Plugin Settings, with Appearance in the rail",()=>{
   const index=read("src/index.tsx");
   assert.match(index,/routerHook.addRoute\(TABS_ROUTE/);
   assert.match(index,/routerHook.addRoute\(PLUGIN_SETTINGS_ROUTE/);
   assert.match(index,/routerHook.removeRoute\(TABS_ROUTE\)/);
   assert.match(index,/routerHook.removeRoute\(PLUGIN_SETTINGS_ROUTE\)/);
-  assert.match(dashboard,/id: "tabs", label: "Tab Manager"/);
+  assert.doesNotMatch(dashboard,/\{ id: "tabs", label: "Tab Manager"/);
+  assert.match(dashboard,/id: "appearance", label: "Appearance"/);
+  assert.match(dashboard,/onClose=\{\(\)=>Navigation.Navigate\(PLUGIN_SETTINGS_ROUTE\)\}/);
   assert.match(dashboard,/id: "settings", label: "Settings"/);
   assert.match(dashboard,/<PluginSettingsPage firstRef=\{settingsEntryRef\}/);
-  assert.match(read("src/PluginSettingsPage.tsx"),/Use as Steam Home/);
+  const pluginSettings=read("src/PluginSettingsPage.tsx");
+  assert.match(pluginSettings,/Use as Steam Home/);
+  assert.match(pluginSettings,/<strong>Tab Manager<\/strong>/);
+  assert.match(pluginSettings,/Navigation.Navigate\("\/game-library\/tabs"\)/);
+  assert.doesNotMatch(pluginSettings,/<strong>Appearance & artwork<\/strong>/);
+  assert.doesNotMatch(pluginSettings,/Navigation.Navigate\("\/game-library\/appearance"\)/);
+  assert.match(pluginSettings,/restoreTabManagerFocus\?1:0/);
   assert.match(read("src/PluginSettingsPage.tsx"),/notifyHomeSetting\(value\)/);
 });
 
@@ -139,7 +147,7 @@ test("Smart exceptions override AND/OR, do not modify Manual or built-ins",()=>{
   assert.deepEqual(untouched[5].forceInclude,[]);
 });
 
-test("Smart editor is reachable from left-rail Tab Manager with live preview",()=>{
+test("Smart editor is reachable from Settings Tab Manager with live preview",()=>{
   const manager=read("src/TabManager.tsx");
   const editor=read("src/SmartTabEditor.tsx");
   assert.match(manager,/Edit Smart Rules/);
