@@ -246,7 +246,7 @@ export function Dashboard({initialMode="home",originRoute}:
     setTabInfo(getAutoTabs());
     return unsubscribe;
   }, []);
-  const tabs=visibleLibraryTabs(tabInfo.tabs.length?tabInfo.tabs:DEFAULT_LIBRARY_TABS);
+  const tabs=useMemo(()=>visibleLibraryTabs(tabInfo.tabs.length?tabInfo.tabs:DEFAULT_LIBRARY_TABS),[tabInfo.tabs]);
   tabsForRefresh.current=tabs;
   const tabIds = tabs.map(t=>t.id).join("|");
   useEffect(()=>{
@@ -1075,6 +1075,8 @@ export function Dashboard({initialMode="home",originRoute}:
 
         <footer className="gl-footer"><span>STEAM · Menu</span><span>L1 / R1 · Tabs</span><span>A Select</span><span>B Back</span><span>← Navigation</span></footer>
         </>}
+        {tabManagerOpen&&<TabManager tabs={tabInfo.tabs}
+          onClose={()=>{setTabManagerOpen(false);window.requestAnimationFrame(()=>manageTabsRef.current?.focus());}}/>}
       </div>
     </div>
   );
