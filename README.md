@@ -2,6 +2,16 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.13 — touchscreen alphabet navigation
+
+The right-side Library A–Z rail now reacts to touch as well as gamepad
+focus. Tap a populated letter to jump to its first game, or slide a
+finger vertically to preview letters and release to jump. The touch rail
+uses a larger hit area and maps empty letters to the nearest available
+letter. Gestures are canceled if interrupted or released far outside
+the rail, and clicks synthesized after touch cannot trigger a second
+jump. D-pad/analog, A/B, LB/RB and Y controls remain unchanged.
+
 ## v0.5.9-test.12 — fast letter jump in Library (Phase 2)
 
 In the dedicated Library grid with A–Z or Z–A sorting, RIGHT from a
