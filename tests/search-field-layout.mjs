@@ -8,7 +8,7 @@ const source=css.slice(css.indexOf("/* v0.5.9-test.3"));
 const dash=read("src/Dashboard.tsx");
 
 test("Steam TextField keeps the visible editable input and accessible label",()=>{
-  assert.ok(view.includes('<div ref={inputRef} className="gl-library-search-field">'));
+  assert.match(view,/<div ref=\{inputRef\} className="gl-library-search-field"\s+onKeyDownCapture=\{searchTextArrows\}>/);
   assert.ok(view.includes('<div className="gl-library-search-native">'));
   assert.ok(view.includes('<TextField aria-label="Search game titles"'));
   assert.ok(view.includes('style={{width:"100%",minWidth:0}}'));
