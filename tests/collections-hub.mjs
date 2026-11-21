@@ -38,8 +38,11 @@ test("Continue Playing only includes games actually played within the last 30 da
   assert.deepEqual(continuePlayingGames([],now),[]);
 });
 
-test("My Collections lists only genuinely custom Steam/TabMaster tabs",()=>{
-  const tab=(id,title,position)=>({id,title,position,filters:null,filtersMode:"and"});
+test("My Collections lists only custom Game Library tabs",()=>{
+  const tab=(id,title,position)=>({id,title,position,
+    kind:["AllGames","Installed","Favorites","NonSteam"].includes(id)?id==="AllGames"?"all":
+      id==="NonSteam"?"nonsteam":id.toLowerCase():["epic-game","gog-games"].includes(id)?
+      "steam":"custom",filter:"all",visible:true});
   const entries=[
     tab("AllGames","All Games",0),tab("Installed","Installed",1),
     tab("Favorites","Favorites",2),tab("NonSteam","Non-Steam",3),
