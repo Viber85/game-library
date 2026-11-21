@@ -16,7 +16,8 @@ trap 'rm -rf "$stage"' EXIT
 
 dest="$stage/game-library"
 mkdir -p "$dest/dist"
-cp plugin.json main.py gog.py updates.py hltb.py protondb.py steamgriddb.py steam_size.py nonsteam_size.py system_status.py package.json README.md "$dest/"
+cp plugin.json main.py updates.py hltb.py protondb.py steamgriddb.py steam_size.py nonsteam_size.py system_status.py package.json README.md "$dest/"
+cp gog.py "$dest/"
 cp -R system-theme "$dest/system-theme"
 cp dist/index.js "$dest/dist/index.js"
 
