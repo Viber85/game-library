@@ -2,6 +2,23 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.0 — original Game Library Tab Engine
+
+The tab strip and its membership filters no longer depend on TabMaster.
+The dedicated **Tabs** control opens a controller-friendly Tab Manager:
+add a custom filtered tab, rename, reorder, hide/show, edit filters, or
+remove a custom tab. The five native defaults are All Games, Installed,
+Steam, Non-Steam and Favorites. L1/R1 follows visible tab order.
+
+Settings are stored atomically in this plugin's own per-Steam-account
+configuration. No peer plugin settings or source are imported. The old
+TabMaster bridge code has been removed. Epic and GOG integrations are
+a separate next phase: until our own store connectors exist, previously
+registered titles remain available as Steam non-Steam shortcuts, but
+uninstalled external-store libraries are not fetched in v0.6.0.
+
+See `docs/release-notes-0.6.0.md` for on-device test cases.
+
 ## v0.5.9-test.19 — compact size and HLTB cover metadata
 
 Library covers show a disk icon with size (tilde for Store estimates),
