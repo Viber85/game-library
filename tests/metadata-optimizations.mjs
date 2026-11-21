@@ -71,10 +71,12 @@ test("rejected provider requests are evicted for retries",async()=>{
   assert.equal(calls,2);
 });
 
-test("Dashboard gets a fresh collection batch for refresh and per-tab counts",()=>{
+test("Dashboard resolves all own-tab counts without peer plugin collection calls",()=>{
   const tab=read("src/libraryTabs.ts"),ui=read("src/Dashboard.tsx");
-  assert.match(tab,/createCollectionLookupBatch\(COLLECTION_SOURCE\)/);
-  assert.match(tab,/matchFilter\(f,depth\+1,lookups\)/);
+  assert.match(tab,/createLibraryTabResolver\(\)/);
+  assert.match(tab,/gamesForLibraryTab\(tab,games\)/);
+  assert.match(tab,/case "steam":return !game.nonSteam/);
+  assert.match(tab,/case "installed":return game.installed/);
   assert.match(ui,/tabsForRefresh\.current,next,createLibraryTabResolver\(\)\)/);
   assert.match(ui,/libraryTabSignature\(tabs,games,createLibraryTabResolver\(\)\)/);
   assert.match(ui,/const resolve=createLibraryTabResolver\(\)/);
