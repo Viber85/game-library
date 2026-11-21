@@ -57,12 +57,12 @@ test("Game Mode long-lived observers still clean up at mount/unmount",()=>{
   assert.match(runtime,/stopTimer\(\)/);
 });
 
-test("0.6.9 validates uninstalled Steam native install requirements while preserving controller navigation",()=>{
+test("0.6.10 validates SteamOS Space Required native fetch and accurate presentation",()=>{
   const pkg=JSON.parse(read("package.json"));
   const dash=read("src/Dashboard.tsx");
   const css=read("system-theme/settings-gamepad-focus.css");
   const theme=read("src/builtinThemeRuntime.ts");
-  assert.equal(pkg.version,"0.6.9");
+  assert.equal(pkg.version,"0.6.10");
   assert.match(dash,/function GameCard\(/);
   assert.match(dash,/onMenuButton=\{\(e:GamepadEvent\)=>\{/);
   assert.match(dash,/onMove=\{button=>moveInGrid\(index,button\)\}/);
