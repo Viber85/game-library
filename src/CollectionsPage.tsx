@@ -158,7 +158,7 @@ export function CollectionsPage({
   const focusCollection=(index:number,button:GamepadButton)=>{
     focusNativeMenuControl(collectionRefs.current[index],button);
   };
-  // Use the same Decky Focusable.onMove callback as the working Library.
+  // Use the supported Decky Focusable.onButtonDown callback and native focus.
   const movePersonalCollection=(index:number,tabId:string,button:GamepadButton)=>{
     if(button===GamepadButton.DIR_LEFT){
       onFocusRail();
@@ -425,7 +425,14 @@ export function CollectionsPage({
               className="gl-collections-group" focusClassName="gl-focused" noFocusRing
               onActivate={()=>changeLocation({section:"my",tabId:tab.id,gameId:null})}
               onCancelButton={back}
-              onMove={button=>movePersonalCollection(index,tab.id,button)}
+              onButtonDown={(event:GamepadEvent)=>{
+                const button=event.detail?.button;
+                if(button===GamepadButton.DIR_LEFT||button===GamepadButton.DIR_RIGHT||
+                  button===GamepadButton.DIR_UP||button===GamepadButton.DIR_DOWN){
+                  CONSUME(event);
+                  movePersonalCollection(index,tab.id,button);
+                }
+              }}
               onOKActionDescription={"Open "+tab.title+" collection"}>
               <MdFolder aria-hidden="true"/><strong>{tab.title}</strong>
               <MdChevronRight aria-hidden="true"/>
