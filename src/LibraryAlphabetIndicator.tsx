@@ -16,7 +16,7 @@ type Props={
   railRef:RefObject<HTMLDivElement|null>;
   onJumpToGame:(index:number)=>void;
   onReturnToGame:()=>void;
-  onSort:()=>void;
+  onOpenSort:()=>void;
   onChangeTab:(direction:-1|1)=>void;
 };
 
@@ -26,7 +26,7 @@ type Props={
  */
 export function LibraryAlphabetIndicator({
   games,allGames,focusedGameId,descending,scrollRef,gridRef,railRef,
-  onJumpToGame,onReturnToGame,onSort,onChangeTab,
+  onJumpToGame,onReturnToGame,onOpenSort,onChangeTab,
 }:Props){
   const [letter,setLetter]=useState<string>("#");
   const [popup,setPopup]=useState<string|null>(null);
@@ -184,7 +184,7 @@ export function LibraryAlphabetIndicator({
       onCancelButton={returnToGrid}
       onButtonDown={onRailButton}
       onOptionsButton={(e:GamepadEvent)=>{
-        e.preventDefault();e.stopPropagation();onSort();
+        e.preventDefault();e.stopPropagation();onOpenSort();
       }}
       onOKActionDescription="Jump to selected letter"
       onOptionsActionDescription="Sort games"
