@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import {useNativeMenuGamepad,focusNativeMenuControl} from "./nativeMenuGamepad";
-import { Focusable, Navigation, GamepadButton } from "@decky/ui";
+import { Focusable, Navigation, GamepadButton, type GamepadEvent } from "@decky/ui";
 import { getLibraryGames } from "./steam";
 import {
   collectLibraryDiagnostics,formatLibraryDiagnostics,
@@ -127,6 +127,24 @@ export function LibraryDiagnostics(){
     });
   };
   const back=()=>Navigation.Navigate(DASHBOARD_ROUTE);
+  // Focusable has onButtonDown (not onMove). Use the actual GamepadEvent
+  // for all four directions so D-pad and analog dispatch identically.
+  const onToolbarButton=(index:number)=>(event:GamepadEvent)=>{
+    const button=event.detail?.button;
+    if(button===GamepadButton.DIR_LEFT||button===GamepadButton.DIR_RIGHT||
+       button===GamepadButton.DIR_UP||button===GamepadButton.DIR_DOWN){
+      event.preventDefault();event.stopPropagation();
+      moveToolbar(index,button);
+    }
+  };
+  const onPanelButton=(index:number)=>(event:GamepadEvent)=>{
+    const button=event.detail?.button;
+    if(button===GamepadButton.DIR_LEFT||button===GamepadButton.DIR_RIGHT||
+       button===GamepadButton.DIR_UP||button===GamepadButton.DIR_DOWN){
+      event.preventDefault();event.stopPropagation();
+      movePanel(index,button);
+    }
+  };
   return <div className="gl-library-diag" ref={menuRoot}>
     <style>{DIAGNOSTICS_CSS}</style>
     <h1 className="ld-title">Library data diagnostics</h1>
@@ -139,24 +157,24 @@ export function LibraryDiagnostics(){
       <Focusable ref={el=>{buttonRefs.current[0]=el;}}
         className="ld-button" focusClassName="ld-focused"
         preferredFocus noFocusRing onActivate={refresh} onCancelButton={back}
-        onMove={button=>moveToolbar(0,button)}
+        onButtonDown={onToolbarButton(0)}
         onOKActionDescription="Refresh Steam library diagnostics">Refresh</Focusable>
       <Focusable ref={el=>{buttonRefs.current[1]=el;}}
         className="ld-button" focusClassName="ld-focused"
         noFocusRing onActivate={copy} onCancelButton={back}
-        onMove={button=>moveToolbar(1,button)}
+        onButtonDown={onToolbarButton(1)}
         onOKActionDescription="Copy aggregate diagnostic report">Copy report</Focusable>
       <Focusable ref={el=>{buttonRefs.current[2]=el;}}
         className="ld-button" focusClassName="ld-focused"
         noFocusRing onActivate={back} onCancelButton={back}
-        onMove={button=>moveToolbar(2,button)}
+        onButtonDown={onToolbarButton(2)}
         onOKActionDescription="Back to Game Library">Back</Focusable>
     </div>
     {message&&<p className="ld-error">{message}</p>}
     {report ? <div className="ld-grid">
       <Focusable ref={el=>{panelRefs.current[0]=el;}} 
         className="ld-panel ld-panel-focus" focusClassName="ld-focused" noFocusRing
-        onMove={button=>movePanel(0,button)} onCancelButton={back}>
+        onButtonDown={onPanelButton(0)} onCancelButton={back}>
         <h2>What Game Library actually sees</h2>
         <div className="ld-stat"><span>Candidate IDs</span><strong>{report.candidateRows}</strong></div>
         <div className="ld-stat"><span>Displayed games</span><strong>{report.displayedGames}</strong></div>
@@ -177,7 +195,7 @@ export function LibraryDiagnostics(){
       </Focusable>
       <Focusable ref={el=>{panelRefs.current[1]=el;}}
         className="ld-panel ld-panel-focus" focusClassName="ld-focused" noFocusRing
-        onMove={button=>movePanel(1,button)} onCancelButton={back}>
+        onButtonDown={onPanelButton(1)} onCancelButton={back}>
         <h2>Native Steam sources (counts only)</h2>
         <pre className="ld-report">{formatLibraryDiagnostics(report)}</pre>
       </Focusable>
