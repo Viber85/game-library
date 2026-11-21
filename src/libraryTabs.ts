@@ -87,7 +87,6 @@ export function gamesForLibraryTab(tab:LibraryTab,games:readonly LibraryGame[]):
   return {supported:true,games:games.filter(game=>{
     switch(filter){
       case "installed":return game.installed;
-      case "not-installed":return !game.installed;
       case "steam":return !game.nonSteam;
       case "nonsteam":return game.nonSteam;
       case "favorites":return game.favorite;
