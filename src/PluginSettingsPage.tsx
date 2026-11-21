@@ -2,15 +2,16 @@ import {useEffect,useRef,useState} from "react";
 import {callable} from "@decky/api";
 import {Focusable,GamepadButton,Navigation,type GamepadEvent} from "@decky/ui";
 import {MdArrowBack,MdChevronRight,MdHome,MdStorage,MdImage,MdSystemUpdate,
-  MdToggleOff,MdToggleOn,MdViewList} from "react-icons/md";
+  MdToggleOff,MdToggleOn,MdViewList,MdStorefront} from "react-icons/md";
 import {SystemStatusBar} from "./SystemStatusBar";
 import {notifyHomeSetting} from "./pluginSettingsEvents";
 import {SteamGridDBPanel} from "./SteamGridDBPanel";
 import {UpdatesPanel} from "./UpdatesPanel";
+import {GogIntegrationPanel} from "./GogIntegrationPanel";
 
 const getSettings=callable<[],{default_home:boolean}>("get_dashboard_settings");
 const setSettings=callable<[boolean],boolean>("set_dashboard_settings");
-type SettingsTool="steamgriddb"|"updates";
+type SettingsTool="steamgriddb"|"updates"|"gog";
 type Props={
   firstRef:{current:HTMLDivElement|null};
   onFocusRail:()=>void;
@@ -19,8 +20,8 @@ type Props={
 const stop=(e:GamepadEvent)=>{e.preventDefault();e.stopPropagation();};
 let restoreTabManagerFocus=false;
 
-const GENERAL_ROWS=5;
-const TOOL_INDEX:{[K in SettingsTool]:number}={steamgriddb:2,updates:3};
+const GENERAL_ROWS=6;
+const TOOL_INDEX:{[K in SettingsTool]:number}={gog:2,steamgriddb:3,updates:4};
 /** General plugin settings, integrations and updates. Visual themes stay in Appearance. */
 export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
   const [home,setHome]=useState(true);
@@ -64,8 +65,9 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
     else if(b===GamepadButton.DIR_RIGHT&&index>0){
       stop(e);
       if(index===1)openTabs();
-      else if(index===2)openTool("steamgriddb");
-      else if(index===3)openTool("updates");
+      else if(index===2)openTool("gog");
+      else if(index===3)openTool("steamgriddb");
+      else if(index===4)openTool("updates");
       else Navigation.Navigate("/game-library/library-diagnostics");
     }
   };
@@ -97,7 +99,8 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
     <header className="gl-header gl-library-topbar">
       <div className="gl-topbar-titles"><span className="gl-topbar-current">
         {activeTool==="updates"?"Plugin Updates":
-          activeTool==="steamgriddb"?"SteamGridDB Integration":"Plugin Settings"}
+          activeTool==="steamgriddb"?"SteamGridDB Integration":
+          activeTool==="gog"?"GOG Integration":"Plugin Settings"}
       </span></div>
       <SystemStatusBar statusRef={statusRef} onStatusButtonDown={(e:GamepadEvent)=>{
         if(e.detail?.button===GamepadButton.DIR_DOWN){
@@ -108,7 +111,8 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
     </header>
     {activeTool?
       <section className="gl-plugin-settings-body gl-plugin-settings-tool" aria-label={
-        activeTool==="updates"?"Plugin Updates":"SteamGridDB Integration"}>
+        activeTool==="updates"?"Plugin Updates":
+          activeTool==="gog"?"GOG Integration":"SteamGridDB Integration"}>
         <div className="gl-settings-title">
           <Focusable ref={el=>{toolBackRef.current=el;firstRef.current=el;}}
             className="gl-tab-manager-action" focusClassName="gl-focused" noFocusRing
@@ -127,9 +131,11 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
             }}>
             <MdArrowBack/> Back to Settings
           </Focusable>
-          <h2>{activeTool==="updates"?"Plugin Updates":"SteamGridDB Integration"}</h2>
+          <h2>{activeTool==="updates"?"Plugin Updates":
+            activeTool==="gog"?"GOG Integration":"SteamGridDB Integration"}</h2>
           <p>{activeTool==="updates"?
             "Check for Game Library releases and install verified updates.":
+            activeTool==="gog"?"Connect your GOG account and sync your purchased games.":
             "Configure missing cover and hero artwork with your personal API key."}</p>
         </div>
         <Focusable className="gl-plugin-settings-tool-content" ref={toolContentRef}
@@ -140,7 +146,8 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
               stop(e);toolBackRef.current?.focus();
             }
           }}>
-          {activeTool==="updates"?<UpdatesPanel/>:<SteamGridDBPanel/>}
+          {activeTool==="updates"?<UpdatesPanel/>:
+            activeTool==="gog"?<GogIntegrationPanel/>:<SteamGridDBPanel/>}
         </Focusable>
       </section>
       :
@@ -175,25 +182,33 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
         <span className="gl-tab-manager-caption">INTEGRATIONS</span>
         <Focusable className="gl-plugin-setting-row" focusClassName="gl-focused" noFocusRing
           ref={el=>{actions.current[2]=el;}}
-          onActivate={()=>openTool("steamgriddb")} onCancelButton={onBack}
+          onActivate={()=>openTool("gog")} onCancelButton={onBack}
           onButtonDown={(e:GamepadEvent)=>direction(e,2)}>
+          <MdStorefront/><div><strong>GOG Integration</strong>
+            <span>Connect GOG and synchronize purchased games</span></div>
+          <MdChevronRight/>
+        </Focusable>
+        <Focusable className="gl-plugin-setting-row" focusClassName="gl-focused" noFocusRing
+          ref={el=>{actions.current[3]=el;}}
+          onActivate={()=>openTool("steamgriddb")} onCancelButton={onBack}
+          onButtonDown={(e:GamepadEvent)=>direction(e,3)}>
           <MdImage/><div><strong>SteamGridDB Integration</strong>
             <span>Missing Steam covers, hero artwork and API key</span></div>
           <MdChevronRight/>
         </Focusable>
         <span className="gl-tab-manager-caption">MAINTENANCE</span>
         <Focusable className="gl-plugin-setting-row" focusClassName="gl-focused" noFocusRing
-          ref={el=>{actions.current[3]=el;}}
+          ref={el=>{actions.current[4]=el;}}
           onActivate={()=>openTool("updates")} onCancelButton={onBack}
-          onButtonDown={(e:GamepadEvent)=>direction(e,3)}>
+          onButtonDown={(e:GamepadEvent)=>direction(e,4)}>
           <MdSystemUpdate/><div><strong>Updates</strong>
             <span>Check for and install verified Game Library releases</span></div>
           <MdChevronRight/>
         </Focusable>
         <Focusable className="gl-plugin-setting-row" focusClassName="gl-focused" noFocusRing
-          ref={el=>{actions.current[4]=el;}}
+          ref={el=>{actions.current[5]=el;}}
           onActivate={()=>Navigation.Navigate("/game-library/library-diagnostics")} onCancelButton={onBack}
-          onButtonDown={(e:GamepadEvent)=>direction(e,4)}>
+          onButtonDown={(e:GamepadEvent)=>direction(e,5)}>
           <MdStorage/><div><strong>Library diagnostics</strong>
             <span>Inspect Steam library sources and available collections</span></div>
           <MdChevronRight/>
