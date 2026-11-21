@@ -1,11 +1,7 @@
 import type {LibraryGame} from "./steam";
-import type {SteamTab} from "./tabmaster";
+import type {LibraryTab} from "./libraryTabs";
 
 const DAY_SECONDS=24*60*60;
-const BUILTIN_TABS=new Set(["allgames","installed","favorites","nonsteam"]);
-const SOURCE_TABS=new Set([
-  "all games","installed","favorites","non-steam","steam","epic","gog",
-]);
 
 /** Use verified recent Steam timestamps. An unknown history is NOT played. */
 export function continuePlayingGames(
@@ -17,11 +13,8 @@ export function continuePlayingGames(
     .sort((a,b)=>b.lastPlayed-a.lastPlayed||a.title.localeCompare(b.title));
 }
 
-/** Custom tabs in the existing Steam/TabMaster source; do not create false
- * manual collections. Built-in and provider-only tabs stay in Library.
- */
-export function personalCollectionTabs(tabs:readonly SteamTab[]):SteamTab[]{
-  return tabs.filter(tab=>!BUILTIN_TABS.has(tab.id.toLowerCase())&&
-    !SOURCE_TABS.has(tab.title.trim().toLowerCase()))
+/** Only custom tabs created inside Game Library are user collections. */
+export function personalCollectionTabs(tabs:readonly LibraryTab[]):LibraryTab[]{
+  return tabs.filter(tab=>tab.kind==="custom"&&tab.visible)
     .sort((a,b)=>a.position-b.position||a.title.localeCompare(b.title));
 }
