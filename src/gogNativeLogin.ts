@@ -51,6 +51,7 @@ export function isGogLoginURL(value:string):boolean{
     return address.protocol==="https:"&&address.hostname==="auth.gog.com"&&
       address.pathname==="/auth"&&!address.username&&!address.password&&!address.port&&
       address.searchParams.get("response_type")==="code"&&
+      address.searchParams.get("client_id")==="46899977096215655"&&
       address.searchParams.get("redirect_uri")==="https://embed.gog.com/on_login_success?origin=client";
   }catch{return false;}
 }
@@ -62,7 +63,7 @@ export function startNativeGogLogin(
 ):GogLoginResult{
   if(!isGogLoginURL(authorizationURL))
     return {ok:false,reason:"GOG returned an invalid authorization URL."};
-  const host=(window as NativeSteamWindow).SteamClient?.BrowserView;
+  const host=(window as unknown as NativeSteamWindow).SteamClient?.BrowserView;
   if(typeof host?.CreatePopup!=="function"||typeof host?.Destroy!=="function")
     return {ok:false,reason:"Steam native browser is not available on this build."};
 
