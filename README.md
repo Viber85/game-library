@@ -2,6 +2,26 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.5 — four-direction Game Mode navigation overhaul
+
+Custom menus now use explicit D-pad and analogue navigation on all
+four axes. The Tab Manager editor supports **Left/Right between buttons
+on the same row** plus **Up/Down** to matching controls on adjacent
+rows. The same shared focus engine covers the Manual game picker and
+Smart Rules editor, including its two-column condition grid.
+
+We also audited and adjusted directional navigation in Appearance,
+Plugin Settings (including SteamGridDB / Updates), Search, Collections,
+Home and Library. Editable fields retain left/right caret behavior.
+
+`src/spatialFocus.ts` now handles geometry-based focus for wrapped
+layouts, with simulated rect tests in `tests/spatial-navigation.mjs`.
+All original tab and library data formats are unchanged.
+
+See `docs/release-notes-0.6.5.md` for details and on-device checks.
+Controller behavior still needs to be validated on real SteamOS
+hardware even after GitHub Actions pass.
+
 ## v0.6.4 — two-axis Tab Manager and dedicated Theme Hub
 
 The Tab Manager edit panel now supports **Up/Down** controller focus
