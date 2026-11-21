@@ -2,6 +2,19 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.6.3 — Tab Manager under Plugin Settings
+
+The main left rail has only the primary destinations: **Appearance**
+remains there, while **Tab Manager** has moved to **Plugin Settings >
+Tab Manager**. Its existing Manual/Smart tab editing is unchanged.
+Back from Tab Manager returns to Plugin Settings and restores focus.
+
+Appearance, artwork and plugin updates are no longer duplicated inside
+Plugin Settings; use the dedicated Appearance rail item for those.
+Plugin Settings keeps the Steam Home toggle and Library diagnostics.
+
+See `docs/release-notes-0.6.3.md` for device checks.
+
 ## v0.6.2 — advanced Smart Tabs and manual exceptions
 
 Custom Smart Tabs now support multiple local-library conditions combined
