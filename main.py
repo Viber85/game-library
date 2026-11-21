@@ -263,6 +263,7 @@ OWN_TAB_BUILTINS = (
     ("Favorites", "Favorites", "favorites"),
 )
 OWN_TAB_FILTERS = {"all", "installed", "not-installed", "steam", "nonsteam", "favorites"}
+OWN_SMART_RULES = {"installed", "not-installed", "steam", "nonsteam", "favorites", "not-favorites", "played"}
 
 
 def _own_tab_defaults():
@@ -274,7 +275,7 @@ def _own_tab_defaults():
 
 
 def _own_tab_validate(tabs):
-    """Only our own strict per-user schema; never read/import peer-plugin configs."""
+    """Validate only the plugin's original per-account Smart/Manual tab model."""
     if not isinstance(tabs, list) or not 5 <= len(tabs) <= 40:
         raise ValueError("Invalid tab list")
     seen = set()
@@ -288,6 +289,13 @@ def _own_tab_validate(tabs):
         kind, rule = tab.get("kind"), tab.get("filter")
         mode = tab.get("mode", "smart")
         members = tab.get("members", [])
+        rule_join = tab.get("ruleJoin", "all")
+        rules = tab.get("rules", None)
+        include, exclude = tab.get("forceInclude", []), tab.get("forceExclude", [])
+        if rules is None:
+            # Preserve v0.6.1 one-filter custom tabs without importing anything.
+            rules = ([{"type": rule}] if kind == "custom" and
+                     rule in OWN_SMART_RULES else [])
         if (not isinstance(tab_id, str) or
             (tab_id not in builtin and not re.fullmatch(r"custom-[a-z0-9-]{4,50}", tab_id)) or
             tab_id in seen or not isinstance(title, str) or
@@ -296,20 +304,40 @@ def _own_tab_validate(tabs):
             type(position) is not int or not 0 <= position < 40 or
             type(visible) is not bool or type(kind) is not str or
             type(rule) is not str or rule not in OWN_TAB_FILTERS or
-            mode not in ("smart", "manual") or
-            not isinstance(members, list) or len(members) > 2000 or
-            any(type(item) is not int or not 0 < item <= 9007199254740991
-                for item in members) or len(set(members)) != len(members)):
+            mode not in ("smart", "manual") or rule_join not in ("all", "any")):
             raise ValueError("Invalid tab field")
+        if (not isinstance(rules, list) or len(rules) > 12 or
+            any(not isinstance(item, dict) or
+                type(item.get("type")) is not str or
+                item["type"] not in OWN_SMART_RULES or len(item) != 1
+                for item in rules) or
+            len({item["type"] for item in rules}) != len(rules)):
+            raise ValueError("Invalid Smart rules")
+        for game_ids in (members, include, exclude):
+            if (not isinstance(game_ids, list) or len(game_ids) > 2000 or
+                any(type(item) is not int or
+                    not 0 < item <= 9007199254740991
+                    for item in game_ids) or
+                len(set(game_ids)) != len(game_ids)):
+                raise ValueError("Invalid game IDs")
+        if set(include).intersection(exclude):
+            raise ValueError("Smart include and exclude cannot overlap")
         if tab_id in builtin:
-            if kind != builtin[tab_id] or rule != kind or mode != "smart" or members:
+            if (kind != builtin[tab_id] or rule != kind or
+                mode != "smart" or members or rules or include or exclude or
+                rule_join != "all"):
                 raise ValueError("Built-in tab has an invalid filter")
         elif kind != "custom":
             raise ValueError("Custom tab has an invalid kind")
         seen.add(tab_id)
-        output.append({"id": tab_id, "title": title.strip(), "position": position,
-                       "visible": visible, "kind": kind, "filter": rule,
-                       "mode": mode, "members": sorted(members)})
+        output.append({
+            "id": tab_id, "title": title.strip(), "position": position,
+            "visible": visible, "kind": kind, "filter": rule,
+            "mode": mode, "members": sorted(members),
+            "rules": [{"type": item["type"]} for item in rules],
+            "ruleJoin": rule_join,
+            "forceInclude": sorted(include), "forceExclude": sorted(exclude),
+        })
     if not set(builtin).issubset(seen):
         raise ValueError("Missing built-in tab")
     if not any(tab["visible"] for tab in output):
