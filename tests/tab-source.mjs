@@ -3,7 +3,8 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 import {
   DEFAULT_LIBRARY_TABS,visibleLibraryTabs,gamesForLibraryTab,
-  moveLibraryTab,changeLibraryTab,newLibraryTab,assignManualGames
+  moveLibraryTab,changeLibraryTab,newLibraryTab,assignManualGames,
+  smartRulesForTab,assignSmartExceptions
 } from "../src/libraryTabs.ts";
 
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
@@ -97,4 +98,58 @@ test("Manual selection and settings are reached through permanent left rail rout
   assert.match(dashboard,/<PluginSettingsPage firstRef=\{settingsEntryRef\}/);
   assert.match(read("src/PluginSettingsPage.tsx"),/Use as Steam Home/);
   assert.match(read("src/PluginSettingsPage.tsx"),/notifyHomeSetting\(value\)/);
+});
+
+test("Smart AND/OR evaluates separate conditions, with no false game matches",()=>{
+  const smart=newLibraryTab(DEFAULT_LIBRARY_TABS,"Steam installed","all",
+    "custom-steam-installed","smart")[5];
+  const tab={...smart,rules:[{type:"steam"},{type:"installed"}],ruleJoin:"all"};
+  assert.deepEqual(gamesForLibraryTab(tab,games).games.map(g=>g.id),[1]);
+  assert.deepEqual(gamesForLibraryTab({...tab,ruleJoin:"any"},games).games.map(g=>g.id),
+    [1,2,3]);
+  assert.deepEqual(gamesForLibraryTab({...tab,rules:[],ruleJoin:"all"},games).games.map(g=>g.id),
+    [1,2,3,4]);
+  assert.deepEqual(gamesForLibraryTab({...tab,rules:[{type:"not-favorites"}]},games)
+    .games.map(g=>g.id),[1,2,3]);
+  assert.deepEqual(gamesForLibraryTab({...tab,rules:[{type:"played"}]},games).games,[]);
+  assert.deepEqual(gamesForLibraryTab({...tab,rules:[{type:"played"}]},
+    [...games,{...game(5,false,true),lastPlayed:1700000000,playtimeMinutes:0}])
+    .games.map(g=>g.id),[5]);
+  const legacy={...smart,filter:"not-installed",rules:undefined};
+  assert.deepEqual(smartRulesForTab(legacy),[{type:"not-installed"}]);
+  assert.deepEqual(gamesForLibraryTab(legacy,games).games.map(g=>g.id),[2,4]);
+});
+
+test("Smart exceptions override AND/OR, do not modify Manual or built-ins",()=>{
+  const smart=newLibraryTab(DEFAULT_LIBRARY_TABS,"Steam installed","all",
+    "custom-steam-installed","smart");
+  const id=smart[5].id;
+  const withRules=changeLibraryTab(smart,id,{
+    rules:[{type:"steam"},{type:"installed"}],ruleJoin:"all"
+  });
+  const included=assignSmartExceptions(withRules,id,"include",[4,4,2]);
+  assert.deepEqual(included[5].forceInclude,[2,4]);
+  const excluded=assignSmartExceptions(included,id,"exclude",[4,1]);
+  assert.deepEqual(excluded[5].forceInclude,[2]);
+  assert.deepEqual(excluded[5].forceExclude,[1,4]);
+  assert.deepEqual(gamesForLibraryTab(excluded[5],games).games.map(g=>g.id),[2]);
+  assert.equal(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[0],games).games.length,4);
+  const manual=newLibraryTab(DEFAULT_LIBRARY_TABS,"Manual","all","custom-manualtest","manual");
+  const untouched=assignSmartExceptions(manual,manual[5].id,"include",[1]);
+  assert.deepEqual(untouched[5].forceInclude,[]);
+});
+
+test("Smart editor is reachable from left-rail Tab Manager with live preview",()=>{
+  const manager=read("src/TabManager.tsx");
+  const editor=read("src/SmartTabEditor.tsx");
+  assert.match(manager,/Edit Smart Rules/);
+  assert.match(manager,/Always Include/);
+  assert.match(manager,/Always Exclude/);
+  assert.match(manager,/assignSmartExceptions\(items,selected.id,pickerTarget,pickerSelected\)/);
+  assert.match(manager,/<SmartTabEditor tab=\{selected\} games=\{games\}/);
+  assert.match(editor,/gamesForLibraryTab\(\{\.\.\.tab,mode:"smart",rules,ruleJoin:join\},games\)/);
+  assert.match(editor,/ALL · AND/);
+  assert.match(editor,/ANY · OR/);
+  assert.match(editor,/Save Rules/);
+  assert.doesNotMatch(editor,/TabMaster|Unifideck/);
 });
