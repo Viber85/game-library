@@ -975,7 +975,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 railRef={alphabetRailRef}
                 onJumpToGame={jumpFromAlphabet}
                 onReturnToGame={leaveAlphabet}
-                onSort={showSortMenu}
+                onOpenSort={showSortMenu}
                 onChangeTab={cycleTab}/>}
               <div className="gl-grid-hint">Y: Sort · Start: Game options · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
             </section>
