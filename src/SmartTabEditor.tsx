@@ -81,7 +81,7 @@ export function SmartTabEditor({tab,games,onClose,onSave,onFocusRail,firstRef}:P
       </div>
       <div className="gl-tab-smart-rules">
         {rules.map((rule,index)=>
-          <div className="gl-tab-smart-rule" key={rule.type}>
+          <div className="gl-tab-smart-rule" key={index}>
             <span className="gl-tab-smart-rule-number">{index+1}</span>
             <Focusable ref={el=>{rowRefs.current[index]=el;}}
               className="gl-tab-smart-rule-picker" focusClassName="gl-focused"
