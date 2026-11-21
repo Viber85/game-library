@@ -45,13 +45,16 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
   const pickerSearchRef=useRef<HTMLDivElement>(null);
   const pickerRows=useRef<Array<HTMLDivElement|null>>([]);
   const selected=items.find(t=>t.id===selectedId)??items[0];
-  const selectedIndex=items.findIndex(t=>t.id===selected?.id);
 
   useEffect(()=>{setItems(normalizeLibraryTabs(tabs));},[tabs]);
   useEffect(()=>{
     const frame=window.requestAnimationFrame(()=>backRef.current?.focus());
     return ()=>{window.cancelAnimationFrame(frame);firstRef.current=null;};
   },[]);
+  // The parent sidebar's Right/B action targets the currently visible page.
+  useEffect(()=>{
+    firstRef.current=picker?pickerBackRef.current:backRef.current;
+  },[picker]);
 
   const focusRow=(index:number)=>{
     const row=rowRefs.current[Math.max(0,Math.min(items.length-1,index))];
@@ -149,8 +152,7 @@ export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
   return <div className="gl-tab-manager gl-tab-manager-page" aria-label="Manage Library tabs">
     <div className="gl-tab-manager-shell">
       <header className="gl-tab-manager-header">
-        <Focusable ref={el=>{backRef.current=el;firstRef.current=picker?
-          pickerBackRef.current:el;}}
+        <Focusable ref={el=>{backRef.current=el;if(!picker)firstRef.current=el;}}
           className="gl-tab-manager-action" focusClassName="gl-focused" noFocusRing
           onActivate={picker?leavePicker:onClose} onCancelButton={picker?leavePicker:onClose}
           onButtonDown={(e:GamepadEvent)=>{
