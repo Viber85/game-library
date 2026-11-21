@@ -177,9 +177,10 @@ test("Appearance and Settings keep independently navigable theme and provider to
   assert.match(appearance,/Color Editor/);
   assert.doesNotMatch(appearance,/SteamGridDBPanel|UpdatesPanel/);
   assert.match(settings,/<SteamGridDBPanel\/>/);
+  assert.match(settings,/<GogIntegrationPanel\/>/);
   assert.match(settings,/<UpdatesPanel\/>/);
   assert.match(settings,/openTool\("steamgriddb"\)/);
   assert.match(settings,/openTool\("updates"\)/);
-  assert.match(settings,/GENERAL_ROWS=5/);
+  assert.match(settings,/GENERAL_ROWS=6/);
   assert.match(settings,/focus\(toolLastIndex\)/);
 });
