@@ -2,6 +2,16 @@
 
 Independent SteamOS Game Mode dashboard, developed using the **Viber85 Claw Metrics / Better Overlay** Decky build conventions. **Not** a PS5 Dashboard fork.
 
+## v0.5.9-test.12 — fast letter jump in Library (Phase 2)
+
+In the dedicated Library grid with A–Z or Z–A sorting, RIGHT from a
+row's final game poster now focuses the existing alphabet rail. UP/DOWN
+select an available letter (empty letters are skipped), A focuses the
+first game with that initial, LEFT/B return to the original poster. The
+existing progressive 60-card grid handles jumps to distant games.
+LB/RB still change tabs and Y still opens Sort. No changes to Home,
+Search, Collections, Appearance, Steam native UI or metadata loading.
+
 ## v0.5.9-test.11 — alphabet position in Library (Phase 1)
 
 Only when the dedicated full Library grid is sorted A–Z or Z–A, a
