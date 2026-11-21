@@ -1833,4 +1833,29 @@ html:has(.gl-root.gl-own-status-only) #header {
   box-shadow:0 0 0 1px #e5faff,0 0 12px rgba(45,202,255,.76);
 }
 
+/* v0.5.9-test.13 — touchable alphabet rail, scoped to Library only.
+ * Wider target for handheld fingertips; vertical gesture belongs to this
+ * rail, not the grid scroll. Preserve the Phase 2 gamepad focus states. */
+.gl-root .gl-grid-page.gl-alphabet-enabled .gl-alphabet-rail {
+  width:42px;
+  pointer-events:auto;
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
+  cursor:pointer;
+}
+.gl-root .gl-grid-page.gl-alphabet-enabled > .gl-full-grid-scroll {
+  margin-right:47px;
+}
+.gl-root .gl-grid-page.gl-alphabet-enabled .gl-alphabet-rail-letter {
+  pointer-events:none;
+}
+.gl-root .gl-grid-page.gl-alphabet-enabled .gl-alphabet-popup {
+  right:66px;
+}
+@media(max-height:650px){
+  .gl-root .gl-grid-page.gl-alphabet-enabled .gl-alphabet-rail {width:40px;}
+  .gl-root .gl-grid-page.gl-alphabet-enabled > .gl-full-grid-scroll {margin-right:45px;}
+}
+
 `;
