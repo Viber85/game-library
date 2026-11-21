@@ -86,6 +86,9 @@ def parse_binary_shortcuts(blob):
         return [
             entry for key, entry in entries.items()
             if key.isdecimal() and isinstance(entry, dict)
+            and type(entry.get("appid")) is int
+            and isinstance(entry.get("appname"), str)
+            and isinstance(entry.get("exe"), str)
         ][:5000]
     except (ValueError, OverflowError):
         return []
