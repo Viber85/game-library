@@ -79,9 +79,12 @@ def parse_store_response(payload, appid):
         for category in ("minimum", "recommended"):
             gb = parse_required_gb(req.get(category))
             if gb is not None:
+                name = data.get("name")
+                title = name.strip() if isinstance(name, str) else ""
                 return {"status": "estimated", "estimated_gb": gb,
                         "platform": platform, "requirement": category,
-                        "source": "steam_store"}
+                        "source": "steam_store",
+                        "steam_title": title[:180] if 0 < len(title) <= 200 else ""}
     return None
 
 
