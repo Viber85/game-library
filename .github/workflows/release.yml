@@ -43,7 +43,7 @@ jobs:
         run: npm run test:achievements
       - name: Typecheck, build and package
         run: bash scripts/package.sh
-      # v0.5.9-test.11: Library alphabet display-only; regression checks passed.
+      # v0.5.9-test.15: bottom-anchored Library size gradient; notes and tests verified.
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
