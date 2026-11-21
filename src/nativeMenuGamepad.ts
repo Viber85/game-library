@@ -31,8 +31,28 @@ const CONTROLS:Record<MenuType,string>={
     ".gl-collections-grid .gl-game",
     ".gl-collections-picker-search input",
   ].join(","),
-  diagnostics:".ld-button",
+  diagnostics:".ld-button,.ld-panel-focus",
 };
+
+/** For controls outside Decky's automatic focus grid, use native Steam
+ * gamepad focus first. HTMLElement.focus() is only a keyboard/touch fallback.
+ * Works from Focusable.onMove, which Steam dispatches for directional input. */
+export function focusNativeMenuControl(
+  target:HTMLElement|null|undefined,
+  button:GamepadButton,
+):boolean{
+  if(!target)return false;
+  try{
+    const trees=getGamepadNavigationTrees() as unknown;
+    if(Array.isArray(trees)&&takeNativeGamepadFocus(trees as SteamFocusTree[],target,button)){
+      target.scrollIntoView({block:"nearest",inline:"nearest"});
+      return true;
+    }
+  }catch{/* During Game Mode transitions the Steam tree may be unavailable. */}
+  target.focus();
+  target.scrollIntoView({block:"nearest",inline:"nearest"});
+  return target.ownerDocument.activeElement===target;
+}
 
 export function directionFromButton(button:number|undefined):FocusDirection|null{
   switch(button){
@@ -64,6 +84,11 @@ export function nativeMenuTarget(
         ".gl-tab-manager-row.gl-tab-manager-selected");
     }
   }
+  // Personal collections are a vertical list, not a row of action buttons.
+  // RIGHT is handled by the focused item's onMove and opens that collection;
+  // LEFT returns to the rail rather than jumping to an unrelated card.
+  if(kind==="collections"&&source.closest(".gl-collections-group")&&
+    (direction==="right"||direction==="left"))return null;
   return nextGamepadControl(scope,source,direction,selector);
 }
 
