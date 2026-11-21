@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   requiredInstallBytes,readNativeRequiredInstallBytes,
-  subscribeNativeRequiredInstallBytes
+  requestNativeRequiredInstallBytes,subscribeNativeRequiredInstallBytes
 } from "../src/steamNativeRequiredSize.ts";
 
 test("Steam native required-install bytes accept only safe positive byte quantities",()=>{
@@ -49,6 +49,48 @@ test("Native app-details changes update only the selected card and unregister on
     assert.deepEqual(values,[8_000_000_000]);
     stop();
     assert.equal(unregistered,1);
+  }finally{
+    if(old===undefined)delete globalThis.window;
+    else globalThis.window=old;
+  }
+});
+
+test("Cold uninstalled Steam game explicitly loads app details before reading Space Required",async()=>{
+  const old=globalThis.window;
+  let calls=0,resolveDetails;
+  const gate=new Promise(resolve=>{resolveDetails=resolve;});
+  globalThis.window={appDetailsStore:{
+    GetAppDetails:()=>null,
+    RequestAppDetails:async appId=>{
+      calls++;assert.equal(appId,123);
+      return gate;
+    },
+  }};
+  try{
+    const first=requestNativeRequiredInstallBytes(123);
+    const second=requestNativeRequiredInstallBytes(123);
+    assert.strictEqual(first,second,"One Steam native request per selected AppID");
+    resolveDetails({lDiskSpaceRequiredBytes:11_552_803_635});
+    assert.equal(await first,11_552_803_635);
+    assert.equal(calls,1);
+  }finally{
+    if(old===undefined)delete globalThis.window;
+    else globalThis.window=old;
+  }
+});
+
+test("Loaded AppDetails are reused; native Steam request failure falls back safely",async()=>{
+  const old=globalThis.window;
+  let calls=0;
+  globalThis.window={appDetailsStore:{
+    GetAppDetails:id=>id===222?{lDiskSpaceRequiredBytes:4_294_967_296}:null,
+    RequestAppDetails:()=>{calls++;return Promise.reject(new Error("not cached"));},
+  }};
+  try{
+    assert.equal(await requestNativeRequiredInstallBytes(222),4_294_967_296);
+    assert.equal(calls,0,"Do not rerequest cached native details");
+    assert.equal(await requestNativeRequiredInstallBytes(333),null);
+    assert.equal(calls,1);
   }finally{
     if(old===undefined)delete globalThis.window;
     else globalThis.window=old;
