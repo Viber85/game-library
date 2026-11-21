@@ -1917,4 +1917,107 @@ html:has(.gl-root.gl-own-status-only) #header {
   }
 }
 
+
+/* 0.6.0 — independent Game Library tab management, no native Steam changes. */
+.gl-root .gl-manage-tabs-trigger {flex:0 0 auto;gap:5px;}
+.gl-root .gl-tab-manager {
+  position:fixed;inset:0;z-index:21000;
+  display:flex;align-items:center;justify-content:center;
+  padding:22px;box-sizing:border-box;
+  background:rgba(3,9,18,.86);
+  backdrop-filter:blur(12px);
+  color:#f0f5fd;
+}
+.gl-root .gl-tab-manager * {box-sizing:border-box;}
+.gl-root .gl-tab-manager-shell {
+  width:min(1060px,100%);height:min(760px,95vh);
+  min-height:0;display:flex;flex-direction:column;
+  background:#0b1725;border:1px solid #27445e;
+  border-radius:16px;overflow:hidden;box-shadow:0 18px 65px #0009;
+}
+.gl-root .gl-tab-manager-header {
+  display:flex;align-items:center;gap:20px;
+  padding:17px 23px;border-bottom:1px solid #20374a;flex:none;
+}
+.gl-root .gl-tab-manager-header h2 {
+  font-size:22px;margin:0 0 2px;font-weight:800;
+}
+.gl-root .gl-tab-manager-header p,
+.gl-root .gl-tab-manager-editor > p {
+  font-size:12px;color:#a3bdd2;margin:0;
+}
+.gl-root .gl-tab-manager-layout {
+  display:grid;grid-template-columns:minmax(220px,42%) minmax(0,58%);
+  flex:1;min-height:0;overflow:hidden;
+}
+.gl-root .gl-tab-manager-list {
+  display:flex;flex-direction:column;gap:6px;
+  overflow-y:auto;min-height:0;padding:20px;
+  background:#0e2032;border-right:1px solid #20374a;
+}
+.gl-root .gl-tab-manager-editor {
+  padding:20px 24px;overflow-y:auto;min-height:0;
+}
+.gl-root .gl-tab-manager-caption {
+  display:block;color:#85b8d6;letter-spacing:.12em;
+  font-size:10px;font-weight:800;margin-bottom:12px;
+}
+.gl-root .gl-tab-manager-editor h3 {
+  font-size:20px;font-weight:760;margin:0 0 3px;
+}
+.gl-root .gl-tab-manager-row {
+  display:flex;flex-direction:column;gap:3px;
+  padding:10px 14px;flex:none;min-height:56px;
+  border-radius:8px;background:#132b40;
+  border:1px solid transparent;cursor:pointer;
+}
+.gl-root .gl-tab-manager-row strong {font-size:14px;font-weight:700;}
+.gl-root .gl-tab-manager-row span {font-size:11px;color:#a2bed1;}
+.gl-root .gl-tab-manager-row.gl-tab-manager-selected {
+  border-color:#3b87b7;background:#1a3b56;
+}
+.gl-root .gl-tab-manager-actions {
+  display:flex;flex-wrap:wrap;gap:8px;margin:18px 0;
+}
+.gl-root .gl-tab-manager-action {
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 13px;background:#183249;border:1px solid #30506a;
+  border-radius:8px;font-size:12px;line-height:1.2;font-weight:700;
+  color:#eff7ff;cursor:pointer;min-height:38px;
+}
+.gl-root .gl-tab-manager-action svg {width:15px;height:15px;flex:none;}
+.gl-root .gl-tab-manager-action.gl-tab-manager-primary {
+  background:#1e527a;border-color:#4a99c7;
+}
+.gl-root .gl-tab-manager-action.gl-tab-manager-danger {
+  border-color:#844052;color:#ffcdd5;
+}
+.gl-root .gl-tab-manager-action:is(.gl-focused,.gpfocus,:focus-visible),
+.gl-root .gl-tab-manager-row:is(.gl-focused,.gpfocus,:focus-visible) {
+  outline:2px solid #e6f9ff;outline-offset:1px;
+  box-shadow:0 0 0 4px #1d82b8;
+}
+.gl-root .gl-tab-manager-create {
+  border-top:1px solid #27465c;padding-top:17px;
+  display:flex;flex-wrap:wrap;gap:9px;align-items:center;
+}
+.gl-root .gl-tab-manager-create .gl-tab-manager-caption {flex:0 0 100%;margin:0;}
+.gl-root .gl-tab-manager-create > div:has(input) {flex:1 1 100%;min-width:0;}
+.gl-root .gl-tab-manager-note,
+.gl-root .gl-tab-manager-error {
+  font-size:11px;line-height:1.5;margin:12px 0;color:#9eb9ca;
+}
+.gl-root .gl-tab-manager-error {color:#ffc1cc;}
+@media(max-width:680px){
+  .gl-root .gl-tab-manager {padding:7px;}
+  .gl-root .gl-tab-manager-shell {height:98vh;border-radius:10px;}
+  .gl-root .gl-tab-manager-layout {grid-template-columns:38% 62%;}
+  .gl-root .gl-tab-manager-list {padding:9px;}
+  .gl-root .gl-tab-manager-editor {padding:11px;}
+  .gl-root .gl-tab-manager-header {padding:8px 12px;}
+  .gl-root .gl-tab-manager-header h2 {font-size:17px;}
+  .gl-root .gl-tab-manager-action {padding:8px;min-height:34px;}
+  .gl-root .gl-tab-manager-actions {gap:5px;margin:8px 0;}
+}
+
 `;
