@@ -22,6 +22,7 @@ import {SEARCH_ROUTE,rememberSearchOrigin,searchBackRoute,
 import {AppearancePage} from "./AppearancePage";
 import {LibraryAlphabetIndicator} from "./LibraryAlphabetIndicator";
 import {SteamInstallSizeBadge} from "./SteamInstallSizeBadge";
+import {HltbPosterBadge} from "./HltbPosterBadge";
 import {alphabetIndicatorEnabled,isRightEdgeGame} from "./libraryAlphabet";
 import {CollectionsPage} from "./CollectionsPage";
 import {resetCollectionLocation} from "./collectionsNavigation";
@@ -142,8 +143,10 @@ function GameCard({
             else setRemoteCover(null);
           }} /> : null}
         <span className="gl-poster-name">{game.title}</span>
-        {showInstallSize&&<SteamInstallSizeBadge
-          key={"size-"+game.id} game={game} active={selectedForSize}/>}
+        {showInstallSize&&<div className="gl-poster-meta">
+          <SteamInstallSizeBadge key={"size-"+game.id} game={game} active={selectedForSize}/>
+          <HltbPosterBadge key={"hltb-"+game.id} game={game} active={selectedForSize}/>
+        </div>}
         {game.installed && !showInstallSize &&
           <MdCheckCircle className="gl-installed-indicator" aria-label="Installed" />}
       </div>
