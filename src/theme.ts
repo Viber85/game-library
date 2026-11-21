@@ -2114,4 +2114,91 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-plugin-setting-row {padding:10px;min-height:58px;gap:9px;}
 }
 
+
+/* 0.6.2 - original Smart Tab rules designer. */
+.gl-root .gl-tab-manager-rule-preview{
+  flex:1 1 100%;padding:8px 2px;color:#9fbcd0;font-size:12px;
+  border-top:1px solid #27465c;margin:2px 0 0;
+}
+.gl-root .gl-tab-smart-editor{
+  display:flex;flex-direction:column;min-height:0;height:100%;
+  background:#0c1a2b;color:#f2f8ff;
+}
+.gl-root .gl-tab-smart-heading{
+  display:flex;flex:none;align-items:center;gap:16px;
+  padding:15px 22px;border-bottom:1px solid #29465b;
+}
+.gl-root .gl-tab-smart-heading > div{
+  flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;
+}
+.gl-root .gl-tab-smart-heading h3{margin:0;font-size:22px;font-weight:800;}
+.gl-root .gl-tab-smart-heading p{
+  margin:0;font-size:12px;color:#a2c0d3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.gl-root .gl-tab-smart-body{
+  flex:1;display:flex;flex-direction:column;align-items:flex-start;
+  gap:13px;min-height:0;overflow-y:auto;padding:20px 24px;
+}
+.gl-root .gl-tab-smart-summary{
+  display:flex;align-items:center;gap:14px;
+  border:1px solid #31556d;background:#17334a;border-radius:10px;
+  padding:14px 16px;width:100%;
+}
+.gl-root .gl-tab-smart-summary > svg{width:25px;height:25px;color:#82c9ed;flex:none;}
+.gl-root .gl-tab-smart-summary > div{display:flex;flex-direction:column;gap:4px;}
+.gl-root .gl-tab-smart-summary strong{font-size:18px;color:#eff9ff;}
+.gl-root .gl-tab-smart-summary span{font-size:12px;color:#a4bed0;}
+.gl-root .gl-tab-smart-join{
+  display:flex;flex-wrap:wrap;align-items:center;gap:9px;width:100%;
+  border-bottom:1px solid #25445a;padding-bottom:13px;
+}
+.gl-root .gl-tab-smart-join .gl-tab-manager-caption{
+  margin:0;flex:1 1 100%;
+}
+.gl-root .gl-tab-smart-choice{
+  cursor:pointer;border-radius:8px;
+  padding:10px 16px;background:#152c40;border:1px solid #32536b;
+  color:#cce1f2;font-size:13px;font-weight:750;
+}
+.gl-root .gl-tab-smart-choice-active{
+  background:#20557b;border-color:#61afe0;color:#fff;
+}
+.gl-root .gl-tab-smart-rules{width:100%;display:flex;flex-direction:column;gap:8px;}
+.gl-root .gl-tab-smart-rule{
+  width:100%;display:flex;gap:8px;align-items:center;
+  padding:8px 10px;background:#12293c;border:1px solid #2b4d66;border-radius:9px;
+}
+.gl-root .gl-tab-smart-rule-number{
+  width:23px;height:23px;flex:none;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#a8d1e9;background:#274962;font-size:12px;font-weight:700;
+}
+.gl-root .gl-tab-smart-rule-picker{
+  display:flex;flex:1;align-items:center;gap:6px;cursor:pointer;
+  border-radius:6px;padding:8px 12px;min-width:0;background:#19364d;
+}
+.gl-root .gl-tab-smart-rule-picker strong{
+  font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.gl-root .gl-tab-smart-rule-picker span{color:#92afc3;font-size:11px;margin-left:auto;}
+.gl-root .gl-tab-smart-rule-picker svg{font-size:20px;flex:none;color:#7cc4eb;}
+.gl-root .gl-tab-smart-empty{
+  color:#9eafc0;font-size:12px;padding:20px 16px;
+  border:1px dashed #36556d;border-radius:9px;
+}
+.gl-root .gl-tab-smart-choice:is(.gl-focused,.gpfocus,:focus-visible),
+.gl-root .gl-tab-smart-rule-picker:is(.gl-focused,.gpfocus,:focus-visible){
+  outline:2px solid #e9f8ff;outline-offset:2px;box-shadow:0 0 0 4px #197eaf;
+}
+@media(max-width:680px){
+  .gl-root .gl-tab-smart-heading{padding:8px;gap:6px;}
+  .gl-root .gl-tab-smart-heading h3{font-size:17px;}
+  .gl-root .gl-tab-smart-body{padding:12px;gap:9px;}
+  .gl-root .gl-tab-smart-rule{padding:5px;gap:5px;}
+  .gl-root .gl-tab-smart-rule-picker{padding:7px;}
+  .gl-root .gl-tab-smart-rule-picker span{display:none;}
+  .gl-root .gl-tab-smart-rule .gl-tab-manager-action{padding:7px;}
+}
+
 `;
