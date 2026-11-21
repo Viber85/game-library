@@ -31,6 +31,7 @@ import {DEFAULT_LIBRARY_TABS,createLibraryTabResolver,gamesForLibraryTab,
   visibleLibraryTabs,type LibraryTab} from "./libraryTabs";
 import {TabManager} from "./TabManager";
 import {PluginSettingsPage} from "./PluginSettingsPage";
+import {useNativeMenuGamepad} from "./nativeMenuGamepad";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
 import {getSortData,primeHltbCache,sortMetadataProgress,startSortMetadata} from "./sortMetadata";
@@ -163,6 +164,12 @@ function GameCard({
 export function Dashboard({initialMode="home",originRoute}:
   {initialMode?:"home"|"library"|"appearance"|"search"|"collections"|"tabs"|"settings";originRoute?:DetailsOriginRoute}={}) {
   const searchMode=initialMode==="search";
+  const nativeMenuKind=initialMode==="tabs"?"tabs":
+    initialMode==="settings"?"settings":
+    initialMode==="appearance"?"appearance":
+    initialMode==="collections"?"collections":null;
+  const nativeMenuRoot=useRef<HTMLDivElement>(null);
+  useNativeMenuGamepad(nativeMenuKind,nativeMenuRoot);
   const collectionsMode=initialMode==="collections";
   const tabsMode=initialMode==="tabs";
   const settingsMode=initialMode==="settings";
@@ -660,7 +667,7 @@ export function Dashboard({initialMode="home",originRoute}:
   };
 
   return (
-    <div
+    <div ref={nativeMenuRoot}
       // Steam renders its original #header over custom Decky routes. The
       // Home replacement does not need this: Home already has one header.
       // The class and its CSS disappear immediately when this route unmounts.
