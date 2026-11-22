@@ -110,8 +110,8 @@ export function formatDownloadBytes(bytes:number|null):string{
 }
 export function formatDownloadTime(seconds:number|null):string{
   if(seconds===null||!Number.isFinite(seconds)||seconds<=0)return "Estimating";
+  if(seconds<60)return "<1 min";
   const min=Math.ceil(seconds/60);
-  if(min<1)return "<1 min";
   if(min<60)return min+" min";
   const hours=Math.floor(min/60),minutes=min%60;
   return minutes?hours+" h "+minutes+" min":hours+" h";
