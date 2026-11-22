@@ -20,7 +20,7 @@ test("Owned tab model contains no TabMaster and all-games truly includes non-Ste
   const source=read("src/libraryTabs.ts");
   assert.doesNotMatch(source,/TabMaster|Unifideck/);
   assert.deepEqual(DEFAULT_LIBRARY_TABS.map(t=>t.id),
-    ["AllGames","Installed","Steam","NonSteam","Favorites"]);
+    ["AllGames","Installed","Steam","NonSteam","GOG","Favorites"]);
   assert.deepEqual(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[0],games).games.map(g=>g.id),
     [1,2,3,4]);
   assert.deepEqual(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[1],games).games.map(g=>g.id),
@@ -29,18 +29,18 @@ test("Owned tab model contains no TabMaster and all-games truly includes non-Ste
     [1,2]);
   assert.deepEqual(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[3],games).games.map(g=>g.id),
     [3,4]);
-  assert.deepEqual(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[4],games).games.map(g=>g.id),
+  assert.deepEqual(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[5],games).games.map(g=>g.id),
     [4]);
 });
 
 test("Custom rules, hidden tabs and reordering work without changing installed flags",()=>{
   const custom=newLibraryTab(DEFAULT_LIBRARY_TABS,"Backlog","not-installed","custom-backlog123");
-  assert.deepEqual(gamesForLibraryTab(custom[5],games).games.map(g=>g.id),[2,4]);
+  assert.deepEqual(gamesForLibraryTab(custom[6],games).games.map(g=>g.id),[2,4]);
   const moved=moveLibraryTab(custom,"custom-backlog123",-2);
-  assert.equal(moved[3].id,"custom-backlog123");
+  assert.equal(moved[4].id,"custom-backlog123");
   const hidden=changeLibraryTab(moved,"Steam",{visible:false});
   assert.ok(!visibleLibraryTabs(hidden).some(t=>t.id==="Steam"));
-  assert.equal(visibleLibraryTabs(hidden)[3].id,"NonSteam");
+  assert.equal(visibleLibraryTabs(hidden)[2].id,"NonSteam");
   assert.equal(games[0].installed,true);
 });
 
@@ -83,11 +83,11 @@ test("Manager handles creating, renaming, hiding, deleting, filter and navigatio
 
 test("Manual tabs persist selected app IDs and leave native library untouched",()=>{
   const manual=newLibraryTab(DEFAULT_LIBRARY_TABS,"My RPG","all","custom-my-rpg1","manual");
-  assert.equal(manual[5].mode,"manual");
-  assert.deepEqual(gamesForLibraryTab(manual[5],games).games,[]);
-  const selected=assignManualGames(manual,manual[5].id,[4,2,4,999]);
-  assert.deepEqual(selected[5].members,[2,4,999]);
-  assert.deepEqual(gamesForLibraryTab(selected[5],games).games.map(g=>g.id),[2,4]);
+  assert.equal(manual[6].mode,"manual");
+  assert.deepEqual(gamesForLibraryTab(manual[6],games).games,[]);
+  const selected=assignManualGames(manual,manual[6].id,[4,2,4,999]);
+  assert.deepEqual(selected[6].members,[2,4,999]);
+  assert.deepEqual(gamesForLibraryTab(selected[6],games).games.map(g=>g.id),[2,4]);
   assert.deepEqual(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[0],games).games.map(g=>g.id),
     [1,2,3,4]);
   assert.match(read("src/TabManager.tsx"),/Find games for manual tab/);
@@ -118,7 +118,7 @@ test("Manual selection and Tab Manager are accessed from Plugin Settings, with A
 
 test("Smart AND/OR evaluates separate conditions, with no false game matches",()=>{
   const smart=newLibraryTab(DEFAULT_LIBRARY_TABS,"Steam installed","all",
-    "custom-steam-installed","smart")[5];
+    "custom-steam-installed","smart")[6];
   const tab={...smart,rules:[{type:"steam"},{type:"installed"}],ruleJoin:"all"};
   assert.deepEqual(gamesForLibraryTab(tab,games).games.map(g=>g.id),[1]);
   assert.deepEqual(gamesForLibraryTab({...tab,ruleJoin:"any"},games).games.map(g=>g.id),
@@ -139,19 +139,19 @@ test("Smart AND/OR evaluates separate conditions, with no false game matches",()
 test("Smart exceptions override AND/OR, do not modify Manual or built-ins",()=>{
   const smart=newLibraryTab(DEFAULT_LIBRARY_TABS,"Steam installed","all",
     "custom-steam-installed","smart");
-  const id=smart[5].id;
+  const id=smart[6].id;
   const withRules=changeLibraryTab(smart,id,{
     rules:[{type:"steam"},{type:"installed"}],ruleJoin:"all"
   });
   const included=assignSmartExceptions(withRules,id,"include",[4,4,2]);
-  assert.deepEqual(included[5].forceInclude,[2,4]);
+  assert.deepEqual(included[6].forceInclude,[2,4]);
   const excluded=assignSmartExceptions(included,id,"exclude",[4,1]);
-  assert.deepEqual(excluded[5].forceInclude,[2]);
-  assert.deepEqual(excluded[5].forceExclude,[1,4]);
-  assert.deepEqual(gamesForLibraryTab(excluded[5],games).games.map(g=>g.id),[2]);
+  assert.deepEqual(excluded[6].forceInclude,[2]);
+  assert.deepEqual(excluded[6].forceExclude,[1,4]);
+  assert.deepEqual(gamesForLibraryTab(excluded[6],games).games.map(g=>g.id),[2]);
   assert.equal(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[0],games).games.length,4);
   const manual=newLibraryTab(DEFAULT_LIBRARY_TABS,"Manual","all","custom-manualtest","manual");
-  const untouched=assignSmartExceptions(manual,manual[5].id,"include",[1]);
+  const untouched=assignSmartExceptions(manual,manual[6].id,"include",[1]);
   assert.deepEqual(untouched[5].forceInclude,[]);
 });
 
