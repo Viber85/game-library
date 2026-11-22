@@ -2369,6 +2369,13 @@ html:has(.gl-root.gl-own-status-only) #header {
   width:100%;height:100%;object-fit:cover;object-position:58% 33%;
   opacity:.98;
 }
+/* A portrait GOG card stretched to fill the hero when no widescreen artwork
+   exists. Keep its aspect ratio; subtle blur hides low-res upscaling. */
+.gl-root .gl-gog-steam-details .gl-hero.gl-hero-card-fallback{
+  object-fit:cover;object-position:center 38%;
+  transform:scale(1.08);
+  filter:blur(5px) brightness(.82);
+}
 .gl-root .gl-details-hero-shade{
   position:absolute;inset:0;
   background:
