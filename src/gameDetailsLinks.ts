@@ -1,14 +1,14 @@
-/** URLs launched from custom Game Details.
+/** URLs launched from the custom Game Details screen.
  *
- * Steam's own native "Store Page" game action uses steam://store/<appid>
- * via NavigateToSteamWeb; a regular https URL there opens a generic web view.
- * External HLTB links should use Navigator.ExternalWeb, not SteamWeb, so
- * closing the browser doesn't step through stale native GamepadUI routes.
+ * Trial v0.6.11-test.32: open both HowLongToBeat and Steam Store through
+ * ExternalWeb (HTTPS) to isolate SteamWeb + steam://store history behavior.
+ * This is deliberately an external web view, not Steam's native Store.
+ * Authentication and Store client actions are not guaranteed.
  */
 export function steamStorePageUrl(appId:number,nonSteam:boolean):string|null{
   if(nonSteam||!Number.isSafeInteger(appId)||appId<=0||
      appId>=0x80000000)return null;
-  return "steam://store/"+appId;
+  return "https://store.steampowered.com/app/"+appId;
 }
 
 export function validHltbGameUrl(value:string):boolean{
