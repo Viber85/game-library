@@ -11,10 +11,9 @@ import {GAME_DETAILS_ROUTE} from "./gameDetailsRoute.ts";
  *
  * Steam UI source:
  *  SteamUIStore.WindowStore.GamepadUIMainWindowInstance.m_Navigator
- *  m_Navigator.SteamWeb(url) / m_Navigator.ExternalWeb(url)
+ *  m_Navigator.ExternalWeb(url) (for BOTH HTTPS destinations)
  */
 export type MainGamepadNavigator={
-  SteamWeb?:(url:string)=>void;
   ExternalWeb?:(url:string)=>void;
 };
 export type MainGamepadInstance={
@@ -45,7 +44,10 @@ export function openBrowserFromMainGameDetails(
   if(currentRoute&&currentRoute!==GAME_DETAILS_ROUTE)
     return {opened:false,reason:"wrong-route",currentRoute};
   const navigator=main.m_Navigator??main.Navigator;
-  const action=kind==="hltb"?navigator?.ExternalWeb:navigator?.SteamWeb;
+  // Store experiment: EXACTLY the same external-browser path as HLTB.
+  // Native SteamWeb("steam://store/<appId>") returned to Controller
+  // Settings on MSI Claw even when dispatched from the main GamepadUI.
+  const action=navigator?.ExternalWeb;
   if(typeof action!=="function")return {opened:false,reason:"no-api",currentRoute};
   try{
     action.call(navigator,url);
