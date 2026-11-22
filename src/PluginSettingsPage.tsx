@@ -8,7 +8,6 @@ import {notifyHomeSetting} from "./pluginSettingsEvents";
 import {SteamGridDBPanel} from "./SteamGridDBPanel";
 import {UpdatesPanel} from "./UpdatesPanel";
 import {GogIntegrationPanel} from "./GogIntegrationPanel";
-import {consumeGogReturn} from "./gogNativeLogin";
 
 const getSettings=callable<[],{default_home:boolean}>("get_dashboard_settings");
 const setSettings=callable<[boolean],boolean>("set_dashboard_settings");
@@ -29,8 +28,7 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
   const [loaded,setLoaded]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
-  const [activeTool,setActiveTool]=useState<SettingsTool|null>(()=>
-    consumeGogReturn()?"gog":null);
+  const [activeTool,setActiveTool]=useState<SettingsTool|null>(null);
   const [toolLastIndex,setToolLastIndex]=useState(2);
   const statusRef=useRef<HTMLDivElement>(null);
   const actions=useRef<Array<HTMLDivElement|null>>([]);
