@@ -35,6 +35,8 @@ import {GogDashboardCard} from "./GogDashboardCard";
 import {GogArtwork} from "./GogArtwork";
 import {SharedLibraryDetails} from "./SharedLibraryDetails";
 import {SteamGameDetails} from "./SteamGameDetails";
+import {openSteamControllerEditor} from "./steamControllerEditor";
+import {armControllerSettingsReturn,consumeControllerSettingsReturn,clearControllerSettingsReturn,type GameDetailsReturnTarget} from "./controllerSettingsReturn";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {useGogDashboardCatalog} from "./useGogDashboardCatalog";
 import {combineDashboardEntries,combineSearchEntries,searchGogEntries,
@@ -190,6 +192,9 @@ export function Dashboard({initialMode="home",originRoute}:
       tabsMode?TABS_ROUTE:settingsMode?PLUGIN_SETTINGS_ROUTE:"/library/home");
   // Read a single return snapshot only if this exact original route mounts.
   const [detailsReturn]=useState(()=>peekDetailsOrigin(actualRoute));
+  // Steam Controller Settings replaces our entire React route. B must
+  // restore the previously open custom Game Details, not generic Library.
+  const [controllerReturn]=useState(()=>consumeControllerSettingsReturn(actualRoute));
   useEffect(()=>{
     if(detailsReturn)consumeDetailsOrigin(actualRoute);
   },[actualRoute,detailsReturn]);
@@ -199,7 +204,13 @@ export function Dashboard({initialMode="home",originRoute}:
   const gogCatalogEnabled=initialMode==="home"||initialMode==="library"||searchMode;
   const {games:gogGames}=useGogDashboardCatalog(gogAccountId,gogCatalogEnabled);
   const [gogDetailsId,setGogDetailsId]=useState<string|null>(null);
-  const [steamDetailsGame,setSteamDetailsGame]=useState<LibraryGame|null>(null);
+  const [steamDetailsGame,setSteamDetailsGame]=useState<LibraryGame|null>(()=>
+    controllerReturn?getLibraryGames().find(g=>g.id===controllerReturn.appId)??null:null);
+  useEffect(()=>{
+    if(!controllerReturn||steamDetailsGame)return;
+    const restored=games.find(g=>g.id===controllerReturn.appId);
+    if(restored)setSteamDetailsGame(restored);
+  },[controllerReturn,games,steamDetailsGame]);
   useNativeMenuGamepad(steamDetailsGame?"details":nativeMenuKind,nativeMenuRoot);
   const [selectedGogId,setSelectedGogId]=useState<string|null>(null);
   const gogDetailBackRef=useRef<HTMLDivElement>(null);
@@ -251,10 +262,8 @@ export function Dashboard({initialMode="home",originRoute}:
   const alphabetReturnGridIndex = useRef<number|null>(null);
   const pendingGridIndex = useRef<number | null>(null);
   const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
-  const steamReturnTarget=useRef<{
-    kind:"grid"|"home-card"|"home-action"|"collections";
-    gameId:number;index:number;scrollTop:number;
-  }|null>(null);
+  const steamReturnTarget=useRef<GameDetailsReturnTarget|null>(
+    controllerReturn?.target??null);
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const searchBackRef=useRef<HTMLDivElement>(null);
@@ -421,6 +430,24 @@ export function Dashboard({initialMode="home",originRoute}:
     };
     setSteamDetailsGame(game);
   };
+  const openControllerSettings=(game:LibraryGame)=>{
+    const target=steamReturnTarget.current;
+    if(!target||!armControllerSettingsReturn({route:actualRoute,appId:game.id,target})){
+      toaster.toast({title:"Controller Settings unavailable",body:"Game Details return location was not available."});
+      return;
+    }
+    rememberGameDetails(game);
+    void openSteamControllerEditor(game.id).then(accepted=>{
+      if(!accepted){
+        clearControllerSettingsReturn(game.id);
+        toaster.toast({title:"Controller Settings unavailable",body:"Steam could not open controller settings."});
+      }
+    }).catch(error=>{
+      clearControllerSettingsReturn(game.id);
+      console.warn("[game-library] native Controller Settings navigation failed",error);
+      toaster.toast({title:"Controller Settings unavailable",body:"Steam did not accept the controller settings route."});
+    });
+  };
   const openNativeGameDetails=(game:LibraryGame)=>{
     rememberGameDetails(game);
     openDetails(game);
@@ -487,7 +514,12 @@ export function Dashboard({initialMode="home",originRoute}:
     setRailIndex(target);
     lastRailId.current=railActions[target].id;
     setRailExpanded(true);
-    railRefs.current[target]?.focus();
+    focusNativeMenuControl(railRefs.current[target],GamepadButton.DIR_LEFT);
+  };
+  const focusDetailsFromRail=()=>{
+    const back=nativeMenuRoot.current?.querySelector<HTMLElement>(
+      ".gl-game-details .gl-details-back");
+    focusNativeMenuControl(back,GamepadButton.DIR_RIGHT);
   };
   const searchStarted=useRef(false);
   useEffect(()=>{
@@ -918,9 +950,9 @@ export function Dashboard({initialMode="home",originRoute}:
                   const button = e.detail?.button;
                   if (button === GamepadButton.DIR_UP) { consume(e); focusRail(index-1); }
                   else if (button === GamepadButton.DIR_DOWN) { consume(e); focusRail(index+1); }
-                  else if (button === GamepadButton.DIR_RIGHT) { consume(e); goToGame(); }
+                  else if (button === GamepadButton.DIR_RIGHT) { consume(e); if(steamDetailsGame)focusDetailsFromRail(); else goToGame(); }
                 }}
-                onCancelButton={() => goToGame()}
+                onCancelButton={() => steamDetailsGame?focusDetailsFromRail():goToGame()}
                 onCancelActionDescription="Return to games"
                 title={action.label}
                 aria-label={action.label}
@@ -944,6 +976,7 @@ export function Dashboard({initialMode="home",originRoute}:
               game={steamDetailsGame}
               onBack={closeSteamDetails}
               onNativeDetails={()=>openNativeGameDetails(steamDetailsGame)}
+              onOpenControllerSettings={()=>openControllerSettings(steamDetailsGame)}
               onFocusRail={()=>focusRail(railIndex)}/>
           : collectionsMode
           ? <CollectionsPage key={collectionsPageRevision}
