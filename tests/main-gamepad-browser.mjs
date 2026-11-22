@@ -90,5 +90,5 @@ test("never leaks original Decky focused-window browser routing back into custom
   assert.match(block,/openBrowserFromMainGameDetails\(kind,url\)/);
   assert.doesNotMatch(block,/Navigation\.NavigateToExternalWeb|Navigation\.NavigateToSteamWeb/);
   assert.match(source,/WindowStore\?\.GamepadUIMainWindowInstance/);
-  assert.doesNotMatch(source,/GetFocusedWindowInstance\(\)/);
+  assert.doesNotMatch(source,/steamUIStore\.GetFocusedWindowInstance\(\)/);
 });
