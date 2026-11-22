@@ -118,7 +118,7 @@ test("Game Details native B return retains collection location in memory",()=>{
 });
 
 test("Existing library navigation, Search, Appearance and native focus unaffected",()=>{
-  assert.match(dashboard,/onMove=\{button=>moveInGrid\(index,button\)\}/);
+  assert.match(dashboard,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
   assert.match(dashboard,/initialMode==="appearance"\s*\? <AppearancePage/);
   assert.match(dashboard,/<LibrarySearchToolbar/);
   assert.match(read("system-theme/settings-gamepad-focus.css"),/background:#163a5e !important/);
