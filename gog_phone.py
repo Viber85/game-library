@@ -331,6 +331,13 @@ class _Session:
                     self.phase = "error"
                     self.message = str(result.get("reason") or "GOG rejected the code.")[:180]
                     should_close = self.attempts >= 3
+                    if should_close:
+                        self.phase = "expired"
+                        self.message = "Too many failed attempts. Start a new phone pairing."
+                        self.secret = ""
+                        self.url = ""
+                        self.qr = ""
+                        self.expiration.cancel()
             if should_close:
                 self._close_listener()
         except Exception:
@@ -383,6 +390,7 @@ def status(account):
 
 
 def cancel(account):
+    global _ACTIVE
     try:
         gog = _local_module("gog")
         account = gog._account(account)
@@ -393,6 +401,7 @@ def cancel(account):
         if active is None or active.account != account:
             return {"ok": True}
         active.stop("cancelled")
+        _ACTIVE = None
     return {"ok": True}
 
 
