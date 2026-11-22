@@ -48,18 +48,26 @@ export async function nativeDownloadAction(
   if(!valid(appId,nonSteam))return {ok:false,uninstallRequested:false,reason:"invalid-app"};
   const requestedUninstall=action==="cancel"&&nature==="initial";
   const method=action==="resume"?"ResumeAppUpdate":"PauseAppUpdate";
-  if(typeof downloads?.[method]!=="function"||
+  if((action!=="cancel"&&typeof downloads?.[method]!=="function")||
      (action==="cancel"&&typeof downloads?.RemoveFromDownloadList!=="function")||
      (requestedUninstall&&typeof installs?.OpenUninstallWizard!=="function"))
     return {ok:false,uninstallRequested:false,reason:"unavailable"};
   try{
     // Some SteamOS versions include the explicit local-client second argument.
     // Do not touch other apps or call EnableAllDownloads (global).
-    await Promise.resolve(downloads[method]!(appId,LOCAL));
     if(action==="cancel"){
-      await Promise.resolve(downloads.RemoveFromDownloadList!(appId,LOCAL));
+      // Pausing an already queued/paused app throws on some Steam versions.
+      // The authoritative cancellation is RemoveFromDownloadList, so a
+      // best-effort Pause must not block the removal and Steam uninstall.
+      if(typeof downloads?.PauseAppUpdate==="function"){
+        try{await Promise.resolve(downloads.PauseAppUpdate(appId,LOCAL));}
+        catch(error){console.warn("[game-library] pause before cancel unavailable",error);}
+      }
+      await Promise.resolve(downloads!.RemoveFromDownloadList!(appId,LOCAL));
       if(requestedUninstall)
         await Promise.resolve(installs!.OpenUninstallWizard!([appId],true));
+    }else{
+      await Promise.resolve(downloads![method]!(appId,LOCAL));
     }
     return {ok:true,uninstallRequested:requestedUninstall};
   }catch(error){
