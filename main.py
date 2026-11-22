@@ -282,9 +282,10 @@ OWN_TAB_BUILTINS = (
     ("Installed", "Installed", "installed"),
     ("Steam", "Steam", "steam"),
     ("NonSteam", "Non-Steam", "nonsteam"),
+    ("GOG", "GOG", "gog"),
     ("Favorites", "Favorites", "favorites"),
 )
-OWN_TAB_FILTERS = {"all", "installed", "not-installed", "steam", "nonsteam", "favorites"}
+OWN_TAB_FILTERS = {"all", "installed", "not-installed", "steam", "nonsteam", "gog", "favorites"}
 OWN_SMART_RULES = {"installed", "not-installed", "steam", "nonsteam", "favorites", "not-favorites", "played"}
 
 
@@ -298,7 +299,7 @@ def _own_tab_defaults():
 
 def _own_tab_validate(tabs):
     """Validate only the plugin's original per-account Smart/Manual tab model."""
-    if not isinstance(tabs, list) or not 5 <= len(tabs) <= 40:
+    if not isinstance(tabs, list) or not 6 <= len(tabs) <= 40:
         raise ValueError("Invalid tab list")
     seen = set()
     output = []
@@ -384,6 +385,17 @@ def _own_tab_read(account_id):
     profile = saved.get(account_id) if isinstance(saved, dict) else None
     if profile is not None:
         try:
+            # v0.6.11-test.9 had only five built-ins, with a GOG tab
+            # injected by Dashboard. Migrate in memory once without
+            # resetting the user's custom tabs, order or visibility.
+            if isinstance(profile, list) and not any(
+                isinstance(tab, dict) and tab.get("id") == "GOG"
+                for tab in profile
+            ):
+                profile = [*profile, {
+                    "id": "GOG", "title": "GOG", "position": len(profile),
+                    "visible": True, "kind": "gog", "filter": "gog",
+                }]
             return _own_tab_validate(profile)
         except ValueError:
             pass
