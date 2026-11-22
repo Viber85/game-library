@@ -220,7 +220,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
     controllerRestorePending.current=false;
     setSteamDetailsGame(restored);
   },[controllerReturn,games]);
-  useNativeMenuGamepad(steamDetailsGame?"details":nativeMenuKind,nativeMenuRoot);
+  useNativeMenuGamepad(steamDetailsGame||gogDetailsId?"details":nativeMenuKind,nativeMenuRoot);
   const [selectedGogId,setSelectedGogId]=useState<string|null>(null);
   const gogDetailBackRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
@@ -816,14 +816,10 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
     setGogDetailsId(null);
     window.requestAnimationFrame(()=>{
       if(viewAll||searchMode)focusGrid(lastGridFocusIndex.current);
-      else gameRefs.current[lastGridFocusIndex.current]?.focus();
+      else focusNativeMenuControl(gameRefs.current[lastGridFocusIndex.current],
+        GamepadButton.DIR_DOWN);
     });
   };
-  useEffect(()=>{
-    if(!gogDetailsId)return;
-    const frame=window.requestAnimationFrame(()=>gogDetailBackRef.current?.focus());
-    return ()=>window.cancelAnimationFrame(frame);
-  },[gogDetailsId]);
   const openGogDetails=(entry:Extract<DashboardEntry,{store:"gog"}>,index:number)=>{
     lastGridFocusIndex.current=index;
     setGogDetailsId(entry.gog.id);
@@ -1046,9 +1042,9 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
                   const button = e.detail?.button;
                   if (button === GamepadButton.DIR_UP) { consume(e); focusRail(index-1); }
                   else if (button === GamepadButton.DIR_DOWN) { consume(e); focusRail(index+1); }
-                  else if (button === GamepadButton.DIR_RIGHT) { consume(e); if(steamDetailsGame)focusDetailsFromRail(); else goToGame(); }
+                  else if (button === GamepadButton.DIR_RIGHT) { consume(e); if(steamDetailsGame||gogDetailsId)focusDetailsFromRail(); else goToGame(); }
                 }}
-                onCancelButton={() => steamDetailsGame?focusDetailsFromRail():goToGame()}
+                onCancelButton={() => steamDetailsGame||gogDetailsId?focusDetailsFromRail():goToGame()}
                 onCancelActionDescription="Return to games"
                 title={action.label}
                 aria-label={action.label}
@@ -1100,7 +1096,8 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
               game={fromGogLibraryGame(detailGog)}
               cover={<GogArtwork game={detailGog} accountId={gogAccountId} expanded/>}
               gogAccountId={gogAccountId}
-              onBack={closeGogDetails} backRef={gogDetailBackRef}/>
+              onBack={closeGogDetails} onFocusRail={()=>focusRail(railIndex)}
+              backRef={gogDetailBackRef}/>
           : searchMode ? <>
         <header className="gl-header gl-library-topbar" aria-label="Search navigation">
           <div className="gl-topbar-titles"><span className="gl-topbar-current">Search</span></div>
