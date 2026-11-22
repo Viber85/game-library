@@ -5,7 +5,7 @@ import {nextGamepadControl,takeNativeGamepadFocus,
 import type {FocusDirection} from "./spatialFocus";
 
 type DirectionEvent=CustomEvent<{button?:number}>;
-type MenuType="tabs"|"settings"|"appearance"|"collections"|"diagnostics";
+type MenuType="tabs"|"settings"|"appearance"|"collections"|"diagnostics"|"details";
 
 const CONTROLS:Record<MenuType,string>={
   tabs:[
@@ -32,6 +32,9 @@ const CONTROLS:Record<MenuType,string>={
     ".gl-collections-picker-search input",
   ].join(","),
   diagnostics:".ld-button,.ld-panel-focus",
+  // The own Game Details page replaces the Library grid in the same Decky
+  // route. Its browser focus is not sufficient to transfer Game Mode focus.
+  details:".gl-game-details .gl-details-focus",
 };
 
 /** For controls outside Decky's automatic focus grid, use native Steam
