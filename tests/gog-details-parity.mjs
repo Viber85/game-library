@@ -38,9 +38,10 @@ test("GOG-specific metadata lookup never treats a GOG ID as a Steam AppID",()=>{
 test("GOG Game Details retains controller Back and the shared focusable tabs",()=>{
   const source=read("src/SharedLibraryDetails.tsx");
   const artwork=read("src/GogArtwork.tsx");
-  assert.match(source,/onCancelButton=\{onBack\}/);
-  assert.match(source,/ref=\{node=>\{/);
+  assert.match(source,/onCancelButton:onBack/);
+  assert.match(source,/ref:focusRef\(id\)/);
   assert.match(source,/focusNativeMenuControl\(internalBackRef\.current/);
+  assert.match(source,/focusNativeMenuControl\(target,GamepadButton\.DIR_DOWN\)/);
   assert.match(source,/TABS\.map\(item=><Focusable/);
   assert.match(source,/focusClassName="gl-focused"/);
   assert.match(artwork,/GogArtwork\(/);
