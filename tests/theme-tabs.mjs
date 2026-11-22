@@ -1,6 +1,7 @@
+import {readFileSync} from "node:fs";
 import assert from "node:assert/strict";
 import test from "node:test";
-import {classifySteamTab,identifySteamTabs} from "../src/themeTabs.ts";
+import {classifySteamTab,identifySteamTabs,fallbackMainTitlesPresent} from "../src/themeTabs.ts";
 
 test("main Game Mode and Steam overlay windows receive separate styling",()=>{
   assert.deepEqual(classifySteamTab({title:"Steam Big Picture Mode",url:""}),{
@@ -57,4 +58,27 @@ test("Steam client gamepad URLs are accepted only for known Steam contexts",()=>
   assert.equal(classifySteamTab({
     title:"Example Browser",url:"https://steamloopback.host/routes/library/home"
   }),null);
+});
+
+test("opaque native Steam CEF URL remains eligible for live DOM verification",()=>{
+  const listed=[
+    {title:"Steam Big Picture Mode",url:"file:///Valve%20Steam%20Gamepad/default"},
+    {title:"SP",url:"about:blank?main"},
+    {title:"Steam",url:"about:blank"},
+    {title:"Unrelated Website",url:"https://example.com"},
+  ];
+  assert.deepEqual(identifySteamTabs(listed),[
+    {title:"Steam Big Picture Mode",scope:"main"}
+  ]);
+  assert.deepEqual(fallbackMainTitlesPresent(listed),[
+    "Steam Big Picture Mode","Steam","SP"
+  ]);
+  assert.deepEqual(fallbackMainTitlesPresent([]),[]);
+  assert.deepEqual(fallbackMainTitlesPresent([{title:"Other Game",url:"about:blank"}]),[]);
+  // A candidate is NOT a confirmed target until the runtime's live
+  // STEAM_PAGE_CHECK_SCRIPT succeeds for its real browser document.
+  const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
+  assert.match(runtime,/for\(const title of fallbackMainTitlesPresent\(listed\)\)/);
+  assert.doesNotMatch(runtime,/if\(checked\.some\(t=>t\.scope==="main"\)\)return checked;/);
+  assert.match(runtime,/result\.success&&result\.result===true/);
 });
