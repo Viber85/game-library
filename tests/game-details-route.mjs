@@ -37,8 +37,10 @@ test("B after HLTB or Store naturally pops to same actual Game Details route",()
   assert.ok(start>0&&end>start);
   const action=dashboard.slice(start,end);
   assert.match(action,/if\(detailRouteSession\)\{/);
-  assert.match(action,/if\(kind==="hltb"\)Navigation\.NavigateToExternalWeb\(url\)/);
-  assert.match(action,/else Navigation\.NavigateToSteamWeb\(url\)/);
+  assert.match(action,/openBrowserFromMainGameDetails\(kind,url\)/);
+  const direct=action.slice(action.indexOf("if(detailRouteSession){"),
+    action.indexOf("const target=steamReturnTarget.current;"));
+  assert.doesNotMatch(direct,/Navigation\.NavigateToExternalWeb\(|Navigation\.NavigateToSteamWeb\(/);
   const first=action.slice(action.indexOf("if(detailRouteSession){"),
     action.indexOf("const target=steamReturnTarget.current;"));
   assert.doesNotMatch(first,/armGameDetailsWebReturn|rememberGameDetails|armControllerSettingsReturn/);
