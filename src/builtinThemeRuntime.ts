@@ -10,6 +10,7 @@ import {
 import { createMidnightCssCompiler } from "./themeCssCompiler";
 import {sameThemeRuntimeStatus} from "./themeCycleCache";
 import {COMPACT_DETAILS_INSTALL_SCRIPT,COMPACT_DETAILS_REMOVE_SCRIPT} from "./compactDetailsDom";
+import {nativeCompactHintsFromCss,compactHintsInjection} from "./compactDetailsAnchors";
 
 export type ThemeId = "midnight" | "off";
 export type ThemeBundle = {
@@ -80,7 +81,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "84";
+const STYLE_REVISION = "85";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -179,9 +180,12 @@ async function listTabs():Promise<SteamTab[]> {
   return [];
 }
 
-async function syncCompactDetailsDom(title:string,enabled:boolean):Promise<void>{
+async function syncCompactDetailsDom(title:string,enabled:boolean,
+  compiledCss=""):Promise<void>{
   try{
-    const script=enabled?COMPACT_DETAILS_INSTALL_SCRIPT:COMPACT_DETAILS_REMOVE_SCRIPT;
+    const script=enabled?
+      compactHintsInjection(nativeCompactHintsFromCss(compiledCss))+
+      COMPACT_DETAILS_INSTALL_SCRIPT:COMPACT_DETAILS_REMOVE_SCRIPT;
     await bounded(executeInTab(title,false,script),1600);
   }catch{
     // Native Steam UI can recreate its document as the route changes.
@@ -233,7 +237,7 @@ async function applyToTab(
   if(previous?.signature===signature && previous.scope===scope &&
      await activeInTab(title)){
     if(scope==="main"){
-      await syncCompactDetailsDom(title,compactDetails);
+      await syncCompactDetailsDom(title,compactDetails,css);
       await ensureThemeAudit(title);
     }
     return;
@@ -275,7 +279,7 @@ async function applyToTab(
       catch{/* Previous Steam document or CSS node may no longer exist. */}
     }
     if(scope==="main"){
-      await syncCompactDetailsDom(title,compactDetails);
+      await syncCompactDetailsDom(title,compactDetails,css);
       await ensureThemeAudit(title);
     }
   }catch(e){
