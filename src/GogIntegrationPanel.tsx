@@ -1,8 +1,9 @@
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useState} from "react";
 import {callable} from "@decky/api";
 import {ButtonItem,Navigation,PanelSection,PanelSectionRow,TextField} from "@decky/ui";
 import {getActiveUserId} from "./steam";
-import {startNativeGogLogin,type GogLoginSession} from "./gogNativeLogin";
+import {startNativeGogLogin,cancelGogLogin,getGogLoginState,
+  markGogReturn,subscribeGogLogin} from "./gogNativeLogin";
 
 export type GogAccount={
   ok:boolean;connected:boolean;username?:string;count?:number;
@@ -19,14 +20,14 @@ export function GogIntegrationPanel(){
   const [account,setAccount]=useState<GogAccount|null>(null);
   const [draft,setDraft]=useState("");
   const [manual,setManual]=useState(false);
-  const [nativeOpen,setNativeOpen]=useState(false);
-  const nativeSession=useRef<GogLoginSession|null>(null);
+  const [loginState,setLoginState]=useState(getGogLoginState);
+  const nativeOpen=["opening","waiting","exchanging"].includes(loginState.phase);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
   const steamId=getActiveUserId()||"";
 
-  useEffect(()=>()=>{nativeSession.current?.cancel();nativeSession.current=null;},[]);
+  useEffect(()=>subscribeGogLogin(setLoginState),[]);
   useEffect(()=>{
     let active=true;
     if(!steamId){setError("Sign in to Steam before connecting GOG.");return;}
@@ -45,9 +46,6 @@ export function GogIntegrationPanel(){
   };
   const completeSignIn=(submitted:string)=>{
     if(!steamId||!submitted)return;
-    nativeSession.current?.cancel();
-    nativeSession.current=null;
-    setNativeOpen(false);
     setDraft("");setBusy(true);setError("");setNotice("");
     void connect(steamId,submitted).then(async reply=>{
       if(!reply.ok)throw new Error(reply.reason||"GOG sign-in failed.");
@@ -62,34 +60,30 @@ export function GogIntegrationPanel(){
   const openNativeSignIn=()=>{
     if(busy||nativeOpen||!steamId||!account?.login_url)return;
     setError("");setNotice("");
-    const result=startNativeGogLogin(account.login_url,
-      code=>{
-        nativeSession.current=null;
-        setNativeOpen(false);
-        completeSignIn(code);
+    const result=startNativeGogLogin({
+      url:account.login_url,
+      accountId:steamId,
+      navigate:url=>{
+        // SteamUI owns this browser and makes it visible in Game Mode.
+        Navigation.NavigateToExternalWeb(url);
+        Navigation.CloseSideMenus();
       },
-      reason=>{
-        nativeSession.current=null;
-        setNativeOpen(false);
-        setManual(true);
-        setError(reason==="timeout"?
-          "GOG sign-in timed out. Try again, or use the manual option.":
-          "The Steam sign-in browser closed before GOG authorized the connection. Retry or use manual sign-in.");
-      });
-    if(result.ok){
-      nativeSession.current=result.session;
-      setNativeOpen(true);
-      setNotice("GOG sign-in opened in Steam. Complete login in that window; Game Library will detect the result automatically.");
-    }else{
+      exchange:(account,code)=>connect(account,code),
+      finished:()=>{
+        // The settings React component unmounted when Steam navigated to
+        // ExternalWeb. Return through the native navigator after exchange.
+        markGogReturn();
+        Navigation.Navigate("/game-library/plugin-settings");
+      },
+    });
+    if(!result.ok){
+      setError(result.reason);
       setManual(true);
-      setError(result.reason+" Use the manual option below.");
     }
   };
   const cancelNativeSignIn=()=>{
-    nativeSession.current?.cancel();
-    nativeSession.current=null;
-    setNativeOpen(false);
-    setNotice("Sign-in cancelled.");
+    cancelGogLogin();
+    setNotice("GOG sign-in cancelled.");
   };
   const signIn=()=>{
     if(busy||!steamId||!draft.trim())return;
@@ -131,14 +125,15 @@ export function GogIntegrationPanel(){
     </PanelSectionRow>
     {!account?.connected&&<>
       <PanelSectionRow><div style={{fontSize:12,opacity:.85,lineHeight:1.5}}>
-        Connect with GOG in Steam's own secure browser window.
-        After you sign in, Game Library reads the success URL and completes
-        authorization automatically. Your GOG password is never sent to Game Library.
+        Connect in the visible Steam Game Mode browser. Game Library monitors
+        only the GOG success URL and connects your account automatically,
+        without copying a link. Your GOG password is never sent to Game Library.
       </div></PanelSectionRow>
       <PanelSectionRow>
         <ButtonItem layout="below" disabled={busy||nativeOpen||!steamId||!account?.login_url}
           onClick={openNativeSignIn}>
-          {nativeOpen?"GOG sign-in window open…":"Connect GOG automatically"}
+          {loginState.phase==="exchanging"?"Connecting GOG…":
+            nativeOpen?"Waiting for GOG in Steam browser…":"Connect GOG automatically"}
         </ButtonItem>
       </PanelSectionRow>
       {nativeOpen&&<PanelSectionRow>
@@ -153,9 +148,9 @@ export function GogIntegrationPanel(){
       </PanelSectionRow>
       {manual&&<>
         <PanelSectionRow><div style={{fontSize:12,opacity:.85,lineHeight:1.5}}>
-          If this SteamOS build cannot open the monitored browser, open GOG
-          below, sign in normally, then paste the resulting GOG success URL
-          containing <code>code=</code> here. Never paste your password.
+          Manual fallback requires a browser where you can copy the address
+          (for example in Desktop Mode). The Steam Game Mode browser may not
+          support copying URLs. Never paste your GOG password.
         </div></PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem layout="below" disabled={busy||!account?.login_url} onClick={()=>{
@@ -187,6 +182,12 @@ export function GogIntegrationPanel(){
       settings folder for this Steam account. Existing Steam games and other
       plugins are not modified. Installation and launching come in a later phase.
     </div></PanelSectionRow>
+    {loginState.phase!=="idle"&&<PanelSectionRow>
+      <div role={loginState.phase==="error"?"alert":undefined}
+        style={{fontSize:12,color:loginState.phase==="error"?"#ffafb8":"#b9ebd2"}}>
+        {loginState.message}
+      </div>
+    </PanelSectionRow>}
     {notice&&<PanelSectionRow><div style={{color:"#b9ebd2",fontSize:12}}>{notice}</div></PanelSectionRow>}
     {error&&<PanelSectionRow><div role="alert" style={{color:"#ffafb8",fontSize:12}}>{error}</div></PanelSectionRow>}
   </PanelSection>;
