@@ -370,3 +370,48 @@ test("minimal native CSS can flatten the blue wrappers without hiding Steam cont
   assert.match(source,/clearSurfaces/);
   assert.match(source,/state\.surfaces/);
 });
+
+
+test("portrait reuses the native game's observed hashed Steam art directory",()=>{
+  const fake=fakeSteamCEF();
+  fake.location.pathname="/routes/index.html";
+  const hash="e".repeat(40);
+  fake.heroAssets.push({
+    src:"https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/234567/"+hash+"/library_hero.jpg",
+    style:{backgroundImage:""},
+  });
+  vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  for(const {f} of fake.timers.values())f();
+  assert.equal(fake.images.length,1);
+  assert.match(fake.images[0].url,
+    /\/234567\/e{40}\/library_600x900_2x\.jpg$/);
+  fake.images[0].onerror();
+  assert.equal(fake.images.length,2);
+  assert.match(fake.images[1].url,
+    /\/234567\/e{40}\/library_600x900\.jpg$/);
+  fake.images[1].onload();
+  assert.equal(fake.root.getAttribute("data-glm-compact-poster"),"1");
+  assert.match(fake.root.style.getPropertyValue("--glm-compact-poster-url"),
+    /\/234567\/e{40}\/library_600x900\.jpg/);
+  vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+  assert.equal(fake.root.getAttribute("data-glm-compact-poster"),undefined);
+});
+
+test("portrait falls back to safe un-hashed Steam URL, never a raw third-party URL",()=>{
+  const fake=fakeSteamCEF();
+  fake.location.pathname="/routes/index.html";
+  const hash="b".repeat(40);
+  fake.heroAssets.push({
+    src:"https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/234567/"+hash+"/library_hero.jpg",
+    style:{backgroundImage:""},
+  });
+  vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  for(const {f} of fake.timers.values())f();
+  fake.images[0].onerror();
+  fake.images[1].onerror();
+  assert.equal(fake.images.length,3);
+  assert.equal(fake.images[2].url,
+    "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/234567/library_600x900.jpg");
+  assert.equal(fake.images.every(item=>item.url.startsWith("https://shared.fastly.steamstatic.com/")),true);
+  vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+});
