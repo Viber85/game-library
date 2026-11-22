@@ -169,7 +169,7 @@ test("Game Details requires explicit confirmation and uses protected backend cle
   assert.match(src,/gl-details-download-controls/);
   assert.match(src,/onAction\("download-toggle"\)/);
   assert.match(src,/onAction\("download-cancel"\)/);
-  assert.match(src,/cleanupCancelledSteamGame\(game\.id\)/);
+  assert.match(src,/cleanupCancelledSteamGame\(appid\)/);
   assert.match(backend,/async def cleanup_cancelled_steam_game\(self, appid: int\):/);
   assert.match(packageScript,/steam_cancel_cleanup\.py/);
 });
