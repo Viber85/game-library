@@ -79,6 +79,10 @@ export function BuiltinThemePanel(){
       <div style={{fontSize:12,lineHeight:1.5,whiteSpace:"pre-wrap",overflowWrap:"anywhere",
         padding:10,border:"1px solid #397397",borderRadius:9,background:"#071b2c"}}>
         <strong>Compact Game Details — Quick check</strong>
+        <div>Native game evidence: {diagnostics.nativeEvidenceSource==="live"
+          ?"LIVE ORIGINAL STEAM DETAILS":diagnostics.nativeEvidenceSource==="before-qam"
+          ?"CAPTURED BEFORE DECKY · "+diagnostics.nativeEvidenceAgeSeconds+"s ago"
+          :"NOT VERIFIED · Open original Steam Details before Decky"}</div>
         <div>Option enabled: {diagnostics.compactEnabled?"YES":"NO"}</div>
         <div>Midnight CSS verified: {diagnostics.applied?"YES":"NO"}</div>
         <div>Compact stylesheet present: {diagnostics.compactCssLoaded?"YES":"NOT CONFIRMED"}</div>
@@ -93,23 +97,28 @@ export function BuiltinThemePanel(){
           "YES · "+diagnostics.nativeStyleAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
         <div>Verified native Play panel surfaces: {diagnostics.nativePlaySurfaceCount}</div>
         <div>Visible blue panels found: {diagnostics.nativePaintCount}</div>
-        <div>Panels confirmed dark by actual computed paint: {diagnostics.nativePaintNeutralized}</div>
-        <div>HLTB row: {diagnostics.hltbFound?"FOUND":"NOT FOUND"}
-          {" · "}{diagnostics.hltbStyled?"MINIMAL STYLE APPLIED":"Style not confirmed"}</div>
+        <div>Panels confirmed dark by actual computed paint: {diagnostics.nativeEvidenceSource==="unverified"
+          ?"NOT VERIFIED":diagnostics.nativePaintNeutralized}</div>
+        <div>HLTB in original Steam Details: {diagnostics.nativeEvidenceSource==="unverified"
+          ?"NOT VERIFIED":diagnostics.hltbFound?"FOUND":"NOT FOUND"}
+          {" · "}{diagnostics.nativeEvidenceSource==="unverified"?"No game-only sample":
+          diagnostics.hltbStyled?"STYLE APPLIED":"Style not confirmed"}</div>
         <div>Current Steam CSS-module aliases resolved: {diagnostics.nativeAliasesResolved}/6</div>
         <div>Global compact CSS selector (not proof of a changed element):
           {" "}{diagnostics.compactMatchedRecently
           ?"Matched "+diagnostics.compactMatchAgeSeconds+"s ago":"Not confirmed"}</div>
         <div>Native Steam game header: {diagnostics.nativeHeaderCount} readable-class matches</div>
         <div>Native Steam Play bar: {diagnostics.nativePlayBarCount} readable-class matches</div>
-        <div>Game Library UI present in snapshot: {diagnostics.libraryUIVisible?"YES":"NO"}</div>
+        <div>Game Library UI currently visible: {diagnostics.libraryUIVisible?"YES":"NO"}</div>
         <div style={{opacity:.78,fontSize:11,marginTop:5}}>
           A verified Midnight stylesheet or root selector does NOT prove that
           native hero/Play controls changed. The verified per-element native
           style and pixel heights above are the actual test. If they are
           missing, we need the Steam class mapping, not another blind CSS edit.
-          If the snapshot shows Game Library UI, close this panel, open a Steam
-          game's original Details page, then immediately reopen diagnostics.
+          A computed dark color on two DOM elements does not prove the large
+          visible Steam bars are both dark. The measurements above must come
+          from one native-game-only snapshot. If the evidence is unverified,
+          close this panel, open the original Steam Details page, then return.
           Steam may use hashed class names, so zero readable-class matches alone
           are not a failure. The verified layout-match status is authoritative.
         </div>
