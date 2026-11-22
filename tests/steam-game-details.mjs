@@ -51,7 +51,7 @@ test("all 4 directional gamepad buttons use Steam focusables and bounded spatial
   assert.match(source,/GamepadButton\.DIR_DOWN/);
   assert.match(source,/GamepadButton\.DIR_LEFT/);
   assert.match(source,/GamepadButton\.DIR_RIGHT/);
-  assert.match(source,/focusSpatially\(rootRef\.current,current,direction,"\.gl-details-focus"\)/);
+  assert.match(source,/focusSpatially\(rootRef\.current,current,direction,\s*"\.gl-details-focus"\)/);
   assert.match(source,/onCancelButton:onBack/);
   assert.match(source,/focusRefs/);
   assert.match(source,/backRef\.current\?\.focus\(\)/);
