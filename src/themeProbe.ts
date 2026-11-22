@@ -206,7 +206,7 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     nativeCompactPlayBarFound:obj.nativeCompactPlayBarFound===true,
     nativeCompactHeroStyled:obj.nativeCompactHeroStyled===true,
     nativeCompactPlayBarStyled:obj.nativeCompactPlayBarStyled===true,
-    nativeCompactPlaySource:["PlayBar","PlaySection","PlayButton"].includes(obj.nativeCompactPlaySource)?obj.nativeCompactPlaySource:"",
+    nativeCompactPlaySource:typeof obj.nativeCompactPlaySource==="string"&&["PlayBar","PlaySection","PlayButton"].includes(obj.nativeCompactPlaySource)?obj.nativeCompactPlaySource:"",
     nativeCompactHeroHeight:integer(obj.nativeCompactHeroHeight),
     nativeCompactPlayBarHeight:integer(obj.nativeCompactPlayBarHeight),
     nativeCompactAliasCount:integer(obj.nativeCompactAliasCount),
