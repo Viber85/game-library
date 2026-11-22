@@ -21,6 +21,7 @@ import {type FocusDirection} from "./spatialFocus";
 import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {openSteamControllerEditor} from "./steamControllerEditor";
+import {showNativeGameOptions} from "./nativeGameContextMenu";
 import {toaster} from "@decky/api";
 
 type PageTab="activity"|"your-stuff"|"community"|"game-info";
@@ -198,6 +199,17 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     /^https:\/\/howlongtobeat\.com\/game\/[0-9]+$/.test(hltbData.url)?
     hltbData.url:null;
   const isNativeSteam=!game.nonSteam&&game.id>0&&game.id<0x80000000;
+  // Exactly the same native Steam game context menu used by Start/Menu on
+  // Library cards. Keep both the gear's A action and physical Start on this
+  // one handler so they never diverge.
+  const openGameOptions=()=>{
+    const anchor=focusRefs.current["settings"]??document.activeElement;
+    if(showNativeGameOptions(game.id,anchor))return;
+    toaster.toast({
+      title:"Steam game options",
+      body:"Steam's native game menu is unavailable here. Open Steam Details to access its options."
+    });
+  };
   const openController=()=>{
     void openSteamControllerEditor(game.id).then(opened=>{
       if(!opened)toaster.toast({
@@ -305,9 +317,14 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
                 onActivate={openController}><MdSportsEsports/></Focusable>
             <Focusable {...onAction("settings")}
                 className="gl-details-focus gl-details-icon-button"
-                title="Original Steam game settings"
-                onOKActionDescription="Original Steam game settings"
-                onActivate={onNativeDetails}><MdSettings/></Focusable>
+                title="Steam game options (same as Start)"
+                onOKActionDescription="Steam game context menu"
+                onMenuButton={(e:GamepadEvent)=>{
+                  e.preventDefault();e.stopPropagation();
+                  if(!e.detail?.is_repeat)openGameOptions();
+                }}
+                onMenuActionDescription="Game options"
+                onActivate={openGameOptions}><MdSettings/></Focusable>
           </div>
           {!installState&&
             <div className="gl-details-install-help">Install opens Steam's original installer to choose a drive and confirm the download.</div>}
