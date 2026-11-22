@@ -391,3 +391,271 @@
   }
   [data-glm-native-compact-playbutton="1"] {min-height:40px !important;}
 }
+
+
+/* v0.6.11-test.17 — quiet cinematic redesign of the *verified* native page.
+ * There is deliberately no DOM reparenting, hiding of controls, forced
+ * absolute positioning of Valve buttons, or changes to focus event handlers.
+ * Direct native markers are the source of truth on the user's SteamOS build.
+ */
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  :is([class*="appdetails_Container"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]) {
+  --glm-compact-panel:#0b1929;
+  --glm-compact-line:rgba(173,209,229,.13);
+  background:#070f1c !important;
+  color:#eaf3fd !important;
+}
+
+/* Remove the proof-of-concept TEST/NATIVE banners after confirmed device
+ * diagnostics. Their CSS variables remain so Quick Check still works. */
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [data-glm-native-compact-hero="1"]::before {
+  content:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+/* The photograph shows a working header but excessive empty blue space.
+ * Rebalance toward the game art and logo instead of stacking more bars. */
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [data-glm-native-compact-hero="1"] {
+  height:clamp(220px,29.5vh,300px) !important;
+  max-height:300px !important;
+  border-radius:0 0 16px 16px !important;
+  border-bottom:1px solid rgba(170,210,231,.16) !important;
+  background:#071420 !important;
+  box-shadow:0 15px 34px rgba(0,0,0,.24) !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [class*="sharedappdetailsheader_TopGradient"] {
+  background:linear-gradient(90deg,
+    rgba(3,9,19,.98) 0%,rgba(4,12,22,.83) 21%,
+    rgba(4,11,20,.38) 49%,rgba(4,10,19,.04) 89%) !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [data-glm-native-compact-title="1"] {
+  max-height:100% !important;
+  padding:18px clamp(23px,3vw,46px) 18px !important;
+  box-sizing:border-box !important;
+}
+:root[data-glm-compact-poster="1"]:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [data-glm-native-compact-title="1"] {
+  padding-left:clamp(137px,15vw,178px) !important;
+}
+:root[data-glm-compact-poster="1"]:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [data-glm-native-compact-hero="1"]::after {
+  width:clamp(92px,9.3vw,122px);
+  height:clamp(139px,14.6vw,183px);
+  left:clamp(16px,2.5vw,35px);
+  bottom:16px;
+  border-radius:11px;
+  border:1px solid rgba(216,233,244,.30);
+  box-shadow:0 12px 28px rgba(0,0,0,.5);
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  :is([class*="sharedappdetailsheader_TitleLogo"],
+      [class*="sharedappdetailsheader_SVGTitle"],
+      [class*="sharedappdetailsheader_TitleImageContainer"]) {
+  max-width:min(41vw,440px) !important;
+  max-height:clamp(75px,13vh,122px) !important;
+}
+
+/* HLTB belongs to its own plugin. Restrict overrides to its known root,
+ * don't duplicate, alter or infer any time values. This selector intentionally
+ * does NOT require .BasicUI because Decky may mount the row as a sibling. */
+:root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck {
+  --glm-compact-hltb-applied:1;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  margin:7px 14px 3px !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck
+  :is(.hltb-info,.hltb-info-absolute) {
+  border:1px solid rgba(172,207,226,.14) !important;
+  background:rgba(9,21,35,.97) !important;
+  box-shadow:0 4px 18px rgba(0,0,0,.11) !important;
+  color:#edf5ff !important;
+  border-radius:12px !important;
+  padding:8px 13px !important;
+  min-height:0 !important;
+  gap:9px !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck .hltb-gametime {
+  color:#eef7ff !important;
+  font-size:clamp(12px,1.2vw,16px) !important;
+  font-weight:650 !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck .hltb-label {
+  color:#a7b9cb !important;
+  font-size:10px !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck .hltb-details-btn {
+  background:rgba(21,43,60,.8) !important;
+  border:1px solid rgba(127,209,233,.42) !important;
+  border-radius:10px !important;
+  color:#b2ecf5 !important;
+  min-height:30px !important;
+  box-shadow:none !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck .hltb-details-btn:is(
+  .gpfocus,.gpfocuswithin,:focus-visible) {
+  outline:2px solid #9ee9f4 !important;
+  outline-offset:1px !important;
+}
+
+/* Steam's native PlaySection exists on the photographed device. Its CHILD
+ * surfaces can keep Valve's blue background even after the parent is styled.
+ * Flatten only structural wrappers, never actions, progress bars or labels. */
+[data-glm-native-compact-playsection="1"] {
+  --glm-compact-playsection-applied:1;
+  margin:8px 14px 9px !important;
+  padding:7px 13px !important;
+  background:#0a1828 !important;
+  border:1px solid rgba(156,194,217,.17) !important;
+  border-radius:13px !important;
+  box-shadow:0 4px 18px rgba(0,0,0,.13) !important;
+  color:#eaf3fd !important;
+}
+[data-glm-native-compact-surface="1"] {
+  --glm-compact-surface-applied:1;
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+}
+[data-glm-native-compact-playsection="1"]
+  :is([class*="basicappdetailssectionstyler_ActionRow"],
+      [class*="appdetailsplaysection_PlayBar"],
+      [class*="appdetailsplaysection_RightControls"]) {
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border-color:transparent !important;
+  padding-top:2px !important;
+  padding-bottom:2px !important;
+}
+[data-glm-native-compact-playsection="1"]
+  :is([class*="appdetailsplaysection_LastPlayed"],
+      [class*="appdetailsplaysection_Playtime"],
+      [class*="appdetailsplaysection_PlayBarDetailLabel"]) {
+  color:#adbed0 !important;
+  font-size:12px !important;
+  line-height:1.35 !important;
+}
+[data-glm-native-compact-playbutton="1"] {
+  min-width:clamp(146px,18.5vw,230px) !important;
+  max-width:280px !important;
+  min-height:43px !important;
+  border-radius:10px !important;
+}
+[data-glm-native-compact-playbutton="1"]
+  [class*="appactionbutton_ButtonChild"] {
+  border-radius:10px !important;
+  box-shadow:none !important;
+}
+[data-glm-native-compact-playsection="1"]
+  :is([class*="appdetailsplaysection_MenuButton"],
+      [class*="appdetailsplaysection_ControllerConfigButton"]) {
+  background:#12263a !important;
+  border:1px solid rgba(163,202,224,.18) !important;
+  box-shadow:none !important;
+  border-radius:10px !important;
+  min-height:40px !important;
+  min-width:40px !important;
+}
+[data-glm-native-compact-playsection="1"]
+  :is([class*="appdetailsplaysection_MenuButton"],
+      [class*="appdetailsplaysection_ControllerConfigButton"]):is(
+      .gpfocus,.gpfocuswithin,:focus-visible) {
+  outline:2px solid #92e1f3 !important;
+  outline-offset:1px !important;
+  background:#17354d !important;
+}
+
+/* The native game navigation and content stay in their normal Steam order. */
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [class*="appdetailssection_SectionTab"] {
+  min-height:33px !important;
+  padding:7px 13px !important;
+  margin:0 3px !important;
+  border:1px solid transparent !important;
+  border-radius:9px !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  color:#b4c3d3 !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [class*="appdetailssection_SectionTab"]:is(
+  [aria-selected="true"],.gpfocus,.gpfocuswithin,:focus-visible) {
+  border-color:rgba(117,208,232,.38) !important;
+  background:rgba(48,104,135,.25) !important;
+  color:#eaf6ff !important;
+  outline:2px solid rgba(126,216,239,.66) !important;
+  outline-offset:0 !important;
+  box-shadow:none !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [class*="appdetailsoverview_ColumnContainer"] {
+  padding:10px 16px !important;
+  gap:10px !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  :is([class*="appdetailssection_AppDetailsSectionContainer"],
+      [class*="appdetailsactivitysection_ActivityFeedContainer"]) {
+  background:#0a1929 !important;
+  border:1px solid rgba(163,204,229,.13) !important;
+  border-radius:13px !important;
+  box-shadow:none !important;
+  margin-top:6px !important;
+  padding:10px 13px !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [data-glm-native-compact-sections="1"] {
+  border:0 !important;
+  border-bottom:1px solid rgba(150,193,215,.17) !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  padding:8px 5px !important;
+  color:#e9f4ff !important;
+  box-shadow:none !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  [class*="posttextentry_PostTextEntryArea"] {
+  min-height:36px !important;
+  background:#112438 !important;
+  border:1px solid rgba(159,196,218,.16) !important;
+  border-radius:9px !important;
+  box-shadow:none !important;
+}
+:root:has([data-glm-native-compact-hero="1"]) .BasicUI
+  :is([class*="appactivityday_EventBody"],
+      [class*="appdetailscommunityfeed_CommunityItem"]) {
+  background:#0d2031 !important;
+  border:1px solid rgba(165,206,228,.12) !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
+  margin-top:5px !important;
+}
+
+/* Handhelds keep natural document flow: no clipped Play buttons, download
+ * progress, native controller focus, input fields or accessibility overlays. */
+@media (max-width:1120px),(max-height:720px) {
+  :root:has([data-glm-native-compact-hero="1"]) .BasicUI
+    [data-glm-native-compact-hero="1"] {
+    height:clamp(200px,28vh,244px) !important;
+    max-height:244px !important;
+  }
+  :root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck {
+    margin:5px 8px 2px !important;
+  }
+  [data-glm-native-compact-playsection="1"] {
+    margin:6px 8px !important;
+    padding:6px 10px !important;
+  }
+  :root:has([data-glm-native-compact-hero="1"]) .BasicUI
+    [class*="appdetailsoverview_ColumnContainer"] {
+    padding:8px 10px !important;
+  }
+  [data-glm-native-compact-playbutton="1"] {min-height:41px !important;}
+}
