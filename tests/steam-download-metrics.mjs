@@ -22,6 +22,31 @@ test("the active app uses real Steam overview bytes and its remaining seconds",(
   });
 });
 
+test("ETA uses Steam Downloads' overall remaining time before network-only estimate",()=>{
+  const overview={update_appid:730,update_state:"Downloading",
+    overall_estimated_time_remaining_sec:455,
+    update_seconds_remaining:210,
+    update_bytes_downloaded:2*GiB,update_bytes_to_download:4*GiB};
+  assert.deepEqual(readSteamDownloadMetrics(730,[],overview),{
+    downloadedBytes:2*GiB,totalBytes:4*GiB,remainingSeconds:455
+  });
+  assert.equal(formatDownloadTime(455),"8 min");
+  assert.equal(readSteamDownloadMetrics(570,[],overview).remainingSeconds,null);
+  assert.equal(readSteamDownloadMetrics(730,[],{...overview,paused:true}).remainingSeconds,null);
+});
+
+test("Steam falls back to network-only remaining seconds if overall ETA is missing",()=>{
+  const overview={update_appid:730,update_state:"Downloading",
+    update_seconds_remaining:140};
+  assert.equal(readSteamDownloadMetrics(730,[],overview).remainingSeconds,140);
+  assert.equal(readSteamDownloadMetrics(730,[],{
+    ...overview,overall_estimated_time_remaining_sec:-1
+  }).remainingSeconds,140);
+  assert.equal(readSteamDownloadMetrics(730,[],{
+    ...overview,remote_client_id:"remote"
+  }).remainingSeconds,null);
+});
+
 test("the queue counts the current game's local bytes and rejects other PCs",()=>{
   const items=[
     {remote_client_id:"725",item_data:[{
