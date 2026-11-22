@@ -108,8 +108,8 @@ test("Details return keeps same Library/Collections/Home route, game, scroll and
 test("controller icon invokes direct Steam Input configurator, not original game Settings",()=>{
   const core=read("src/steamControllerEditorCore.ts");
   const adapter=read("src/steamControllerEditor.ts");
-  assert.match(core,/ShowControllerConfigurator/);
-  assert.match(adapter,/executeInTab/);
+  assert.match(core,/controllerconfigurator\/main/);
+  assert.match(adapter,/Navigation\.Navigate\(route\)/);
   assert.match(source,/openSteamControllerEditor\(game\.id\)/);
   const controllerAction=source.slice(source.indexOf("const openController="),
     source.indexOf("const action=",source.indexOf("const openController=")));
@@ -132,18 +132,15 @@ test("gear and physical Start share the exact native Steam game menu, not Settin
   assert.doesNotMatch(gear,/onActivate=\{onNativeDetails\}/);
 });
 
-test("controller icon opens Steam's full Controller Settings screen, never its game context menu",()=>{
+test("controller icon targets pre-edit Controller Settings rather than Edit Layout",()=>{
   const adapter=read("src/steamControllerEditor.ts");
   const core=read("src/steamControllerEditorCore.ts");
-  assert.match(adapter,/if\(openControllerFromClient\(appId,client\)\)return true/);
-  assert.match(adapter,/title==="SharedJSContext"/);
-  assert.match(core,/controllerconfig/);
-  const action=source.slice(source.indexOf("const openController="),
-    source.indexOf("const action="));
-  assert.match(action,/openSteamControllerEditor\(game\.id\)/);
-  assert.doesNotMatch(action,/showNativeGameOptions\(|onNativeDetails\(/);
-  assert.match(action,/Controller Settings unavailable/);
-  const gear=source.slice(source.indexOf("const openGameOptions="),
-    source.indexOf("const openController="));
+  assert.match(adapter,/Navigation\.Navigate\(route\)/);
+  assert.match(core,/controllerconfigurator\/main/);
+  assert.doesNotMatch(adapter,/steam:\/\/controllerconfig|ShowControllerConfigurator/);
+  const controllerAction=source.slice(source.indexOf("const openController="),source.indexOf("const action="));
+  assert.match(controllerAction,/openSteamControllerEditor\(game\.id\)/);
+  assert.doesNotMatch(controllerAction,/showNativeGameOptions\(|onNativeDetails\(/);
+  const gear=source.slice(source.indexOf("const openGameOptions="),source.indexOf("const openController="));
   assert.match(gear,/showNativeGameOptions\(game\.id,anchor\)/);
 });
