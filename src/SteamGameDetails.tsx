@@ -28,6 +28,7 @@ import {useSteamGameDownload} from "./useSteamGameDownload";
 import {resolveInstallMode,transferLabel} from "./steamDownloadProgressCore";
 import {formatDownloadBytes,formatDownloadTime} from "./steamDownloadMetrics";
 import {nativeDownloadAction} from "./steamDownloadActionsCore";
+import {withRequestTimeout} from "./requestDeadline";
 
 type CleanupReply={ok:boolean;status:string;removed?:string[];skipped?:string[]};
 const cleanupCancelledSteamGame=callable<[number],CleanupReply>("cleanup_cancelled_steam_game");
@@ -101,6 +102,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   const [installState,setInstallState]=useState(game.installed);
   const [wizardPending,setWizardPending]=useState(false);
   const [downloadBusy,setDownloadBusy]=useState(false);
+  const [cancelRequested,setCancelRequested]=useState(false);
   const nativeDownload=useSteamGameDownload(game.id,game.nonSteam);
   const actualInstalled=nativeDownload.installed??installState;
   const installMode=resolveInstallMode(
@@ -120,6 +122,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   const currentDownloadRef=useRef(nativeDownload);
   currentDownloadRef.current=nativeDownload;
   const busyRef=useRef(false);
+  const cancelRequestedRef=useRef(false);
 
   useEffect(()=>{
     userChangedFocus.current=false;
@@ -131,6 +134,8 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     setWizardPending(false);
     setDownloadBusy(false);
     busyRef.current=false;
+    cancelRequestedRef.current=false;
+    setCancelRequested(false);
     setPlaytime(game.playtimeMinutes);
     setLastPlayed(game.lastPlayed);
     // Native Game Mode focus is separate from document.activeElement.
@@ -282,6 +287,24 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
         :"Steam could not open the installation wizard for this game.";
     toaster.toast({title:"Install unavailable",body:message});
   };
+  // The Steam download list may update after we dispatch Cancel. Do not
+  // leave "Cancel requested" stuck if Steam refuses to remove the transfer.
+  useEffect(()=>{
+    if(!cancelRequested)return;
+    if(!nativeDownload.transfer){
+      cancelRequestedRef.current=false;
+      setCancelRequested(false);
+      return;
+    }
+    const timer=window.setTimeout(()=>{
+      cancelRequestedRef.current=false;
+      setCancelRequested(false);
+      toaster.toast({title:"Steam download is still listed",
+        body:"Steam has not yet confirmed cancellation. Check the Downloads page before retrying."});
+    },12000);
+    return ()=>window.clearTimeout(timer);
+  },[cancelRequested,Boolean(nativeDownload.transfer),game.id]);
+
   const downloadControls=()=>(
     window as unknown as {SteamClient?:{Downloads?:{
       PauseAppUpdate?:(id:number,clientId?:string)=>unknown;
@@ -304,53 +327,63 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
         body:"Steam could not "+action+" this download ("+result.reason+")."});
     }finally{busyRef.current=false;setDownloadBusy(false);}
   };
+  const inspectPrefixCleanup=(appid:number)=>{
+    // This is independent of the native command response and must not block
+    // controller navigation or leave the Cancel button in "Working".
+    void withRequestTimeout(cleanupCancelledSteamGame(appid),38000)
+      .then(cleanup=>{
+        if(cleanup.ok){
+          toaster.toast({title:"Steam game data cleanup completed",
+            body:"The selected game's Proton prefix and shader cache were removed where safe."});
+        }else{
+          toaster.toast({title:"Steam game data cleanup not confirmed",
+            body:cleanup.status==="steam-busy"?
+              "Steam still has installation data on disk. Prefixes were preserved for safety.":
+              "Cleanup returned "+cleanup.status+". Some data may remain; check Steam Storage."});
+        }
+      }).catch(error=>{
+        console.warn("[game-library] Steam cancellation cleanup response unavailable",error);
+        toaster.toast({title:"Proton prefix cleanup unconfirmed",
+          body:"Steam cancellation was requested, but cleanup could not be verified. No deletion success is claimed."});
+      });
+  };
   const cancelDownload=async(expectedNature:typeof nativeDownload.downloadNature)=>{
     const current=currentDownloadRef.current;
-    if(busyRef.current||!current.transfer||current.downloadNature!==expectedNature){
+    if(busyRef.current||cancelRequestedRef.current||
+       !current.transfer||current.downloadNature!==expectedNature){
       toaster.toast({title:"Steam download changed",
         body:"Download status changed since you opened the confirmation. Reopen Cancel to review it."});
       return;
     }
     const client=downloadControls();
-    const nature=current.downloadNature;
     busyRef.current=true;
     setDownloadBusy(true);
     try{
       const result=await nativeDownloadAction("cancel",game.id,game.nonSteam,
-        nature,client?.Downloads,client?.Installs);
+        current.downloadNature,client?.Downloads,client?.Installs);
       if(!result.ok){
-        toaster.toast({title:"Cancel failed",
-          body:"Steam could not cancel the selected download ("+result.reason+")."});
+        toaster.toast({title:"Steam cancellation failed",
+          body:"Could not send the cancellation command ("+result.reason+")."});
         return;
       }
-      if(!result.uninstallRequested){
-        toaster.toast({title:"Steam download removed",
-          body:"Download removed from the queue. Existing installed files and Proton prefixes were preserved."});
-        return;
-      }
-      // Native Steam owns all install files. The backend waits until Steam
-      // releases its manifest/download folder before deleting app-scoped
-      // compatdata and shadercache; it never guesses a filesystem path.
-      try{
-        const cleanup=await cleanupCancelledSteamGame(game.id);
-        if(cleanup.ok){
-          toaster.toast({title:"Download cancelled",
-            body:"Steam installation removed; game-specific Proton prefix and shader cache cleaned."});
-        }else{
-          toaster.toast({title:"Download cancelled — cleanup incomplete",
-            body:cleanup.status==="steam-busy"?
-              "Steam still holds installation files. Proton data was left untouched for safety.":
-              "Proton data could not be fully removed ("+cleanup.status+")."});
-        }
-      }catch(error){
-        console.warn("[game-library] Steam cancellation prefix cleanup failed",error);
-        toaster.toast({title:"Steam download cancelled",
-          body:"Could not confirm Proton prefix cleanup; some game data may remain."});
-      }
-    }finally{busyRef.current=false;setDownloadBusy(false);}
+      cancelRequestedRef.current=true;
+      setCancelRequested(true);
+      toaster.toast({title:"Cancel requested",
+        body:result.uninstallRequested?
+          "Steam is removing this game's partial install. Proton prefix cleanup will be checked separately.":
+          "The download was removed from Steam's queue. Existing game data is preserved."});
+      if(result.uninstallRequested)inspectPrefixCleanup(game.id);
+    }catch(error){
+      console.warn("[game-library] Steam cancel action failed",error);
+      toaster.toast({title:"Steam cancellation failed",
+        body:"Steam did not confirm the cancellation request."});
+    }finally{
+      busyRef.current=false;
+      setDownloadBusy(false);
+    }
   };
   const confirmCancelDownload=()=>{
-    if(downloadBusy||busyRef.current||!nativeDownload.transfer)return;
+    if(downloadBusy||busyRef.current||cancelRequestedRef.current||!nativeDownload.transfer)return;
     const initial=nativeDownload.downloadNature==="initial";
     showModal(<ConfirmModal
       strTitle={initial?"Cancel install and delete its Proton prefix?":"Cancel Steam download?"}
@@ -494,7 +527,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                       className="gl-details-focus gl-details-download-control gl-details-download-cancel"
                       onOKActionDescription="Cancel download and remove its new-install data"
                       onActivate={confirmCancelDownload}>
-                    <MdDeleteOutline/><span>{downloadBusy?"Working...":"Cancel download"}</span>
+                    <MdDeleteOutline/><span>{downloadBusy?"Sending...":cancelRequested?"Cancel requested":"Cancel download"}</span>
                   </Focusable>
                 </div>
               </div>
