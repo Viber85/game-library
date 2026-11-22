@@ -90,7 +90,7 @@ test("native focus capture activates in Game Details without altering normal Hom
   assert.match(dashboard,/initialMode==="settings"\?"settings":/);
   assert.match(dashboard,/initialMode==="appearance"\?"appearance":/);
   assert.match(dashboard,/initialMode==="collections"\?"collections":null/);
-  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\?"details":nativeMenuKind,nativeMenuRoot\)/);
+  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\|\|gogDetailsId\?"details":nativeMenuKind,nativeMenuRoot\)/);
   assert.match(bridge,/details:"\.gl-game-details \.gl-details-focus"/);
   assert.doesNotMatch(dashboard,/initialMode==="home"\?"home":/);
   assert.match(diagnostics,/useNativeMenuGamepad\("diagnostics",menuRoot\)/);
