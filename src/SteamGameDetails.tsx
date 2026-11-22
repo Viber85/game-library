@@ -570,7 +570,9 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                       onOKActionDescription={nativeDownload.downloadNature==="initial"?
                         "Open Steam options to choose Manage and Uninstall":"Remove update from Steam download queue"}
                       onActivate={confirmCancelDownload}>
-                    <MdDeleteOutline/><span>{downloadBusy?"Sending...":cancelRequested?"Cancel requested":"Cancel download"}</span>
+                    <MdDeleteOutline/><span>{downloadBusy?"Sending...":
+                      awaitingSteamUninstall?"Steam options open":
+                      cancelRequested?"Cancel requested":"Cancel download"}</span>
                   </Focusable>
                 </div>
               </div>
