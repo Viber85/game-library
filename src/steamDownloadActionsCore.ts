@@ -80,30 +80,24 @@ export async function nativeDownloadAction(
   const requestedUninstall=action==="cancel"&&nature==="initial";
   const method=action==="resume"?"ResumeAppUpdate":"PauseAppUpdate";
   if((action!=="cancel"&&typeof downloads?.[method]!=="function")||
-     (action==="cancel"&&typeof downloads?.RemoveFromDownloadList!=="function")||
-     (requestedUninstall&&typeof installs?.OpenUninstallWizard!=="function"))
+     (action==="cancel"&&nature==="initial"&&
+       typeof installs?.OpenUninstallWizard!=="function")||
+     (action==="cancel"&&nature!=="initial"&&
+       typeof downloads?.RemoveFromDownloadList!=="function"))
     return {ok:false,uninstallRequested:false,reason:"unavailable"};
   try{
-    // Some SteamOS versions include the explicit local-client second argument.
-    // Do not touch other apps or call EnableAllDownloads (global).
-    if(action==="cancel"){
-      // Pausing an already queued/paused app can reject or hang; this is
-      // best-effort, but must never block queue removal indefinitely.
-      if(typeof downloads?.PauseAppUpdate==="function"){
-        try{
-          await invokeSteam("pause before cancel",()=>
-            downloads.PauseAppUpdate!(appId,LOCAL),ackTimeoutMs);
-        }catch(error){
-          console.warn("[game-library] pause before cancel unavailable",error);
-        }
-      }
-      // RemoveFromDownloadList alone just unschedules a partial install.
+    // Native Steam UI already owns the Uninstall entry in the Library
+    // context menu. It opens a confirmation dialog if dontPrompt=false.
+    // Do NOT remove a fresh install from the queue before calling this:
+    // that merely unschedules it and can leave the partial files behind.
+    if(action==="cancel"&&requestedUninstall){
+      await invokeSteam("native uninstall dialog",()=>
+        installs!.OpenUninstallWizard!([appId],false),ackTimeoutMs);
+    }else if(action==="cancel"){
+      // Existing installed game or uncertain install: never uninstall
+      // or touch its Proton prefix. Steam's Remove action just unschedules.
       await invokeSteam("remove download",()=>
         downloads!.RemoveFromDownloadList!(appId,LOCAL),ackTimeoutMs);
-      if(requestedUninstall){
-        await invokeSteam("uninstall partial game",()=>
-          installs!.OpenUninstallWizard!([appId],true),ackTimeoutMs);
-      }
     }else{
       await invokeSteam(action,()=>downloads![method]!(appId,LOCAL),ackTimeoutMs);
     }
