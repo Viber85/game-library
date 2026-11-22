@@ -16,7 +16,7 @@ trap 'rm -rf "$stage"' EXIT
 
 dest="$stage/game-library"
 mkdir -p "$dest/dist"
-cp plugin.json main.py updates.py hltb.py protondb.py steamgriddb.py steam_size.py nonsteam_size.py system_status.py package.json README.md "$dest/"
+cp plugin.json main.py updates.py hltb.py protondb.py steamgriddb.py steam_size.py nonsteam_size.py system_status.py steam_cancel_cleanup.py package.json README.md "$dest/"
 cp gog.py gog_phone.py qrcodegen.py "$dest/"
 cp -R system-theme "$dest/system-theme"
 cp dist/index.js "$dest/dist/index.js"
@@ -41,6 +41,7 @@ unzip -Z1 "$output" | grep -qx 'game-library/steamgriddb.py'
 unzip -Z1 "$output" | grep -qx 'game-library/steam_size.py'
 unzip -Z1 "$output" | grep -qx 'game-library/nonsteam_size.py'
 unzip -Z1 "$output" | grep -qx 'game-library/system_status.py'
+unzip -Z1 "$output" | grep -qx 'game-library/steam_cancel_cleanup.py'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/shared.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/qam.css'
 unzip -Z1 "$output" | grep -qx 'game-library/system-theme/settings.css'
