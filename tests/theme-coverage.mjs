@@ -274,6 +274,6 @@ test("Midnight palette has high contrast for Settings and notes",()=>{
 
 test("0.4.2 forces replacement of earlier cached style revision",()=>{
   const runtime=readFileSync(new URL("../src/builtinThemeRuntime.ts",import.meta.url),"utf8");
-  assert.match(runtime,/STYLE_REVISION\s*=\s*"84"/);
+  assert.match(runtime,/STYLE_REVISION\s*=\s*"85"/);
   assert.match(runtime,/CLEANUP_SCRIPT/);
 });
