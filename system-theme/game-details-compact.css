@@ -690,8 +690,8 @@
 }
 /* The real HLTB row can be wider than its own cards on some Steam clients.
  * Direct ID styling avoids dependence on a particular hashed Steam parent. */
-#hltb-for-deck .hltb-info,
-#hltb-for-deck .hltb-info-absolute {
+:root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck .hltb-info,
+:root:has([data-glm-native-compact-hero="1"]) #hltb-for-deck .hltb-info-absolute {
   background:#0e1d2e !important;
   background-image:none !important;
   border:1px solid rgba(157,193,216,.18) !important;
