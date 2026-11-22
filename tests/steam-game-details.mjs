@@ -89,7 +89,7 @@ test("activity/community never fabricate posts or installation state",()=>{
 test("Library uses native Steam focus bridge while custom Details is visible, never hidden grid",()=>{
   const menu=read("src/nativeMenuGamepad.ts");
   assert.match(menu,/details:"\.gl-game-details \.gl-details-focus"/);
-  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\?"details":nativeMenuKind,nativeMenuRoot\)/);
+  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\|\|gogDetailsId\?"details":nativeMenuKind,nativeMenuRoot\)/);
   assert.match(source,/onActivate=\{onBack\}/);
   assert.match(source,/onCancelButton:onBack/);
   assert.doesNotMatch(source,/focusSpatially\(/);
@@ -168,8 +168,8 @@ test("focus can leave custom Details LEFT for rail and reenter RIGHT from the ra
   assert.match(dashboard,/focusNativeMenuControl\(railRefs\.current\[target\],GamepadButton\.DIR_LEFT\)/);
   assert.match(dashboard,/const focusDetailsFromRail=\(\)=>\{/);
   assert.match(dashboard,/focusNativeMenuControl\(back,GamepadButton\.DIR_RIGHT\)/);
-  assert.match(dashboard,/if\(steamDetailsGame\)focusDetailsFromRail\(\); else goToGame\(\)/);
-  assert.match(dashboard,/onCancelButton=\{\(\) => steamDetailsGame\?focusDetailsFromRail\(\):goToGame\(\)\}/);
+  assert.match(dashboard,/if\(steamDetailsGame\|\|gogDetailsId\)focusDetailsFromRail\(\); else goToGame\(\)/);
+  assert.match(dashboard,/onCancelButton=\{\(\) => steamDetailsGame\|\|gogDetailsId\?focusDetailsFromRail\(\):goToGame\(\)\}/);
   assert.match(menu,/kind==="details"\?[\s\S]*?\.gl-game-details \.gl-details-back/);
   assert.match(menu,/kind==="details"&&focusNativeMenuControl\(rail,event\.detail!\.button!\)/);
 });
