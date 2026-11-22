@@ -1,8 +1,9 @@
 import {useEffect,useRef,useState} from "react";
-import {Focusable,GamepadButton,Navigation,type GamepadEvent} from "@decky/ui";
+import {Focusable,GamepadButton,Navigation,showModal,ConfirmModal,type GamepadEvent} from "@decky/ui";
 import {
   MdArrowBack,MdCheckCircle,MdDownload,MdOpenInNew,MdPlayArrow,
-  MdSettings,MdSportsEsports,MdStorefront,MdAccessTime,MdVideogameAsset
+  MdSettings,MdSportsEsports,MdStorefront,MdAccessTime,MdVideogameAsset,
+  MdPause,MdDeleteOutline
 } from "react-icons/md";
 import type {LibraryGame} from "./steam";
 import {
@@ -21,11 +22,15 @@ import {type FocusDirection} from "./spatialFocus";
 import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
-import {toaster} from "@decky/api";
+import {toaster,callable} from "@decky/api";
 import {openSteamInstallWizard} from "./steamInstallWizard";
 import {useSteamGameDownload} from "./useSteamGameDownload";
 import {resolveInstallMode,transferLabel} from "./steamDownloadProgressCore";
 import {formatDownloadBytes,formatDownloadTime} from "./steamDownloadMetrics";
+import {nativeDownloadAction} from "./steamDownloadActionsCore";
+
+type CleanupReply={ok:boolean;status:string;removed?:string[];skipped?:string[]};
+const cleanupCancelledSteamGame=callable<[number],CleanupReply>("cleanup_cancelled_steam_game");
 
 type PageTab="activity"|"your-stuff"|"community"|"game-info";
 const PAGE_TABS:readonly {id:PageTab;label:string}[]=[
@@ -95,6 +100,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
       game.requiredBytes:readNativeRequiredInstallBytes(game.id));
   const [installState,setInstallState]=useState(game.installed);
   const [wizardPending,setWizardPending]=useState(false);
+  const [downloadBusy,setDownloadBusy]=useState(false);
   const nativeDownload=useSteamGameDownload(game.id,game.nonSteam);
   const actualInstalled=nativeDownload.installed??installState;
   const installMode=resolveInstallMode(
@@ -120,6 +126,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
       game.requiredBytes:readNativeRequiredInstallBytes(game.id));
     setInstallState(game.installed);
     setWizardPending(false);
+    setDownloadBusy(false);
     setPlaytime(game.playtimeMinutes);
     setLastPlayed(game.lastPlayed);
     // Native Game Mode focus is separate from document.activeElement.
@@ -271,6 +278,80 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
         :"Steam could not open the installation wizard for this game.";
     toaster.toast({title:"Install unavailable",body:message});
   };
+  const downloadControls=()=>(
+    window as unknown as {SteamClient?:{Downloads?:{
+      PauseAppUpdate?:(id:number,clientId?:string)=>unknown;
+      ResumeAppUpdate?:(id:number,clientId?:string)=>unknown;
+      RemoveFromDownloadList?:(id:number,clientId?:string)=>unknown;
+    };Installs?:{OpenUninstallWizard?:(ids:number[],dontPrompt:boolean)=>unknown}}}
+  ).SteamClient;
+  const toggleDownload=async()=>{
+    if(downloadBusy||!nativeDownload.transfer)return;
+    const action=nativeDownload.transfer.phase==="paused"||
+      nativeDownload.transfer.phase==="queued"?"resume":"pause";
+    const client=downloadControls();
+    setDownloadBusy(true);
+    try{
+      const result=await nativeDownloadAction(action,game.id,game.nonSteam,
+        nativeDownload.downloadNature,client?.Downloads,client?.Installs);
+      if(!result.ok)toaster.toast({title:"Steam download",
+        body:"Steam could not "+action+" this download ("+result.reason+")."});
+    }finally{setDownloadBusy(false);}
+  };
+  const cancelDownload=async()=>{
+    if(downloadBusy||!nativeDownload.transfer)return;
+    const client=downloadControls();
+    const nature=nativeDownload.downloadNature;
+    setDownloadBusy(true);
+    try{
+      const result=await nativeDownloadAction("cancel",game.id,game.nonSteam,
+        nature,client?.Downloads,client?.Installs);
+      if(!result.ok){
+        toaster.toast({title:"Cancel failed",
+          body:"Steam could not cancel the selected download ("+result.reason+")."});
+        return;
+      }
+      if(!result.uninstallRequested){
+        toaster.toast({title:"Steam download removed",
+          body:"Download removed from the queue. Existing installed files and Proton prefixes were preserved."});
+        return;
+      }
+      // Native Steam owns all install files. The backend waits until Steam
+      // releases its manifest/download folder before deleting app-scoped
+      // compatdata and shadercache; it never guesses a filesystem path.
+      try{
+        const cleanup=await cleanupCancelledSteamGame(game.id);
+        if(cleanup.ok){
+          toaster.toast({title:"Download cancelled",
+            body:"Steam installation removed; game-specific Proton prefix and shader cache cleaned."});
+        }else{
+          toaster.toast({title:"Download cancelled — cleanup incomplete",
+            body:cleanup.status==="steam-busy"?
+              "Steam still holds installation files. Proton data was left untouched for safety.":
+              "Proton data could not be fully removed ("+cleanup.status+")."});
+        }
+      }catch(error){
+        console.warn("[game-library] Steam cancellation prefix cleanup failed",error);
+        toaster.toast({title:"Steam download cancelled",
+          body:"Could not confirm Proton prefix cleanup; some game data may remain."});
+      }
+    }finally{setDownloadBusy(false);}
+  };
+  const confirmCancelDownload=()=>{
+    if(downloadBusy||!nativeDownload.transfer)return;
+    const initial=nativeDownload.downloadNature==="initial";
+    showModal(<ConfirmModal
+      strTitle={initial?"Cancel install and delete its Proton prefix?":"Cancel Steam download?"}
+      strDescription={initial?
+        "Steam will cancel this installation and remove its downloaded files. Its Proton prefix and game-specific shader cache will also be permanently deleted. Any local saves inside the prefix will be lost. Continue?":
+        "Steam will stop this game's current transfer. Because this is not verified as a new installation, existing installed files, Proton prefixes and saved games will NOT be deleted. Continue?"}
+      strOKButtonText={initial?"Cancel and delete":"Cancel download"}
+      strCancelButtonText="Keep downloading"
+      bDestructiveWarning
+      onOK={()=>{void cancelDownload();}}
+    />);
+  };
+
   const showCommunity=()=>{
     if(isNativeSteam)Navigation.NavigateToSteamWeb(
       "https://steamcommunity.com/app/"+game.id
@@ -403,6 +484,25 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   nativeDownload.transfer.phase==="queued"?"—":
                   formatDownloadTime(nativeDownload.metrics.remainingSeconds)}</span>
               </div>
+              <div className="gl-details-download-controls">
+                <Focusable {...onAction("download-toggle")}
+                    className="gl-details-focus gl-details-download-control"
+                    onOKActionDescription={nativeDownload.transfer.phase==="paused"||
+                      nativeDownload.transfer.phase==="queued"?"Resume download":"Pause download"}
+                    onActivate={()=>{void toggleDownload();}}>
+                  {nativeDownload.transfer.phase==="paused"||
+                    nativeDownload.transfer.phase==="queued"?
+                    <MdPlayArrow/>:<MdPause/>}
+                  <span>{nativeDownload.transfer.phase==="paused"||
+                    nativeDownload.transfer.phase==="queued"?"Resume":"Pause"}</span>
+                </Focusable>
+                <Focusable {...onAction("download-cancel")}
+                    className="gl-details-focus gl-details-download-control gl-details-download-cancel"
+                    onOKActionDescription="Cancel download and remove its new-install data"
+                    onActivate={confirmCancelDownload}>
+                  <MdDeleteOutline/><span>Cancel download</span>
+                </Focusable>
+              </div>
             </div>}
           {installMode==="preparing"&&
             <div className="gl-details-install-help">
@@ -482,6 +582,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
               {" · "}Progress event: {nativeDownload.debug.overview?"yes":"no"}
               {" · "}Native store: {nativeDownload.debug.store?"found":"missing"}
               {" · "}Local queue item: {nativeDownload.debug.queue?"found":"missing"}
+              {" · "}Type: {nativeDownload.downloadNature}
               {" · "}Transfer: {nativeDownload.transfer?
                 transferLabel(nativeDownload.transfer)+" "+
                 (nativeDownload.transfer.percent===null?"unknown %":nativeDownload.transfer.percent+"%"):"not detected"}
