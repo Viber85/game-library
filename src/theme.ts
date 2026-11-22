@@ -2283,4 +2283,37 @@ html:has(.gl-root.gl-own-status-only) #header {
  .gl-root .gl-gog-grid .gl-gog-game{height:154px;}
 }
 
+/* GOG account status is a single green success marker, not a decorative badge. */
+.gl-root .gl-plugin-setting-row > svg.gl-gog-connected-check {
+  color:#57d993;font-size:24px;filter:drop-shadow(0 0 5px rgba(45,194,119,.20));
+}
+
+/* Portraits come from GOG first; SteamGridDB is only used on visible tiles
+   when native artwork is absent or its image load fails. */
+.gl-root .gl-gog-artwork{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.gl-root .gl-gog-artwork img{width:100%;height:100%;object-fit:cover;display:block;}
+.gl-root .gl-gog-detail-screen{display:flex;flex:1;min-height:0;flex-direction:column;gap:18px;
+  padding:4px 12px 12px;overflow:auto;}
+.gl-root .gl-gog-detail-top{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.gl-root .gl-gog-detail-back{display:flex;align-items:center;gap:8px;}
+.gl-root .gl-gog-detail-content{flex:1;display:flex;align-items:center;justify-content:center;
+  gap:clamp(24px,5vw,66px);min-height:210px;padding:10px 12px;}
+.gl-root .gl-gog-detail-cover{flex:0 0 clamp(160px,20vw,260px);height:clamp(245px,31vw,378px);
+  background:linear-gradient(135deg,#16436a,#081423);border-radius:14px;
+  overflow:hidden;position:relative;box-shadow:0 15px 42px rgba(0,0,0,.40);}
+.gl-root .gl-gog-detail-info{max-width:560px;flex:1;min-width:0;}
+.gl-root .gl-gog-detail-store{display:flex;align-items:center;gap:7px;font-size:13px;
+  font-weight:750;color:#93c7e7;letter-spacing:.05em;}
+.gl-root .gl-gog-detail-info h2{font-size:clamp(22px,3vw,39px);line-height:1.18;
+  margin:14px 0 18px;font-weight:850;}
+.gl-root .gl-gog-detail-info p{font-size:15px;color:#b5d9d1;}
+.gl-root .gl-gog-detail-info .gl-gog-detail-footnote{color:#9ab4c9;font-size:13px;
+  line-height:1.65;margin-top:25px;}
+@media(max-width:680px){
+  .gl-root .gl-gog-detail-content{gap:15px;align-items:flex-start;}
+  .gl-root .gl-gog-detail-cover{flex-basis:120px;height:180px;}
+  .gl-root .gl-gog-detail-info h2{font-size:21px;}
+  .gl-root .gl-gog-detail-info .gl-gog-detail-footnote{font-size:11px;}
+}
+
 `;
