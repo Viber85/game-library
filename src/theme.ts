@@ -2551,6 +2551,14 @@ html:has(.gl-root.gl-own-status-only) #header {
   font-size:11px;line-height:1.5;color:#d1e7f2;
   white-space:normal;overflow-wrap:anywhere;
 }
+.gl-root .gl-details-download-fallback{
+  display:inline-flex;align-items:center;justify-content:center;
+  margin-top:7px;padding:6px 10px;max-width:100%;
+  border:1px solid rgba(94,191,235,.5);border-radius:7px;
+  background:rgba(18,70,100,.6);color:#d2f3ff;
+  font-size:11px;font-weight:700;cursor:pointer;
+  white-space:normal;overflow-wrap:anywhere;
+}
 .gl-root .gl-details-download-diagnostics{
   margin-top:16px;padding:10px 12px;
   border:1px solid rgba(127,184,217,.2);
