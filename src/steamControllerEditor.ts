@@ -18,6 +18,18 @@ export async function openSteamControllerEditor(
   }
 ):Promise<boolean>{
   if(!Number.isSafeInteger(appId)||appId<=0||appId>0xffffffff)return false;
+
+  // First try the native Steam URL handler in Game Mode. A real SteamOS
+  // Decky plugin uses this to open the *full* Controller Settings screen,
+  // rather than ShowControllerConfigurator's separate popup.
+  const client=deps?.client===undefined?
+    (globalThis as unknown as {SteamClient?:SteamClientLike}).SteamClient:
+    deps.client;
+  if(openControllerFromClient(appId,client))return true;
+
+  // Decky can run in a different JS context to Steam. If the URL handler
+  // isn't exposed there, execute the same validated steam:// URL from an
+  // actually enumerated Steam CEF target, with SharedJSContext first.
   const getTabs=deps?.getTabs??(async()=>{
     const response=await fetchNoCors("http://localhost:8080/json");
     if(!response.ok)return [];
@@ -27,22 +39,14 @@ export async function openSteamControllerEditor(
   try{listed=await Promise.race([
     getTabs(),new Promise<unknown>(resolve=>setTimeout(()=>resolve([]),1800))
   ]);}catch{listed=[];}
-  // The known working SteamOS controller popup implementation calls
-  // ShowControllerConfigurator from SharedJSContext, not from Decky's
-  // separate React/plugin window. That matters on the real MSI Claw:
-  // a callable method in our window did not actually open a dialog.
-  // Only use tab titles which CEF actually reported.
+
   const recognized=identifySteamTabs(listed).filter(tab=>tab.scope==="main")
     .map(tab=>tab.title);
-  for(const title of fallbackMainTitlesPresent(listed)){
+  for(const title of fallbackMainTitlesPresent(listed))
     if(!recognized.includes(title))recognized.push(title);
-  }
   const candidates=[
     ...recognized.filter(title=>title==="SharedJSContext"),
-    ...recognized.filter(title=>title!=="SharedJSContext"&&
-      (title.includes("Shared Context")||title==="Steam")),
-    ...recognized.filter(title=>title!=="SharedJSContext"&&
-      !title.includes("Shared Context")&&title!=="Steam"),
+    ...recognized.filter(title=>title!=="SharedJSContext"),
   ];
   const execute=deps?.execute??executeInTab;
   const script=controllerEditorScript(appId);
@@ -54,12 +58,7 @@ export async function openSteamControllerEditor(
           setTimeout(()=>resolve({success:false,result:false}),1800))
       ]);
       if(result.success&&result.result===true)return true;
-    }catch{/* Try the next verified Steam tab; never open game Settings. */}
+    }catch{/* Try another enumerated Steam CEF target, not a game Settings route. */}
   }
-  // Do not use this as the *first* attempt: its presence did not guarantee
-  // that Steam's popup was visible when invoked from our plugin window.
-  const client=deps?.client===undefined?
-    (globalThis as unknown as {SteamClient?:SteamClientLike}).SteamClient:
-    deps.client;
-  return openControllerFromClient(appId,client);
+  return false;
 }
