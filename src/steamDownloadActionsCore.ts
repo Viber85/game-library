@@ -1,3 +1,5 @@
+import {withRequestTimeout} from "./requestDeadline";
+
 /** App-scoped native Steam transfer controls. No global pause/resume.
  * Only a provably new install can trigger Steam's native uninstall cleanup.
  */
@@ -40,10 +42,30 @@ export function readSteamDownloadNature(appId:number,items:unknown,overview:unkn
   return "unknown";
 }
 const LOCAL="0";
+const DEFAULT_NATIVE_ACK_MS=2500;
+/** Steam's UI command methods are documented as void, yet some client builds
+ * return thenables that never settle. Dispatch them, but do not wait forever.
+ * A timeout means the command was SENT, not that Steam confirmed completion.
+ */
+async function invokeSteam(
+  name:string,request:()=>unknown,timeoutMs:number
+):Promise<void>{
+  const reply=request();
+  if(reply===null||reply===undefined)return;
+  try{
+    await withRequestTimeout(Promise.resolve(reply),timeoutMs);
+  }catch(error){
+    if(error instanceof Error&&error.message==="Request timed out"){
+      console.warn("[game-library] Steam "+name+" response is pending; checking Steam state");
+      return;
+    }
+    throw error;
+  }
+}
 export async function nativeDownloadAction(
   action:SteamDownloadAction,appId:number,nonSteam:boolean,
   nature:SteamDownloadNature,downloads:NativeDownloadClient|null|undefined,
-  installs?:NativeUninstallClient|null
+  installs?:NativeUninstallClient|null,ackTimeoutMs=DEFAULT_NATIVE_ACK_MS
 ):Promise<ActionResult>{
   if(!valid(appId,nonSteam))return {ok:false,uninstallRequested:false,reason:"invalid-app"};
   const requestedUninstall=action==="cancel"&&nature==="initial";
@@ -56,18 +78,25 @@ export async function nativeDownloadAction(
     // Some SteamOS versions include the explicit local-client second argument.
     // Do not touch other apps or call EnableAllDownloads (global).
     if(action==="cancel"){
-      // Pausing an already queued/paused app throws on some Steam versions.
-      // The authoritative cancellation is RemoveFromDownloadList, so a
-      // best-effort Pause must not block the removal and Steam uninstall.
+      // Pausing an already queued/paused app can reject or hang; this is
+      // best-effort, but must never block queue removal indefinitely.
       if(typeof downloads?.PauseAppUpdate==="function"){
-        try{await Promise.resolve(downloads.PauseAppUpdate(appId,LOCAL));}
-        catch(error){console.warn("[game-library] pause before cancel unavailable",error);}
+        try{
+          await invokeSteam("pause before cancel",()=>
+            downloads.PauseAppUpdate!(appId,LOCAL),ackTimeoutMs);
+        }catch(error){
+          console.warn("[game-library] pause before cancel unavailable",error);
+        }
       }
-      await Promise.resolve(downloads!.RemoveFromDownloadList!(appId,LOCAL));
-      if(requestedUninstall)
-        await Promise.resolve(installs!.OpenUninstallWizard!([appId],true));
+      // RemoveFromDownloadList alone just unschedules a partial install.
+      await invokeSteam("remove download",()=>
+        downloads!.RemoveFromDownloadList!(appId,LOCAL),ackTimeoutMs);
+      if(requestedUninstall){
+        await invokeSteam("uninstall partial game",()=>
+          installs!.OpenUninstallWizard!([appId],true),ackTimeoutMs);
+      }
     }else{
-      await Promise.resolve(downloads![method]!(appId,LOCAL));
+      await invokeSteam(action,()=>downloads![method]!(appId,LOCAL),ackTimeoutMs);
     }
     return {ok:true,uninstallRequested:requestedUninstall};
   }catch(error){
