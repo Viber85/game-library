@@ -269,6 +269,17 @@ def _load_steam_size():
     return module
 
 
+def _load_steam_cancel_cleanup():
+    """Import the own app-scoped cleanup helper, never another plugin's code."""
+    path = BASE / "steam_cancel_cleanup.py"
+    spec = importlib.util.spec_from_file_location("game_library_steam_cancel_cleanup", str(path))
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Steam cancel cleanup helper missing. Reinstall plugin.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _load_protondb():
     """Load packaged module by file path, irrespective of Decky's sys.path."""
     spec = importlib.util.spec_from_file_location("game_library_local_protondb", str(BASE / "protondb.py"))
@@ -719,6 +730,20 @@ class Plugin:
             return await asyncio.to_thread(self._steam_size_cache_service().lookup, appid)
         except (OSError, RuntimeError, ValueError):
             return {"status": "error"}
+
+    async def cleanup_cancelled_steam_game(self, appid: int):
+        """After explicit native Steam cancellation, remove only this AppID's
+        Proton prefix and shader cache once Steam has stopped using its files.
+        No caller-provided filesystem path is accepted.
+        """
+        if type(appid) is not int or not 0 < appid < 0x7FFFFFFF:
+            return {"ok": False, "status": "invalid", "removed": []}
+        try:
+            helper = _load_steam_cancel_cleanup()
+            return await asyncio.to_thread(
+                helper.wait_for_native_uninstall_and_cleanup, appid, BASE, 30)
+        except (OSError, RuntimeError, ValueError, TypeError) as error:
+            return {"ok": False, "status": type(error).__name__, "removed": []}
 
     def _hltb_cache_service(self):
         if self._hltb_service is None:
