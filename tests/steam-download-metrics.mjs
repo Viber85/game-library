@@ -43,6 +43,9 @@ test("Steam falls back to network-only remaining seconds if overall ETA is missi
     ...overview,overall_estimated_time_remaining_sec:-1
   }).remainingSeconds,140);
   assert.equal(readSteamDownloadMetrics(730,[],{
+    ...overview,overall_estimated_time_remaining_sec:0
+  }).remainingSeconds,140);
+  assert.equal(readSteamDownloadMetrics(730,[],{
     ...overview,remote_client_id:"remote"
   }).remainingSeconds,null);
 });
