@@ -76,7 +76,7 @@ test("runtime scans live Steam CSS aliases once per sync, still verifies every t
   assert.match(runtime,/await syncCompactDetailsDom\(title,compactDetails,css\)/);
   assert.match(runtime,/await ensureThemeAudit\(title\)/);
   assert.match(runtime,/const RECHECK_MS = 6500/);
-  assert.match(runtime,/const STYLE_REVISION = "87"/);
+  assert.match(runtime,/const STYLE_REVISION = "88"/);
   assert.match(compiler,/const modules=getSteamModules\(\)/);
   assert.match(compiler,/const compileWithCache=createThemeAliasCache\(expandThemeClassAliases\)/);
 });
