@@ -9,8 +9,7 @@ import {
 } from "./themeProbe";
 import { createMidnightCssCompiler } from "./themeCssCompiler";
 import {sameThemeRuntimeStatus} from "./themeCycleCache";
-import {COMPACT_DETAILS_INSTALL_SCRIPT,COMPACT_DETAILS_REMOVE_SCRIPT} from "./compactDetailsDom";
-import {nativeCompactHintsFromCss,compactHintsInjection} from "./compactDetailsAnchors";
+import {COMPACT_DETAILS_REMOVE_SCRIPT} from "./compactDetailsDom";
 import {selectNativeEvidence} from "./nativeEvidence";
 
 export type ThemeId = "midnight" | "off";
@@ -99,7 +98,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "89";
+const STYLE_REVISION = "90";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -199,16 +198,14 @@ async function listTabs():Promise<SteamTab[]> {
   return [];
 }
 
-async function syncCompactDetailsDom(title:string,enabled:boolean,
-  compiledCss=""):Promise<void>{
+async function syncCompactDetailsDom(title:string,_enabled:boolean,
+  _compiledCss=""):Promise<void>{
+  // Rollback only: stop earlier Compact CEF observers and remove injected
+  // native styling markers. Never install the experimental decorator again.
   try{
-    const script=enabled?
-      compactHintsInjection(nativeCompactHintsFromCss(compiledCss))+
-      COMPACT_DETAILS_INSTALL_SCRIPT:COMPACT_DETAILS_REMOVE_SCRIPT;
-    await bounded(executeInTab(title,false,script),1600);
+    await bounded(executeInTab(title,false,COMPACT_DETAILS_REMOVE_SCRIPT),1600);
   }catch{
-    // Native Steam UI can recreate its document as the route changes.
-    // Recheck on the next theme cycle; never alter controller focus.
+    // Native Steam can rebuild its document; retry on the next sync.
   }
 }
 
@@ -320,8 +317,7 @@ async function syncTheme():Promise<void>{
     if(shuttingDown||desired!=="midnight"||epoch!==generation)break;
     let css=cssByScope.get(tab.scope);
     if(css===undefined){
-      const source=theme.css[tab.scope]+(tab.scope==="main"&&compactDetails
-        ? "\n"+(theme.compact_css??""):"");
+      const source=theme.css[tab.scope];
       css=compile!(source)+markerCss;
       cssByScope.set(tab.scope,css);
     }
@@ -372,19 +368,19 @@ function startTimer(){
  * pipeline resolves Steam's current hashed class names; atomic replacement
  * never unmounts Steam's buttons, tabs or focus handlers. */
 export async function setCompactDetailsMode(enabled:boolean):Promise<void>{
+  if(enabled)throw new Error("Experimental Compact Game Details was retired");
   if(shuttingDown)return;
-  if(enabled&&theme&&!theme.compact_css)
-    throw new Error("Compact details CSS is missing from the installed ZIP.");
-  if(compactDetails===enabled)return;
-  compactDetails=enabled;
-  ++generation;
-  report({compactDetails:enabled});
-  if(desired==="midnight"&&theme)await queue(syncTheme);
-  else if(!enabled){
-    const tabs=await listTabs();
-    for(const t of tabs.filter(t=>t.scope==="main"))
-      await syncCompactDetailsDom(t.title,false);
+  if(compactDetails){
+    compactDetails=false;
+    ++generation;
+    report({compactDetails:false});
+    if(desired==="midnight"&&theme)await queue(syncTheme);
   }
+  // Clean up even if persisted Compact preference was already false: a
+  // previous ZIP may have left its native CEF observer running in Steam.
+  const tabs=await listTabs();
+  for(const t of tabs.filter(t=>t.scope==="main"))
+    await syncCompactDetailsDom(t.title,false);
 }
 
 export async function setBuiltinTheme(
