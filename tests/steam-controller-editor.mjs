@@ -37,7 +37,10 @@ test("React adapter uses Decky Navigation.Navigate and preserves original native
   assert.doesNotMatch(adapter,/ExecuteSteamURL|fetchNoCors|executeInTab|ShowControllerConfigurator/);
   assert.match(core,/\/controllerconfigurator\/main/);
   assert.doesNotMatch(core,/ExecuteSteamURL|ShowControllerConfigurator/);
-  assert.match(page,/openSteamControllerEditor\(game\.id\)/);
+  const dashboard=read("src/Dashboard.tsx");
+  assert.match(page,/onOpenControllerSettings:()=>void/);
+  assert.match(page,/const openController=onOpenControllerSettings/);
+  assert.match(dashboard,/void openSteamControllerEditor\(game\.id\)/);
   const action=page.slice(page.indexOf("const openController="),
     page.indexOf("const action=",page.indexOf("const openController=")));
   assert.doesNotMatch(action,/showNativeGameOptions\(|onNativeDetails\(/);
