@@ -52,5 +52,5 @@ test("Steam's real gamepadUI component renders Quick Settings on ControllerConfi
   const core=read("src/steamControllerEditorCore.ts");
   assert.match(core,/ClientRoutes\.GamepadUI\.ControllerConfigurator\.Main/);
   assert.match(core,/Current Button Layout/);
-  assert.match(core,/Quick Settings/);
+  assert.match(core,/Quick\s+Settings/);
 });
