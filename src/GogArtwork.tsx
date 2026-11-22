@@ -38,8 +38,9 @@ export function getGogSteamGridFallback(
 }
 
 /** GOG portrait, legacy CDN thumbnail and SteamGridDB fallback in priority order. */
-export function GogArtwork({game,accountId,expanded=false}:{
+export function GogArtwork({game,accountId,expanded=false,onImageLoaded}:{
   game:GogOwnedGame;accountId:string;expanded?:boolean;
+  onImageLoaded?:(url:string)=>void;
 }){
   const hostRef=useRef<HTMLDivElement>(null);
   const [visible,setVisible]=useState(expanded);
@@ -88,6 +89,7 @@ export function GogArtwork({game,accountId,expanded=false}:{
 
   return <div ref={hostRef} className="gl-gog-artwork" aria-hidden="true">
     {image&&<img src={image} alt="" loading={expanded?"eager":"lazy"}
+      onLoad={()=>onImageLoaded?.(image)}
       onError={()=>{
         if(index<candidates.length)setIndex(value=>value+1);
         else setRemote(null);
