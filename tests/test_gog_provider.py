@@ -55,7 +55,7 @@ class GogPhaseOneTests(unittest.TestCase):
                          {"access": "abc", "refresh": "def", "expires_at": time.time() + 2000})
         pages = {
             1: {"totalPages": 2, "products": [
-                {"id": 111, "title": "Zelda Test", "image": "//images-1.gog.com/test"},
+                {"id": 111, "title": "Zelda Test", "image": "//images-1.gog-statics.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
                 {"id": 222, "title": "Alpha Game", "image": "https://evil.example/image"}]},
             2: {"totalPages": 2, "products": [
                 {"id": 111, "title": "duplicate"},
@@ -75,7 +75,11 @@ class GogPhaseOneTests(unittest.TestCase):
         self.assertEqual([x["title"] for x in result["games"]],
                          ["Alpha Game", "Beta Game", "Zelda Test"])
         self.assertEqual(result["games"][0]["image"], "")
-        self.assertEqual(result["games"][2]["image"], "https://images-1.gog.com/test")
+        self.assertEqual(result["games"][2]["image"],
+                         "https://images-1.gog-statics.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_glx_vertical_cover.webp")
+        self.assertEqual(result["games"][2]["imageFallback"],
+                         "https://images-1.gog-statics.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_196.jpg")
+        self.assertFalse(result["needs_art_refresh"])
 
     def test_failed_sync_preserves_previous_complete_cache(self):
         gog._atomic_json(gog._folder("42") / "session.json",
@@ -169,6 +173,45 @@ class GogPhaseOneTests(unittest.TestCase):
             result = gog.sync(account)
         self.assertFalse(result["ok"])
         self.assertEqual(gog.library(account)["games"], cache["games"])
+
+    def test_gog_artwork_url_validation_and_legacy_cache_refresh(self):
+        sha = "a" * 64
+        cases = (
+            ("//images-1.gog.com/" + sha,
+             "https://images-1.gog.com/" + sha + "_glx_vertical_cover.webp"),
+            ("https://images-2.gog-statics.com/" + sha + "_196.jpg",
+             "https://images-2.gog-statics.com/" + sha + "_196.jpg"),
+            (sha, "https://images.gog-statics.com/" + sha + "_glx_vertical_cover.webp"),
+        )
+        for value, expected in cases:
+            with self.subTest(value=value):
+                self.assertEqual(gog._gog_image(value), expected)
+        for invalid in (
+            "//images.evil.com/" + sha,
+            "https://images-1.gog.com.evil.org/" + sha,
+            "http://images.gog-statics.com/" + sha,
+            "https://images.gog-statics.com/../secret.png",
+            "https://example.com/" + sha,
+        ):
+            with self.subTest(invalid=invalid):
+                self.assertEqual(gog._gog_image(invalid), "")
+
+        account = "321"
+        gog._atomic_json(gog._folder(account) / "session.json", {
+            "access": "abc", "refresh": "xyz", "expires_at": time.time()+1200})
+        gog._atomic_json(gog._folder(account) / "library.json", {
+            "games": [{"id": "1", "title": "Owned", "image": "", "background": ""}],
+            "synced_at": 100,
+        })
+        self.assertTrue(gog.library(account)["needs_art_refresh"])
+        with mock.patch.object(gog, "_http_json", return_value={
+            "totalPages": 1, "products": [{
+                "id": 1, "title": "Owned", "image": "//images-1.gog.com/" + sha
+            }]
+        }):
+            self.assertTrue(gog.sync(account)["ok"])
+        self.assertFalse(gog.library(account)["needs_art_refresh"])
+        self.assertIn("_glx_vertical_cover.webp", gog.library(account)["games"][0]["image"])
 
     def test_no_foreign_plugin_or_steam_folder_lookup(self):
         src = (ROOT / "gog.py").read_text(encoding="utf-8")
