@@ -347,7 +347,7 @@ test("actual native action area paints only broad wrappers, never Play/Install c
     playbutton:"",title:"",sections:""
   })+COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
   const state=fake.ctx.window.__gameLibraryCompactDetails14;
-  assert.equal(state.revision,17);
+  assert.equal(state.revision,18);
   assert.equal(state.native.surfaceCount,1);
   assert.equal(wrapper.hasAttribute("data-glm-native-compact-surface"),true);
   assert.equal(button.hasAttribute("data-glm-native-compact-surface"),false);
@@ -414,4 +414,102 @@ test("portrait falls back to safe un-hashed Steam URL, never a raw third-party U
     "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/234567/library_600x900.jpg");
   assert.equal(fake.images.every(item=>item.url.startsWith("https://shared.fastly.steamstatic.com/")),true);
   vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+});
+
+
+test("real computed blue panel is tagged, turns dark, and remains stable without flicker",()=>{
+  const fake=fakeSteamCEF();
+  fake.ctx.window.innerWidth=1200;
+  fake.ctx.window.innerHeight=800;
+  const attributes=new Map();
+  const blue={
+    tagName:"DIV",className:"_hashedBlueSection",parentElement:null,
+    getAttribute:key=>attributes.get(key)||null,
+    setAttribute:(key,value)=>attributes.set(key,String(value)),
+    removeAttribute:key=>attributes.delete(key),
+    hasAttribute:key=>attributes.has(key),
+    getBoundingClientRect:()=>({
+      left:40,right:1160,width:1120,height:74,top:352,bottom:426,
+    }),
+  };
+  const button={
+    tagName:"BUTTON",className:"gamepaddialog_Button",parentElement:blue,
+    getAttribute:key=>key==="role"?"button":null,
+    getBoundingClientRect:()=>({
+      left:60,right:280,width:220,height:48,top:363,bottom:411,
+    }),
+  };
+  fake.ctx.document.elementsFromPoint=(x,y)=>
+    y>=352&&y<=426?[button,blue]:[];
+  fake.ctx.getComputedStyle=node=>{
+    const dark=blue.hasAttribute("data-glm-native-compact-painted");
+    return {
+      backgroundColor:node===blue?(dark?"rgb(11, 25, 40)":"rgb(24, 78, 167)"):"transparent",
+      backgroundImage:"none",
+      getPropertyValue:key=>key==="--glm-compact-painted-applied"&&dark?"1":
+        key==="--glm-compact-hero-applied"?"1":"",
+    };
+  };
+  vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  const state=fake.ctx.window.__gameLibraryCompactDetails14;
+  assert.equal(state.native.paintCount,1);
+  assert.equal(state.native.paintNeutralized,1);
+  assert.equal(blue.hasAttribute("data-glm-native-compact-painted"),true);
+  assert.equal(button.hasAttribute?.("data-glm-native-compact-painted")||false,false);
+  const calls=[];
+  const originalRemove=blue.removeAttribute;
+  blue.removeAttribute=k=>{calls.push(k);originalRemove(k);};
+  for(const {f} of fake.timers.values())f();
+  assert.equal(state.native.paintCount,1);
+  assert.equal(state.native.paintNeutralized,1);
+  assert.equal(calls.includes("data-glm-native-compact-painted"),false,
+    "Do not remove and re-add a working dark style every poll");
+  vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+  assert.equal(blue.hasAttribute("data-glm-native-compact-painted"),false);
+});
+
+test("actual painted panel must be broad, below the native hero and not game artwork",()=>{
+  const fake=fakeSteamCEF();
+  fake.ctx.window.innerWidth=1200;
+  fake.ctx.window.innerHeight=800;
+  const attrs=new Map();
+  const artwork={
+    tagName:"DIV",className:"HeaderBackgroundImage",
+    setAttribute:(k,v)=>attrs.set(k,String(v)),
+    removeAttribute:k=>attrs.delete(k),
+    getAttribute:()=>null,
+    getBoundingClientRect:()=>({
+      left:25,right:1170,width:1145,height:110,top:90,bottom:200,
+    }),
+  };
+  const visibleButton={
+    tagName:"DIV",className:"appactionbutton_PlayButtonContainer",
+    getAttribute:()=>null,
+    getBoundingClientRect:()=>({
+      left:50,right:1100,width:1050,height:50,top:360,bottom:410,
+    }),
+  };
+  fake.ctx.document.elementsFromPoint=()=>[artwork,visibleButton];
+  fake.ctx.getComputedStyle=()=>({
+    backgroundColor:"rgb(12, 85, 182)",backgroundImage:"none",
+    getPropertyValue:()=>"",
+  });
+  vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  const state=fake.ctx.window.__gameLibraryCompactDetails14;
+  assert.equal(state.native.paintCount,0);
+  assert.equal(attrs.has("data-glm-native-compact-painted"),false);
+  vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+});
+
+test("paint diagnostics check actual CSS outcomes rather than class matches alone",()=>{
+  const css=read("system-theme/game-details-compact.css");
+  const runtime=read("src/builtinThemeRuntime.ts");
+  const panel=read("src/BuiltinThemePanel.tsx");
+  const probe=read("src/themeProbe.ts");
+  assert.match(css,/--glm-compact-painted-applied:1/);
+  assert.match(css,/data-glm-native-compact-painted/);
+  assert.match(runtime,/nativePaintNeutralized/);
+  assert.match(panel,/Panels confirmed dark by actual computed paint/);
+  assert.match(probe,/nativeCompactPaintNeutralized/);
+  assert.doesNotMatch(css,/\bdisplay:\s*none\s*!important/);
 });
