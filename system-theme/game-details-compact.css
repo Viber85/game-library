@@ -2,7 +2,7 @@
  * Compact Game Details — experimental opt-in concept 1.
  *
  * IMPORTANT: This sheet is NEVER added unless explicitly enabled. Its rules
- * only apply while native Steam game-details DOM nodes are present. All Steam buttons, controller focus nodes, Steam
+ * only apply when a native Steam game-details header exists. All Steam buttons, controller focus nodes, Steam
  * tabs, notes, activity and dialogs remain mounted and interactive.
  *
  * References: Decky's verified sharedappdetailsheader, appdetailsplaysection,
@@ -11,7 +11,7 @@
  * Keep selectors in [class*="module_Class"] syntax: the existing theme CSS
  * compiler maps those selectors to the current Steam build's hashed classes.
  */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   :is([class*="appdetails_Container"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]) {
   --glm-compact-gap:10px;
   --glm-compact-line:rgba(103,187,235,.24);
@@ -20,14 +20,15 @@
   background:#040e20 !important;
 }
 
-/* This opt-in sheet is never in the default theme. Detect the native game
- * DOM, not window.location: Steam's internal router often does not update
- * browser pathname/hash in Game Mode. Hashed classes are resolved by the
- * existing Midnight CSS module alias compiler. */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) {
+/* This opt-in sheet is never in the default theme.
+ * Steam can render its native Play/Install area after the hero, so requiring
+ * BOTH TopCapsule and PlayBar (test.12) could suppress the entire layout.
+ * A native details hero is a narrower, stable activation anchor. The existing
+ * CSS compiler still expands hashed Steam CSS-module classes. */
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) {
   --glm-compact-details-effective:1;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="sharedappdetailsheader_TopCapsule"]::before {
   content:"COMPACT · TEST";
   position:absolute;
@@ -42,7 +43,7 @@
   pointer-events:none;
 }
 /* Compact cinematic hero. Steam's own logo, hero art and video are retained. */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="sharedappdetailsheader_TopCapsule"] {
   position:relative !important;
   height:clamp(178px,28vh,254px) !important;
@@ -53,20 +54,20 @@
   background-color:#06152a !important;
   isolation:isolate;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="sharedappdetailsheader_HeaderBackgroundImage"],
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="sharedappdetailsheader_ImgContainer"] {
   max-height:100% !important;
   object-fit:cover !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="sharedappdetailsheader_TopGradient"] {
   background:linear-gradient(90deg,
     rgba(2,10,25,.91) 0%,rgba(2,10,25,.69) 34%,
     rgba(2,10,25,.06) 86%) !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="sharedappdetailsheader_TitleSection"] {
   z-index:2;
   max-height:100% !important;
@@ -75,7 +76,7 @@
 }
 /* A real store-library portrait, if native game route contains an AppID.
    Decorative pseudo-element does not take focus or intercept controller/touch. */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"]))[data-glm-compact-poster="1"] .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"])[data-glm-compact-poster="1"] .BasicUI
   [class*="sharedappdetailsheader_TopCapsule"]::after {
   content:"";
   position:absolute;
@@ -91,11 +92,11 @@
   background:#07172d var(--glm-compact-poster-url) center / cover no-repeat;
   box-shadow:0 8px 28px rgba(0,0,0,.52),0 0 0 1px rgba(35,116,175,.28);
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"]))[data-glm-compact-poster="1"] .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"])[data-glm-compact-poster="1"] .BasicUI
   [class*="sharedappdetailsheader_TitleSection"] {
   padding-left:clamp(116px,14vw,165px) !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   :is([class*="sharedappdetailsheader_TitleLogo"],
       [class*="sharedappdetailsheader_SVGTitle"],
       [class*="sharedappdetailsheader_TitleImageContainer"]) {
@@ -106,7 +107,7 @@
 
 /* Compact native install/play area: changes dimensions, NOT interaction.
    Do not hide Play, Install, Stop, Download progress, Cloud, gamepad or settings. */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="basicappdetailssectionstyler_PlaySection"] {
   position:relative;
   padding:8px clamp(12px,2vw,24px) !important;
@@ -115,7 +116,7 @@
   border-radius:0 0 12px 12px !important;
   border-color:var(--glm-compact-line) !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailsplaysection_PlayBar"] {
   min-height:62px !important;
   height:auto !important;
@@ -128,53 +129,53 @@
     rgba(5,22,43,.96),rgba(11,37,62,.96)) !important;
   box-shadow:0 6px 17px rgba(0,0,0,.17) !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="basicappdetailssectionstyler_ActionRow"] {
   gap:8px !important;
   min-height:0 !important;
   padding:4px 0 !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailsplaysection_RightControls"] {
   display:flex !important;
   align-items:center !important;
   gap:7px !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailsplaysection_MenuButton"] {
   min-height:36px !important;
   min-width:36px !important;
   border-radius:8px !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appactionbutton_PlayButtonContainer"] {
   min-width:clamp(130px,21vw,250px) !important;
   max-width:350px !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailsplaysection_PlayBarDetailLabel"] {
   font-size:12px !important;
   line-height:1.35 !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailsplaysection_CloudStatusRow"] {
   padding:2px 5px !important;
   margin:0 !important;
 }
 /* Progress / downloads / pinned playbars must continue to render. */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailsplaysection_StickyHeader"] {
   padding:6px 12px !important;
 }
 
 /* Remove oversized whitespace around native Steam details sections.
    Do not suppress notes, artwork, media, community, DLC or achievements. */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailsoverview_ColumnContainer"] {
   padding:10px clamp(12px,2vw,24px) !important;
   gap:clamp(9px,1.4vw,17px) !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailssection_AppDetailsSectionContainer"] {
   margin-top:6px !important;
   margin-bottom:8px !important;
@@ -182,25 +183,25 @@
   border:1px solid var(--glm-compact-line) !important;
   border-radius:10px !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailssection_SectionHeader"] {
   padding:6px 12px !important;
   min-height:0 !important;
   border-radius:9px !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailssection_SectionTab"] {
   min-height:32px !important;
   padding:5px 12px !important;
   border-radius:999px !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailssection_SectionTab"]:is(.gpfocus,.gpfocuswithin,:focus-visible,[aria-selected="true"]) {
   outline:2px solid #a4eaff !important;
   outline-offset:0 !important;
 }
 /* Third-party HLTB plugin supplies real values and links; no hard-coded data. */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   #hltb-for-deck :is(.hltb-info,.hltb-info-absolute) {
   min-height:0 !important;
   padding:4px 9px !important;
@@ -208,53 +209,62 @@
   border-radius:9px !important;
   background:rgba(5,24,42,.92) !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   #hltb-for-deck .hltb-gametime {
   line-height:1.2 !important;
   font-size:clamp(12px,1.15vw,17px) !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   #hltb-for-deck .hltb-label {font-size:10px !important;}
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   #hltb-for-deck .hltb-details-btn {
   min-height:30px !important;
   padding:4px 12px !important;
 }
 /* Dense activity/news cards and input, preserving navigation and focus. */
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailsactivitysection_ActivityFeedContainer"] {
   margin-top:4px !important;
   padding:9px 12px !important;
   border-radius:10px !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="appdetailscommunityfeed_CommunityItem"] {
   margin:5px 0 !important;
   padding:9px 12px !important;
   border-radius:9px !important;
 }
-:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+:root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
   [class*="posttextentry_PostTextEntryArea"] {
   min-height:33px !important;
   border-radius:8px !important;
 }
 /* On smaller Steam Deck-sized screens, never force a fixed-height play row. */
 @media (max-width:1050px),(max-height:690px) {
-  :root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+  :root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
     [class*="sharedappdetailsheader_TopCapsule"] {
     height:clamp(152px,25vh,205px) !important;
   }
-  :root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"]))[data-glm-compact-poster="1"] .BasicUI
+  :root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"])[data-glm-compact-poster="1"] .BasicUI
     [class*="sharedappdetailsheader_TopCapsule"]::after {
     width:84px;height:125px;left:12px;bottom:10px;
   }
-  :root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"]))[data-glm-compact-poster="1"] .BasicUI
+  :root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"])[data-glm-compact-poster="1"] .BasicUI
     [class*="sharedappdetailsheader_TitleSection"] {
     padding-left:108px !important;
   }
-  :root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]):has(.BasicUI :is([class*="appdetailsplaysection_PlayBar"],[class*="basicappdetailssectionstyler_PlaySection"])) .BasicUI
+  :root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"]) .BasicUI
     [class*="appdetailsplaysection_PlayBar"] {
     padding:5px 8px !important;
     min-height:55px !important;
   }
+}
+
+/* Fallback: the native PlayBar itself is unique to a Steam game page.
+ * Keep this density improvement working even if the header module is
+ * lazily loaded or renamed. This CSS is loaded ONLY with explicit opt-in. */
+:root .BasicUI [class*="appdetailsplaysection_PlayBar"] {
+  min-height:62px !important;
+  padding:7px 12px !important;
+  border-radius:10px !important;
 }
