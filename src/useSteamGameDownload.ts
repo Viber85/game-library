@@ -1,6 +1,10 @@
 import {useEffect,useState} from "react";
 import {findModuleChild} from "@decky/ui";
 import {
+  readSteamDownloadMetrics,EMPTY_DOWNLOAD_METRICS,
+  type SteamDownloadMetrics
+} from "./steamDownloadMetrics";
+import {
   readNativeGameStatus,readSteamDownloadItems,resolveGameTransfer,
   type GameTransfer,type NativeGameStatus
 } from "./steamDownloadProgressCore";
@@ -23,17 +27,21 @@ type Host={
   downloadsStore?:SteamDownloadsStore;
 };
 export type GameDownloadSnapshot=NativeGameStatus&{
-  appId:number;transfer:GameTransfer|null;
+  appId:number;transfer:GameTransfer|null;metrics:SteamDownloadMetrics;
   debug:{items:boolean;overview:boolean;store:boolean;queue:boolean};
 };
 const EMPTY:GameDownloadSnapshot={
   appId:0,installed:null,displayStatus:null,transfer:null,
+  metrics:EMPTY_DOWNLOAD_METRICS,
   debug:{items:false,overview:false,store:false,queue:false}
 };
 const same=(a:GameDownloadSnapshot,b:GameDownloadSnapshot)=>
   a.appId===b.appId&&a.installed===b.installed&&
   a.displayStatus===b.displayStatus&&a.transfer?.phase===b.transfer?.phase&&
   a.transfer?.percent===b.transfer?.percent&&
+  a.metrics.downloadedBytes===b.metrics.downloadedBytes&&
+  a.metrics.totalBytes===b.metrics.totalBytes&&
+  a.metrics.remainingSeconds===b.metrics.remainingSeconds&&
   a.debug.items===b.debug.items&&a.debug.overview===b.debug.overview&&
   a.debug.store===b.debug.store&&a.debug.queue===b.debug.queue;
 
@@ -109,8 +117,11 @@ export function useSteamGameDownload(appId:number,nonSteam:boolean):GameDownload
       const transfer=resolveGameTransfer(
         appId,chosenItems,chosenOverview,status.displayStatus
       );
+      const metrics=transfer?
+        readSteamDownloadMetrics(appId,chosenItems,chosenOverview,app):
+        EMPTY_DOWNLOAD_METRICS;
       const next:GameDownloadSnapshot={
-        appId,...status,transfer,
+        appId,...status,transfer,metrics,
         debug:{items:itemsSeen,overview:overviewSeen,store:!!store,
           queue:!!callbackMatch||!!storedMatch}
       };
