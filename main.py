@@ -759,6 +759,23 @@ class Plugin:
     async def hltb_times(self, appid: int, name: str):
         return await asyncio.to_thread(self._hltb_cache_service().lookup, appid, name)
 
+    async def gog_hltb_times(self, product_id: str, name: str):
+        """HLTB lookup for a GOG-owned title, isolated from real Steam AppIDs.
+
+        HLTB's cache requires a numeric key. Use a deterministic ID in a
+        reserved range above all 32-bit Steam AppIDs. This is a metadata-only
+        key and is NEVER passed to Steam's app, install or launch APIs.
+        """
+        import hashlib
+        import re
+        if (not isinstance(product_id, str) or
+                not re.fullmatch(r"[0-9]{1,20}", product_id)):
+            return {"status": "unavailable", "reason": "Invalid GOG product ID"}
+        digest = hashlib.sha256(("gog:" + product_id).encode("ascii")).digest()
+        metadata_key = (1 << 49) + (int.from_bytes(digest[:6], "big"))
+        return await asyncio.to_thread(
+            self._hltb_cache_service().lookup, metadata_key, name)
+
     async def protondb_tier(self, appid: int):
         if self._protondb_service is None:
             cache = _runtime_cache_path().with_name("protondb_cache.json")
