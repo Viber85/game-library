@@ -76,7 +76,7 @@ export function readSteamDownloadOverview(raw:unknown,appId:number):GameTransfer
      (overview.remote_client_id!==undefined&&String(overview.remote_client_id)!=="0"))
     return null;
   const state=overview.update_state;
-  if(state==="None"||state===""||state===null)return null;
+  if(typeof state!=="string"||state==="None"||state==="")return null;
   const phase:TransferPhase=overview.paused===true?"paused":
     state==="Finalizing"?"finalizing":state==="Verifying"?"verifying":
     state==="Installing"?"installing":"downloading";
