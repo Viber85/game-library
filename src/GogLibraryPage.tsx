@@ -1,12 +1,15 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import {callable} from "@decky/api";
 import {Focusable,GamepadButton,Navigation,TextField,type GamepadEvent} from "@decky/ui";
-import {MdArrowBack,MdCheckCircle,MdRefresh,MdSettings,MdStorefront} from "react-icons/md";
+import {MdCheckCircle,MdRefresh,MdSettings,MdStorefront} from "react-icons/md";
 import {getActiveUserId} from "./steam";
 import {normalizeSearchText} from "./librarySearch";
 import {getGridColumnCount,gridNeighbor,type GridDirection} from "./gridNavigation";
 import {GogArtwork,type GogOwnedGame} from "./GogArtwork";
 import type {GogAccount} from "./GogIntegrationPanel";
+import {SharedLibraryGrid,SharedLibraryCardFace} from "./SharedLibraryGrid";
+import {SharedLibraryDetails} from "./SharedLibraryDetails";
+import {fromGogLibraryGame} from "./unifiedLibraryGame";
 
 type LibraryReply={ok:boolean;games:GogOwnedGame[];synced_at?:number;
   needs_art_refresh?:boolean;reason?:string};
@@ -132,41 +135,16 @@ export function GogLibraryPage({onFocusRail}:{onFocusRail:()=>void}){
 
   return <section className="gl-gog-library" aria-label="GOG owned library">
     {detailGame?
-      <div className="gl-gog-detail-screen" aria-label={detailGame.title+" details"}>
-        <div className="gl-gog-detail-top">
-          <Focusable ref={detailBackRef} className="gl-grid-back gl-gog-detail-back"
-            focusClassName="gl-focused" noFocusRing
-            onActivate={closeDetail} onCancelButton={closeDetail}
-            onButtonDown={(e:GamepadEvent)=>{
-              if(e.detail?.button===GamepadButton.DIR_LEFT||
-                 e.detail?.button===GamepadButton.DIR_UP){stop(e);closeDetail();}
-            }}><MdArrowBack/> Back to GOG Library</Focusable>
-          <span className="gl-gog-owned"><MdCheckCircle/> Owned on GOG</span>
-        </div>
-        <div className="gl-gog-detail-content">
-          <div className="gl-gog-detail-cover">
-            <GogArtwork game={detailGame} accountId={steamId} expanded/>
-          </div>
-          <div className="gl-gog-detail-info">
-            <div className="gl-gog-detail-store"><MdStorefront/> GOG</div>
-            <h2>{detailGame.title}</h2>
-            <p>In your GOG library</p>
-            <p className="gl-gog-detail-footnote">
-              This is your owned GOG game, not a Steam shortcut.
-              Installing, launching and managing GOG games will be available
-              in a later integration phase.
-            </p>
-          </div>
-        </div>
-        <div className="gl-grid-hint">A: Back to games · B: Back to games</div>
-      </div>
+      <SharedLibraryDetails game={fromGogLibraryGame(detailGame)}
+        cover={<GogArtwork game={detailGame} accountId={steamId} expanded/>}
+        onBack={closeDetail} backRef={detailBackRef}/>
     :<>
-      <div className="gl-gog-header">
+      <div className="gl-grid-heading gl-gog-header">
         <div><h2>GOG Library</h2>
           <span>{account?.connected?
             items.length+" owned games · "+(account.username||"GOG account"):
             "Your purchased games, independently of Steam shortcuts"}</span></div>
-        <div className="gl-gog-controls">
+        <div className="gl-grid-header-actions gl-gog-controls">
           <Focusable ref={settingsRef} className="gl-grid-back" noFocusRing focusClassName="gl-focused"
             onActivate={toSettings} onCancelButton={onFocusRail}
             onButtonDown={(e:GamepadEvent)=>{
@@ -205,27 +183,24 @@ export function GogLibraryPage({onFocusRail}:{onFocusRail:()=>void}){
             }}/>
           <span>{filtered.length} results</span>
         </div>
-        <div className="gl-gog-scroll">
-          <div className="gl-gog-grid" ref={gridRef}>
+        <SharedLibraryGrid gridRef={gridRef}>
             {visible.map((game,index)=><Focusable key={game.id}
               ref={el=>{tiles.current[index]=el;}}
-              className="gl-game gl-gog-game" noFocusRing focusClassName="gl-focused"
+              className="gl-game" noFocusRing focusClassName="gl-focused"
               onActivate={()=>openDetail(game)}
               onGamepadFocus={()=>setSelected(game.id)}
               onMouseEnter={()=>setSelected(game.id)}
               onCancelButton={onFocusRail}
               onButtonDown={(e:GamepadEvent)=>onTileDirection(e,index)}
               onOKActionDescription="GOG game details">
-              <div className="gl-poster">
+              <SharedLibraryCardFace title={game.title}>
                 <GogArtwork game={game} accountId={steamId}/>
-                <span className="gl-poster-name">{game.title}</span>
-              </div>
+              </SharedLibraryCardFace>
             </Focusable>)}
-          </div>
-          {filtered.length===0&&<div className="gl-gog-empty">
-            <h2>{query.trim()?"No matching GOG games":"No games in your GOG library"}</h2>
-            <p>Try another title or refresh the account library.</p>
-          </div>}
+        </SharedLibraryGrid>
+        {filtered.length===0&&<div className="gl-gog-empty">
+          <h2>{query.trim()?"No matching GOG games":"No games in your GOG library"}</h2>
+          <p>Try another title or refresh the account library.</p>
         </div>
         {current&&<div className="gl-gog-details">
           <span className="gl-gog-owned"><MdCheckCircle/> Owned on GOG</span>
