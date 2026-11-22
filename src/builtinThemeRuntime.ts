@@ -406,7 +406,8 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
   return queue(async()=>{
     if(!shuttingDown&&desired==="midnight"&&theme)await syncTheme();
     const tabs=await listTabs();
-    const main=tabs.find(t=>t.scope==="main");
+    const mainCandidates=tabs.filter(t=>t.scope==="main");
+    let main=mainCandidates[0];
     const empty:ThemeDiagnostics={
       target:main?.title??"Not found",
       discoveredTabs:tabs.length,
@@ -433,12 +434,39 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       details:main?"Unable to inspect Steam UI.":"No Steam Game Mode tab could be verified.",
     };
     if(!main)return empty;
+    // Multiple real Steam CEF documents can exist. The former Quick Check
+    // read only the FIRST tab and could report the plugin route while the
+    // native Details page was mounted in a different verified Steam tab.
+    // Inspect each verified main tab; prefer live native-game evidence, then
+    // its recent read-only pre-QAM snapshot. Never select by tab title alone.
     let probe:ThemeProbe|null=null;
-    try{
-      const execution=await bounded(executeInTab(main.title,false,THEME_PROBE_SCRIPT));
-      if(execution.success)probe=parseThemeProbe(execution.result);
-      else empty.details="Decky could not execute a read-only CSS inspection.";
-    }catch(error){empty.details="Steam CSS inspection failed: "+String(error).slice(0,140);}
+    let bestScore=-1;
+    for(const candidate of mainCandidates){
+      try{
+        const execution=await bounded(executeInTab(candidate.title,false,THEME_PROBE_SCRIPT));
+        if(!execution.success)continue;
+        const next=parseThemeProbe(execution.result);
+        if(!next)continue;
+        let score=(next.nativeCompactHeroStyled?60:0)+
+          (next.nativeCompactPlayBarStyled?60:0)+
+          (next.nativeCompactHeroFound?25:0)+
+          (next.nativeCompactPlayBarFound?25:0)+
+          (next.gameRoots>0?16:0)+(next.compactStyleActive?8:0);
+        if(mainCandidates.length>1){
+          try{
+            const result=await bounded(executeInTab(candidate.title,false,THEME_AUDIT_READ_SCRIPT),1800);
+            const audit=result.success?parseThemeAudit(result.result):null;
+            const recent=(at:number)=>at>0&&Date.now()-at>=0&&Date.now()-at<=180000;
+            if(recent(audit?.latestNativeCompact?.at??0))score+=30;
+            else if(recent(audit?.latestCompact?.at??0))score+=15;
+            else if(recent(audit?.latestGame?.at??0))score+=10;
+          }catch{/* Continue with live native evidence. */}
+        }
+        if(score>bestScore){main=candidate;probe=next;bestScore=score;}
+      }catch(error){
+        empty.details="Steam CSS inspection failed: "+String(error).slice(0,140);
+      }
+    }
     if(!probe)return empty;
     const applied=probe.visibleUI && probe.marker===STYLE_REVISION && probe.sheets>0;
     const liveSettings=probe.settingsRoots>0 || probe.deckySettingsActive;
