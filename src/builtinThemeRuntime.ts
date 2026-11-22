@@ -11,6 +11,7 @@ import { createMidnightCssCompiler } from "./themeCssCompiler";
 import {sameThemeRuntimeStatus} from "./themeCycleCache";
 import {COMPACT_DETAILS_INSTALL_SCRIPT,COMPACT_DETAILS_REMOVE_SCRIPT} from "./compactDetailsDom";
 import {nativeCompactHintsFromCss,compactHintsInjection} from "./compactDetailsAnchors";
+import {selectNativeEvidence} from "./nativeEvidence";
 
 export type ThemeId = "midnight" | "off";
 export type ThemeBundle = {
@@ -506,14 +507,10 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     // an old native hero/paint snapshot mixed with live QAM HLTB/CSS fields,
     // making 2/2 dark panels + HLTB NOT FOUND look like the same observation.
     // Do not treat a visible Game Library route as a native-game-only test.
-    const nativeLive=!probe.libraryUIVisible &&
-      (probe.nativeCompactHeroStyled||probe.nativeCompactPlayBarStyled);
-    const nativeEvidenceSource:"live"|"before-qam"|"unverified"=
-      nativeLive?"live":nativeStyledRecently?"before-qam":"unverified";
-    const nativeRead=nativeLive?probe:nativeStyledRecently?
-      audit!.latestNativeCompact!.probe:probe;
-    const nativeEvidenceAgeSeconds=nativeLive?0:
-      nativeStyledRecently?nativeStyleAge:-1;
+    const evidence=selectNativeEvidence(probe,audit?.latestNativeCompact??null,Date.now());
+    const nativeEvidenceSource=evidence.source;
+    const nativeRead=evidence.probe;
+    const nativeEvidenceAgeSeconds=evidence.ageSeconds;
     const onSettings=inspected.settingsRoots>0 || inspected.deckySettingsActive;
     const onGame=inspected.gameRoots>0;
     const details=!probe.visibleUI?"Selected CEF tab does not expose the Steam Game Mode DOM.":
