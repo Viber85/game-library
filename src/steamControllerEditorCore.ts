@@ -1,45 +1,34 @@
-/** Native Steam Input Controller Settings page for ONE selected game.
- * Uses Steam's public steam://controllerconfig/<AppID> deep link.
- * This is distinct from ShowControllerConfigurator(), whose popup was not
- * the full settings page the MSI Claw user requested.
+/** Game Mode's *full* per-game Controller Settings screen.
+ *
+ * Source: Steam's own GamepadUI routes:
+ * ClientRoutes.GamepadUI.ControllerConfigurator.Main(appId)
+ *   => /app/<appid>/controllerconfigurator/main
+ *
+ * This is the page with Current Button Layout, Edit Layout and Quick
+ * Settings. In contrast, steam://controllerconfig/<appid> opens straight
+ * into the layout editor on the user's MSI Claw.
  */
-export type SteamClientLike={
-  URL?:{ExecuteSteamURL?:(url:string)=>void};
-};
-
-export function controllerSettingsUrl(appId:number):string{
+export function controllerSettingsRoute(appId:number):string{
   if(!Number.isSafeInteger(appId)||appId<=0||appId>0xffffffff)
     throw new Error("Invalid Steam AppID");
-  return "steam://controllerconfig/"+appId;
+  return "/app/"+appId+"/controllerconfigurator/main";
 }
 
-export function openControllerFromClient(
-  appId:number,client:SteamClientLike|null|undefined
+/** Route through the same native Game Mode navigator used by Steam's own
+ * game-detail gamepad icon. No synthetic controller input or DOM patching.
+ * Returns true only if navigation was dispatched without throwing; on-device
+ * route rendering must still be verified.
+ */
+export function openControllerSettingsRoute(
+  appId:number,navigate:(route:string)=>void
 ):boolean{
-  let url:string;
-  try{url=controllerSettingsUrl(appId);}catch{return false;}
-  const api=client?.URL;
-  if(typeof api?.ExecuteSteamURL!=="function")return false;
-  try{api.ExecuteSteamURL.call(api,url);return true;}
-  catch(error){
-    console.warn("[game-library] native Steam controller settings URL failed",error);
+  let route:string;
+  try{route=controllerSettingsRoute(appId);}catch{return false;}
+  try{
+    navigate(route);
+    return true;
+  }catch(error){
+    console.warn("[game-library] Steam Controller Settings route rejected",error);
     return false;
   }
-}
-
-/** Can run only in a CEF target actually exposed by Steam/Decky. The source
- * interpolates validated numeric AppID only, never a user-controlled string.
- * A boolean 'true' means the URL handler accepted the command, not proof of
- * the screen's appearance; we still require on-device validation.
- */
-export function controllerEditorScript(appId:number):string{
-  const url=controllerSettingsUrl(appId);
-  return `(() => {
-    try {
-      const api=globalThis.SteamClient?.URL;
-      if(typeof api?.ExecuteSteamURL!=="function")return false;
-      api.ExecuteSteamURL(${JSON.stringify(url)});
-      return true;
-    } catch { return false; }
-  })()`;
 }
