@@ -1,7 +1,7 @@
 {
   "name": "game-library",
   "description": "Minimalist SteamOS game library and native game-details theme",
-  "version": "0.6.11-test.19",
+  "version": "0.6.11-test.20",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "test:navigation": "node --test tests/library-search.mjs tests/release-audit.mjs tests/dashboard-component-extraction.mjs tests/metadata-optimizations.mjs tests/status-polling.mjs tests/performance-cleanup.mjs tests/hltb-bulk-cache.mjs tests/details-return.mjs tests/sort-progress-notice.mjs tests/start-game-options.mjs tests/controller-shortcuts.mjs tests/library-sort.mjs tests/library-alphabet.mjs tests/install-size.mjs tests/steam-native-required-size.mjs tests/steamgrid-artwork.mjs tests/grid-navigation.mjs tests/spatial-navigation.mjs tests/native-gamepad-focus.mjs tests/steam-clock.mjs tests/home-sort.mjs tests/tab-source.mjs tests/library-inventory.mjs tests/library-diagnostics.mjs tests/tab-source-refresh.mjs tests/gog-mobile-pairing.mjs tests/gog-artwork-details.mjs tests/shared-store-library.mjs tests/dashboard-gog-integration.mjs",
     "test:launch": "node --test tests/launch-game.mjs",
     "test:achievements": "node --test tests/achievements.mjs",
-    "test:theme": "node --test tests/theme-runtime-performance.mjs tests/theme-tabs.mjs tests/game-details-midnight.mjs tests/theme-ingame.mjs tests/menu-focus.mjs tests/power-volume.mjs tests/settings-focus.mjs tests/settings-gamepad-nav.mjs tests/settings-focus-trace.mjs tests/settings-special.mjs tests/decky-settings.mjs tests/decky-dom-diagnostics.mjs tests/decky-live-css.mjs tests/compact-details.mjs tests/native-evidence.mjs tests/theme-tabs.mjs",
+    "test:theme": "node --test tests/theme-runtime-performance.mjs tests/theme-tabs.mjs tests/game-details-midnight.mjs tests/theme-ingame.mjs tests/menu-focus.mjs tests/power-volume.mjs tests/settings-focus.mjs tests/settings-gamepad-nav.mjs tests/settings-focus-trace.mjs tests/settings-special.mjs tests/decky-settings.mjs tests/decky-dom-diagnostics.mjs tests/decky-live-css.mjs tests/compact-details.mjs tests/theme-tabs.mjs",
     "test:css-aliases": "node --test tests/theme-css-aliases.mjs tests/theme-tabs.mjs",
     "test:sidebar": "node --test tests/collections-hub.mjs tests/search-field-layout.mjs tests/search-rail.mjs tests/native-status-bar.mjs tests/sidebar-repurpose.mjs tests/sidebar-expand.mjs tests/card-focus.mjs tests/running-game.mjs",
     "test:coverage": "node --test tests/theme-coverage.mjs",
