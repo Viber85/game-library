@@ -1,5 +1,3 @@
-import {withRequestTimeout} from "./requestDeadline";
-
 /** App-scoped native Steam transfer controls. No global pause/resume.
  * Only a provably new install can trigger Steam's native uninstall cleanup.
  */
@@ -43,6 +41,17 @@ export function readSteamDownloadNature(appId:number,items:unknown,overview:unkn
 }
 const LOCAL="0";
 const DEFAULT_NATIVE_ACK_MS=2500;
+
+function boundedSteamReply(reply:unknown,timeoutMs:number):Promise<void>{
+  // Keep a local, extension-free helper: these pure core tests run directly
+  // under Node's native TypeScript loader, not Rollup's module resolver.
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  const deadline=new Promise<void>((_,reject)=>{
+    timer=setTimeout(()=>reject(new Error("Request timed out")),timeoutMs);
+  });
+  return Promise.race([Promise.resolve(reply).then(()=>undefined),deadline])
+    .finally(()=>{if(timer!==undefined)clearTimeout(timer);});
+}
 /** Steam's UI command methods are documented as void, yet some client builds
  * return thenables that never settle. Dispatch them, but do not wait forever.
  * A timeout means the command was SENT, not that Steam confirmed completion.
@@ -53,7 +62,7 @@ async function invokeSteam(
   const reply=request();
   if(reply===null||reply===undefined)return;
   try{
-    await withRequestTimeout(Promise.resolve(reply),timeoutMs);
+    await boundedSteamReply(reply,timeoutMs);
   }catch(error){
     if(error instanceof Error&&error.message==="Request timed out"){
       console.warn("[game-library] Steam "+name+" response is pending; checking Steam state");
