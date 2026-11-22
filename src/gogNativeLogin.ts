@@ -11,7 +11,7 @@
  * The session persists across React route unmounts while Steam displays GOG.
  * Only the selected, exact GOG callback URL can complete authentication.
  */
-import {stabilizeGogKeyboardFocus,type FocusGuard} from "./gogKeyboardFocus";
+import {stabilizeGogKeyboardFocus,type FocusGuard} from "./gogKeyboardFocus.ts";
 
 type BrowserEvents={
   SetFocus?:(value:boolean)=>void;
