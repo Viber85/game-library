@@ -42,6 +42,10 @@ export function GogIntegrationPanel(){
     return ()=>{active=false;};
   },[steamId]);
 
+  const onMobileConnected=useCallback(()=>{
+    void reload().catch(()=>setError("GOG connected, but account status could not refresh."));
+  },[reload]);
+
   const manualConnect=()=>{
     if(busy||!steamId||draft.trim().length<12)return;
     const value=draft.trim();
@@ -86,9 +90,7 @@ export function GogIntegrationPanel(){
           <div>Sign in directly to GOG and synchronize your purchased games.</div></>}
     </div></PanelSectionRow>
     {!account?.connected&&<>
-      <GogMobilePairingPanel accountId={steamId} onConnected={()=>{
-        void reload().catch(()=>setError("GOG connected, but account status could not refresh."));
-      }}/>
+      <GogMobilePairingPanel accountId={steamId} onConnected={onMobileConnected}/>
       <PanelSectionRow>
         <ButtonItem layout="below" disabled={busy} onClick={()=>setManual(value=>!value)}>
           {manual?"Hide manual authorization":"Manual authorization (advanced)"}
