@@ -15,11 +15,16 @@ export type ProtonRating={
   appid?:number;matched_title?:string|null;cached?:boolean;reason?:string;
 };
 const hltbRpc=callable<[number,string],HltbReply>("hltb_times");
+const gogHltbRpc=callable<[string,string],HltbReply>("gog_hltb_times");
 const protonRpc=callable<[number,string,boolean],ProtonRating>("protondb_for_game");
 const shared=createInflightGate();
 
 export function requestHltbTimes(id:number,title:string):Promise<HltbReply>{
   return shared(["hltb",id,title],()=>hltbRpc(id,title));
+}
+
+export function requestGogHltbTimes(productId:string,title:string):Promise<HltbReply>{
+  return shared(["hltb","gog",productId,title],()=>gogHltbRpc(productId,title));
 }
 
 export function requestProtonRating(id:number,title:string,nonSteam:boolean):Promise<ProtonRating>{
