@@ -20,10 +20,10 @@ export function nativeCompactHintsFromCss(css:string):NativeCompactHints{
     const semantic=names[key];
     // Matched shape emitted by expandThemeClassAliases:
     // :is([class*="sharedappdetailsheader_TopCapsule"],[class~="_nativeHash"])
-    const re=new RegExp(
-      '\\\\[class\\\\\\*="'+semantic+'"\\\\],\\\\[class~="([A-Za-z0-9_-]{3,150})"\\\\]'
-    );
-    const match=css.match(re);
+    const anchor='[class*="'+semantic+'"],[class~="';
+    const at=css.indexOf(anchor);
+    const match=at>=0?
+      css.slice(at+anchor.length).match(/^([A-Za-z0-9_-]{3,150})"\]/):null;
     output[key]=match?.[1]??"";
   }
   return output;
