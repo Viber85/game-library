@@ -1,6 +1,6 @@
 {
   "name": "game-library",
-  "description": "Minimalist SteamOS game library with Steam-native uninstall links and live downloads",
+  "description": "SteamOS Game Library with native four-way controller navigation for Steam and GOG game details",
   "version": "0.6.11-test.46",
   "private": true,
   "type": "module",
