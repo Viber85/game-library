@@ -1,37 +1,41 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {readFileSync} from "node:fs";
-
+import {readFileSync,existsSync} from "node:fs";
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 
-test("Cancel opens the same Steam Uninstall confirmation used by native Manage menu",()=>{
-  const helper=read("src/nativeSteamUninstallDialog.ts");
+test("Cancel of new installs uses verified native Steam context menu without injecting a modal",()=>{
   const details=read("src/SteamGameDetails.tsx");
-  assert.match(helper,/findModuleByExport\(isNativeSteamUninstallDialog\)/);
-  assert.match(helper,/source\.includes\("rgApps"\)/);
-  assert.match(helper,/source\.includes\("bConfirmPassword"\)/);
-  assert.match(helper,/source\.includes\("bNeverPopOut"\)/);
-  assert.match(helper,/dialog\(\[appId\],ownerWindow,false\)/);
-  assert.match(details,/if\(nativeDownload\.downloadNature==="initial"\)\{/);
-  assert.match(details,/showNativeSteamUninstallDialog\(game\.id,ownerWindow\)/);
-  assert.match(details,/rootRef\.current\?\.ownerDocument\.defaultView\?\?window/);
-  assert.match(details,/return;\s*\}\s*\/\/ Existing game updates never trigger game uninstall/);
+  const start=details.indexOf("  const confirmCancelDownload=()=>");
+  const end=details.indexOf("  const showCommunity=()=>",start);
+  assert.ok(start>=0&&end>start);
+  const cancel=details.slice(start,end);
+  assert.match(cancel,/if\(nativeDownload\.downloadNature==="initial"\)/);
+  assert.match(cancel,/showNativeGameOptions\(game\.id,anchor\)/);
+  assert.match(cancel,/focusRefs\.current\["download-cancel"\]/);
+  assert.match(cancel,/Select Manage → Uninstall/);
+  assert.doesNotMatch(cancel,/showNativeSteamUninstallDialog/);
+  assert.doesNotMatch(cancel,/OpenUninstallWizard/);
+  assert.doesNotMatch(cancel,/void cancelDownload\("initial"\)/);
+  assert.doesNotMatch(details,/import .*nativeSteamUninstallDialog/);
+  assert.equal(existsSync(new URL("../src/nativeSteamUninstallDialog.ts",import.meta.url)),false);
+});
+
+test("The game context menu is Steam's already-tested native UI implementation",()=>{
+  const details=read("src/SteamGameDetails.tsx");
+  const native=read("src/nativeGameContextMenu.tsx");
+  assert.match(details,/import \{showNativeGameOptions\} from "\.\/nativeGameContextMenu"/);
+  assert.match(native,/findModuleByExport/);
+  assert.match(native,/showContextMenu\(element,target,opts\)/);
+  assert.match(native,/LibraryContextMenu/);
+});
+
+test("Existing game update Cancel remains queue-only and never uninstalls",()=>{
+  const details=read("src/SteamGameDetails.tsx");
   const start=details.indexOf("  const confirmCancelDownload=()=>");
   const end=details.indexOf("  const showCommunity=()=>",start);
   const cancel=details.slice(start,end);
-  assert.ok(start>=0&&end>start);
-  assert.doesNotMatch(cancel,/void cancelDownload\("initial"\)/);
-  assert.doesNotMatch(cancel,/strOKButtonText="Uninstall game"/);
-  assert.match(cancel,/showModal\(<ConfirmModal/); // update-only
-});
-
-test("Steam modal has no premature uninstall, and unknown Steam build can use native context menu",()=>{
-  const helper=read("src/nativeSteamUninstallDialog.ts");
-  const details=read("src/SteamGameDetails.tsx");
-  assert.doesNotMatch(helper,/\bOpenUninstallWizard\!\(/);
-  assert.match(helper,/appId>=0x80000000/);
-  assert.match(helper,/if\(matches\.length!==1\)return null/);
-  assert.match(details,/Steam's Uninstall confirmation could not be opened directly/);
-  assert.match(details,/showNativeGameOptions\(game\.id,anchor\)/);
-  assert.match(details,/awaitingSteamUninstall\|\|nativeDownload\.transfer/);
+  assert.match(cancel,/strTitle="Remove Steam download from queue\?"/);
+  assert.match(cancel,/onOK=\{\(\)=>\{void cancelDownload\(nativeDownload\.downloadNature\);\}\}/);
+  assert.match(details,/if\(!awaitingSteamUninstall\|\|nativeDownload\.transfer/);
+  assert.match(details,/inspectPrefixCleanup\(game\.id\)/);
 });
