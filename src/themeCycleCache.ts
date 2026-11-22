@@ -60,6 +60,7 @@ export function createThemeAliasCache(
 /** Structural equality avoids notifying Decky on an unchanged CSS cycle. */
 export type ThemeStatusFields={
   selected:"midnight"|"off";
+  compactDetails?:boolean;
   appliedTabs:number;
   hasMain:boolean;
   hasMenu:boolean;
@@ -68,6 +69,7 @@ export type ThemeStatusFields={
 };
 export function sameThemeRuntimeStatus(a:ThemeStatusFields,b:ThemeStatusFields):boolean{
   return a===b || (a.selected===b.selected &&
+    a.compactDetails===b.compactDetails &&
     a.appliedTabs===b.appliedTabs &&
     a.hasMain===b.hasMain &&
     a.hasMenu===b.hasMenu &&
