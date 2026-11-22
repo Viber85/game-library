@@ -89,6 +89,9 @@ class GogPhoneTests(unittest.TestCase):
         self.assertIn(b"<svg", svg)
         with urllib.request.urlopen(pair["url"], timeout=4) as response:
             content = response.read().decode()
+            match = re.search(r'name="form_token" value="([^"]+)"', content)
+            self.assertIsNotNone(match, "Page must contain its private form token")
+            form_token = match.group(1)
             self.assertIn("Open GOG sign-in", content)
             self.assertIn("Connect GOG to Game Library", content)
             self.assertNotIn("Unifideck", content)
@@ -96,13 +99,14 @@ class GogPhoneTests(unittest.TestCase):
             self.assertIn("no-store", response.headers.get("Cache-Control"))
         good = "https://embed.gog.com/on_login_success?origin=client&code=abcdef1234567890ABCDEF"
         submit = pair["url"] + "submit"
-        bad = urllib.parse.urlencode({"gog_url": "https://evil.example/?code=abcdef1234567890ABCDEF"}).encode()
+        bad = urllib.parse.urlencode({"gog_url": "https://evil.example/?code=abcdef1234567890ABCDEF",
+                                          "form_token": form_token}).encode()
         with self.assertRaises(urllib.error.HTTPError) as failure:
             urllib.request.urlopen(submit, data=bad, timeout=4)
         self.assertEqual(failure.exception.code, 400)
         self.assertEqual(len(self.fake_gog.calls), 0)
 
-        data = urllib.parse.urlencode({"gog_url": good}).encode()
+        data = urllib.parse.urlencode({"gog_url": good, "form_token": form_token}).encode()
         with urllib.request.urlopen(submit, data=data, timeout=4) as response:
             self.assertEqual(response.status, 202)
             self.assertNotIn(b"abcdef1234567890ABCDEF", response.read())
@@ -128,12 +132,63 @@ class GogPhoneTests(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError) as failure:
             urllib.request.urlopen(wrong_host, timeout=4)
         self.assertEqual(failure.exception.code, 404)
-        data = urllib.parse.urlencode({"gog_url": "abcdef1234567890ABCDEF"}).encode()
+        data = urllib.parse.urlencode({"gog_url": "abcdef1234567890ABCDEF",
+                                      "form_token": phone._ACTIVE.form_token}).encode()
         wrong_origin = urllib.request.Request(pair["url"] + "submit",
             data=data, headers={"Origin": "https://evil.example"})
         with self.assertRaises(urllib.error.HTTPError) as failure:
             urllib.request.urlopen(wrong_origin, timeout=4)
         self.assertEqual(failure.exception.code, 403)
+        self.assertEqual(self.fake_gog.calls, [])
+
+    def test_opaque_mobile_origin_with_valid_form_nonce_completes_pairing(self):
+        """QR in-app browsers may send Origin: null even from the pairing page."""
+        pair = phone.start("123")
+        value = urllib.parse.urlencode({
+            "gog_url": "https://embed.gog.com/on_login_success?origin=client&code=abcdef1234567890ABCDEF",
+            "form_token": phone._ACTIVE.form_token,
+        }).encode()
+        request = urllib.request.Request(pair["url"] + "submit", data=value,
+                                         headers={"Origin": "null", "Sec-Fetch-Site": "same-origin"})
+        with urllib.request.urlopen(request, timeout=4) as response:
+            self.assertEqual(response.status, 202)
+        for _ in range(100):
+            if phone.status("123").get("phase") == "connected":
+                break
+            time.sleep(.05)
+        self.assertEqual(phone.status("123")["phase"], "connected")
+        self.assertEqual(self.fake_gog.calls, [("123", "abcdef1234567890ABCDEF")])
+
+    def test_no_form_nonce_is_refused_even_with_valid_login_code_and_null_origin(self):
+        pair = phone.start("123")
+        for token in ("", "wrongtoken1234567890"):
+            request = urllib.request.Request(
+                pair["url"] + "submit",
+                data=urllib.parse.urlencode({
+                    "gog_url": "abcdef1234567890ABCDEF",
+                    "form_token": token,
+                }).encode(), headers={"Origin": "null"})
+            with self.assertRaises(urllib.error.HTTPError) as failure:
+                urllib.request.urlopen(request, timeout=4)
+            self.assertEqual(failure.exception.code, 403)
+            self.assertIn(b"This pairing form is not valid", failure.exception.read())
+        self.assertEqual(self.fake_gog.calls, [])
+
+    def test_cross_site_form_even_with_known_pairing_token_is_denied(self):
+        pair = phone.start("123")
+        request = urllib.request.Request(
+            pair["url"] + "submit",
+            data=urllib.parse.urlencode({
+                "gog_url": "abcdef1234567890ABCDEF",
+                "form_token": phone._ACTIVE.form_token,
+            }).encode(), headers={
+                "Origin": "https://evil.example",
+                "Sec-Fetch-Site": "cross-site",
+            })
+        with self.assertRaises(urllib.error.HTTPError) as failure:
+            urllib.request.urlopen(request, timeout=4)
+        self.assertEqual(failure.exception.code, 403)
+        self.assertIn(b"mobile browser changed the page origin", failure.exception.read())
         self.assertEqual(self.fake_gog.calls, [])
 
     def test_expired_and_cancelled_pairs_refuse_new_requests(self):
