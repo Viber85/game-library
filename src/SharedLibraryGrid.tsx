@@ -4,10 +4,10 @@ import {MdCheckCircle} from "react-icons/md";
 /** The exact card surface used by every store, independent of where its
  * metadata/installation actions originate. Focusable/gamepad behavior lives
  * in the caller so native Steam menus are not changed. */
-export function SharedLibraryCardFace({title,installed=false,children}:{
-  title:string;installed?:boolean;children?:ReactNode;
+export function SharedLibraryCardFace({title,installed=false,sizeActive=false,children}:{
+  title:string;installed?:boolean;sizeActive?:boolean;children?:ReactNode;
 }){
-  return <div className="gl-poster">
+  return <div className="gl-poster" data-size-active={sizeActive||undefined}>
     {children}
     <span className="gl-poster-name">{title}</span>
     {installed&&<MdCheckCircle className="gl-installed-indicator" aria-label="Installed"/>}
