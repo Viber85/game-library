@@ -117,6 +117,9 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   const focusRefs=useRef<Record<string,HTMLDivElement|null>>({});
   const backRef=useRef<HTMLDivElement>(null);
   const userChangedFocus=useRef(false);
+  const currentDownloadRef=useRef(nativeDownload);
+  currentDownloadRef.current=nativeDownload;
+  const busyRef=useRef(false);
 
   useEffect(()=>{
     userChangedFocus.current=false;
@@ -127,6 +130,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     setInstallState(game.installed);
     setWizardPending(false);
     setDownloadBusy(false);
+    busyRef.current=false;
     setPlaytime(game.playtimeMinutes);
     setLastPlayed(game.lastPlayed);
     // Native Game Mode focus is separate from document.activeElement.
@@ -286,22 +290,30 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     };Installs?:{OpenUninstallWizard?:(ids:number[],dontPrompt:boolean)=>unknown}}}
   ).SteamClient;
   const toggleDownload=async()=>{
-    if(downloadBusy||!nativeDownload.transfer)return;
-    const action=nativeDownload.transfer.phase==="paused"||
-      nativeDownload.transfer.phase==="queued"?"resume":"pause";
+    const current=currentDownloadRef.current;
+    if(busyRef.current||!current.transfer)return;
+    const action=current.transfer.phase==="paused"||
+      current.transfer.phase==="queued"?"resume":"pause";
     const client=downloadControls();
+    busyRef.current=true;
     setDownloadBusy(true);
     try{
       const result=await nativeDownloadAction(action,game.id,game.nonSteam,
-        nativeDownload.downloadNature,client?.Downloads,client?.Installs);
+        current.downloadNature,client?.Downloads,client?.Installs);
       if(!result.ok)toaster.toast({title:"Steam download",
         body:"Steam could not "+action+" this download ("+result.reason+")."});
-    }finally{setDownloadBusy(false);}
+    }finally{busyRef.current=false;setDownloadBusy(false);}
   };
-  const cancelDownload=async()=>{
-    if(downloadBusy||!nativeDownload.transfer)return;
+  const cancelDownload=async(expectedNature:typeof nativeDownload.downloadNature)=>{
+    const current=currentDownloadRef.current;
+    if(busyRef.current||!current.transfer||current.downloadNature!==expectedNature){
+      toaster.toast({title:"Steam download changed",
+        body:"Download status changed since you opened the confirmation. Reopen Cancel to review it."});
+      return;
+    }
     const client=downloadControls();
-    const nature=nativeDownload.downloadNature;
+    const nature=current.downloadNature;
+    busyRef.current=true;
     setDownloadBusy(true);
     try{
       const result=await nativeDownloadAction("cancel",game.id,game.nonSteam,
@@ -335,10 +347,10 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
         toaster.toast({title:"Steam download cancelled",
           body:"Could not confirm Proton prefix cleanup; some game data may remain."});
       }
-    }finally{setDownloadBusy(false);}
+    }finally{busyRef.current=false;setDownloadBusy(false);}
   };
   const confirmCancelDownload=()=>{
-    if(downloadBusy||!nativeDownload.transfer)return;
+    if(downloadBusy||busyRef.current||!nativeDownload.transfer)return;
     const initial=nativeDownload.downloadNature==="initial";
     showModal(<ConfirmModal
       strTitle={initial?"Cancel install and delete its Proton prefix?":"Cancel Steam download?"}
@@ -348,7 +360,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
       strOKButtonText={initial?"Cancel and delete":"Cancel download"}
       strCancelButtonText="Keep downloading"
       bDestructiveWarning
-      onOK={()=>{void cancelDownload();}}
+      onOK={()=>{void cancelDownload(nativeDownload.downloadNature);}}
     />);
   };
 
