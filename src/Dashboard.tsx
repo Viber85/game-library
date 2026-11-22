@@ -644,7 +644,7 @@ export function Dashboard({initialMode="home",originRoute}:
     setTabSorts(previous=>({...previous,[sortId]:id}));
     pendingGridIndex.current=null;
     lastGridFocusIndex.current=0;
-    setSelectedId(undefined);
+    setSelectedId(undefined);setSelectedGogId(null);
     closeSortMenu();
   };
   const focusSortItem=(index:number)=>{
@@ -717,6 +717,7 @@ export function Dashboard({initialMode="home",originRoute}:
     // of displaying a 15-second-old (possibly not-yet-hydrated) snapshot.
     setGames(getLibraryGames());
     setActiveTab(tabs[nextIndex].id);
+    setSelectedGogId(null);
     pendingGridIndex.current=null;
     setViewAll(initialMode==="library");
     setSortOpen(false);
@@ -972,8 +973,9 @@ export function Dashboard({initialMode="home",originRoute}:
           <div className="gl-grid-hint">A: Game details · Y: Sort · Start: Steam options · B: Back</div>
         </section>
           </> : <>
-        {!viewAll && selected && <div className="gl-scene" aria-hidden="true">
-          <HeroBackdrop key={selected.id} game={selected}/>
+        {!viewAll && (selected||selectedGog) && <div className="gl-scene" aria-hidden="true">
+          {selected?<HeroBackdrop key={selected.id} game={selected}/>:
+            selectedGog?.background?<img className="gl-hero" src={selectedGog.background} alt=""/>:null}
           <div className="gl-scene-shade"/>
         </div>}
         {/* Active tab title is separate from the floating, pill-shaped status controls. */}
@@ -1001,7 +1003,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 focusClassName="gl-focused" noFocusRing
                 onOptionsButton={(e:GamepadEvent)=>{consume(e);showSortMenu();}}
                 onOptionsActionDescription="Sort games"
-                onActivate={() => { pendingGridIndex.current=null; setGames(getLibraryGames()); setActiveTab(item.id); setViewAll(initialMode==="library"); setSortOpen(false); setGridLimit(60); setSelectedId(undefined); }}
+                onActivate={() => { pendingGridIndex.current=null; setGames(getLibraryGames()); setActiveTab(item.id); setSelectedGogId(null); setViewAll(initialMode==="library"); setSortOpen(false); setGridLimit(60); setSelectedId(undefined); }}
                 onButtonDown={(e:GamepadEvent) => {
                   if(handleBumper(e))return;
                   const b=e.detail?.button;
@@ -1122,32 +1124,8 @@ export function Dashboard({initialMode="home",originRoute}:
           ) : (
           <>
             <Focusable className="gl-strip" flow-children="row">
-              {previewGames.map((game, index) => (
-                <GameCard
-                  key={game.id}
-                  game={game}
-                  index={index}
-                  activate={()=>runGameAction(game)}
-                  onSelect={() => setSelectedId(game.id)}
-                  onSort={showSortMenu}
-                  onMove={button=>{
-                    if(button===GamepadButton.DIR_DOWN){
-                      homeActionRefs.current[0]?.focus();
-                      return;
-                    }
-                    if(button===GamepadButton.DIR_LEFT)index===0?focusRail(railIndex):goToGame(index-1);
-                    else if(button===GamepadButton.DIR_RIGHT) {
-                      if (index===previewGames.length-1 && shown.length>INITIAL_GAME_COUNT) viewMoreRef.current?.focus();
-                      else goToGame(index+1);
-                    }
-                    else if(button===GamepadButton.DIR_UP)focusPill(tabs.indexOf(tab));
-                    else if(button===GamepadButton.BUMPER_LEFT)cycleTab(-1);
-                    else if(button===GamepadButton.BUMPER_RIGHT)cycleTab(1);
-                  }}
-                  cardRef={el=>{gameRefs.current[index]=el;}}
-                />
-              ))}
-              {shown.length>INITIAL_GAME_COUNT &&
+              {previewGames.map((entry,index)=>renderEntry(entry,index,"home"))}
+              {gridShown.length>INITIAL_GAME_COUNT &&
                 <Focusable ref={viewMoreRef} className="gl-view-more" noFocusRing focusClassName="gl-focused"
                   onOptionsButton={(e:GamepadEvent)=>{consume(e);showSortMenu();}}
                   onOptionsActionDescription="Sort games"
@@ -1163,10 +1141,43 @@ export function Dashboard({initialMode="home",originRoute}:
                   }}>
                   <MdChevronRight size={42}/>
                   <strong>View More</strong>
-                  <span>All {shown.length} games</span>
+                  <span>All {gridShown.length} games</span>
                 </Focusable>}
             </Focusable>
 
+            {selectedGog&&<section className="gl-feature" aria-label="Selected GOG game">
+              <div className="gl-feature-content">
+                <h1>{selectedGog.title}</h1>
+                <div className="gl-status">
+                  <span><MdCheckCircle/> Owned on GOG</span>
+                  <span>GOG</span>
+                </div>
+                <div className="gl-metrics">
+                  <div className="gl-metric">
+                    <MdLibraryBooks/><div><small>LIBRARY</small><strong>GOG</strong></div>
+                  </div>
+                </div>
+                <Focusable className="gl-actions" flow-children="row">
+                  <Focusable ref={el=>{homeActionRefs.current[0]=el;}}
+                    className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing
+                    onActivate={()=>{
+                      const entry=previewGames.find((x):x is Extract<DashboardEntry,{store:"gog"}>=>
+                        x.store==="gog"&&x.gog.id===selectedGog.id);
+                      if(entry)openGogDetails(entry,previewGames.indexOf(entry));
+                    }}
+                    onButtonDown={(e:GamepadEvent)=>{
+                      const b=e.detail?.button;
+                      if(b===GamepadButton.DIR_UP||b===GamepadButton.DIR_LEFT){
+                        consume(e);
+                        goToGame(Math.max(0,previewGames.findIndex(entry=>
+                          entry.store==="gog"&&entry.gog.id===selectedGog.id)));
+                      }
+                    }} onCancelButton={()=>goToGame()}>
+                    <MdInfo/> Game Details
+                  </Focusable>
+                </Focusable>
+              </div>
+            </section>}
             {selected && <section className="gl-feature" aria-label="Selected game">
               <div className="gl-feature-content">
                 <GameLogo key={"logo-"+selected.id} game={selected}/>
@@ -1190,7 +1201,7 @@ export function Dashboard({initialMode="home",originRoute}:
                       const b=e.detail?.button;
                       if(b===GamepadButton.DIR_RIGHT){consume(e);homeActionRefs.current[1]?.focus();}
                       else if(b===GamepadButton.DIR_LEFT||b===GamepadButton.DIR_UP){
-                        consume(e);goToGame(Math.max(0,previewGames.findIndex(g=>g.id===selected.id)));
+                        consume(e);goToGame(Math.max(0,previewGames.findIndex(entry=>entry.store==="steam"&&entry.steam.id===selected.id)));
                       }
                     }} onCancelButton={()=>goToGame()}>
                     {selected.installed ? <MdPlayArrow /> : <MdDownload />} {gameActionLabel(selected)}
@@ -1202,7 +1213,7 @@ export function Dashboard({initialMode="home",originRoute}:
                       const b=e.detail?.button;
                       if(b===GamepadButton.DIR_LEFT){consume(e);homeActionRefs.current[0]?.focus();}
                       else if(b===GamepadButton.DIR_UP){consume(e);
-                        goToGame(Math.max(0,previewGames.findIndex(g=>g.id===selected.id)));
+                        goToGame(Math.max(0,previewGames.findIndex(entry=>entry.store==="steam"&&entry.steam.id===selected.id)));
                       }
                     }} onCancelButton={()=>goToGame()}>
                     <MdInfo /> Game Details
