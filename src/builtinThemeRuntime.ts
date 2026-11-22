@@ -53,6 +53,8 @@ export type ThemeDiagnostics={
   compactCssLoaded:boolean;
   compactStyleActive:boolean;
   compactPosterShown:boolean;
+  compactMatchedRecently:boolean;
+  compactMatchAgeSeconds:number;
   computedFieldColor:string;
   computedRootColor:string;
   sampleClasses:string[];
@@ -400,6 +402,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       deckyFieldRows:0,deckyFieldColor:"",
       gameRoots:0,gameSections:0,compactEnabled:compactDetails,
       compactCssLoaded:false,compactStyleActive:false,compactPosterShown:false,
+      compactMatchedRecently:false,compactMatchAgeSeconds:-1,
       computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
       colorSamples:[],surfaceElements:0,detectedRoute:"other",
@@ -432,6 +435,9 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     }catch(error){console.warn("[game-library] last native CSS page snapshot unavailable",error);}
     const usingSnapshot=!liveSettings&&!liveGame&&snapshot!==null;
     const inspected=usingSnapshot?snapshot!.sample.probe:probe;
+    const compactLastAt=audit?.latestCompact?.at??0;
+    const compactMatchAge=compactLastAt?Math.round((Date.now()-compactLastAt)/1000):-1;
+    const compactMatchedRecently=compactMatchAge>=0&&compactMatchAge<=180;
     const onSettings=inspected.settingsRoots>0 || inspected.deckySettingsActive;
     const onGame=inspected.gameRoots>0;
     const details=!probe.visibleUI?"Selected CEF tab does not expose the Steam Game Mode DOM.":
@@ -471,6 +477,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       compactEnabled:compactDetails,compactCssLoaded:inspected.compactCssLoaded,
       compactStyleActive:inspected.compactStyleActive,
       compactPosterShown:inspected.compactPosterShown,
+      compactMatchedRecently,compactMatchAgeSeconds:compactMatchAge,
       computedFieldColor:inspected.fieldColor,
       computedRootColor:inspected.rootColor,sampleClasses:inspected.sampleClasses,
       colorSamples:inspected.colorSamples,surfaceElements:inspected.surfaceElements,
