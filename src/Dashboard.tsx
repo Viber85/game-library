@@ -39,6 +39,7 @@ import {openSteamControllerEditor} from "./steamControllerEditor";
 import {armControllerSettingsReturn,armGameDetailsWebReturn,consumeControllerSettingsReturn,clearControllerSettingsReturn,type GameDetailsReturnTarget} from "./controllerSettingsReturn";
 import {steamStorePageUrl,validHltbGameUrl} from "./gameDetailsLinks";
 import {GAME_DETAILS_ROUTE,stageGameDetailsRoute,clearGameDetailsRoute,type GameDetailsRouteSession} from "./gameDetailsRoute";
+import {openBrowserFromMainGameDetails} from "./mainGamepadBrowser";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {useGogDashboardCatalog} from "./useGogDashboardCatalog";
 import {combineDashboardEntries,combineSearchEntries,searchGogEntries,
@@ -490,15 +491,21 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
       return;
     }
     if(detailRouteSession){
-      // HLTB and Store are opened *on top* of a registered Game Details
-      // route. Native B returns to this exact page without one-shot browser
-      // tokens, preventing a stale Controller Settings flash.
-      try{
-        if(kind==="hltb")Navigation.NavigateToExternalWeb(url);
-        else Navigation.NavigateToSteamWeb(url);
-      }catch(error){
-        console.warn("[game-library] could not open external page",error);
-        toaster.toast({title:"Game Library",body:"Could not open the selected game page."});
+      // The generic Decky Navigation helpers use GetFocusedWindowInstance().
+      // Steam can leave Controller Settings as the focused window after B,
+      // despite rendering our Game Details. Opening links from that stale
+      // window puts Controller Settings below Store/HLTB in its back stack.
+      // Always navigate via the actual main Gamepad UI window, whose route
+      // is our registered Game Details page. No fallback to focused window.
+      const opened=openBrowserFromMainGameDetails(kind,url);
+      if(!opened.opened){
+        console.warn("[game-library] main Steam browser refused navigation",opened);
+        toaster.toast({
+          title:"Cannot open "+(kind==="hltb"?"HowLongToBeat":"Steam Store"),
+          body:opened.reason==="wrong-route"
+            ?"Steam is focused on a different page. Return to Game Details and try again."
+            :"Main Steam Game Mode browser is not available."
+        });
       }
       return;
     }
