@@ -85,7 +85,7 @@ test("second B closes restored Game Details once; delayed inventory cannot reope
 test("focus bridge remains unchanged for Details and both directions of sidebar",()=>{
   const dashboard=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
   const details=readFileSync(new URL("../src/SteamGameDetails.tsx",import.meta.url),"utf8");
-  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\?"details":nativeMenuKind,nativeMenuRoot\)/);
+  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\|\|gogDetailsId\?"details":nativeMenuKind,nativeMenuRoot\)/);
   assert.match(dashboard,/focusNativeMenuControl\(back,GamepadButton\.DIR_RIGHT\)/);
   assert.match(dashboard,/focusNativeMenuControl\(railRefs\.current\[target\],GamepadButton\.DIR_LEFT\)/);
   assert.match(details,/else if\(direction==="left"\)onFocusRail\(\)/);
