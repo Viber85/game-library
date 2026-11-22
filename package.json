@@ -1,7 +1,7 @@
 {
   "name": "game-library",
   "description": "Minimalist SteamOS game library and native game-details theme",
-  "version": "0.6.11-test.25",
+  "version": "0.6.11-test.26",
   "private": true,
   "type": "module",
   "scripts": {
