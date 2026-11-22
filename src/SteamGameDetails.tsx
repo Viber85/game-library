@@ -22,6 +22,7 @@ import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
 import {toaster} from "@decky/api";
+import {openSteamInstallWizard} from "./steamInstallWizard";
 
 type PageTab="activity"|"your-stuff"|"community"|"game-info";
 const PAGE_TABS:readonly {id:PageTab;label:string}[]=[
@@ -72,8 +73,8 @@ function DetailPoster({game}:{game:LibraryGame}){
   </div>;
 }
 
-/** Steam's own game installation wizard remains authoritative. We never
- * claim a download began merely because the user selected Install.
+/** Steam's own installation wizard remains authoritative, including the
+ * installation location and final confirmation. Never fake download progress.
  */
 export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpenControllerSettings,onOpenHltb,onOpenStore}:{
   game:LibraryGame;
@@ -216,8 +217,20 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   // Game Details screen when Steam's B returns to the previous route.
   const openController=onOpenControllerSettings;
   const action=()=>{
-    if(installState)play({...game,installed:true});
-    else onNativeDetails();
+    if(installState){
+      play({...game,installed:true});
+      return;
+    }
+    // Open the *actual* Steam installer directly from this Game Details.
+    // Never navigate to /library/app/:id merely to reach an Install button.
+    const result=openSteamInstallWizard(game.id,game.nonSteam);
+    if(result.opened)return;
+    const message=result.reason==="non-steam"
+      ?"Non-Steam games must be installed through their original launcher."
+      :result.reason==="unavailable"
+        ?"Steam's installation wizard is not available in this Game Mode session."
+        :"Steam could not open the installation wizard for this game.";
+    toaster.toast({title:"Install unavailable",body:message});
   };
   const showCommunity=()=>{
     if(isNativeSteam)Navigation.NavigateToSteamWeb(
@@ -320,7 +333,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                 onActivate={openGameOptions}><MdSettings/></Focusable>
           </div>
           {!installState&&
-            <div className="gl-details-install-help">Install opens Steam's original installer to choose a drive and confirm the download.</div>}
+            <div className="gl-details-install-help">Install opens Steam's drive selection and confirmation dialog.</div>}
         </div>
       </div>
 
