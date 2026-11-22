@@ -5,6 +5,7 @@ import {sameStoreGameTitle,normalizedStoreGameTitle} from "../src/installSizeRef
 
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const ui=read("src/Dashboard.tsx");
+const sharedCard=read("src/SharedLibraryGrid.tsx");
 const badge=read("src/SteamInstallSizeBadge.tsx");
 const css=read("src/theme.ts");
 const native=read("src/nativeSortFields.ts");
@@ -34,7 +35,8 @@ test("Only dedicated Library grid shows size badge and does not prefetch 400 gam
   assert.match(ui,/showInstallSize&&<div className="gl-poster-meta">/);
   assert.match(ui,/<SteamInstallSizeBadge/);
   assert.match(ui,/<HltbPosterBadge/);
-  assert.match(ui,/data-size-active=\{showInstallSize\|\|undefined\}/);
+  assert.match(ui,/sizeActive=\{showInstallSize\}/);
+  assert.match(sharedCard,/data-size-active=\{sizeActive\|\|undefined\}/);
   assert.match(badge,/if\(storeAppId!==null&&active&&native===null&&nativeRequired===null&&/);
   assert.match(badge,/timer=window\.setTimeout\(load,850\)/);
   assert.match(badge,/if\(reply\.status==="deferred"&&attempts<3\)/);
@@ -89,7 +91,8 @@ test("v0.5.9-test.15: SIZE gradient anchors to the bottom third, not top half",(
   assert.match(sizeValue,/margin-left:1px/);
   assert.doesNotMatch(sizeValue,/margin-left:auto/);
   assert.match(sizeValue,/flex:0 0 auto/);
-  assert.match(ui,/\{game\.installed && !showInstallSize &&/);
+  assert.match(ui,/installed=\{game\.installed&&!showInstallSize\}/);
+  assert.match(sharedCard,/installed&&<MdCheckCircle/);
   assert.match(ui,/showInstallSize&&<div className="gl-poster-meta">/);
   assert.match(ui,/<SteamInstallSizeBadge/);
   assert.match(ui,/<HltbPosterBadge/);
