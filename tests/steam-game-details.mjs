@@ -132,18 +132,18 @@ test("gear and physical Start share the exact native Steam game menu, not Settin
   assert.doesNotMatch(gear,/onActivate=\{onNativeDetails\}/);
 });
 
-test("controller prioritizes working SharedJSContext and never uses native properties as fallback",()=>{
+test("controller icon opens Steam's full Controller Settings screen, never its game context menu",()=>{
   const adapter=read("src/steamControllerEditor.ts");
-  const start=adapter.indexOf('const candidates=[');
-  const shared=adapter.indexOf('title==="SharedJSContext"',start);
-  const direct=adapter.indexOf("return openControllerFromClient(appId,client)",start);
-  assert.ok(start>=0&&shared>start&&direct>shared);
-  assert.match(adapter,/execute\(title,false,script\)/);
+  const core=read("src/steamControllerEditorCore.ts");
+  assert.match(adapter,/if\(openControllerFromClient\(appId,client\)\)return true/);
   assert.match(adapter,/title==="SharedJSContext"/);
-  assert.equal((adapter.match(/openControllerFromClient\(appId,client\)/g)||[]).length,1,
-    "Fallback cannot open duplicate controller popup windows");
+  assert.match(core,/controllerconfig/);
   const action=source.slice(source.indexOf("const openController="),
     source.indexOf("const action="));
-  assert.doesNotMatch(action,/onNativeDetails\(/);
-  assert.match(action,/showNativeGameOptions\(game\.id,anchor\)/);
+  assert.match(action,/openSteamControllerEditor\(game\.id\)/);
+  assert.doesNotMatch(action,/showNativeGameOptions\(|onNativeDetails\(/);
+  assert.match(action,/Controller Settings unavailable/);
+  const gear=source.slice(source.indexOf("const openGameOptions="),
+    source.indexOf("const openController="));
+  assert.match(gear,/showNativeGameOptions\(game\.id,anchor\)/);
 });
