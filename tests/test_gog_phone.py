@@ -92,10 +92,25 @@ class GogPhoneTests(unittest.TestCase):
             match = re.search(r'name="form_token" value="([^"]+)"', content)
             self.assertIsNotNone(match, "Page must contain its private form token")
             form_token = match.group(1)
-            self.assertIn("Open GOG sign-in", content)
+            self.assertIn("Open GOG sign-in in new tab", content)
+            self.assertIn('target="_blank"', content)
+            self.assertIn('rel="noopener noreferrer"', content)
             self.assertIn("Connect GOG to Game Library", content)
+            self.assertIn("/new-tab.js", content)
+            script_url = pair["url"] + "new-tab.js"
+            with urllib.request.urlopen(script_url, timeout=4) as script_response:
+                script = script_response.read().decode()
+                self.assertIn('window.open(link.href, "_blank")', script)
+                self.assertIn("opened.opener = null", script)
+                self.assertIn("event.preventDefault()", script)
+                self.assertEqual(script_response.headers.get("Cache-Control"),
+                                 "no-store, max-age=0")
+                self.assertIn("application/javascript",
+                              script_response.headers.get("Content-Type"))
             self.assertNotIn("Unifideck", content)
             self.assertEqual(response.headers.get("Referrer-Policy"), "no-referrer")
+            self.assertIn("script-src 'self'",
+                          response.headers.get("Content-Security-Policy"))
             self.assertIn("no-store", response.headers.get("Cache-Control"))
         good = "https://embed.gog.com/on_login_success?origin=client&code=abcdef1234567890ABCDEF"
         submit = pair["url"] + "submit"
@@ -125,6 +140,14 @@ class GogPhoneTests(unittest.TestCase):
         self.assertEqual(phone.status("999"), {"ok": True, "phase": "idle"})
         self.assertTrue(phone.cancel("123")["ok"])
         self.assertEqual(phone.status("123")["phase"], "idle")
+
+    def test_new_tab_script_cannot_be_fetched_without_pairing_secret(self):
+        pair = phone.start("123")
+        wrong = "http://" + phone._ACTIVE.host + "/invalid/new-tab.js"
+        with self.assertRaises(urllib.error.HTTPError) as failure:
+            urllib.request.urlopen(wrong, timeout=4)
+        self.assertEqual(failure.exception.code, 404)
+        self.assertTrue(phone.cancel("123")["ok"])
 
     def test_pairing_rejects_different_host_header_and_csrf_origin(self):
         pair = phone.start("123")
