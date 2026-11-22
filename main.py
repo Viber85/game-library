@@ -19,6 +19,17 @@ def _load_gog():
     return module
 
 
+def _load_gog_phone():
+    """Load our own LAN pairing service once, preserving its active session."""
+    spec = importlib.util.spec_from_file_location(
+        "game_library_local_gog_phone", str(BASE / "gog_phone.py"))
+    if spec is None or spec.loader is None:
+        raise RuntimeError("GOG phone pairing module missing. Reinstall plugin.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _load_updater():
     """Load our own packaged module by path, not Python's global import path.
 
@@ -389,6 +400,33 @@ class Plugin:
 
     async def _main(self):
         self._gog_lock = asyncio.Lock()
+        self._gog_phone = _load_gog_phone()
+
+    def _phone_provider(self):
+        if not hasattr(self, "_gog_phone"):
+            self._gog_phone = _load_gog_phone()
+        return self._gog_phone
+
+    async def start_gog_phone_pairing(self, account_id: str):
+        """Start a 15-minute LAN-only one-use GOG authorization handoff."""
+        try:
+            return await asyncio.to_thread(self._phone_provider().start, account_id)
+        except Exception:
+            return {"ok": False, "reason": "Could not start mobile GOG pairing."}
+
+    async def get_gog_phone_status(self, account_id: str):
+        """Return safe pairing status, never OAuth codes, passwords or tokens."""
+        try:
+            return await asyncio.to_thread(self._phone_provider().status, account_id)
+        except Exception:
+            return {"ok": False, "reason": "Mobile pairing service unavailable."}
+
+    async def cancel_gog_phone_pairing(self, account_id: str):
+        """Stop only this plugin's local temporary pairing listener."""
+        try:
+            return await asyncio.to_thread(self._phone_provider().cancel, account_id)
+        except Exception:
+            return {"ok": False, "reason": "Could not cancel mobile pairing."}
 
     async def get_gog_account(self, account_id: str = ""):
         """Return sanitized auth state only; never return GOG credentials."""
@@ -678,7 +716,8 @@ class Plugin:
 
 
     async def _unload(self):
-        pass
+        if hasattr(self, "_gog_phone"):
+            await asyncio.to_thread(self._gog_phone.shutdown)
 
     async def get_installed_version(self):
         try:
