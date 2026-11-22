@@ -25,6 +25,7 @@ import {toaster} from "@decky/api";
 import {openSteamInstallWizard} from "./steamInstallWizard";
 import {useSteamGameDownload} from "./useSteamGameDownload";
 import {resolveInstallMode,transferLabel} from "./steamDownloadProgressCore";
+import {formatDownloadBytes,formatDownloadTime} from "./steamDownloadMetrics";
 
 type PageTab="activity"|"your-stuff"|"community"|"game-info";
 const PAGE_TABS:readonly {id:PageTab;label:string}[]=[
@@ -389,6 +390,18 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   aria-valuenow={nativeDownload.transfer.percent??undefined}>
                 <div className="gl-details-download-fill"
                   style={{width:(nativeDownload.transfer.percent??0)+"%"}}/>
+              </div>
+              <div className="gl-details-download-metrics" aria-label="Steam download size and time">
+                {nativeDownload.metrics.totalBytes!==null&&
+                  nativeDownload.metrics.downloadedBytes!==null&&<>
+                    <span><b>Downloaded</b> {formatDownloadBytes(nativeDownload.metrics.downloadedBytes)}
+                      {" / "}{formatDownloadBytes(nativeDownload.metrics.totalBytes)}</span>
+                    <span><b>Remaining</b> {formatDownloadBytes(Math.max(0,
+                      nativeDownload.metrics.totalBytes-nativeDownload.metrics.downloadedBytes))}</span>
+                  </>}
+                <span><b>Time left</b> {nativeDownload.transfer.phase==="paused"||
+                  nativeDownload.transfer.phase==="queued"?"—":
+                  formatDownloadTime(nativeDownload.metrics.remainingSeconds)}</span>
               </div>
             </div>}
           {installMode==="preparing"&&
