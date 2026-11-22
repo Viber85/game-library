@@ -70,7 +70,7 @@ test("Safety: Home/GameCard D-pad, B return, native CSS and focus remain unchang
   assert.match(dash,/const goToGame = \(index\?: number\) => \{/);
   assert.match(dash,/const moveInGrid = \(index:number, button:GamepadButton\)/);
   assert.match(dash,/showNativeGameOptions\(game\.id,e\.currentTarget\)/);
-  assert.match(dash,/onMove=\{button=>moveInGrid\(index,button\)\}/);
+  assert.match(dash,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
   assert.match(dash,/lastRailId\.current=action\.id/);
   assert.match(css,/--gl-blue:#4fc3ff/);
   assert.match(read("system-theme/settings-gamepad-focus.css"),/background:#163a5e !important/);
