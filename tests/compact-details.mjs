@@ -315,3 +315,58 @@ test("portrait remains stable across missing hero imagery and brief QAM transiti
   vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
   assert.equal(fake.root.getAttribute("data-glm-compact-poster"),undefined);
 });
+
+
+test("actual native action area paints only broad wrappers, never Play/Install controls",()=>{
+  const fake=fakeSteamCEF();
+  const attrs=()=>new Map();
+  const make=(tagName,width,height,role="")=>{
+    const data=attrs();
+    return {
+      tagName, className:"",
+      children:[],
+      getAttribute:key=>key==="role"?role:null,
+      setAttribute:(key,v)=>data.set(key,String(v)),
+      hasAttribute:key=>data.has(key),
+      removeAttribute:key=>data.delete(key),
+      getBoundingClientRect:()=>({width,height}),
+    };
+  };
+  const section=make("SECTION",920,78);
+  const wrapper=make("DIV",900,72);
+  const button=make("BUTTON",235,48,"button");
+  section.children=[wrapper,button];
+  fake.ctx.document.querySelector=selector=>
+    selector==='[class~="_nativeHeroX"]'?fake.hero:
+    selector==='[class~="_nativeSectionX"]'?section:null;
+  fake.ctx.getComputedStyle=()=>({
+    getPropertyValue:()=> "1",
+  });
+  vm.runInNewContext(compactHintsInjection({
+    hero:"_nativeHeroX",playbar:"",playsection:"_nativeSectionX",
+    playbutton:"",title:"",sections:""
+  })+COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  const state=fake.ctx.window.__gameLibraryCompactDetails14;
+  assert.equal(state.revision,17);
+  assert.equal(state.native.surfaceCount,1);
+  assert.equal(wrapper.hasAttribute("data-glm-native-compact-surface"),true);
+  assert.equal(button.hasAttribute("data-glm-native-compact-surface"),false);
+  vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+  assert.equal(wrapper.hasAttribute("data-glm-native-compact-surface"),false);
+  assert.equal(section.hasAttribute("data-glm-native-compact-playsection"),false);
+});
+
+test("minimal native CSS can flatten the blue wrappers without hiding Steam controls",()=>{
+  assert.match(clean,/data-glm-native-compact-surface/);
+  assert.match(clean,/--glm-compact-surface-applied:1/);
+  assert.match(clean,/--glm-compact-hltb-applied:1/);
+  assert.match(clean,/#hltb-for-deck/);
+  assert.match(clean,/data-glm-native-compact-playsection/);
+  assert.match(clean,/appdetailssection_SectionTab/);
+  assert.match(clean,/appdetailsactivitysection_ActivityFeedContainer/);
+  assert.doesNotMatch(clean,/\bdisplay:\s*none\b|\bvisibility:\s*hidden\b/);
+  const source=read("src/compactDetailsDom.ts");
+  assert.match(source,/markPlaySurfaces/);
+  assert.match(source,/clearSurfaces/);
+  assert.match(source,/state\.surfaces/);
+});
