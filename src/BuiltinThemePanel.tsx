@@ -85,7 +85,7 @@ export function BuiltinThemePanel(){
           :"NOT VERIFIED · Open original Steam Details before Decky"}</div>
         <div>Option enabled: {diagnostics.compactEnabled?"YES":"NO"}</div>
         <div>Midnight CSS verified: {diagnostics.applied?"YES":"NO"}</div>
-        <div>Compact stylesheet present: {diagnostics.compactCssLoaded?"YES":"NOT CONFIRMED"}</div>
+        <div>Compact styling in native game: {diagnostics.nativeEvidenceSource==="unverified"?"NOT VERIFIED":diagnostics.compactCssLoaded?"CONFIRMED":"NOT CONFIRMED"}</div>
         <div>Native Steam hero: {diagnostics.nativeHeroFound?"FOUND":"NOT FOUND"}
           {" · "}{diagnostics.nativeHeroStyled?"STYLE APPLIED":"Style not confirmed"}
           {diagnostics.nativeHeroHeight>0?" · "+diagnostics.nativeHeroHeight+" px":""}</div>
@@ -93,10 +93,11 @@ export function BuiltinThemePanel(){
           {diagnostics.nativePlayBarSource?" ("+diagnostics.nativePlayBarSource+")":""}
           {" · "}{diagnostics.nativePlayBarStyled?"STYLE APPLIED":"Style not confirmed"}
           {diagnostics.nativePlayBarHeight>0?" · "+diagnostics.nativePlayBarHeight+" px":""}</div>
-        <div>Native style directly verified recently: {diagnostics.nativeStyledRecently?
-          "YES · "+diagnostics.nativeStyleAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
+        <div>Native style directly verified recently: {diagnostics.nativeEvidenceSource==="live"
+          ?"YES · live":diagnostics.nativeEvidenceSource==="before-qam"
+          ?"YES · "+diagnostics.nativeEvidenceAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
         <div>Verified native Play panel surfaces: {diagnostics.nativePlaySurfaceCount}</div>
-        <div>Visible blue panels found: {diagnostics.nativePaintCount}</div>
+        <div>Visible blue panels found: {diagnostics.nativeEvidenceSource==="unverified"?"NOT VERIFIED":diagnostics.nativePaintCount}</div>
         <div>Panels confirmed dark by actual computed paint: {diagnostics.nativeEvidenceSource==="unverified"
           ?"NOT VERIFIED":diagnostics.nativePaintNeutralized}</div>
         <div>HLTB in original Steam Details: {diagnostics.nativeEvidenceSource==="unverified"
