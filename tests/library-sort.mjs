@@ -115,7 +115,7 @@ test("Midnight Library link uses its own Decky route, never overrides Steam nati
   assert.doesNotMatch(plugin,/routerHook.addPatch\("\/library"/);
   assert.match(ui,/Navigation.Navigate\("\/library"\)/);
   assert.match(ui,/initialMode==="library"/);
-  assert.match(ui,/onCancel=\{exitGrid\}/);
+  assert.match(ui,/onCancel=\{mode==="grid"\?exitGrid:undefined\}/);
   assert.match(ui,/SORT_OPTIONS.map/);
   assert.match(ui,/onCancelButton=\{closeSortMenu\}/);
 });
