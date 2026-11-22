@@ -65,9 +65,6 @@ const APPEARANCE_ROUTE = "/game-library/appearance";
 const COLLECTIONS_ROUTE="/game-library/collections";
 const TABS_ROUTE="/game-library/tabs";
 const PLUGIN_SETTINGS_ROUTE="/game-library/plugin-settings";
-const GOG_TAB:LibraryTab={
-  id:"GOG",title:"GOG",position:999,visible:true,kind:"all",filter:"all",
-};
 let lastSelectedLibraryTab="AllGames";
 const rememberedSorts:Record<string,Sort>={};
 
@@ -287,10 +284,8 @@ export function Dashboard({initialMode="home",originRoute}:
   }, []);
   const tabs=useMemo(()=>{
     const own=visibleLibraryTabs(tabInfo.tabs.length?tabInfo.tabs:DEFAULT_LIBRARY_TABS);
-    // Provider tab is part of the same Dashboard grid, not its own route.
-    return initialMode==="library"&&!own.some(tab=>tab.id==="GOG")?
-      [...own,GOG_TAB]:own;
-  },[tabInfo.tabs,initialMode]);
+    return own; // All built-in store tabs are owned by Tab Manager.
+  },[tabInfo.tabs]);
   tabsForRefresh.current=tabs;
   const tabIds = tabs.map(t=>t.id).join("|");
   useEffect(()=>{
@@ -379,8 +374,10 @@ export function Dashboard({initialMode="home",originRoute}:
     return startSortMetadata(sortKind,tabResult.games,()=>
       setMetaRevision(revision=>revision+1));
   },[sortKind,tab.id,metadataQueryIds,tabResult.supported]);
-  const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
-  const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
+  const homeSelection=gridShown.find(entry=>entry.key===selectedGridKey)??gridShown[0];
+  const selected=homeSelection?.store==="steam"?homeSelection.steam:undefined;
+  const selectedGog=homeSelection?.store==="gog"?homeSelection.gog:undefined;
+  const previewGames = gridShown.slice(0,INITIAL_GAME_COUNT);
   const visibleGridGames = useMemo(()=>gridShown.slice(0,gridLimit),
     [gridShown,gridLimit]);
   /** Save the real origin before handing over to native Steam details. */
@@ -480,7 +477,14 @@ export function Dashboard({initialMode="home",originRoute}:
     node.focus();
     node.scrollIntoView({block:"nearest",inline:"nearest"});
     lastGridFocusIndex.current=index;
-    if (shown[index]) setSelectedId(shown[index].id);
+    const entry=gridShown[index];
+    if(entry?.store==="steam"){
+      setSelectedId(entry.steam.id);
+      setSelectedGogId(null);
+    }else if(entry?.store==="gog"){
+      setSelectedId(undefined);
+      setSelectedGogId(entry.gog.id);
+    }
     return true;
   };
   const focusGrid = (index:number) => {
@@ -577,7 +581,12 @@ export function Dashboard({initialMode="home",originRoute}:
     if (target) {
       target.focus();
       target.scrollIntoView({block:"nearest",inline:"nearest"});
-      setSelectedId(previewGames[next].id);
+      const entry=previewGames[next];
+      if(entry.store==="steam"){
+        setSelectedId(entry.steam.id);setSelectedGogId(null);
+      }else{
+        setSelectedId(undefined);setSelectedGogId(entry.gog.id);
+      }
     } else pillRefs.current[0]?.focus();
   };
   const openGrid = () => {
@@ -589,9 +598,24 @@ export function Dashboard({initialMode="home",originRoute}:
   const closeGrid = () => {
     lastGridFocusIndex.current=0;
     pendingGridIndex.current=null;
-    setSelectedId(previewGames[0]?.id);
+    const first=previewGames[0];
+    setSelectedId(first?.store==="steam"?first.steam.id:undefined);
+    setSelectedGogId(first?.store==="gog"?first.gog.id:null);
     setViewAll(false);
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
+  };
+  const closeGogDetails=()=>{
+    setGogDetailsId(null);
+    window.requestAnimationFrame(()=>focusGrid(lastGridFocusIndex.current));
+  };
+  useEffect(()=>{
+    if(!gogDetailsId)return;
+    const frame=window.requestAnimationFrame(()=>gogDetailBackRef.current?.focus());
+    return ()=>window.cancelAnimationFrame(frame);
+  },[gogDetailsId]);
+  const openGogDetails=(entry:Extract<DashboardEntry,{store:"gog"}>,index:number)=>{
+    lastGridFocusIndex.current=index;
+    setGogDetailsId(entry.gog.id);
   };
   const exitGrid=()=>{
     if(searchMode)Navigation.Navigate(searchBackRoute());
@@ -665,7 +689,8 @@ export function Dashboard({initialMode="home",originRoute}:
   useEffect(()=>{
     if(collectionsMode||viewAll||!detailsReturn||autoFocusedHome.current||
        detailsReturn.tabId!==tab.id)return;
-    const index=previewGames.findIndex(game=>game.id===detailsReturn.gameId);
+    const index=previewGames.findIndex(entry=>entry.store==="steam"&&
+      entry.steam.id===detailsReturn.gameId);
     if(index<0)return;
     autoFocusedHome.current=true;
     const frame=window.requestAnimationFrame(()=>{
