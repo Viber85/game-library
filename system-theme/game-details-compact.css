@@ -659,3 +659,47 @@
   }
   [data-glm-native-compact-playbutton="1"] {min-height:41px !important;}
 }
+
+
+/* test.18 — inspected PAINT, not just CSS-module identity. A node is tagged
+ * only after the in-CEF observer confirms it is a broad, visible, saturated-
+ * blue structural panel BELOW the real native game hero. This reliably
+ * catches Steam's hashed wrapper surfaces that remained blue in test.17.
+ * No buttons, input controls, progress bars, images, game art, controller
+ * focus targets or non-native pages are tagged by the observer.
+ */
+[data-glm-native-compact-painted="1"] {
+  --glm-compact-painted-applied:1;
+  background:#0b1928 !important;
+  background-color:#0b1928 !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border-color:rgba(163,201,223,.12) !important;
+  backdrop-filter:none !important;
+}
+/* Preserve obvious controller-focus feedback in dark mode instead of
+ * suppressing focus outline/selection colors on functional game controls. */
+[data-glm-native-compact-painted="1"]:is(.gpfocus,.gpfocuswithin,:focus-visible) {
+  outline:2px solid rgba(138,216,239,.72) !important;
+  outline-offset:0 !important;
+}
+/* The native action panel itself stays subtly distinct from the background. */
+[data-glm-native-compact-playsection="1"] {
+  border-color:rgba(163,201,223,.22) !important;
+  background:#101f30 !important;
+}
+/* The real HLTB row can be wider than its own cards on some Steam clients.
+ * Direct ID styling avoids dependence on a particular hashed Steam parent. */
+#hltb-for-deck .hltb-info,
+#hltb-for-deck .hltb-info-absolute {
+  background:#0e1d2e !important;
+  background-image:none !important;
+  border:1px solid rgba(157,193,216,.18) !important;
+  box-shadow:none !important;
+}
+/* More compact muted native tab appearance, preserving focus / selection. */
+[data-glm-native-compact-sections="1"] {
+  background:rgba(10,21,34,.75) !important;
+  background-image:none !important;
+  border-color:rgba(154,187,209,.13) !important;
+}
