@@ -25,7 +25,7 @@ test("matches reference components: hero, portrait, game metadata, HLTB, actions
   for(const match of [
     /<HeroBackdrop/,/<GameLogo/,/<DetailPoster/,/<ProtonDBBadge/,
     /gl-details-hltb/,/gl-details-action-row/,/gl-details-hero/,
-    /gl-details-tabs/,/gl-details-panel/,/gl-details-context/,
+    /gl-details-metrics/,/gl-details-meta-cell/,/<AchievementsCard game=\{game\} compact\/>/,
     /<SystemStatusBar/,/onNativeDetails/,/play\(\{\.\.\.game,installed:true\}\)/,
     /getLibraryGames\(\)/,/requestNativeRequiredInstallBytes/
   ])assert.match(source,match);
@@ -77,16 +77,13 @@ test("native four-way layout logic selects physically adjacent controls, not ran
   assert.equal(directionalNeighbor(r,3,"up"),1);
 });
 
-test("activity/community never fabricate posts or installation state",()=>{
-  assert.match(source,/Steam Activity/);
-  assert.match(source,/News, posts and friends' activity remain available in Steam/);
+test("selected Steam Details shows native achievement tracker and Last Played without lower tabs",()=>{
+  assert.match(source,/gl-details-meta-cell/);
   assert.match(source,/lastPlayedLabel\(lastPlayed\)/);
+  assert.match(source,/<AchievementsCard game=\{game\} compact\/>/);
   assert.match(source,/setInstallState\(v=>v===current\.installed/);
-  assert.match(source,/Navigation\.NavigateToSteamWeb\(/);
-  assert.doesNotMatch(source,/202[45] Update|Say something about this game|Update 2\.2/);
-});
-
-test("Library uses native Steam focus bridge while custom Details is visible, never hidden grid",()=>{
+  assert.doesNotMatch(source,/gl-details-tabs|gl-details-panel|View in Steam|Steam Community|PAGE_TABS/);
+});test("Library uses native Steam focus bridge while custom Details is visible, never hidden grid",()=>{
   const menu=read("src/nativeMenuGamepad.ts");
   assert.match(menu,/details:"\.gl-game-details \.gl-details-focus"/);
   assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\|\|gogDetailsId\?"details":nativeMenuKind,nativeMenuRoot\)/);

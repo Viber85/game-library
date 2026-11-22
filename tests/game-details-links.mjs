@@ -66,13 +66,9 @@ test("closing Details clears an unconsumed web token, avoids stale controller me
   assert.doesNotMatch(source,/Original Steam Details <MdOpenInNew\/>/);
 });
 
-test("Game Info has only actual metadata fields and no redundant original Steam Details action",()=>{
-  const start=source.indexOf('<h2>Game Info</h2>');
-  assert.ok(start>0);
-  const end=source.indexOf("</>}",start);
-  const section=source.slice(start,end);
-  assert.match(section,/gl-details-info-grid/);
-  assert.match(section,/LAST PLAYED/);
-  assert.match(section,/PLAYTIME/);
-  assert.doesNotMatch(section,/<Focusable|onNativeDetails|Original Steam Details/);
+test("Game Details metadata replaces the removed Game Info tab",()=>{
+  assert.match(source,/gl-details-metrics/);
+  assert.match(source,/gl-details-meta-cell/);
+  assert.match(source,/lastPlayedLabel\(lastPlayed\)/);
+  assert.doesNotMatch(source,/<h2>Game Info<\/h2>|gl-details-tabs|View in Steam/);
 });

@@ -1062,7 +1062,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
         </Focusable>
       </aside>
 
-      <div className={"gl-main"+(steamDetailsGame?" gl-main-details":"")}>
+      <div className={"gl-main"+(steamDetailsGame||detailGog?" gl-main-details":"")}>
         {steamDetailsGame
           ? <SteamGameDetails key={steamDetailsGame.id}
               game={steamDetailsGame}

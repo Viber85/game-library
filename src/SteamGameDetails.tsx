@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from "react";
-import {Focusable,GamepadButton,Navigation,showModal,ConfirmModal,type GamepadEvent} from "@decky/ui";
+import {Focusable,GamepadButton,showModal,ConfirmModal,type GamepadEvent} from "@decky/ui";
 import {
   MdArrowBack,MdCheckCircle,MdDownload,MdOpenInNew,MdPlayArrow,
   MdSettings,MdSportsEsports,MdStorefront,MdAccessTime,MdVideogameAsset,
@@ -33,14 +33,6 @@ import {withRequestTimeout} from "./requestDeadline";
 
 type CleanupReply={ok:boolean;status:string;removed?:string[];skipped?:string[]};
 const cleanupCancelledSteamGame=callable<[number],CleanupReply>("cleanup_cancelled_steam_game");
-
-type PageTab="activity"|"your-stuff"|"community"|"game-info";
-const PAGE_TABS:readonly {id:PageTab;label:string}[]=[
-  {id:"activity",label:"Activity"},
-  {id:"your-stuff",label:"Your Stuff"},
-  {id:"community",label:"Community"},
-  {id:"game-info",label:"Game Info"},
-];
 
 const hours=(v:number|null|undefined)=>
   typeof v==="number"&&Number.isFinite(v)&&v>0?
@@ -95,7 +87,6 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   onOpenHltb:(url:string)=>void;
   onOpenStore:()=>void;
 }){
-  const [tab,setTab]=useState<PageTab>("activity");
   const [hltb,setHltb]=useState<HltbReply|null>(null);
   const [required,setRequired]=useState<number|null>(()=>
     typeof game.requiredBytes==="number"&&game.requiredBytes>0?
@@ -130,7 +121,6 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
 
   useEffect(()=>{
     userChangedFocus.current=false;
-    setTab("activity");
     setHltb(null);
     setRequired(typeof game.requiredBytes==="number"&&game.requiredBytes>0?
       game.requiredBytes:readNativeRequiredInstallBytes(game.id));
@@ -443,13 +433,6 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     />);
   };
 
-  const showCommunity=()=>{
-    if(isNativeSteam)Navigation.NavigateToSteamWeb(
-      "https://steamcommunity.com/app/"+game.id
-    );
-    else onNativeDetails();
-  };
-
   return <section ref={rootRef} className="gl-game-details"
       aria-label={game.title+" details"}>
     <div className="gl-details-scroller">
@@ -492,7 +475,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
               installMode==="play"?"Installed":"Not installed"}</span>
           </div>
 
-          <div className="gl-details-hltb" aria-label="HowLongToBeat times and your playtime">
+          <div className="gl-details-hltb gl-details-metrics" aria-label="HowLongToBeat, last played and achievements">
             <div className="gl-details-hltb-cell">
               <strong>{hours(hltbData?.main)}</strong><span>MAIN STORY</span>
             </div>
@@ -505,8 +488,15 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
             <div className="gl-details-hltb-cell">
               <strong>{playtimeLabel(playtime)}</strong><span>YOUR PLAYTIME</span>
             </div>
+            <div className="gl-details-meta-cell">
+              <MdAccessTime/><div>
+                <small>LAST PLAYED</small><strong>{lastPlayedLabel(lastPlayed)}</strong>
+              </div>
+            </div>
+            <AchievementsCard game={game} compact/>
           </div>
-          <div className="gl-details-action-row">
+        </div>
+        <div className="gl-details-action-row">
             <Focusable {...onAction("primary")}
                 className="gl-details-focus gl-details-primary"
                 onOKActionDescription={installMode==="play"?"Play game":
@@ -624,85 +614,8 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   Steam options · Manage · Uninstall
                 </Focusable>}
             </div>}
-        </div>
       </div>
 
-      <nav className="gl-details-tabs" aria-label="Game details sections">
-        {PAGE_TABS.map(item=><Focusable key={item.id} {...onAction("tab-"+item.id)}
-            className={"gl-details-focus gl-details-tab"+
-              (tab===item.id?" gl-details-tab-active":"")}
-            aria-label={item.label}
-            onOKActionDescription={item.label}
-            onActivate={()=>setTab(item.id)}>
-          {item.label}
-          {item.id==="game-info"&&<MdCheckCircle aria-hidden="true"/>}
-        </Focusable>)}
-      </nav>
-      <div className="gl-details-panel" aria-live="polite">
-        {tab==="activity"?<>
-          <h2>Activity</h2>
-          <div className="gl-details-activity-grid">
-            <div className="gl-details-stat"><MdAccessTime/><div>
-              <small>LAST PLAYED</small><strong>{lastPlayedLabel(lastPlayed)}</strong>
-            </div></div>
-            <div className="gl-details-stat"><MdSportsEsports/><div>
-              <small>PLAYTIME</small><strong>{playtimeLabel(playtime)}</strong>
-            </div></div>
-          </div>
-          <div className="gl-details-context">
-            <div><strong>Steam Activity</strong>
-              <p>News, posts and friends' activity remain available in Steam.</p></div>
-            <Focusable {...onAction("steam-activity")}
-                className="gl-details-focus gl-details-secondary"
-                onOKActionDescription="Open Steam game activity"
-                onActivate={onNativeDetails}>View in Steam <MdOpenInNew/></Focusable>
-          </div>
-        </>:tab==="your-stuff"?<>
-          <h2>Your Stuff</h2>
-          <div className="gl-details-stuff-row">
-            <AchievementsCard game={game}/>
-            <div className="gl-details-stat"><MdAccessTime/><div>
-              <small>YOUR PLAYTIME</small><strong>{playtimeLabel(playtime)}</strong>
-            </div></div>
-          </div>
-        </>:tab==="community"?<>
-          <h2>Community</h2>
-          <div className="gl-details-context">
-            <div><strong>Steam Community</strong>
-              <p>See the game's community, discussions and player content.</p></div>
-            <Focusable {...onAction("community")}
-                className="gl-details-focus gl-details-secondary"
-                onOKActionDescription="Open Steam community"
-                onActivate={showCommunity}>Open community <MdOpenInNew/></Focusable>
-          </div>
-        </>:<>
-          <h2>Game Info</h2>
-          <div className="gl-details-info-grid">
-            <div><small>STORE</small><strong>{game.nonSteam?"Non-Steam shortcut":"Steam"}</strong></div>
-            <div><small>STATUS</small><strong>{installMode==="transfer"&&nativeDownload.transfer?
-              transferLabel(nativeDownload.transfer):
-              installMode==="preparing"?"Checking download":
-              installMode==="play"?"Ready to play":"Not installed"}</strong></div>
-            <div><small>LAST PLAYED</small><strong>{lastPlayedLabel(lastPlayed)}</strong></div>
-            <div><small>PLAYTIME</small><strong>{playtimeLabel(playtime)}</strong></div>
-            {game.releaseDate!==undefined&&game.releaseDate>0&&
-              <div><small>RELEASE YEAR</small><strong>{new Date(game.releaseDate*1000).getFullYear()}</strong></div>}
-          </div>
-          {!game.nonSteam&&
-            <div className="gl-details-download-diagnostics" aria-label="Steam download diagnostics">
-              Steam AppID: {game.id} · Status: {nativeDownload.displayStatus??"unknown"}
-              {" · "}Installed: {nativeDownload.installed===null?"unknown":String(nativeDownload.installed)}
-              {" · "}Queue event: {nativeDownload.debug.items?"yes":"no"}
-              {" · "}Progress event: {nativeDownload.debug.overview?"yes":"no"}
-              {" · "}Native store: {nativeDownload.debug.store?"found":"missing"}
-              {" · "}Local queue item: {nativeDownload.debug.queue?"found":"missing"}
-              {" · "}Type: {nativeDownload.downloadNature}
-              {" · "}Transfer: {nativeDownload.transfer?
-                transferLabel(nativeDownload.transfer)+" "+
-                (nativeDownload.transfer.percent===null?"unknown %":nativeDownload.transfer.percent+"%"):"not detected"}
-            </div>}
-        </>}
-      </div>
       <footer className="gl-details-footer">A Select · B Back · D-pad / Left stick Navigate · Steam controls remain available</footer>
     </div>
   </section>;

@@ -2,11 +2,12 @@ import {useEffect,useRef,useState,type ReactNode,type Ref} from "react";
 import {Focusable,GamepadButton,type GamepadEvent} from "@decky/ui";
 import {
   MdAccessTime,MdArrowBack,MdCheckCircle,MdDownload,
-  MdInfoOutline,MdShield,MdStorefront,MdSportsEsports
+  MdEmojiEvents,MdShield,MdStorefront
 } from "react-icons/md";
 import type {UnifiedLibraryGame} from "./unifiedLibraryGame";
 import {requestGogHltbTimes,requestProtonRating,type HltbReply,type ProtonRating} from "./metadataRequests";
 import {SystemStatusBar} from "./SystemStatusBar";
+import {lastPlayedLabel} from "./steam";
 import {directionFromButton,focusNativeMenuControl} from "./nativeMenuGamepad";
 import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {getGogSteamGridFallback} from "./GogArtwork";
@@ -20,13 +21,6 @@ const STORE_LABELS:Record<UnifiedLibraryGame["store"],string>={
   steam:"Steam",gog:"GOG",epic:"Epic Games",ubisoft:"Ubisoft Connect",
   ea:"EA app",amazon:"Amazon Games",other:"Other",
 };
-type DetailTab="activity"|"your-stuff"|"community"|"game-info";
-const TABS:readonly {id:DetailTab;label:string}[]=[
-  {id:"activity",label:"Activity"},
-  {id:"your-stuff",label:"Your Stuff"},
-  {id:"community",label:"Community"},
-  {id:"game-info",label:"Game Info"}
-];
 const hours=(value:number|null|undefined)=>
   typeof value==="number"&&Number.isFinite(value)&&value>0?
     value.toFixed(1)+" hours":"—";
@@ -42,7 +36,6 @@ export function SharedLibraryDetails({
   actions?:ReactNode;
   gogAccountId?:string;
 }){
-  const [tab,setTab]=useState<DetailTab>("activity");
   const [hltb,setHltb]=useState<HltbReply|null>(null);
   const [proton,setProton]=useState<ProtonRating|null>(null);
   const [nativeHeroFailed,setNativeHeroFailed]=useState(false);
@@ -64,7 +57,7 @@ export function SharedLibraryDetails({
     game.availability==="not-installed"?"Not installed":"Owned";
   useEffect(()=>{
     changedFocus.current=false;
-    setTab("activity");setHltb(null);setProton(null);
+    setHltb(null);setProton(null);
     setNativeHeroFailed(false);setRemoteHero(null);setRemoteHeroFailed(false);
     // Steam's gamepad navigation tree is independent from browser focus.
     // Transfer native focus from the old GOG library card to this page,
@@ -219,7 +212,7 @@ export function SharedLibraryDetails({
             <span className="gl-details-dot">·</span>
             <span>{status}</span>
           </div>
-          <div className="gl-details-hltb" aria-label="HowLongToBeat estimates and local playtime">
+          <div className="gl-details-hltb gl-details-metrics" aria-label="HowLongToBeat, last played and achievements">
             <div className="gl-details-hltb-cell"><strong>{hours(hltbData?.main)}</strong>
               <span>MAIN STORY</span></div>
             <div className="gl-details-hltb-cell"><strong>{hours(hltbData?.extras)}</strong>
@@ -231,81 +224,37 @@ export function SharedLibraryDetails({
                 (game.playtimeMinutes/60).toFixed(1)+" hours":"—"}</strong>
               <span>YOUR PLAYTIME</span>
             </div>
+            <div className="gl-details-meta-cell">
+              <MdAccessTime/><div><small>LAST PLAYED</small>
+                <strong>{typeof game.lastPlayed==="number"&&game.lastPlayed>0?
+                  lastPlayedLabel(game.lastPlayed):"—"}</strong>
+              </div>
+            </div>
+            <div className="gl-details-meta-cell gl-details-meta-achievements">
+              <MdEmojiEvents/><div><small>ACHIEVEMENTS</small>
+                <strong>Unavailable</strong>
+                <div className="gl-details-empty-progress" aria-hidden="true"/>
+              </div>
+            </div>
           </div>
-          <div className="gl-details-action-row">
+        </div>
+        <div className="gl-details-action-row">
             {actions ? <div className="gl-actions">{actions}</div>:
               <div className="gl-details-primary gl-gog-install-pending"
                   aria-disabled="true" title="GOG downloader integration in progress">
                 <MdDownload/><strong>Install</strong>
               </div>}
             <div className="gl-details-space">
-              <span>INSTALL LOCATION</span>
-              <strong>Not selected</strong>
+              <span>SPACE REQUIRED</span>
+              <strong>—</strong>
             </div>
           </div>
           {!actions&&<div className="gl-details-install-help">
             GOG installation requires a separate gogdl downloader, a drive picker
             and Proton setup. These actions are not connected yet.
           </div>}
-        </div>
       </div>
 
-      <nav className="gl-details-tabs" aria-label="Game details sections">
-        {TABS.map(item=><Focusable key={item.id} {...onAction("tab-"+item.id)}
-            className={"gl-details-focus gl-details-tab"+
-              (tab===item.id?" gl-details-tab-active":"")}
-            focusClassName="gl-focused" noFocusRing
-            onActivate={()=>setTab(item.id)}
-            onOKActionDescription={item.label}>
-          {item.label}
-          {item.id==="game-info"&&<MdCheckCircle aria-hidden="true"/>}
-        </Focusable>)}
-      </nav>
-      <div className="gl-details-panel" aria-live="polite">
-        {tab==="activity"?<>
-          <h2>Activity</h2>
-          <div className="gl-details-activity-grid">
-            <div className="gl-details-stat"><MdAccessTime/><div>
-              <small>LAST PLAYED</small><strong>—</strong>
-            </div></div>
-            <div className="gl-details-stat"><MdSportsEsports/><div>
-              <small>PLAYTIME</small><strong>{typeof game.playtimeMinutes==="number"?
-                (game.playtimeMinutes/60).toFixed(1)+" hours":"—"}</strong>
-            </div></div>
-          </div>
-          <div className="gl-details-context"><div>
-            <strong>{store} Activity</strong>
-            <p>Local play history will appear when GOG launching is implemented.</p>
-          </div></div>
-        </>:tab==="your-stuff"?<>
-          <h2>Your Stuff</h2>
-          <div className="gl-details-context"><div>
-            <strong>{store} Library</strong>
-            <p>Owned game. Achievements and save synchronization require the
-              GOG installation and launch integration.</p>
-          </div></div>
-        </>:tab==="community"?<>
-          <h2>Community</h2>
-          <div className="gl-details-context"><div>
-            <strong>GOG Community</strong>
-            <p>Community features will become available once the GOG game
-              details and launcher integration is complete.</p>
-          </div></div>
-        </>:<>
-          <h2>Game Info</h2>
-          <div className="gl-details-info-grid">
-            <div><small>STORE</small><strong>{store}</strong></div>
-            <div><small>STATUS</small><strong>{status}</strong></div>
-            <div><small>PRODUCT ID</small><strong>{game.storeId}</strong></div>
-            <div><small>INSTALLER</small><strong>Not connected</strong></div>
-          </div>
-          <div className="gl-details-context"><MdInfoOutline/><div>
-            <strong>GOG installation is separate from Steam installation.</strong>
-            <p>Steam AppIDs and native Steam download progress are never used
-              for GOG products. Our gogdl backend will provide verified progress.</p>
-          </div></div>
-        </>}
-      </div>
       <footer className="gl-details-footer">
         A Select · B Back · GOG actions remain separate from Steam
       </footer>

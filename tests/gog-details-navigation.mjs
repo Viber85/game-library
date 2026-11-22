@@ -33,19 +33,13 @@ test("GOG details has actual native SteamOS gamepad focus, not only DOM focus",(
   assert.match(page,/onGamepadFocus:\(\)=>\{if\(id!=="back"\)changedFocus\.current=true;\}/);
 });
 
-test("GOG Back and all four tabs use the same focus-and-button handlers",()=>{
+test("GOG Back remains the focusable control after removing tab navigation",()=>{
   const page=read("src/SharedLibraryDetails.tsx");
   assert.match(page,/<Focusable \{\.\.\.onAction\("back"\)\}/);
-  assert.match(page,/TABS\.map\(item=><Focusable key=\{item\.id\} \{\.\.\.onAction\("tab-"\+item\.id\)\}/);
-  for(const tab of ["activity","your-stuff","community","game-info"]){
-    assert.match(page,new RegExp('id:"'+tab+'"'));
-  }
   assert.match(page,/onCancelButton:onBack/);
   assert.match(page,/onActivate=\{onBack\}/);
-  assert.match(page,/onActivate=\{\(\)=>setTab\(item\.id\)\}/);
-});
-
-test("GOG Details takes and retries native focus; Dashboard captures direction events",()=>{
+  assert.doesNotMatch(page,/gl-details-tabs|onAction\("tab-|TABS\.map/);
+});test("GOG Details takes and retries native focus; Dashboard captures direction events",()=>{
   const page=read("src/SharedLibraryDetails.tsx");
   const dashboard=read("src/Dashboard.tsx");
   const bridge=read("src/nativeMenuGamepad.ts");
@@ -62,22 +56,12 @@ test("GOG Details takes and retries native focus; Dashboard captures direction e
   assert.match(bridge,/addEventListener\("vgp_ondirection",onDirection,true\)/);
 });
 
-test("geometric native controller navigation traverses tabs in all four directions",()=>{
-  const controls=[
-    node(bounds(70,50,145,38)),     // Back
-    node(bounds(75,220,115,40)),    // Activity
-    node(bounds(200,220,115,40)),   // Your Stuff
-    node(bounds(325,220,115,40)),   // Community
-    node(bounds(450,220,115,40))    // Game Info
-  ];
-  const scope={querySelectorAll:()=>controls};
-  const go=(i,d)=>nextGamepadControl(scope,controls[i],d,".gl-game-details .gl-details-focus");
-  assert.equal(go(0,"down"),controls[1]);  // Back -> first tab
-  assert.equal(go(1,"right"),controls[2]);
-  assert.equal(go(2,"right"),controls[3]);
-  assert.equal(go(3,"right"),controls[4]);
-  assert.equal(go(4,"left"),controls[3]);
-  assert.equal(go(2,"left"),controls[1]);
-  assert.equal(go(1,"up"),controls[0]);    // Back, not hidden grid
-  assert.equal(go(1,"left"),null);         // rail hand-off
+test("GOG single native Back control safely handles all directions and rail handoff",()=>{
+  const back=node(bounds(70,50,145,38));
+  const scope={querySelectorAll:()=>[back]};
+  for(const direction of ["up","down","left","right"]){
+    assert.equal(nextGamepadControl(scope,back,direction,
+      ".gl-game-details .gl-details-focus"),null);
+  }
+  assert.match(read("src/SharedLibraryDetails.tsx"),/else if\(direction==="left"\)onFocusRail\?\.\(\)/);
 });

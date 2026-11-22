@@ -9,7 +9,7 @@ const cache=new Map<number,{value:AchievementResult;time:number}>();
 /** Matches the concept: trophy, achieved/total and a slim cyan progress bar.
  * Only requests Steam's achievements for the selected game.
  */
-export function AchievementsCard({game}:{game:LibraryGame}){
+export function AchievementsCard({game,compact=false}:{game:LibraryGame;compact?:boolean}){
   const [result,setResult]=useState<AchievementResult|null>(
     ()=>cache.get(game.id)?.value??null);
   useEffect(()=>{
@@ -41,12 +41,13 @@ export function AchievementsCard({game}:{game:LibraryGame}){
   const caption=!result?"Loading…" : valid ?
     result.achieved+" / "+result.total :
     result.status==="none"?"No achievements":"—";
-  return <div className="gl-metric gl-achievement-card">
+  return <div className={"gl-metric gl-achievement-card"+
+      (compact?" gl-details-meta-cell gl-details-achievements":"")}>
     <MdEmojiEvents className="gl-achievement-icon"/>
     <div className="gl-achievement-content">
       <small>ACHIEVEMENTS</small>
       <div className="gl-achievement-stats">
-        <strong>{caption}</strong>
+        <strong>{caption}{compact&&valid?" ("+result.progress+"%)":""}</strong>
         {valid && <div className="gl-achievement-track" role="progressbar"
           aria-label="Achievements unlocked"
           aria-valuemin={0} aria-valuemax={result.total} aria-valuenow={result.achieved}>

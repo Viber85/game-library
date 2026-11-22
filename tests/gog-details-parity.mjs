@@ -10,8 +10,8 @@ test("GOG details uses Steam layout CSS but not Steam install or launch APIs",()
   assert.match(ui,/className="gl-game-details gl-gog-steam-details gl-unified-details"/);
   for(const token of [
     "gl-details-hero","gl-details-scroller","gl-details-intro",
-    "gl-details-hltb","gl-details-action-row","gl-details-tabs",
-    "gl-details-panel","gl-details-info-grid"
+    "gl-details-hltb gl-details-metrics","gl-details-action-row",
+    "gl-details-meta-cell","gl-details-meta-achievements"
   ])assert.ok(ui.includes(token),token+" missing from GOG details");
   assert.match(ui,/gl-details-gog-poster/);
   assert.match(ui,/aria-disabled="true"/);
@@ -35,14 +35,17 @@ test("GOG-specific metadata lookup never treats a GOG ID as a Steam AppID",()=>{
   assert.doesNotMatch(ui,/parseInt\(game\.storeId|SteamClient/);
 });
 
-test("GOG Game Details retains controller Back and the shared focusable tabs",()=>{
+test("GOG Game Details retains controller Back and replaces obsolete tabs with inline metadata",()=>{
   const source=read("src/SharedLibraryDetails.tsx");
   const artwork=read("src/GogArtwork.tsx");
   assert.match(source,/onCancelButton:onBack/);
   assert.match(source,/ref:focusRef\(id\)/);
   assert.match(source,/focusNativeMenuControl\(internalBackRef\.current/);
   assert.match(source,/focusNativeMenuControl\(target,GamepadButton\.DIR_DOWN\)/);
-  assert.match(source,/TABS\.map\(item=><Focusable/);
+  assert.match(source,/LAST PLAYED/);
+  assert.match(source,/ACHIEVEMENTS/);
+  assert.match(source,/Unavailable/);
+  assert.doesNotMatch(source,/gl-details-tabs|gl-details-panel|TABS\.map|<h2>Community/);
   assert.match(source,/focusClassName="gl-focused"/);
   assert.match(artwork,/GogArtwork\(/);
 });
