@@ -36,7 +36,7 @@ test("Rail Search A/Right focuses editable field and other pages navigate to Sea
   assert.match(dash,/Navigation.Navigate\(SEARCH_ROUTE\)/);
   assert.match(dash,/if\(searchMode\)\{\s*\/\/ Right\/B from the expanded Search rail/);
   assert.match(dash,/searchInputRef\.current\?\.querySelector\("input"\)\?\.focus\(\)/);
-  assert.match(dash,/else if \(button === GamepadButton.DIR_RIGHT\) \{ consume\(e\); goToGame\(\); \}/);
+  assert.match(dash,/else if \(button === GamepadButton.DIR_RIGHT\) \{ consume\(e\); if\(steamDetailsGame\)focusDetailsFromRail\(\); else goToGame\(\); \}/);
   assert.match(search,/<TextField aria-label="Search game titles"/);
 });
 
