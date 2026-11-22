@@ -17,7 +17,11 @@ import {getMissingSteamArt} from "./steamGridArtwork";
 import {requestHltbTimes,type HltbReply} from "./metadataRequests";
 import {requestNativeRequiredInstallBytes,readNativeRequiredInstallBytes}
   from "./steamNativeRequiredSize";
-import {focusSpatially,type FocusDirection} from "./spatialFocus";
+import {type FocusDirection} from "./spatialFocus";
+import {nextGamepadControl} from "./nativeGamepadFocusCore";
+import {focusNativeMenuControl} from "./nativeMenuGamepad";
+import {openSteamControllerEditor} from "./steamControllerEditor";
+import {toaster} from "@decky/api";
 
 type PageTab="activity"|"your-stuff"|"community"|"game-info";
 const PAGE_TABS:readonly {id:PageTab;label:string}[]=[
@@ -98,8 +102,25 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     setInstallState(game.installed);
     setPlaytime(game.playtimeMinutes);
     setLastPlayed(game.lastPlayed);
-    const frame=window.requestAnimationFrame(()=>backRef.current?.focus());
-    return ()=>window.cancelAnimationFrame(frame);
+    // Native Game Mode focus is separate from document.activeElement.
+    // A DOM-only .focus() leaves Steam's controller attached to the old
+    // Library card, so D-pad/B navigate the hidden grid instead of this page.
+    const focusBack=()=>{
+      const target=backRef.current;
+      if(target)focusNativeMenuControl(target,GamepadButton.DIR_DOWN);
+    };
+    const frame=window.requestAnimationFrame(focusBack);
+    // Steam may register the freshly mounted Focusable nodes after the first
+    // frame. Re-take native focus unless the user already focused another
+    // control on this page.
+    const retry=window.setTimeout(()=>{
+      const active=document.activeElement;
+      if(!rootRef.current?.contains(active))focusBack();
+    },110);
+    return ()=>{
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(retry);
+    };
   },[game.id]);
 
   // Reuse the existing read-only per-AppID HLTB service and 7-day cache.
@@ -148,12 +169,14 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     const direction=handleDirection(event.detail?.button);
     if(!direction)return;
     const current=focusRefs.current[id];
-    const moved=focusSpatially(rootRef.current,current,direction,
-      ".gl-details-focus");
-    // The native Steam focus engine must not jump to a hidden Library card
-    // when the custom game page has no next button in this direction.
+    const next=rootRef.current&&current?
+      nextGamepadControl(rootRef.current,current,direction,
+        ".gl-game-details .gl-details-focus"):null;
+    // Always consume so a still-mounted background route never receives the
+    // same gamepad press. Take the Steam nav-tree focus, not DOM focus.
     event.preventDefault();event.stopPropagation();
-    if(!moved&&direction==="left"&&id==="back")onFocusRail();
+    if(next)focusNativeMenuControl(next,event.detail!.button!);
+    else if(direction==="left"&&id==="back")onFocusRail();
   };
   const onAction=(id:string)=>({
     ref:focusRef(id),
@@ -171,14 +194,16 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     hltbData.url:null;
   const isNativeSteam=!game.nonSteam&&game.id>0&&game.id<0x80000000;
   const openController=()=>{
-    try{
-      const show=(window as any).SteamClient?.Apps?.ShowControllerConfigurator;
-      if(typeof show==="function"){
-        show(game.id);
-        return;
-      }
-    }catch(error){console.warn("[game-library] controller config unavailable",error);}
-    onNativeDetails();
+    void openSteamControllerEditor(game.id).then(opened=>{
+      if(!opened)toaster.toast({
+        title:"Steam controller layout",
+        body:"The controller editor is not exposed on this SteamOS build. Use the controller icon in original Steam Details."
+      });
+    }).catch(error=>{
+      console.warn("[game-library] Steam controller editor unavailable",error);
+      toaster.toast({title:"Controller layout unavailable",
+        body:"Open original Steam Details and select its controller icon."});
+    });
   };
   const action=()=>{
     if(installState)play({...game,installed:true});
@@ -205,7 +230,8 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
       <header className="gl-details-top">
         <Focusable {...onAction("back")}
             className="gl-details-focus gl-details-back"
-            onOKActionDescription="Back to library" >
+            onActivate={onBack}
+            onOKActionDescription="Return to previous screen" >
           <MdArrowBack aria-hidden="true"/> Back to Library
         </Focusable>
         <SystemStatusBar statusRef={statusRef} onStatusButtonDown={event=>{
