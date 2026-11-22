@@ -59,5 +59,5 @@ test("new focus-only styling does not touch Steam UI, settings, hero, grid sizin
   assert.match(css,/\.gl-full-grid \.gl-game\s*\{display:block;width:100%;height:220px;/);
   assert.match(css,/\.gl-feature/);
   assert.doesNotMatch(dashboard,/\bselected=\{game\.id\s*===\s*selected\?\.id\}/);
-  assert.match(dashboard,/const selected = shown\.find\(\(g\) => g\.id === selectedId\) \?\? shown\[0\]/);
+  assert.match(dashboard,/const homeSelection=gridShown\.find\(entry=>entry\.key===selectedGridKey\)/);
 });
