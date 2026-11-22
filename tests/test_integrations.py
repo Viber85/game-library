@@ -190,6 +190,8 @@ class OwnTabsTests(unittest.TestCase):
                 # with custom visibility/order and one manual collection.
                 old=main._own_tab_defaults()
                 old=[t for t in old if t["id"]!="GOG"]
+                for position, tab in enumerate(old):
+                    tab["position"]=position
                 old.append({"id":"custom-existing123","title":"My games",
                             "position":5,"visible":True,"kind":"custom",
                             "filter":"all","mode":"manual","members":[17,19]})
