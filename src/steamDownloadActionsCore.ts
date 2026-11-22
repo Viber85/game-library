@@ -86,13 +86,14 @@ export async function nativeDownloadAction(
        typeof downloads?.RemoveFromDownloadList!=="function"))
     return {ok:false,uninstallRequested:false,reason:"unavailable"};
   try{
-    // Native Steam UI already owns the Uninstall entry in the Library
-    // context menu. It opens a confirmation dialog if dontPrompt=false.
-    // Do NOT remove a fresh install from the queue before calling this:
-    // that merely unschedules it and can leave the partial files behind.
+    // Steam's native Library context-menu implementation shows its own
+    // confirmation first and *then* calls OpenUninstallWizard([appId],true).
+    // The caller has shown equivalent destructive confirmation already.
+    // Calling false from a Decky route was opening no usable dialog.
+    // Do not pause or remove the partial installation from queue first.
     if(action==="cancel"&&requestedUninstall){
-      await invokeSteam("native uninstall dialog",()=>
-        installs!.OpenUninstallWizard!([appId],false),ackTimeoutMs);
+      await invokeSteam("native confirmed uninstall",()=>
+        installs!.OpenUninstallWizard!([appId],true),ackTimeoutMs);
     }else if(action==="cancel"){
       // Existing installed game or uncertain install: never uninstall
       // or touch its Proton prefix. Steam's Remove action just unschedules.
