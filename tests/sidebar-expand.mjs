@@ -10,7 +10,7 @@ const artwork=readFileSync(new URL("../src/SelectedGameArtwork.tsx",import.meta.
 test("focus opens navigation and returning to games collapses it",()=>{
   assert.match(ui,/const \[railExpanded, setRailExpanded\] = useState\(false\)/);
   assert.match(ui,/onGamepadFocus=\{\(\) => \{\s*lastRailId\.current=action\.id;\s*setRailIndex\(index\);\s*setRailExpanded\(true\);\s*\}\}/);
-  assert.match(ui,/const focusRail = \(index: number\) => \{[\s\S]*?setRailExpanded\(true\);[\s\S]*?railRefs\.current\[target\]\?\.focus\(\);/);
+  assert.match(ui,/const focusRail = \(index: number\) => \{[\s\S]*?setRailExpanded\(true\);[\s\S]*?focusNativeMenuControl\(railRefs\.current\[target\],GamepadButton\.DIR_LEFT\);/);
   assert.match(ui,/const goToGame = \(index\?: number\) => \{\s*setRailExpanded\(false\);/);
   assert.match(ui,/onFocusCapture=\{event => \{[\s\S]*?sidebarRef\.current\?\.contains\(event\.target as Node\)/);
 });
