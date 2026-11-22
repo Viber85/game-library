@@ -1,67 +1,56 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import vm from "node:vm";
 import {readFileSync} from "node:fs";
 import {
-  controllerSettingsUrl,openControllerFromClient,controllerEditorScript
+  controllerSettingsRoute,openControllerSettingsRoute
 } from "../src/steamControllerEditorCore.ts";
 
-test("Steam Input icon requests the actual per-game Controller Settings page",()=>{
-  const urls=[];
-  const api={ExecuteSteamURL(url){
-    assert.equal(this,api);
-    urls.push(url);
-  }};
-  assert.equal(openControllerFromClient(1091500,{URL:api}),true);
-  assert.deepEqual(urls,["steam://controllerconfig/1091500"]);
-  assert.equal(controllerSettingsUrl(1091500),"steam://controllerconfig/1091500");
+const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
+
+test("Controller Settings uses Steam GamepadUI's native Main route, not edit layout",()=>{
+  assert.equal(controllerSettingsRoute(1091500),"/app/1091500/controllerconfigurator/main");
+  assert.equal(controllerSettingsRoute(42420),"/app/42420/controllerconfigurator/main");
+  assert.doesNotMatch(controllerSettingsRoute(1091500),/steam:\/\/controllerconfig\//);
+  assert.doesNotMatch(controllerSettingsRoute(1091500),/\/buttons$|\/actionsets$/);
 });
 
-test("validates AppID and refuses unrelated Steam Settings or context menu",()=>{
-  for(const invalid of [0,-1,2**32,1.25,NaN,"1091500","1091500;alert(1)"]){
-    assert.throws(()=>controllerSettingsUrl(invalid));
-    assert.equal(openControllerFromClient(invalid,{URL:{ExecuteSteamURL(){
-      throw Error("invalid should not invoke");
-    }}}),false);
+test("validated numeric AppID only; untrusted strings cannot become native routes",()=>{
+  for(const bad of [0,-1,2**32,1.25,NaN,Infinity,"1091500","123;alert(1)",null]){
+    assert.throws(()=>controllerSettingsRoute(bad));
+    assert.equal(openControllerSettingsRoute(bad,()=>{throw Error("must not navigate");}),false);
   }
-  assert.equal(openControllerFromClient(1091500,null),false);
-  assert.equal(openControllerFromClient(1091500,{}),false);
-  assert.equal(openControllerFromClient(1091500,{URL:{ExecuteSteamURL(){
-    throw Error("unavailable");
-  }}}),false);
 });
 
-test("CEF fallback executes the same verified controllerconfig deep link",()=>{
+test("exactly one native Game Mode navigation; no fake controller press or URL dialog",()=>{
   const calls=[];
-  const script=controllerEditorScript(1091500);
-  assert.equal(vm.runInNewContext(script,{globalThis:{SteamClient:{
-    URL:{ExecuteSteamURL:url=>calls.push(url)}
-  }}}),true);
-  assert.deepEqual(calls,["steam://controllerconfig/1091500"]);
-  assert.equal(vm.runInNewContext(script,{globalThis:{SteamClient:{URL:{}}}}),false);
-  assert.equal(vm.runInNewContext(script,{globalThis:{}}),false);
-  assert.doesNotMatch(script,/ShowControllerConfigurator|OpenAppSettingsDialog/);
+  assert.equal(openControllerSettingsRoute(1091500,route=>calls.push(route)),true);
+  assert.deepEqual(calls,["/app/1091500/controllerconfigurator/main"]);
+  assert.equal(openControllerSettingsRoute(1091500,()=>{throw Error("navigation unavailable");}),false);
 });
 
-test("on demand prefers Steam URL then enumerated CEF context without spoofing Start menu",()=>{
-  const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
+test("React adapter uses Decky Navigation.Navigate and preserves original native history",()=>{
   const adapter=read("src/steamControllerEditor.ts");
-  const page=read("src/SteamGameDetails.tsx");
   const core=read("src/steamControllerEditorCore.ts");
-  const urlAt=adapter.indexOf("if(openControllerFromClient(appId,client))return true;");
-  const tabsAt=adapter.indexOf("const getTabs=");
-  assert.ok(urlAt>0&&tabsAt>urlAt,"URL call must precede CEF fallback");
-  assert.match(adapter,/identifySteamTabs\(listed\)/);
-  assert.match(adapter,/fallbackMainTitlesPresent\(listed\)/);
-  assert.match(adapter,/execute\(title,false,script\)/);
-  assert.match(adapter,/result.success&&result.result===true/);
-  assert.match(core,/steam:\/\/controllerconfig\//);
+  const page=read("src/SteamGameDetails.tsx");
+  assert.match(adapter,/Navigation\.Navigate\(route\)/);
+  assert.match(adapter,/openControllerSettingsRoute\(appId,navigate\)/);
+  assert.doesNotMatch(adapter,/ExecuteSteamURL|fetchNoCors|executeInTab|ShowControllerConfigurator/);
+  assert.match(core,/\/controllerconfigurator\/main/);
+  assert.doesNotMatch(core,/ExecuteSteamURL|ShowControllerConfigurator/);
   assert.match(page,/openSteamControllerEditor\(game\.id\)/);
   const action=page.slice(page.indexOf("const openController="),
     page.indexOf("const action=",page.indexOf("const openController=")));
   assert.doesNotMatch(action,/showNativeGameOptions\(|onNativeDetails\(/);
-  assert.match(action,/Controller Settings unavailable/);
   const gear=page.slice(page.indexOf("const openGameOptions="),
     page.indexOf("const openController="));
   assert.match(gear,/showNativeGameOptions\(game\.id,anchor\)/);
+});
+
+test("Steam's real gamepadUI component renders Quick Settings on ControllerConfigurator.Main",()=>{
+  // This source correspondence was verified against the public unobfuscated
+  // Steam client: routes/37449.js and GamepadUI/85399.js.
+  const core=read("src/steamControllerEditorCore.ts");
+  assert.match(core,/ClientRoutes\.GamepadUI\.ControllerConfigurator\.Main/);
+  assert.match(core,/Current Button Layout/);
+  assert.match(core,/Quick Settings/);
 });
