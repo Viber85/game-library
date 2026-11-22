@@ -1,5 +1,6 @@
 import {useEffect,useState} from "react";
 import {findModuleChild} from "@decky/ui";
+import {readSteamDownloadNature,type SteamDownloadNature} from "./steamDownloadActionsCore";
 import {
   readSteamDownloadMetrics,EMPTY_DOWNLOAD_METRICS,
   type SteamDownloadMetrics
@@ -28,11 +29,12 @@ type Host={
 };
 export type GameDownloadSnapshot=NativeGameStatus&{
   appId:number;transfer:GameTransfer|null;metrics:SteamDownloadMetrics;
+  downloadNature:SteamDownloadNature;
   debug:{items:boolean;overview:boolean;store:boolean;queue:boolean};
 };
 const EMPTY:GameDownloadSnapshot={
   appId:0,installed:null,displayStatus:null,transfer:null,
-  metrics:EMPTY_DOWNLOAD_METRICS,
+  metrics:EMPTY_DOWNLOAD_METRICS,downloadNature:"unknown",
   debug:{items:false,overview:false,store:false,queue:false}
 };
 const same=(a:GameDownloadSnapshot,b:GameDownloadSnapshot)=>
@@ -42,6 +44,7 @@ const same=(a:GameDownloadSnapshot,b:GameDownloadSnapshot)=>
   a.metrics.downloadedBytes===b.metrics.downloadedBytes&&
   a.metrics.totalBytes===b.metrics.totalBytes&&
   a.metrics.remainingSeconds===b.metrics.remainingSeconds&&
+  a.downloadNature===b.downloadNature&&
   a.debug.items===b.debug.items&&a.debug.overview===b.debug.overview&&
   a.debug.store===b.debug.store&&a.debug.queue===b.debug.queue;
 
@@ -120,8 +123,10 @@ export function useSteamGameDownload(appId:number,nonSteam:boolean):GameDownload
       const metrics=transfer?
         readSteamDownloadMetrics(appId,chosenItems,chosenOverview,app):
         EMPTY_DOWNLOAD_METRICS;
+      const downloadNature=transfer?
+        readSteamDownloadNature(appId,chosenItems,chosenOverview):"unknown";
       const next:GameDownloadSnapshot={
-        appId,...status,transfer,metrics,
+        appId,...status,transfer,metrics,downloadNature,
         debug:{items:itemsSeen,overview:overviewSeen,store:!!store,
           queue:!!callbackMatch||!!storedMatch}
       };
