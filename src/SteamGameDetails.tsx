@@ -512,7 +512,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                     className="gl-details-focus gl-details-download-control gl-details-download-cancel"
                     onOKActionDescription="Cancel download and remove its new-install data"
                     onActivate={confirmCancelDownload}>
-                  <MdDeleteOutline/><span>Cancel download</span>
+                  <MdDeleteOutline/><span>{downloadBusy?"Working...":"Cancel download"}</span>
                 </Focusable>
               </div>
             </div>}
