@@ -18,7 +18,7 @@ test("START opens native context menu for the actual focused game via Decky onMe
   assert.match(card,/onMenuButton=\{\(e:GamepadEvent\)=>\{/);
   assert.match(card,/consume\(e\);\s*const opened=showNativeGameOptions\(game\.id,e\.currentTarget\)/);
   assert.match(card,/onMenuActionDescription="Game options"/);
-  assert.match(dashboard,/Start: Game options/);
+  assert.match(dashboard,/Start: Steam options/);
   assert.doesNotMatch(card,/onMenuButton=\{.*openDetails/);
 });
 
@@ -27,9 +27,9 @@ test("Y remains sort while A and B keep their existing functions",()=>{
   assert.match(card,/onOptionsActionDescription="Sort games"/);
   assert.match(card,/onActivate=\{activate \?\? \(\(\) => play\(game\)\)\}/);
   assert.match(card,/onCancelButton=\{onCancel\}/);
-  assert.match(dashboard,/activate=\{\(\)=>openGameDetails\(game\)\}/);
+  assert.match(dashboard,/openGameDetails\(entry.steam\)/);
   assert.match(dashboard,/openDetails\(game\);/);
-  assert.equal((dashboard.match(/onSort=\{showSortMenu\}/g)||[]).length,3);
+  assert.equal((dashboard.match(/onSort=\{showSortMenu\}/g)||[]).length,2);
 });
 
 test("Steam's real context menu is dynamically resolved, never hard-coded or recreated",()=>{
