@@ -104,7 +104,7 @@ test("Return snapshot expires and will not hijack Home hours later",()=>{
 test("Dashboard captures return immediately before native Steam details",()=>{
   assert.match(dashboard,/rememberDetailsOrigin\(\{[\s\S]*?route:actualRoute,[\s\S]*?tabId:tab\.id,[\s\S]*?gameId:game\.id,[\s\S]*?viewAll,[\s\S]*?gridLimit,[\s\S]*?gridScrollTop:/);
   assert.match(dashboard,/const openGameDetails=\(game:LibraryGame\)=>\{[\s\S]*?setSteamDetailsGame\(game\);/);
-  assert.match(dashboard,/const openNativeGameDetails=\(game:LibraryGame\)=>\{\s*rememberGameDetails\(game\);\s*openDetails\(game\);/);
+  assert.match(dashboard,/const openNativeGameDetails=\(game:LibraryGame\)=>\{\s*if\(!detailRouteSession\)rememberGameDetails\(game\);\s*openDetails\(game\);/);
   assert.match(dashboard,/onNativeDetails=\{\(\)=>openNativeGameDetails\(steamDetailsGame\)\}/);
   assert.match(dashboard,/onBack=\{closeSteamDetails\}/);
   assert.match(dashboard,/openGameDetails\(entry.steam\)/);
@@ -124,7 +124,7 @@ test("Fullscreen grid and Home restore tab, selected game, batch size, scroll an
   assert.match(dashboard,/fullGridScrollRef\.current\.scrollTop=snapshot\.gridScrollTop/);
   assert.match(dashboard,/focusGrid\(target\)/);
   assert.match(dashboard,/gameRefs\.current\[index\]/);
-  assert.match(dashboard,/const \[detailsReturn\]=useState\(\(\)=>peekDetailsOrigin\(actualRoute\)\)/);
+  assert.match(dashboard,/const \[detailsReturn\]=useState\(\(\)=>detailRouteSession\?null:peekDetailsOrigin\(actualRoute\)\)/);
   assert.match(dashboard,/if\(detailsReturn\)consumeDetailsOrigin\(actualRoute\);/);
 });
 
