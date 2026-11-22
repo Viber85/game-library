@@ -298,7 +298,7 @@ export function Dashboard({initialMode="home",originRoute}:
        restorePending.current?.tabId===activeTab)return;
     // When a tab is actually removed, fall back to first valid native tab.
     setActiveTab(tabs[0]?.id ?? "AllGames");
-    setSelectedId(undefined);
+    setSelectedId(undefined);setSelectedGogId(null);
     setViewAll(initialMode==="library");
     setGridLimit(60);
     pendingGridIndex.current=null;
@@ -382,7 +382,7 @@ export function Dashboard({initialMode="home",originRoute}:
     [gridShown,gridLimit]);
   /** Save the real origin before handing over to native Steam details. */
   const rememberGameDetails=(game:LibraryGame)=>{
-    const focusedIndex=shown.findIndex(entry=>entry.id===game.id);
+    const focusedIndex=gridShown.findIndex(entry=>entry.store==="steam"&&entry.steam.id===game.id);
     rememberDetailsOrigin({
       route:actualRoute,
       tabId:tab.id,
@@ -467,7 +467,7 @@ export function Dashboard({initialMode="home",originRoute}:
     if(!searchStarted.current){searchStarted.current=true;return;}
     pendingGridIndex.current=null;
     lastGridFocusIndex.current=0;
-    setSelectedId(undefined);
+    setSelectedId(undefined);setSelectedGogId(null);
     setGridLimit(60);
     if(fullGridScrollRef.current)fullGridScrollRef.current.scrollTop=0;
   },[searchMode,searchSelection]);
@@ -488,11 +488,11 @@ export function Dashboard({initialMode="home",originRoute}:
     return true;
   };
   const focusGrid = (index:number) => {
-    if (!shown.length) return;
-    const target=Math.max(0,Math.min(shown.length-1,index));
+    if (!gridShown.length) return;
+    const target=Math.max(0,Math.min(gridShown.length-1,index));
     if(target >= gridLimit) {
       pendingGridIndex.current=target;
-      setGridLimit(limit=>Math.min(shown.length,Math.max(limit+60,target+1)));
+      setGridLimit(limit=>Math.min(gridShown.length,Math.max(limit+60,target+1)));
       return;
     }
     if (!commitGridFocus(target)) pendingGridIndex.current=target;
@@ -505,7 +505,7 @@ export function Dashboard({initialMode="home",originRoute}:
     const target=pendingGridIndex.current;
     if(target>=gridLimit)return;
     if(commitGridFocus(target))pendingGridIndex.current=null;
-  },[viewAll,gridLimit,shown.length,activeTab,sort]);
+  },[viewAll,gridLimit,gridShown.length,activeTab,sort]);
   const enterAlphabet=(index:number)=>{
     if(!libraryAlphabetActive)return;
     alphabetReturnGridIndex.current=index;
@@ -538,7 +538,7 @@ export function Dashboard({initialMode="home",originRoute}:
       firstSearchFilterRef.current?.focus();
       return;
     }
-    if (canEnterNavigationRail(index, shown.length, columns, direction)) {
+    if (canEnterNavigationRail(index, gridShown.length, columns, direction)) {
       // This is an explicit first-column -> sidebar transition, not Steam's
       // free-form spatial focus search. Right/B returns to the same game.
       lastGridFocusIndex.current=index;
@@ -546,11 +546,11 @@ export function Dashboard({initialMode="home",originRoute}:
       return;
     }
     if(libraryAlphabetActive&&direction==="right"&&
-       isRightEdgeGame(index,shown.length,columns)){
+       isRightEdgeGame(index,gridShown.length,columns)){
       enterAlphabet(index);
       return;
     }
-    const target=gridNeighbor(index,shown.length,columns,direction);
+    const target=gridNeighbor(index,gridShown.length,columns,direction);
     if(target!==index)focusGrid(target);
     // Right/down/up at grid boundaries remain bounded to the grid.
   };
@@ -664,17 +664,17 @@ export function Dashboard({initialMode="home",originRoute}:
   },[sortOpen]);
   const autoFocusedLibrary=useRef(false);
   useEffect(()=>{
-    if(collectionsMode||!viewAll||!shown.length||autoFocusedLibrary.current)return;
+    if(collectionsMode||!viewAll||!gridShown.length||autoFocusedLibrary.current)return;
     // Native Library is a grid; Home can be in View More full-grid mode.
     if(initialMode!=="library"&&!detailsReturn?.viewAll)return;
     if(searchMode&&!restorePending.current)return;
     const snapshot=restorePending.current;
     if(snapshot&&snapshot.tabId!==tab.id)return;
     const restoredIndex=snapshot?
-      shown.findIndex(game=>game.id===snapshot.gameId):-1;
+      gridShown.findIndex(entry=>entry.store==="steam"&&entry.steam.id===snapshot.gameId):-1;
     const target=snapshot?
       restoredIndex>=0?restoredIndex:
-        Math.min(snapshot.gridFocusIndex,shown.length-1):0;
+        Math.min(snapshot.gridFocusIndex,gridShown.length-1):0;
     if(target>=gridLimit){
       setGridLimit(limit=>Math.max(limit,target+1));
       return;
@@ -687,7 +687,7 @@ export function Dashboard({initialMode="home",originRoute}:
       restorePending.current=null;
     });
     return ()=>window.cancelAnimationFrame(frame);
-  },[initialMode,viewAll,tab.id,activeTab,shown.length,gridLimit]);
+  },[initialMode,viewAll,tab.id,activeTab,gridShown.length,gridLimit]);
   const autoFocusedHome=useRef(false);
   useEffect(()=>{
     if(collectionsMode||viewAll||!detailsReturn||autoFocusedHome.current||
