@@ -141,13 +141,14 @@ background:#154e5a}.alert.error{background:#713640}
 containing <b>code=</b>. Return to this Game Library tab.</p>
 <p class="step">3 · Send the one-use link to your handheld</p>
 <form method="post" action="%s" autocomplete="off">
+<input type="hidden" name="form_token" value="%s">
 <textarea name="gog_url" required maxlength="2048" spellcheck="false"
 placeholder="Paste the complete GOG success URL here"></textarea>
 <button type="submit">Connect GOG to Game Library</button></form>%s
 <p class="hint">This page is served only by your handheld on local Wi-Fi.
 The code is transferred once, never your password. Close this page afterward.</p>
 </div></main></body></html>"""
-            % (title, title, url, action, note)).encode("utf-8")
+            % (title, title, url, action, session.form_token, note)).encode("utf-8")
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -175,6 +176,22 @@ class _Handler(BaseHTTPRequestHandler):
     def _send(self, code, body, ctype="text/html; charset=utf-8"):
         self._headers(code, len(body), ctype)
         self.wfile.write(body)
+
+    def _same_origin_post(self):
+        """Accept opaque/null origins from mobile QR/in-app browsers only when
+        the request includes our separate page token. Explicit foreign origins
+        and cross-site requests remain forbidden. No Origin header is common
+        in some older browsers and must also provide the page token."""
+        origin = self.headers.get("Origin", "")
+        expected = "http://" + self.session.host
+        fetch_site = self.headers.get("Sec-Fetch-Site", "").lower()
+        if fetch_site == "cross-site":
+            return False
+        return origin in ("", "null", expected)
+
+    def _reject_post(self, reason):
+        # Show an actionable page on mobile rather than a blank HTTP error.
+        self._send(403, _html_page(self.session, reason, error=True))
 
     def _permitted(self, suffix):
         session = self.session
@@ -212,13 +229,20 @@ class _Handler(BaseHTTPRequestHandler):
         if length <= 0 or length > _MAX_BODY:
             self._send(413, b"Invalid request size")
             return
-        origin = self.headers.get("Origin")
-        if origin and origin != "http://" + self.session.host:
-            self._send(403, b"Forbidden")
+        if not self._same_origin_post():
+            self._reject_post("Your mobile browser changed the page origin. "
+                              "Open the QR page directly in Chrome or Safari, "
+                              "then return here and submit again.")
             return
         data = self.rfile.read(length)
         try:
             fields = urllib.parse.parse_qs(data.decode("utf-8"), max_num_fields=4)
+            token = fields.get("form_token", [])
+            if (len(token) != 1 or not secrets.compare_digest(
+                    token[0], self.session.form_token)):
+                self._reject_post("This pairing form is not valid. Reopen the "
+                                  "original QR page and try again.")
+                return
             values = fields.get("gog_url", [])
             code = _validated_code(values[0] if len(values) == 1 else "")
         except (ValueError, UnicodeError) as exc:
@@ -242,6 +266,9 @@ class _Session:
         self.ip = ip
         self.gog = gog
         self.secret = secrets.token_urlsafe(24)
+        # Separate CSRF nonce delivered only in the QR page's HTML. Browsers
+        # with Origin: null are accepted only when this nonce is present.
+        self.form_token = secrets.token_urlsafe(24)
         self.started_at = time.time()
         self.expires_at = self.started_at + _LIFETIME
         self.login_url = gog.login_url()
