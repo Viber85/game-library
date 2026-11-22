@@ -62,12 +62,12 @@ test("0.6.10 validates SteamOS Space Required native fetch and accurate presenta
   const dash=read("src/Dashboard.tsx");
   const css=read("system-theme/settings-gamepad-focus.css");
   const theme=read("src/builtinThemeRuntime.ts");
-  assert.equal(pkg.version,"0.6.11-test.13");
+  assert.equal(pkg.version,"0.6.11-test.14");
   assert.match(dash,/function GameCard\(/);
   assert.match(dash,/onMenuButton=\{\(e:GamepadEvent\)=>\{/);
   assert.match(dash,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
   assert.match(dash,/const \{runningGame,setRunningGame\}=useRunningGameState\(\)/);
   assert.match(css,/background:#163a5e !important/);
-  assert.match(theme,/const STYLE_REVISION = "84"/);
+  assert.match(theme,/const STYLE_REVISION = "85"/);
   assert.doesNotMatch(dash,/\bMdStar\b/);
 });
