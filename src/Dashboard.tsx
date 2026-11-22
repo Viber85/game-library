@@ -176,7 +176,10 @@ export function Dashboard({initialMode="home",originRoute}:
     initialMode==="appearance"?"appearance":
     initialMode==="collections"?"collections":null;
   const nativeMenuRoot=useRef<HTMLDivElement>(null);
-  useNativeMenuGamepad(nativeMenuKind,nativeMenuRoot);
+  // Attach the native Game Mode focus bridge whenever our custom Details
+  // replaces the grid, regardless of Home/Library/Collections origin.
+  // The old Library route left Steam focus attached to its now-hidden grid.
+
   const collectionsMode=initialMode==="collections";
   const tabsMode=initialMode==="tabs";
   const settingsMode=initialMode==="settings";
@@ -196,6 +199,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const {games:gogGames}=useGogDashboardCatalog(gogAccountId,gogCatalogEnabled);
   const [gogDetailsId,setGogDetailsId]=useState<string|null>(null);
   const [steamDetailsGame,setSteamDetailsGame]=useState<LibraryGame|null>(null);
+  useNativeMenuGamepad(steamDetailsGame?"details":nativeMenuKind,nativeMenuRoot);
   const [selectedGogId,setSelectedGogId]=useState<string|null>(null);
   const gogDetailBackRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
