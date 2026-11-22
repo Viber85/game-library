@@ -68,6 +68,6 @@ test("0.6.10 validates SteamOS Space Required native fetch and accurate presenta
   assert.match(dash,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
   assert.match(dash,/const \{runningGame,setRunningGame\}=useRunningGameState\(\)/);
   assert.match(css,/background:#163a5e !important/);
-  assert.match(theme,/const STYLE_REVISION = "85"/);
+  assert.match(theme,/const STYLE_REVISION = "86"/);
   assert.doesNotMatch(dash,/\bMdStar\b/);
 });
