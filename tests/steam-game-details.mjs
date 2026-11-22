@@ -152,7 +152,7 @@ test("native Controller Settings B preserves React-only Game Details on same ori
   assert.match(returnState,/export function armControllerSettingsReturn\(/);
   assert.match(returnState,/export function consumeControllerSettingsReturn\(/);
   assert.match(returnState,/MAX_AGE_MS=10\*60\*1000/);
-  assert.match(dashboard,/const \[controllerReturn\]=useState\(\(\)=>consumeControllerSettingsReturn\(actualRoute\)\)/);
+  assert.match(dashboard,/const \[controllerReturn\]=useState\(\(\)=>detailRouteSession\?null:consumeControllerSettingsReturn\(actualRoute\)\)/);
   assert.match(dashboard,/controllerReturn\?getLibraryGames\(\)\.find\(g=>g.id===controllerReturn.appId\)/);
   assert.match(dashboard,/armControllerSettingsReturn\(\{route:actualRoute,appId:game.id,target\}\)/);
   assert.match(dashboard,/rememberGameDetails\(game\)/);
