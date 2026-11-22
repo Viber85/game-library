@@ -2489,7 +2489,7 @@ html:has(.gl-root.gl-own-status-only) #header {
   font-size:10px;color:#a9c4d8;padding:2px 4px 0;line-height:1.3;
 }
 .gl-root .gl-details-download{
-  margin-top:10px;max-width:560px;padding:1px 4px 0;
+  margin-top:10px;max-width:680px;padding:1px 4px 0;
 }
 .gl-root .gl-details-download-header{
   display:flex;align-items:center;justify-content:space-between;
@@ -2503,9 +2503,13 @@ html:has(.gl-root.gl-own-status-only) #header {
 .gl-root .gl-details-download-caption strong{
   color:#dffaff;font-variant-numeric:tabular-nums;font-size:12px;
 }
+.gl-root .gl-details-download-main{
+  display:flex;align-items:center;flex-wrap:wrap;
+  gap:9px 13px;margin-top:9px;
+}
 .gl-root .gl-details-download-track{
-  height:6px;width:100%;max-width:340px;margin-top:9px;
-  overflow:hidden;border-radius:999px;
+  height:6px;flex:1 1 230px;max-width:340px;
+  min-width:140px;overflow:hidden;border-radius:999px;
   background:rgba(146,191,221,.19);
 }
 .gl-root .gl-details-download-fill{
@@ -2539,6 +2543,13 @@ html:has(.gl-root.gl-own-status-only) #header {
 .gl-root .gl-details-download-cancel{
   border-color:rgba(232,125,134,.45);color:#ffc6cc;
   background:rgba(66,25,43,.35);
+}
+.gl-root .gl-details-download-feedback{
+  margin:8px 4px 0;padding:8px 11px;
+  max-width:680px;border:1px solid rgba(86,177,212,.28);
+  border-radius:7px;background:rgba(10,37,57,.6);
+  font-size:11px;line-height:1.5;color:#d1e7f2;
+  white-space:normal;overflow-wrap:anywhere;
 }
 .gl-root .gl-details-download-diagnostics{
   margin-top:16px;padding:10px 12px;
