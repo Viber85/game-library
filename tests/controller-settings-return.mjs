@@ -63,8 +63,8 @@ test("real Dashboard arms return before leaving and restores same card state",()
   const source=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
   assert.match(source,/armControllerSettingsReturn\(\{route:actualRoute,appId:game.id,target\}\)/);
   assert.match(source,/rememberGameDetails\(game\);\s*void openSteamControllerEditor\(game.id\)/);
-  assert.match(source,/const steamReturnTarget=useRef<GameDetailsReturnTarget\|null>\(\s*controllerReturn\?\.target\?\?null\)/);
-  assert.match(source,/const \[controllerReturn\]=useState\(\(\)=>consumeControllerSettingsReturn\(actualRoute\)\)/);
+  assert.match(source,/const steamReturnTarget=useRef<GameDetailsReturnTarget\|null>\(\s*detailRouteSession\?\.target\?\?controllerReturn\?\.target\?\?null\)/);
+  assert.match(source,/const \[controllerReturn\]=useState\(\(\)=>detailRouteSession\?null:consumeControllerSettingsReturn\(actualRoute\)\)/);
 });
 
 test("second B closes restored Game Details once; delayed inventory cannot reopen it",()=>{
