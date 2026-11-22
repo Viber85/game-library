@@ -56,3 +56,15 @@ export function consumeControllerSettingsReturn(
 export function clearControllerSettingsReturn(appId?:number):void{
   if(appId===undefined||pending?.appId===appId)pending=null;
 }
+
+/** Steam's external browser also unmounts our React-only Game Details.
+ * Use the SAME single-use, route-scoped return token instead of pushing a
+ * second overlapping native return mechanism or reconstructing history.
+ */
+export function armGameDetailsWebReturn(
+  value:ControllerSettingsReturn,
+  now=Date.now(),
+):boolean{
+  return armControllerSettingsReturn(value,now);
+}
+
