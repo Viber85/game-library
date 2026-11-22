@@ -86,11 +86,12 @@ export function BuiltinThemePanel(){
           {" · "}{diagnostics.nativeHeroStyled?"STYLE APPLIED":"Style not confirmed"}
           {diagnostics.nativeHeroHeight>0?" · "+diagnostics.nativeHeroHeight+" px":""}</div>
         <div>Native Steam Play/Install: {diagnostics.nativePlayBarFound?"FOUND":"NOT FOUND"}
+          {diagnostics.nativePlayBarSource?" ("+diagnostics.nativePlayBarSource+")":""}
           {" · "}{diagnostics.nativePlayBarStyled?"STYLE APPLIED":"Style not confirmed"}
           {diagnostics.nativePlayBarHeight>0?" · "+diagnostics.nativePlayBarHeight+" px":""}</div>
         <div>Native style directly verified recently: {diagnostics.nativeStyledRecently?
           "YES · "+diagnostics.nativeStyleAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
-        <div>Current Steam CSS-module aliases resolved: {diagnostics.nativeAliasesResolved}/4</div>
+        <div>Current Steam CSS-module aliases resolved: {diagnostics.nativeAliasesResolved}/6</div>
         <div>Global compact CSS selector (not proof of a changed element):
           {" "}{diagnostics.compactMatchedRecently
           ?"Matched "+diagnostics.compactMatchAgeSeconds+"s ago":"Not confirmed"}</div>
