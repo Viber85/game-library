@@ -1094,7 +1094,9 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
               onBack={()=>Navigation.Navigate("/library/home")}/>
           : detailGog ? <SharedLibraryDetails
               game={fromGogLibraryGame(detailGog)}
-              cover={<GogArtwork game={detailGog} accountId={gogAccountId} expanded/>}
+              cover={onImageLoaded=><GogArtwork key={detailGog.id}
+                game={detailGog} accountId={gogAccountId} expanded
+                onImageLoaded={onImageLoaded}/>}
               gogAccountId={gogAccountId}
               onBack={closeGogDetails} onFocusRail={()=>focusRail(railIndex)}
               backRef={gogDetailBackRef}/>
