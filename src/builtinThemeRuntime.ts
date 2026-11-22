@@ -67,6 +67,8 @@ export type ThemeDiagnostics={
   nativePlaySurfaceCount:number;
   nativePaintCount:number;
   nativePaintNeutralized:number;
+  nativeEvidenceSource:"live"|"before-qam"|"unverified";
+  nativeEvidenceAgeSeconds:number;
   hltbFound:boolean;
   hltbStyled:boolean;
   nativeHeroHeight:number;
@@ -96,7 +98,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "88";
+const STYLE_REVISION = "89";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -431,6 +433,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       nativeHeroFound:false,nativePlayBarFound:false,
       nativeHeroStyled:false,nativePlayBarStyled:false,nativePlayBarSource:"",
       nativePlaySurfaceCount:0,nativePaintCount:0,nativePaintNeutralized:0,
+      nativeEvidenceSource:"unverified",nativeEvidenceAgeSeconds:-1,
       hltbFound:false,hltbStyled:false,
       nativeHeroHeight:0,nativePlayBarHeight:0,nativeAliasesResolved:0,
       nativeStyledRecently:false,nativeStyleAgeSeconds:-1,
@@ -499,8 +502,18 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     const nativeLastAt=audit?.latestNativeCompact?.at??0;
     const nativeStyleAge=nativeLastAt?Math.round((Date.now()-nativeLastAt)/1000):-1;
     const nativeStyledRecently=nativeStyleAge>=0&&nativeStyleAge<=180;
-    const nativeRead=nativeStyledRecently?
-      audit!.latestNativeCompact!.probe:inspected;
+    // One coherent native Details sample for ALL compact rows. Test.18 used
+    // an old native hero/paint snapshot mixed with live QAM HLTB/CSS fields,
+    // making 2/2 dark panels + HLTB NOT FOUND look like the same observation.
+    // Do not treat a visible Game Library route as a native-game-only test.
+    const nativeLive=!probe.libraryUIVisible &&
+      (probe.nativeCompactHeroStyled||probe.nativeCompactPlayBarStyled);
+    const nativeEvidenceSource:"live"|"before-qam"|"unverified"=
+      nativeLive?"live":nativeStyledRecently?"before-qam":"unverified";
+    const nativeRead=nativeLive?probe:nativeStyledRecently?
+      audit!.latestNativeCompact!.probe:probe;
+    const nativeEvidenceAgeSeconds=nativeLive?0:
+      nativeStyledRecently?nativeStyleAge:-1;
     const onSettings=inspected.settingsRoots>0 || inspected.deckySettingsActive;
     const onGame=inspected.gameRoots>0;
     const details=!probe.visibleUI?"Selected CEF tab does not expose the Steam Game Mode DOM.":
@@ -537,11 +550,11 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       deckyFieldColor:inspected.deckyFieldColor,
       gameRoots:inspected.gameRoots,
       gameSections:inspected.gameSections,
-      compactEnabled:compactDetails,compactCssLoaded:inspected.compactCssLoaded,
-      compactStyleActive:inspected.compactStyleActive,
-      compactPosterShown:inspected.compactPosterShown,
+      compactEnabled:compactDetails,compactCssLoaded:nativeRead.compactCssLoaded,
+      compactStyleActive:nativeRead.compactStyleActive,
+      compactPosterShown:nativeRead.compactPosterShown,
       compactMatchedRecently,compactMatchAgeSeconds:compactMatchAge,
-      libraryUIVisible:inspected.libraryUIVisible,
+      libraryUIVisible:probe.libraryUIVisible,
       nativeHeaderCount:inspected.nativeHeaderCount,
       nativePlayBarCount:inspected.nativePlayBarCount,
       nativeHeroFound:nativeRead.nativeCompactHeroFound,
@@ -552,8 +565,9 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       nativePlaySurfaceCount:nativeRead.nativeCompactSurfaceCount,
       nativePaintCount:nativeRead.nativeCompactPaintCount,
       nativePaintNeutralized:nativeRead.nativeCompactPaintNeutralized,
-      hltbFound:inspected.compactHltbFound,
-      hltbStyled:inspected.compactHltbStyled,
+      nativeEvidenceSource,nativeEvidenceAgeSeconds,
+      hltbFound:nativeRead.compactHltbFound,
+      hltbStyled:nativeRead.compactHltbStyled,
       nativeHeroHeight:nativeRead.nativeCompactHeroHeight,
       nativePlayBarHeight:nativeRead.nativeCompactPlayBarHeight,
       nativeAliasesResolved:nativeRead.nativeCompactAliasCount,
