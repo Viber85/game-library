@@ -14,7 +14,7 @@ const isActive=(value:GogPhoneStatus)=>value.phase==="waiting"||
   value.phase==="error"||value.phase==="exchanging";
 
 /** The QR is rendered locally by our Python QR encoder; it is never sent to
- * Google Charts or any other hosted QR service. The pairing endpoint handles
+ * a third-party hosted QR service. The pairing endpoint handles
  * an authorization code only, not the user's GOG credentials. */
 export function GogMobilePairingPanel({accountId,onConnected}:{
   accountId:string;onConnected:()=>void;
