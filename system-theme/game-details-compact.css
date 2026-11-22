@@ -1,0 +1,240 @@
+/*
+ * Compact Game Details — experimental opt-in concept 1.
+ *
+ * IMPORTANT: This sheet is NEVER added unless explicitly enabled. Its rules
+ * only apply while the Steam-owned game details route is detected and marked
+ * on the native document. All Steam buttons, controller focus nodes, Steam
+ * tabs, notes, activity and dialogs remain mounted and interactive.
+ *
+ * References: Decky's verified sharedappdetailsheader, appdetailsplaysection,
+ * basicappdetailssectionstyler and appdetailssection CSS modules.
+ *
+ * Keep selectors in [class*="module_Class"] syntax: the existing theme CSS
+ * compiler maps those selectors to the current Steam build's hashed classes.
+ */
+:root[data-glm-compact-details="1"] .BasicUI
+  :is([class*="appdetails_Container"],[class*="basicappdetailssectionstyler_AppDetailsRoot"]) {
+  --glm-compact-gap:10px;
+  --glm-compact-line:rgba(103,187,235,.24);
+  --glm-compact-panel:#091d33;
+  color:#f2f8ff !important;
+  background:#040e20 !important;
+}
+
+/* Compact cinematic hero. Steam's own logo, hero art and video are retained. */
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="sharedappdetailsheader_TopCapsule"] {
+  position:relative !important;
+  height:clamp(178px,28vh,254px) !important;
+  min-height:0 !important;
+  max-height:254px !important;
+  overflow:hidden !important;
+  border-radius:0 0 12px 12px !important;
+  background-color:#06152a !important;
+  isolation:isolate;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="sharedappdetailsheader_HeaderBackgroundImage"],
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="sharedappdetailsheader_ImgContainer"] {
+  max-height:100% !important;
+  object-fit:cover !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="sharedappdetailsheader_TopGradient"] {
+  background:linear-gradient(90deg,
+    rgba(2,10,25,.91) 0%,rgba(2,10,25,.69) 34%,
+    rgba(2,10,25,.06) 86%) !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="sharedappdetailsheader_TitleSection"] {
+  z-index:2;
+  max-height:100% !important;
+  min-height:0 !important;
+  box-sizing:border-box !important;
+}
+/* A real store-library portrait, if native game route contains an AppID.
+   Decorative pseudo-element does not take focus or intercept controller/touch. */
+:root[data-glm-compact-details="1"][data-glm-compact-poster="1"] .BasicUI
+  [class*="sharedappdetailsheader_TopCapsule"]::after {
+  content:"";
+  position:absolute;
+  z-index:3;
+  pointer-events:none;
+  left:clamp(12px,2vw,32px);
+  bottom:10px;
+  width:clamp(91px,10vw,116px);
+  height:clamp(135px,17.4vw,174px);
+  max-height:calc(100% - 14px);
+  border:1px solid rgba(191,231,255,.48);
+  border-radius:10px;
+  background:#07172d var(--glm-compact-poster-url) center / cover no-repeat;
+  box-shadow:0 8px 28px rgba(0,0,0,.52),0 0 0 1px rgba(35,116,175,.28);
+}
+:root[data-glm-compact-details="1"][data-glm-compact-poster="1"] .BasicUI
+  [class*="sharedappdetailsheader_TitleSection"] {
+  padding-left:clamp(116px,14vw,165px) !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  :is([class*="sharedappdetailsheader_TitleLogo"],
+      [class*="sharedappdetailsheader_SVGTitle"],
+      [class*="sharedappdetailsheader_TitleImageContainer"]) {
+  max-height:clamp(70px,14vh,145px) !important;
+  max-width:min(58vw,560px) !important;
+  object-fit:contain !important;
+}
+
+/* Compact native install/play area: changes dimensions, NOT interaction.
+   Do not hide Play, Install, Stop, Download progress, Cloud, gamepad or settings. */
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="basicappdetailssectionstyler_PlaySection"] {
+  position:relative;
+  padding:8px clamp(12px,2vw,24px) !important;
+  min-height:0 !important;
+  margin:0 0 6px !important;
+  border-radius:0 0 12px 12px !important;
+  border-color:var(--glm-compact-line) !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailsplaysection_PlayBar"] {
+  min-height:62px !important;
+  height:auto !important;
+  padding:7px 12px !important;
+  gap:clamp(8px,1.25vw,16px) !important;
+  margin:0 !important;
+  border-radius:10px !important;
+  border-color:var(--glm-compact-line) !important;
+  background:linear-gradient(105deg,
+    rgba(5,22,43,.96),rgba(11,37,62,.96)) !important;
+  box-shadow:0 6px 17px rgba(0,0,0,.17) !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="basicappdetailssectionstyler_ActionRow"] {
+  gap:8px !important;
+  min-height:0 !important;
+  padding:4px 0 !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailsplaysection_RightControls"] {
+  display:flex !important;
+  align-items:center !important;
+  gap:7px !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailsplaysection_MenuButton"] {
+  min-height:36px !important;
+  min-width:36px !important;
+  border-radius:8px !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appactionbutton_PlayButtonContainer"] {
+  min-width:clamp(130px,21vw,250px) !important;
+  max-width:350px !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailsplaysection_PlayBarDetailLabel"] {
+  font-size:12px !important;
+  line-height:1.35 !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailsplaysection_CloudStatusRow"] {
+  padding:2px 5px !important;
+  margin:0 !important;
+}
+/* Progress / downloads / pinned playbars must continue to render. */
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailsplaysection_StickyHeader"] {
+  padding:6px 12px !important;
+}
+
+/* Remove oversized whitespace around native Steam details sections.
+   Do not suppress notes, artwork, media, community, DLC or achievements. */
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailsoverview_ColumnContainer"] {
+  padding:10px clamp(12px,2vw,24px) !important;
+  gap:clamp(9px,1.4vw,17px) !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailssection_AppDetailsSectionContainer"] {
+  margin-top:6px !important;
+  margin-bottom:8px !important;
+  padding:8px 12px !important;
+  border:1px solid var(--glm-compact-line) !important;
+  border-radius:10px !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailssection_SectionHeader"] {
+  padding:6px 12px !important;
+  min-height:0 !important;
+  border-radius:9px !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailssection_SectionTab"] {
+  min-height:32px !important;
+  padding:5px 12px !important;
+  border-radius:999px !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailssection_SectionTab"]:is(.gpfocus,.gpfocuswithin,:focus-visible,[aria-selected="true"]) {
+  outline:2px solid #a4eaff !important;
+  outline-offset:0 !important;
+}
+/* Third-party HLTB plugin supplies real values and links; no hard-coded data. */
+:root[data-glm-compact-details="1"] .BasicUI
+  #hltb-for-deck :is(.hltb-info,.hltb-info-absolute) {
+  min-height:0 !important;
+  padding:4px 9px !important;
+  gap:6px !important;
+  border-radius:9px !important;
+  background:rgba(5,24,42,.92) !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  #hltb-for-deck .hltb-gametime {
+  line-height:1.2 !important;
+  font-size:clamp(12px,1.15vw,17px) !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  #hltb-for-deck .hltb-label {font-size:10px !important;}
+:root[data-glm-compact-details="1"] .BasicUI
+  #hltb-for-deck .hltb-details-btn {
+  min-height:30px !important;
+  padding:4px 12px !important;
+}
+/* Dense activity/news cards and input, preserving navigation and focus. */
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailsactivitysection_ActivityFeedContainer"] {
+  margin-top:4px !important;
+  padding:9px 12px !important;
+  border-radius:10px !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="appdetailscommunityfeed_CommunityItem"] {
+  margin:5px 0 !important;
+  padding:9px 12px !important;
+  border-radius:9px !important;
+}
+:root[data-glm-compact-details="1"] .BasicUI
+  [class*="posttextentry_PostTextEntryArea"] {
+  min-height:33px !important;
+  border-radius:8px !important;
+}
+/* On smaller Steam Deck-sized screens, never force a fixed-height play row. */
+@media (max-width:1050px),(max-height:690px) {
+  :root[data-glm-compact-details="1"] .BasicUI
+    [class*="sharedappdetailsheader_TopCapsule"] {
+    height:clamp(152px,25vh,205px) !important;
+  }
+  :root[data-glm-compact-details="1"][data-glm-compact-poster="1"] .BasicUI
+    [class*="sharedappdetailsheader_TopCapsule"]::after {
+    width:84px;height:125px;left:12px;bottom:10px;
+  }
+  :root[data-glm-compact-details="1"][data-glm-compact-poster="1"] .BasicUI
+    [class*="sharedappdetailsheader_TitleSection"] {
+    padding-left:108px !important;
+  }
+  :root[data-glm-compact-details="1"] .BasicUI
+    [class*="appdetailsplaysection_PlayBar"] {
+    padding:5px 8px !important;
+    min-height:55px !important;
+  }
+}
