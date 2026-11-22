@@ -8,6 +8,8 @@ import type {UnifiedLibraryGame} from "./unifiedLibraryGame";
 import {requestGogHltbTimes,requestProtonRating,type HltbReply,type ProtonRating} from "./metadataRequests";
 import {SystemStatusBar} from "./SystemStatusBar";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
+import {getGogSteamGridFallback} from "./GogArtwork";
+import {subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 
 const stop=(event:GamepadEvent)=>{
   event.preventDefault();
@@ -29,23 +31,31 @@ const hours=(value:number|null|undefined)=>
     value.toFixed(1)+" hours":"—";
 
 export function SharedLibraryDetails({
-  game,cover,onBack,backRef,actions,
+  game,cover,onBack,backRef,actions,gogAccountId="",
 }:{
   game:UnifiedLibraryGame;
   cover:ReactNode;
   onBack:()=>void;
   backRef?:Ref<HTMLDivElement>;
   actions?:ReactNode;
+  gogAccountId?:string;
 }){
   const [tab,setTab]=useState<DetailTab>("activity");
   const [hltb,setHltb]=useState<HltbReply|null>(null);
   const [proton,setProton]=useState<ProtonRating|null>(null);
+  const [nativeHeroFailed,setNativeHeroFailed]=useState(false);
+  const [remoteHero,setRemoteHero]=useState<string|null>(null);
+  const [remoteHeroFailed,setRemoteHeroFailed]=useState(false);
+  const [artworkRevision,setArtworkRevision]=useState(0);
   const statusRef=useRef<HTMLDivElement>(null);
   const internalBackRef=useRef<HTMLDivElement|null>(null);
   const store=STORE_LABELS[game.store];
   const status=game.availability==="installed"?"Installed":
     game.availability==="not-installed"?"Not installed":"Owned";
-  useEffect(()=>{setTab("activity");setHltb(null);setProton(null);},[game.key]);
+  useEffect(()=>{
+    setTab("activity");setHltb(null);setProton(null);
+    setNativeHeroFailed(false);setRemoteHero(null);setRemoteHeroFailed(false);
+  },[game.key]);
   useEffect(()=>{
     if(game.store!=="gog")return;
     let active=true;
@@ -64,13 +74,43 @@ export function SharedLibraryDetails({
   const hltbData=hltb?.status==="ok"?hltb.data:null;
   const tier=proton?.status==="ok"?proton.tier:null;
   const tierLabel=tier?tier.charAt(0).toUpperCase()+tier.slice(1):"Not rated";
-  const hero=typeof game.hero==="string"&&game.hero.startsWith("https://")?game.hero:null;
+  // Prefer the original GOG background. Only query SteamGridDB for the
+  // *opened* GOG title if its native hero is absent or fails to load.
+  // Reuse the same account-verified, rate-limited backend/cache as GOG covers.
+  const nativeHero=typeof game.hero==="string"&&game.hero.startsWith("https://")?
+    game.hero:null;
+  const hero=nativeHero&&!nativeHeroFailed?nativeHero:
+    !remoteHeroFailed?remoteHero:null;
+  useEffect(()=>subscribeArtworkSettingsChanged(()=>{
+    setRemoteHero(null);
+    setRemoteHeroFailed(false);
+    setArtworkRevision(n=>n+1);
+  }),[game.key]);
+  useEffect(()=>{
+    if(game.store!=="gog"||!gogAccountId||
+       (nativeHero&&!nativeHeroFailed)||remoteHero||remoteHeroFailed)return;
+    let active=true;
+    const timer=window.setTimeout(()=>{
+      void getGogSteamGridFallback(gogAccountId,{
+        id:game.storeId,title:game.title
+      }).then(reply=>{
+        if(active&&typeof reply.hero==="string"&&
+           reply.hero.startsWith("https://"))setRemoteHero(reply.hero);
+      }).catch(()=>{});
+    },140);
+    return ()=>{active=false;window.clearTimeout(timer);};
+  },[game.store,game.storeId,game.title,game.key,gogAccountId,
+     nativeHero,nativeHeroFailed,remoteHero,remoteHeroFailed,artworkRevision]);
 
   return <section className="gl-game-details gl-gog-steam-details gl-unified-details"
       aria-label={game.title+" details"}>
     <div className="gl-details-scroller">
       <div className="gl-details-hero" aria-hidden="true">
-        {hero&&<img className="gl-hero" src={hero} alt=""/>}
+        {hero&&<img className="gl-hero" src={hero} alt=""
+          onError={()=>{
+            if(hero===nativeHero)setNativeHeroFailed(true);
+            else setRemoteHeroFailed(true);
+          }}/>} 
         <div className="gl-details-hero-shade"/>
       </div>
       <header className="gl-details-top">
