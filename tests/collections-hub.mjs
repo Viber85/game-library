@@ -112,7 +112,9 @@ test("Game Details native B return retains collection location in memory",()=>{
   assert.equal(readCollectionLocation().section,"home");
   const details=read("src/detailsReturn.ts");
   assert.match(details,/route===COLLECTIONS_ROUTE/);
-  assert.match(dashboard,/rememberDetailsOrigin\(\{\s*route:COLLECTIONS_ROUTE/);
+  assert.match(dashboard,/onOpenGame=\{game=>openGameDetails\(game\)\}/);
+  assert.match(dashboard,/const openNativeGameDetails=\(game:LibraryGame\)=>\{\s*rememberGameDetails\(game\)/);
+  assert.match(dashboard,/rememberDetailsOrigin\(\{\s*route:actualRoute/);
   assert.match(dashboard,/onOpenGame=\{game=>\{/);
   assert.match(dashboard,/if\(collectionsMode\|\|viewAll\|\|!detailsReturn/);
 });
