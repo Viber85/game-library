@@ -9,7 +9,7 @@ import {
 } from "react-icons/md";
 import type { IconType } from "react-icons";
 import {
-  getLibraryGames, getUnifideckCollectionIds, hasLibraryStore, lastPlayedLabel,
+  getActiveUserId, getLibraryGames, getUnifideckCollectionIds, hasLibraryStore, lastPlayedLabel,
   LibraryGame, openDetails, play, gameActionLabel, playtimeLabel, posterCandidates,
 } from "./steam";
 import { DASHBOARD_CSS } from "./theme";
@@ -31,7 +31,13 @@ import {DEFAULT_LIBRARY_TABS,createLibraryTabResolver,gamesForLibraryTab,
   visibleLibraryTabs,type LibraryTab} from "./libraryTabs";
 import {TabManager} from "./TabManager";
 import {PluginSettingsPage} from "./PluginSettingsPage";
-import {GogLibraryPage} from "./GogLibraryPage";
+import {GogDashboardCard} from "./GogDashboardCard";
+import {GogArtwork} from "./GogArtwork";
+import {SharedLibraryDetails} from "./SharedLibraryDetails";
+import {useGogDashboardCatalog} from "./useGogDashboardCatalog";
+import {combineDashboardEntries,combineSearchEntries,searchGogEntries,
+  type DashboardEntry} from "./dashboardCatalog";
+import {fromGogLibraryGame} from "./unifiedLibraryGame";
 import {SharedLibraryGrid,SharedLibraryCardFace} from "./SharedLibraryGrid";
 import {useNativeMenuGamepad} from "./nativeMenuGamepad";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
@@ -187,6 +193,12 @@ export function Dashboard({initialMode="home",originRoute}:
   },[actualRoute,detailsReturn]);
   const restorePending=useRef(detailsReturn);
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
+  const gogAccountId=getActiveUserId();
+  const gogCatalogEnabled=initialMode==="home"||initialMode==="library"||searchMode;
+  const {games:gogGames,status:gogStatus}=useGogDashboardCatalog(gogAccountId,gogCatalogEnabled);
+  const [gogDetailsId,setGogDetailsId]=useState<string|null>(null);
+  const [selectedGogId,setSelectedGogId]=useState<string|null>(null);
+  const gogDetailBackRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
     if(initialMode!=="library")return;
     // One local cached-bulk call only; never hit the Steam Store for each
@@ -275,8 +287,9 @@ export function Dashboard({initialMode="home",originRoute}:
   }, []);
   const tabs=useMemo(()=>{
     const own=visibleLibraryTabs(tabInfo.tabs.length?tabInfo.tabs:DEFAULT_LIBRARY_TABS);
-    // GOG stays independent of Steam AppIDs and saved Smart/Manual tab data.
-    return initialMode==="library"?[...own,GOG_TAB]:own;
+    // Provider tab is part of the same Dashboard grid, not its own route.
+    return initialMode==="library"&&!own.some(tab=>tab.id==="GOG")?
+      [...own,GOG_TAB]:own;
   },[tabInfo.tabs,initialMode]);
   tabsForRefresh.current=tabs;
   const tabIds = tabs.map(t=>t.id).join("|");
@@ -307,9 +320,12 @@ export function Dashboard({initialMode="home",originRoute}:
     const resolve=createLibraryTabResolver();
     return new Map(tabs.map(t => {
     const result = t.id==="GOG"?null:resolve(t, games);
-    return [t.id, result?.supported ? result.games.length : null] as const;
+    const count=t.id==="GOG"?gogGames.length:
+      (result?.supported?result.games.length+
+        (t.id==="AllGames"?gogGames.length:0):null);
+    return [t.id,count] as const;
   }));
-  }, [tabs, games, membershipRevision]);
+  }, [tabs, games, gogGames, membershipRevision]);
   // Search is global; the currently selected Library tab does not
   // exclude Steam or Unifideck games from the searchable inventory.
   const searchMembership=useMemo(()=>searchMode?{
@@ -325,6 +341,20 @@ export function Dashboard({initialMode="home",originRoute}:
     gamesForLibraryTab(tab,games),[searchMode,searchResults,tab,games,membershipRevision]);
   const shown=useMemo(()=>sortGames(tabResult.games,sort,getSortData()),
     [tabResult.games,sort,metaRevision]);
+  // Same Dashboard grid for Steam, GOG and search. Native Steam sort metadata
+  // remains authoritative; GOG has no invented installation/playtime fields.
+  const gridShown=useMemo(()=>{
+    if(searchMode){
+      const owned=searchGogEntries(gogGames,searchSelection.query,
+        searchSelection.source,searchSelection.installed);
+      return combineSearchEntries(shown,owned,sort);
+    }
+    return combineDashboardEntries(shown,gogGames,tab.id,sort);
+  },[shown,gogGames,tab.id,sort,searchMode,searchSelection]);
+  const detailGog=gogDetailsId?
+    gogGames.find(game=>game.id===gogDetailsId):undefined;
+  const selectedGridKey=selectedGogId!==null?"gog:"+selectedGogId:
+    selectedId!==undefined?"steam:"+String(selectedId>>>0):undefined;
   const metaProgress=sortKind?
     sortMetadataProgress(sortKind,tabResult.games):null;
   // Native Steam refreshes its overviews every 15s. A fresh array with the
@@ -351,8 +381,8 @@ export function Dashboard({initialMode="home",originRoute}:
   },[sortKind,tab.id,metadataQueryIds,tabResult.supported]);
   const selected = shown.find((g) => g.id === selectedId) ?? shown[0];
   const previewGames = shown.slice(0,INITIAL_GAME_COUNT);
-  const visibleGridGames = useMemo(()=>shown.slice(0,gridLimit),
-    [shown,gridLimit]);
+  const visibleGridGames = useMemo(()=>gridShown.slice(0,gridLimit),
+    [gridShown,gridLimit]);
   /** Save the real origin before handing over to native Steam details. */
   const rememberGameDetails=(game:LibraryGame)=>{
     const focusedIndex=shown.findIndex(entry=>entry.id===game.id);
