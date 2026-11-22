@@ -520,14 +520,9 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
     }
     rememberGameDetails(game);
     try{
-      if(kind==="hltb"){
-        // ExternalWeb uses Steam's external-site navigator. SteamWeb here
-        // unexpectedly replayed the previous controllerconfigurator history.
-        Navigation.NavigateToExternalWeb(url);
-      }else{
-        // Mirrors Steam's own "Store Page" action and uses its store client.
-        Navigation.NavigateToSteamWeb(url);
-      }
+      // Both links now use HTTPS and ExternalWeb. Keep this legacy path in
+      // sync with the dedicated Game Details route for the Store experiment.
+      Navigation.NavigateToExternalWeb(url);
     }catch(error){
       clearControllerSettingsReturn(game.id);
       clearDetailsOrigin();
