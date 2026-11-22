@@ -26,7 +26,7 @@ const label=(tab:LibraryTab)=>tab.kind==="custom"?
   tab.mode==="manual"?"Manual · "+(tab.members?.length??0)+" games":
   "Smart · "+smartRulesForTab(tab).length+" rules · "+
     (tab.ruleJoin==="any"?"OR":"AND"):
-  tab.kind==="all"?"All games":tab.kind;
+  tab.kind==="all"?"All games":tab.kind==="gog"?"GOG · Owned library":tab.kind;
 export function TabManager({tabs,games,firstRef,onFocusRail,onClose}:Props){
   const [items,setItems]=useState(()=>normalizeLibraryTabs(tabs));
   const [selectedId,setSelectedId]=useState(tabs[0]?.id??"AllGames");
