@@ -25,6 +25,9 @@ export type ThemeProbe={
   compactCssLoaded:boolean;
   compactStyleActive:boolean;
   compactPosterShown:boolean;
+  libraryUIVisible:boolean;
+  nativeHeaderCount:number;
+  nativePlayBarCount:number;
   fieldColor:string;
   rootColor:string;
   sampleClasses:string[];
@@ -140,6 +143,9 @@ export const THEME_PROBE_SCRIPT=`(() => {
     compactStyleActive: getComputedStyle(document.documentElement)
       .getPropertyValue('--glm-compact-details-effective').trim()==='1',
     compactPosterShown: document.documentElement?.hasAttribute?.('data-glm-compact-poster')===true,
+    libraryUIVisible:count('.gl-root')>0,
+    nativeHeaderCount:count('[class*="sharedappdetailsheader_TopCapsule"]'),
+    nativePlayBarCount:count('[class*="appdetailsplaysection_PlayBar"]'),
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
     rootColor: getComputedStyle(surface).backgroundColor,
     sampleClasses: Array.from(classNames),
@@ -176,6 +182,9 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     compactCssLoaded:obj.compactCssLoaded===true,
     compactStyleActive:obj.compactStyleActive===true,
     compactPosterShown:obj.compactPosterShown===true,
+    libraryUIVisible:obj.libraryUIVisible===true,
+    nativeHeaderCount:integer(obj.nativeHeaderCount),
+    nativePlayBarCount:integer(obj.nativePlayBarCount),
     fieldColor:typeof obj.fieldColor==="string"?obj.fieldColor.slice(0,60):"",
     rootColor:typeof obj.rootColor==="string"?obj.rootColor.slice(0,60):"",
     routeKind:obj.routeKind==="settings"?"settings":obj.routeKind==="game"?"game":"other",
@@ -249,7 +258,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "20";
+const AUDIT_REVISION = "21";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
