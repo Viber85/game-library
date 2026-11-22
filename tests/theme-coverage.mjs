@@ -35,7 +35,7 @@ function assertBalancedCss(source) {
 
 test("full Midnight theme CSS is syntactically balanced",()=>{
   for(const name of ["shared.css","settings.css","settings-extras.css",
-    "game-details.css","game-details-extras.css","game-details-midnight.css","buttons.css",
+    "game-details.css","game-details-extras.css","game-details-midnight.css","game-details-compact.css","buttons.css",
     "downloads.css","dialogs.css","qam.css","menus.css",
     "running-menu.css","steam-input.css","volume.css","power-menu.css",
     "settings-focus.css","settings-special.css","decky-settings.css","settings-gamepad-focus.css"])
