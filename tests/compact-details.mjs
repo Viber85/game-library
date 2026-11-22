@@ -3,6 +3,7 @@ import test from "node:test";
 import vm from "node:vm";
 import {readFileSync} from "node:fs";
 import {expandThemeClassAliases} from "../src/themeClassAliases.ts";
+import {nativeCompactHintsFromCss,compactHintsInjection} from "../src/compactDetailsAnchors.ts";
 import {
   COMPACT_DETAILS_INSTALL_SCRIPT,COMPACT_DETAILS_REMOVE_SCRIPT,
 } from "../src/compactDetailsDom.ts";
@@ -39,6 +40,7 @@ function fakeSteamCEF(){
   const document={
     documentElement:root,
     querySelectorAll:()=>heroAssets,
+    querySelector:()=>null,
   };
   const ctx={document,window,Image:MockImage,getComputedStyle:()=>({
     getPropertyValue:key=>key==="--glm-compact-details-effective"&&styleState.active?"1":"",
@@ -106,9 +108,9 @@ test("Repeated injection upgrades the old observer and starts one new timer",()=
   vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
   assert.equal(fake.timers.size,1);
   assert.equal(fake.images.length,one);
-  assert.ok(fake.ctx.window.__gameLibraryCompactDetails12);
+  assert.ok(fake.ctx.window.__gameLibraryCompactDetails14);
   vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
-  assert.equal(fake.ctx.window.__gameLibraryCompactDetails12,undefined);
+  assert.equal(fake.ctx.window.__gameLibraryCompactDetails14,undefined);
 });
 
 test("CSS activates by Steam's actual game DOM instead of hidden pathname",()=>{
@@ -116,6 +118,7 @@ test("CSS activates by Steam's actual game DOM instead of hidden pathname",()=>{
     const selector=rule[1].trim();
     assert.ok(selector.includes(':root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"])') ||
       selector.includes(':root .BasicUI [class*="appdetailsplaysection_PlayBar"]') ||
+      selector.includes('[data-glm-native-compact-') ||
       selector.startsWith("@media"),
       "Unscoped compact selector: "+selector.slice(0,110));
     assert.doesNotMatch(rule[2],/\bdisplay:\s*none|\bvisibility:\s*hidden/,
@@ -157,11 +160,83 @@ test("Native diagnostics verify that CSS is loaded AND really matches",()=>{
   assert.match(probe,/compactCssLoaded/);
   assert.match(probe,/compactStyleActive/);
   assert.match(runtime,/compactStyleActive:inspected.compactStyleActive/);
-  assert.match(panel,/Compact CSS matching native game/);
+  assert.match(panel,/Native Steam hero/);
   assert.match(controller,/selectCompactDetails/);
   assert.match(backend,/async def set_compact_details\(self, enabled: bool\)/);
   assert.match(backend,/settings\.get\("compact_details", False\) is True/);
-  assert.match(runtime,/syncCompactDetailsDom\(title,compactDetails\)/);
+  assert.match(runtime,/syncCompactDetailsDom\(title,compactDetails,css\)/);
   assert.match(runtime,/await bounded\(injectCssIntoTab\(title,css\)/);
   assert.match(runtime,/await bounded\(removeCssFromTab\(title,previous\.cssId\)/);
+});
+
+test("Webpack semantic classes map to safe exact native hero/playbar selectors",()=>{
+  const source='[class*="sharedappdetailsheader_TopCapsule"] {} '+
+    '[class*="appdetailsplaysection_PlayBar"] {} '+
+    '[class*="sharedappdetailsheader_TitleSection"] {} '+
+    '[class*="appdetailssection_SectionHeader"] {}';
+  const compiled=expandThemeClassAliases(source,{
+    sharedappdetailsheader:{TopCapsule:"_nativeHeroX",TitleSection:"_nativeTitleX"},
+    appdetailsplaysection:{PlayBar:"_nativeBarX"},
+    appdetailssection:{SectionHeader:"_nativeSectionsX"},
+  });
+  const hints=nativeCompactHintsFromCss(compiled);
+  assert.deepEqual(hints,{hero:"_nativeHeroX",playbar:"_nativeBarX",
+    title:"_nativeTitleX",sections:"_nativeSectionsX"});
+  assert.match(compactHintsInjection(hints),/window\.__gameLibraryNativeCompactHints14=/);
+  assert.equal(nativeCompactHintsFromCss(source).hero,"");
+});
+
+test("Native elements are tagged directly, measured and fully restored",()=>{
+  const fake=fakeSteamCEF();
+  const makeNode=(height)=>{
+    const attributes=new Map();
+    return {
+      getBoundingClientRect:()=>({height}),
+      hasAttribute:key=>attributes.has(key),
+      setAttribute:(key,value)=>attributes.set(key,String(value)),
+      removeAttribute:key=>attributes.delete(key),
+    };
+  };
+  const hero=makeNode(190),play=makeNode(58),title=makeNode(100);
+  const lookup={
+    '[class~="_nativeHeroX"]':hero,
+    '[class~="_nativeBarX"]':play,
+    '[class~="_nativeTitleX"]':title,
+  };
+  fake.ctx.document.querySelector=selector=>lookup[selector]||null;
+  fake.ctx.getComputedStyle=(node)=>({
+    getPropertyValue:key=>{
+      if(key==="--glm-compact-details-effective")return "1";
+      if(key==="--glm-compact-hero-applied")
+        return node===hero&&hero.hasAttribute("data-glm-native-compact-hero")?"1":"";
+      if(key==="--glm-compact-playbar-applied")
+        return node===play&&play.hasAttribute("data-glm-native-compact-playbar")?"1":"";
+      return "";
+    },
+  });
+  const hints={hero:"_nativeHeroX",playbar:"_nativeBarX",
+    title:"_nativeTitleX",sections:""};
+  vm.runInNewContext(compactHintsInjection(hints)+COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  const native=fake.ctx.window.__gameLibraryCompactDetails14.native;
+  assert.equal(native.hero,true);
+  assert.equal(native.playbar,true);
+  assert.equal(native.heroStyle,true);
+  assert.equal(native.playStyle,true);
+  assert.equal(native.heroHeight,190);
+  assert.equal(native.playHeight,58);
+  assert.equal(native.aliases,3);
+  assert.equal(hero.hasAttribute("data-glm-native-compact-hero"),true);
+  vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+  assert.equal(hero.hasAttribute("data-glm-native-compact-hero"),false);
+  assert.equal(play.hasAttribute("data-glm-native-compact-playbar"),false);
+});
+
+test("Root-matched CSS is not treated as proof that native elements changed",()=>{
+  const probe=read("src/themeProbe.ts");
+  const runtime=read("src/builtinThemeRuntime.ts");
+  assert.match(probe,/latestNativeCompact/);
+  assert.match(probe,/nativeCompactHeroStyled/);
+  assert.match(probe,/nativeCompactPlayBarStyled/);
+  assert.match(runtime,/nativeStyledRecently/);
+  assert.match(runtime,/nativeHeroHeight:nativeRead.nativeCompactHeroHeight/);
 });
