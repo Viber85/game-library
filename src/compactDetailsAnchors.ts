@@ -5,10 +5,12 @@
  * compiler; it is safely passed to the Steam CEF observation script.
  * If a module isn't loaded, fall back to the readable semantic token.
  */
-export type NativeCompactAnchor="hero"|"playbar"|"title"|"sections";
+export type NativeCompactAnchor="hero"|"playbar"|"playsection"|"playbutton"|"title"|"sections";
 const names:Record<NativeCompactAnchor,string>={
   hero:"sharedappdetailsheader_TopCapsule",
   playbar:"appdetailsplaysection_PlayBar",
+  playsection:"basicappdetailssectionstyler_PlaySection",
+  playbutton:"appactionbutton_PlayButtonContainer",
   title:"sharedappdetailsheader_TitleSection",
   sections:"appdetailssection_SectionHeader",
 };
