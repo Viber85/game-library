@@ -87,6 +87,50 @@ test("cancel without Pause API can still remove a queued transfer",async()=>{
   assert.deepEqual(calls,[[730,"0"]]);
 });
 
+test("a never-resolving Steam Promise cannot trap Cancel in Working",async()=>{
+  const calls=[];
+  const never=new Promise(()=>{});
+  const downloads={
+    PauseAppUpdate:()=>{calls.push("pause");return never;},
+    RemoveFromDownloadList:()=>{calls.push("remove");return never;}
+  };
+  const installs={
+    OpenUninstallWizard:()=>{calls.push("uninstall");return never;}
+  };
+  const started=Date.now();
+  const result=await nativeDownloadAction("cancel",730,false,
+    "initial",downloads,installs,35);
+  assert.deepEqual(result,{ok:true,uninstallRequested:true});
+  assert.deepEqual(calls,["pause","remove","uninstall"]);
+  assert.ok(Date.now()-started<900,"Steam RPCs must have a bounded acknowledgement wait");
+});
+
+test("a rejected async remove command cannot trigger uninstallation",async()=>{
+  let uninstalls=0;
+  const downloads={
+    PauseAppUpdate:()=>Promise.resolve(),
+    RemoveFromDownloadList:()=>Promise.reject(new Error("Steam remove rejected"))
+  };
+  const installs={OpenUninstallWizard:()=>{uninstalls++;}};
+  const result=await nativeDownloadAction("cancel",730,false,"initial",downloads,installs,35);
+  assert.deepEqual(result,{ok:false,uninstallRequested:false,reason:"failed"});
+  assert.equal(uninstalls,0);
+});
+
+test("the UI does not await the slow Proton cleanup inside the busy state",()=>{
+  const src=read("src/SteamGameDetails.tsx");
+  const cancelStart=src.indexOf("  const cancelDownload=async(");
+  const cancelEnd=src.indexOf("  const confirmCancelDownload=()=>",cancelStart);
+  const body=src.slice(cancelStart,cancelEnd);
+  assert.ok(cancelStart>=0&&cancelEnd>cancelStart);
+  assert.match(src,/const inspectPrefixCleanup=\(appid:number\)=>\{/);
+  assert.match(src,/withRequestTimeout\(cleanupCancelledSteamGame\(appid\),38000\)/);
+  assert.match(body,/if\(result\.uninstallRequested\)inspectPrefixCleanup\(game\.id\)/);
+  assert.doesNotMatch(body,/await cleanupCancelledSteamGame/);
+  assert.match(body,/finally\{\s*busyRef\.current=false;\s*setDownloadBusy\(false\)/);
+  assert.match(src,/downloadBusy\?"Sending\.\.\."\:cancelRequested\?"Cancel requested"/);
+});
+
 test("invalid IDs, shortcuts or unavailable APIs never start deletion",async()=>{
   let calls=0;
   const downloads={
