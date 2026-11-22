@@ -1,6 +1,6 @@
 """One-time, LAN-only phone handoff for Game Library's own GOG account.
 
-No remote relay, no Unifideck dependency and no password handling. A phone on
+No remote relay, no external plugin dependency and no password handling. A phone on
 the same trusted Wi-Fi opens a local form, signs into GOG in a normal browser,
 then pastes the resulting one-use GOG success URL into that local form. The
 only credential forwarded to the handheld is GOG's short-lived OAuth code.
