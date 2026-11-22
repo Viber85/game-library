@@ -69,9 +69,10 @@ test("Game Details Install opens native wizard and retains same Game Details pag
   assert.match(details,/import \{openSteamInstallWizard\} from "\.\/steamInstallWizard"/);
   const action=details.slice(details.indexOf("const action=()=>{"),
     details.indexOf("const showCommunity="));
-  assert.match(action,/if\(installState\)\{\s*play\(\{\.\.\.game,installed:true\}\)/);
+  assert.match(action,/if\(installMode==="play"\)\{\s*play\(\{\.\.\.game,installed:true\}\)/);
+  assert.match(action,/if\(installMode==="transfer"\)\{/);
   assert.match(action,/const result=openSteamInstallWizard\(game\.id,game\.nonSteam\)/);
-  assert.match(action,/if\(result\.opened\)return;/);
+  assert.match(action,/if\(result\.opened\)\{setWizardPending\(true\);return;\}/);
   assert.match(action,/toaster\.toast\(\{title:"Install unavailable"/);
   assert.doesNotMatch(action,/onNativeDetails\(\)|openDetails\(|Navigation\.Navigate/);
   assert.match(details,/onActivate=\{action\}/);
