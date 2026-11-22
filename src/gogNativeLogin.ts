@@ -62,7 +62,7 @@ const setState=(value:GogLoginState)=>{
 export const getGogLoginState=()=>state;
 export const subscribeGogLogin=(fn:(value:GogLoginState)=>void)=>{
   listeners.add(fn);
-  return ()=>listeners.delete(fn);
+  return ()=>{listeners.delete(fn);};
 };
 export function markGogReturn(){returnToGogSettings=true;}
 export function consumeGogReturn(){
