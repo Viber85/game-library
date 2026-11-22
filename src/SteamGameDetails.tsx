@@ -186,12 +186,15 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   // never leave the UI stuck if the user cancels Steam's install dialog.
   useEffect(()=>{
     if(!wizardPending)return;
-    if(nativeDownload.transfer||nativeDownload.displayStatus===11){
+    if(nativeDownload.transfer||nativeDownload.displayStatus===9){
       setWizardPending(false);
       return;
     }
-    const timeout=window.setTimeout(()=>setWizardPending(false),15000);
-    return ()=>window.clearTimeout(timeout);
+    // A ReadyToLaunch flag alone is not enough: Steam often marks an app
+    // installed while its download is still starting. Never show Play only
+    // because a timer has elapsed without finding a download item.
+    return;
+
   },[wizardPending,nativeDownload.transfer,nativeDownload.displayStatus]);
 
   const focusId=(id:string)=>focusRefs.current[id]?.focus();
@@ -389,7 +392,9 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
               </div>
             </div>}
           {installMode==="preparing"&&
-            <div className="gl-details-install-help">Steam is preparing the download queue...</div>}
+            <div className="gl-details-install-help">
+              Checking Steam download status. If progress does not appear, open Game Info for diagnostics.
+            </div>}
           {installMode==="install"&&
             <div className="gl-details-install-help">Install opens Steam's drive selection and confirmation dialog.</div>}
         </div>
@@ -447,12 +452,27 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
           <h2>Game Info</h2>
           <div className="gl-details-info-grid">
             <div><small>STORE</small><strong>{game.nonSteam?"Non-Steam shortcut":"Steam"}</strong></div>
-            <div><small>STATUS</small><strong>{installState?"Installed":"Not installed"}</strong></div>
+            <div><small>STATUS</small><strong>{installMode==="transfer"&&nativeDownload.transfer?
+              transferLabel(nativeDownload.transfer):
+              installMode==="preparing"?"Checking download":
+              installMode==="play"?"Ready to play":"Not installed"}</strong></div>
             <div><small>LAST PLAYED</small><strong>{lastPlayedLabel(lastPlayed)}</strong></div>
             <div><small>PLAYTIME</small><strong>{playtimeLabel(playtime)}</strong></div>
             {game.releaseDate!==undefined&&game.releaseDate>0&&
               <div><small>RELEASE YEAR</small><strong>{new Date(game.releaseDate*1000).getFullYear()}</strong></div>}
           </div>
+          {!game.nonSteam&&
+            <div className="gl-details-download-diagnostics" aria-label="Steam download diagnostics">
+              Steam AppID: {game.id} · Status: {nativeDownload.displayStatus??"unknown"}
+              {" · "}Installed: {nativeDownload.installed===null?"unknown":String(nativeDownload.installed)}
+              {" · "}Queue event: {nativeDownload.debug.items?"yes":"no"}
+              {" · "}Progress event: {nativeDownload.debug.overview?"yes":"no"}
+              {" · "}Native store: {nativeDownload.debug.store?"found":"missing"}
+              {" · "}Local queue item: {nativeDownload.debug.queue?"found":"missing"}
+              {" · "}Transfer: {nativeDownload.transfer?
+                transferLabel(nativeDownload.transfer)+" "+
+                (nativeDownload.transfer.percent===null?"unknown %":nativeDownload.transfer.percent+"%"):"not detected"}
+            </div>}
         </>}
       </div>
       <footer className="gl-details-footer">A Select · B Back · D-pad / Left stick Navigate · Steam controls remain available</footer>
