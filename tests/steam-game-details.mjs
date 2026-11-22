@@ -86,23 +86,23 @@ test("activity/community never fabricate posts or installation state",()=>{
 
 test("Library uses native Steam focus bridge while custom Details is visible, never hidden grid",()=>{
   const menu=read("src/nativeMenuGamepad.ts");
-  assert.match(menu,/details:"\\.gl-game-details \\.gl-details-focus"/);
-  assert.match(dashboard,/useNativeMenuGamepad\\(steamDetailsGame\\?"details":nativeMenuKind,nativeMenuRoot\\)/);
-  assert.match(source,/onActivate=\\{onBack\\}/);
+  assert.match(menu,/details:"\.gl-game-details \.gl-details-focus"/);
+  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\?"details":nativeMenuKind,nativeMenuRoot\)/);
+  assert.match(source,/onActivate=\{onBack\}/);
   assert.match(source,/onCancelButton:onBack/);
-  assert.doesNotMatch(source,/focusSpatially\\(/);
+  assert.doesNotMatch(source,/focusSpatially\(/);
 });
 
 test("Details return keeps same Library/Collections/Home route, game, scroll and original action",()=>{
   assert.match(dashboard,/steamReturnTarget=useRef/);
-  assert.match(dashboard,/scrollTop:fullGridScrollRef\\.current\\?\\.scrollTop\\?\\?0/);
-  assert.match(dashboard,/kind:collectionsMode\\?"collections":viewAll\\|\\|searchMode\\?"grid"/);
-  assert.match(dashboard,/clickedHomeDetails\\?"home-action":"home-card"/);
-  assert.match(dashboard,/setSteamDetailsGame\\(null\\)/);
-  assert.match(dashboard,/fullGridScrollRef\\.current\\.scrollTop=snapshot\\.scrollTop/);
-  assert.match(dashboard,/focusNativeMenuControl\\(target,GamepadButton\\.DIR_DOWN\\)/);
-  assert.match(dashboard,/if\\(snapshot\\.kind==="collections"\\)/);
-  assert.match(dashboard,/if\\(\\+\\+attempts>10\\)/);
+  assert.match(dashboard,/scrollTop:fullGridScrollRef\.current\?\.scrollTop\?\?0/);
+  assert.match(dashboard,/kind:collectionsMode\?"collections":viewAll\|\|searchMode\?"grid"/);
+  assert.match(dashboard,/clickedHomeDetails\?"home-action":"home-card"/);
+  assert.match(dashboard,/setSteamDetailsGame\(null\)/);
+  assert.match(dashboard,/fullGridScrollRef\.current\.scrollTop=snapshot\.scrollTop/);
+  assert.match(dashboard,/focusNativeMenuControl\(target,GamepadButton\.DIR_DOWN\)/);
+  assert.match(dashboard,/if\(snapshot\.kind==="collections"\)/);
+  assert.match(dashboard,/if\(\+\+attempts>10\)/);
 });
 
 test("controller icon invokes direct Steam Input configurator, not original game Settings",()=>{
@@ -110,6 +110,8 @@ test("controller icon invokes direct Steam Input configurator, not original game
   const adapter=read("src/steamControllerEditor.ts");
   assert.match(core,/ShowControllerConfigurator/);
   assert.match(adapter,/executeInTab/);
-  assert.match(source,/openSteamControllerEditor\\(game\\.id\\)/);
-  assert.doesNotMatch(source,/const openController=[\\s\\S]*?onNativeDetails\\(\\);/);
+  assert.match(source,/openSteamControllerEditor\(game\.id\)/);
+  const controllerAction=source.slice(source.indexOf("const openController="),
+    source.indexOf("const action=",source.indexOf("const openController=")));
+  assert.doesNotMatch(controllerAction,/onNativeDetails\(\)/);
 });
