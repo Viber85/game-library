@@ -22,6 +22,7 @@ import {type FocusDirection} from "./spatialFocus";
 import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
+import {showNativeSteamUninstallDialog} from "./nativeSteamUninstallDialog";
 import {toaster,callable} from "@decky/api";
 import {openSteamInstallWizard} from "./steamInstallWizard";
 import {useSteamGameDownload} from "./useSteamGameDownload";
@@ -405,15 +406,30 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   };
   const confirmCancelDownload=()=>{
     if(downloadBusy||busyRef.current||cancelRequestedRef.current||!nativeDownload.transfer)return;
-    const initial=nativeDownload.downloadNature==="initial";
+    if(nativeDownload.downloadNature==="initial"){
+      // Directly present the *identical* Steam Uninstall modal shown by
+      // Library > Manage > Uninstall. Its own Cancel does nothing and its
+      // Uninstall button calls SteamClient.Installs.OpenUninstallWizard
+      // after Steam has obtained the user's confirmation.
+      const ownerWindow=rootRef.current?.ownerDocument.defaultView??window;
+      if(showNativeSteamUninstallDialog(game.id,ownerWindow)){
+        cancelRequestedRef.current=true;
+        setCancelRequested(true);
+        setAwaitingSteamUninstall(true);
+        setCancelFeedback(null);
+      }else{
+        // Some Steam updates may change the private modal export. In that
+        // case offer Steam's real context menu, never silently uninstall.
+        setCancelFeedback("Steam's Uninstall confirmation could not be opened directly. Use the original Steam options button below.");
+      }
+      return;
+    }
+    // Existing game updates never trigger game uninstall.
     showModal(<ConfirmModal
-      strTitle={initial?"Cancel and uninstall this game?":"Remove Steam download from queue?"}
-      strDescription={initial?
-        "This uses Steam's actual Uninstall command, as in its Library menu. It removes the unfinished game. The game's Proton prefix may contain local saves and will be cleaned only after Steam confirms removal. Continue?":
-        "This game is installed or the download type is unknown. Only its pending transfer is removed; the existing game, Proton prefix and local saves are kept."}
-      strOKButtonText={initial?"Uninstall game":"Remove from queue"}
+      strTitle="Remove Steam download from queue?"
+      strDescription="This is an installed game or an unverified download type. Only its transfer is removed from the queue; existing content, Proton prefix and saved games remain untouched."
+      strOKButtonText="Remove from queue"
       strCancelButtonText="Keep downloading"
-      bDestructiveWarning={initial}
       onOK={()=>{void cancelDownload(nativeDownload.downloadNature);}}
     />);
   };
@@ -556,7 +572,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   <Focusable {...onAction("download-cancel")}
                       className="gl-details-focus gl-details-download-control gl-details-download-cancel"
                       onOKActionDescription={nativeDownload.downloadNature==="initial"?
-                        "Open native Steam Uninstall confirmation":"Remove update from Steam download queue"}
+                        "Open Steam's original Uninstall confirmation dialog":"Remove update from Steam download queue"}
                       onActivate={confirmCancelDownload}>
                     <MdDeleteOutline/><span>{downloadBusy?"Sending...":cancelRequested?"Cancel requested":"Cancel download"}</span>
                   </Focusable>
