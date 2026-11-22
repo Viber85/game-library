@@ -115,12 +115,16 @@ test("CSS activates by Steam's actual game DOM instead of hidden pathname",()=>{
   for(const rule of clean.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
     const selector=rule[1].trim();
     assert.ok(selector.includes(':root:has(.BasicUI [class*="sharedappdetailsheader_TopCapsule"])') ||
+      selector.includes(':root .BasicUI [class*="appdetailsplaysection_PlayBar"]') ||
       selector.startsWith("@media"),
       "Unscoped compact selector: "+selector.slice(0,110));
     assert.doesNotMatch(rule[2],/\bdisplay:\s*none|\bvisibility:\s*hidden/,
       "Compact layout must not hide native Steam buttons or content");
   }
   assert.match(clean,/--glm-compact-details-effective:1/);
+  assert.doesNotMatch(clean,/:root:has\([^\{]+\):has\(/,
+    "Native header alone must activate Compact; PlayBar loads lazily");
+  assert.match(clean,/:root \.BasicUI \[class\*="appdetailsplaysection_PlayBar"\]/);
   assert.match(clean,/content:"COMPACT · TEST"/);
   assert.doesNotMatch(clean,/\bSteamClient\b|#[Gg]amepadUI_Full_Root/);
   assert.match(clean,/appdetailsplaysection_PlayBar/);
