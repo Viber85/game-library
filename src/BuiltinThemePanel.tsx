@@ -4,7 +4,7 @@ import {
   subscribeThemeStatus, themeRuntimeStatus, runThemeDiagnostics,
   type ThemeDiagnostics, type ThemeStatus,
 } from "./builtinThemeRuntime";
-import { selectBuiltinTheme } from "./themeController";
+import { selectBuiltinTheme,selectCompactDetails } from "./themeController";
 
 /** Future themes will be added to the built-in theme registry, not CSS Loader. */
 export function BuiltinThemePanel(){
@@ -23,6 +23,13 @@ export function BuiltinThemePanel(){
       .catch(e=>setError("Unable to change system theme: "+String(e)))
       .finally(()=>setBusy(false));
   };
+  const changeCompact=(next:boolean)=>{
+    if(busy||current.selected!=="midnight")return;
+    setError("");setDiagnostics(null);setBusy(true);
+    void selectCompactDetails(next)
+      .catch(e=>setError("Unable to update Compact Game Details: "+String(e)))
+      .finally(()=>setBusy(false));
+  };
   const enabled=current.selected==="midnight";
   const applied=current.appliedTabs;
   return <PanelSection title="Game Library · Appearance">
@@ -34,6 +41,12 @@ export function BuiltinThemePanel(){
         disabled={busy}
         onChange={change}
       />
+    </PanelSectionRow>
+    <PanelSectionRow>
+      <ToggleField label="Compact Game Details · Test"
+        description="Steam's native Game Details in a tighter layout inspired by Game Library. Keeps Install/Play, controller settings, activity, your stuff and the Game Info tabs. Switch off to restore the original layout. Requires Midnight."
+        checked={current.compactDetails} disabled={busy||!enabled}
+        onChange={changeCompact}/>
     </PanelSectionRow>
     <PanelSectionRow>
       <div style={{fontSize:12,opacity:.86,lineHeight:1.5}}>
