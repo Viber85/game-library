@@ -4,7 +4,7 @@ import type {LibraryGame} from "./steam";
 export type TabKind="all"|"installed"|"steam"|"nonsteam"|"gog"|"favorites"|"custom";
 export type TabFilter="all"|"installed"|"not-installed"|"steam"|"nonsteam"|"gog"|"favorites";
 export type TabMode="smart"|"manual";
-export type SmartRuleType=Exclude<TabFilter,"all">|"not-favorites"|"played";
+export type SmartRuleType=Exclude<TabFilter,"all"|"gog">|"not-favorites"|"played";
 export type SmartJoin="all"|"any";
 export type SmartRule={type:SmartRuleType};
 export type LibraryTab={
@@ -28,7 +28,6 @@ export const OWN_FILTERS:{id:TabFilter;title:string}[]=[
   {id:"not-installed",title:"Not installed"},
   {id:"steam",title:"Steam"},
   {id:"nonsteam",title:"Non-Steam"},
-  {id:"gog",title:"GOG"},
   {id:"favorites",title:"Favorites"},
 ];
 export const SMART_RULES:{id:SmartRuleType;title:string}[]=[
@@ -67,7 +66,6 @@ export function matchesSmartRule(game:LibraryGame,rule:SmartRule):boolean{
     case "not-installed":return !game.installed;
     case "steam":return !game.nonSteam;
     case "nonsteam":return game.nonSteam;
-    case "gog":return false; // External GOG IDs are not native Steam AppIDs.
     case "favorites":return game.favorite;
     case "not-favorites":return !game.favorite;
     // Only positive Steam history is reliable for all Steam/non-Steam IDs.
