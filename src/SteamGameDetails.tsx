@@ -211,27 +211,20 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     });
   };
   const openController=()=>{
-    void openSteamControllerEditor(game.id).then(opened=>{
-      if(opened)return;
-      // A verified Steam Input bridge is not always available, especially
-      // on uninstalled games. The same native Start menu is the safe
-      // fallback: never misdirect the user into ordinary game Properties.
-      const anchor=focusRefs.current["controller"]??document.activeElement;
-      const menuOpened=showNativeGameOptions(game.id,anchor);
-      toaster.toast({
-        title:"Steam controller layout",
-        body:menuOpened
-          ?"Steam Input could not be opened directly. Use the game's native menu to find Controller Layout."
-          :"Steam Input is unavailable here. Open original Steam Details and select its controller icon."
+    // Open Steam's own Controller Settings PAGE for the selected app, exactly
+    // the one with Current Button Layout, Edit Layout and Quick Settings.
+    // Do not substitute the Start/gear context menu if navigation fails.
+    void openSteamControllerEditor(game.id).then(accepted=>{
+      if(!accepted)toaster.toast({
+        title:"Controller Settings unavailable",
+        body:"Steam did not accept the controller-settings page command. Open original Steam Details and select its controller icon."
       });
     }).catch(error=>{
-      console.warn("[game-library] Steam controller editor unavailable",error);
-      const anchor=focusRefs.current["controller"]??document.activeElement;
-      const menuOpened=showNativeGameOptions(game.id,anchor);
-      toaster.toast({title:"Controller layout unavailable",
-        body:menuOpened
-          ?"Use the opened Steam game menu for Controller Layout."
-          :"Open original Steam Details and select the controller icon."});
+      console.warn("[game-library] native Controller Settings navigation failed",error);
+      toaster.toast({
+        title:"Controller Settings unavailable",
+        body:"Open original Steam Details and select its controller icon."
+      });
     });
   };
   const action=()=>{
