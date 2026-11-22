@@ -38,8 +38,8 @@ test("No global Steam UI suppression, observers or changes to Appearance",()=>{
 });
 
 test("Previous native focus and controller behavior are unchanged",()=>{
-  assert.match(dash,/onMove=\{button=>moveInGrid\(index,button\)\}/);
-  assert.match(dash,/onGamepadFocus=\{\(\) => \{/);
+  assert.match(dash,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
+  assert.match(dash,/onGamepadFocus=\{onSelect\}/);
   assert.match(read("system-theme/settings-gamepad-focus.css"),/background:#163a5e !important/);
   assert.match(read("src/builtinThemeRuntime.ts"),/const STYLE_REVISION = "81"/);
 });
