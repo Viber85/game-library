@@ -108,17 +108,18 @@ test("Left rail Search uses the internal route and retains Game Details return",
   assert.match(details,/route===SEARCH_ROUTE/);
 });
 
-test("Search results reuse GameCard, native Start menu, original art and B navigation",()=>{
+test("Search results use Dashboard's unified game renderer with Steam native options",()=>{
   const dash=read("src/Dashboard.tsx"),toolbar=read("src/LibrarySearchToolbar.tsx");
-  assert.match(dash,/game=\{game\} index=\{index\} captureVertical/);
-  assert.match(dash,/activate=\{\(\)=>openGameDetails\(game\)\}/);
-  assert.match(dash,/onCancel=\{exitGrid\} onSort=\{showSortMenu\}/);
+  assert.match(dash,/renderEntry\(entry,index,"grid"\)/);
+  assert.match(dash,/game=\{entry.steam\} index=\{index\}/);
+  assert.match(dash,/openGameDetails\(entry.steam\)/);
+  assert.match(dash,/searchGogEntries\(gogGames/);
   assert.match(dash,/returnDestinationFromHome|searchBackRoute\(\)/);
-  assert.match(dash,/onMove=\{button=>moveInGrid\(index,button\)\}/);
-  assert.match(dash,/showNativeGameOptions\(game\.id,e\.currentTarget\)/);
+  assert.match(dash,/moveInGrid\(index,button\)/);
+  assert.match(dash,/showNativeGameOptions\(game.id,e.currentTarget\)/);
   assert.match(toolbar,/<TextField aria-label="Search game titles"/);
-  assert.match(toolbar,/onChange=\{event=>onQuery\(event\.target\.value\)\}/);
-  assert.match(toolbar,/firstFilterRef\.current=el/);
+  assert.match(toolbar,/onChange=\{event=>onQuery\(event.target.value\)\}/);
+  assert.match(toolbar,/firstFilterRef.current=el/);
   assert.match(toolbar,/onFocusResults\(\)/);
 });
 
