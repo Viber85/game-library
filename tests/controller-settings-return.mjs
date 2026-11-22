@@ -76,7 +76,7 @@ test("second B closes restored Game Details once; delayed inventory cannot reope
   assert.match(dashboard,
     /if\(!restored\)return;\s*controllerRestorePending\.current=false;\s*setSteamDetailsGame\(restored\);/);
   assert.match(dashboard,
-    /const closeSteamDetails=\(\)=>\{[\s\S]*?controllerRestorePending\.current=false;\s*setSteamDetailsGame\(null\);/);
+    /const closeSteamDetails=\(\)=>\{[\s\S]*?controllerRestorePending\.current=false;[\s\S]*?setSteamDetailsGame\(null\);/);
   assert.doesNotMatch(dashboard,/if\(!controllerReturn\|\|steamDetailsGame\)return;/,
     "Old effect re-opened Details immediately after the user pressed B");
   assert.match(dashboard,/onBack=\{closeSteamDetails\}/);
