@@ -33,6 +33,9 @@ export type ThemeProbe={
   nativeCompactHeroStyled:boolean;
   nativeCompactPlayBarStyled:boolean;
   nativeCompactPlaySource:string;
+  nativeCompactSurfaceCount:number;
+  compactHltbFound:boolean;
+  compactHltbStyled:boolean;
   nativeCompactHeroHeight:number;
   nativeCompactPlayBarHeight:number;
   nativeCompactAliasCount:number;
@@ -89,6 +92,7 @@ export const THEME_PROBE_SCRIPT=`(() => {
   // Bounded scan of live CSS backgrounds on the page; no text, URLs, values,
   // app names or image data are accessed. Useful if CSS modules are hashed.
   const nativeCompact=window.__gameLibraryCompactDetails14?.native;
+  const compactHltb=document.querySelector("#hltb-for-deck");
   const surfaces = new Map();
   let surfaceElements = 0;
   if(count('.BasicUI,#GamepadUI_Full_Root,[class*="gamepadui_BasicUI"]')>0){
@@ -160,6 +164,10 @@ export const THEME_PROBE_SCRIPT=`(() => {
     nativeCompactHeroStyled:nativeCompact?.heroStyle===true,
     nativeCompactPlayBarStyled:nativeCompact?.playStyle===true,
     nativeCompactPlaySource:String(nativeCompact?.playSource||"").slice(0,24),
+    nativeCompactSurfaceCount:Number(nativeCompact?.surfaceCount)||0,
+    compactHltbFound:!!compactHltb,
+    compactHltbStyled:!!compactHltb&&getComputedStyle(compactHltb)
+      .getPropertyValue("--glm-compact-hltb-applied").trim()==="1",
     nativeCompactHeroHeight:Number(nativeCompact?.heroHeight)||0,
     nativeCompactPlayBarHeight:Number(nativeCompact?.playHeight)||0,
     nativeCompactAliasCount:Number(nativeCompact?.aliases)||0,
@@ -207,6 +215,9 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     nativeCompactHeroStyled:obj.nativeCompactHeroStyled===true,
     nativeCompactPlayBarStyled:obj.nativeCompactPlayBarStyled===true,
     nativeCompactPlaySource:typeof obj.nativeCompactPlaySource==="string"&&["PlayBar","PlaySection","PlayButton"].includes(obj.nativeCompactPlaySource)?obj.nativeCompactPlaySource:"",
+    nativeCompactSurfaceCount:integer(obj.nativeCompactSurfaceCount),
+    compactHltbFound:obj.compactHltbFound===true,
+    compactHltbStyled:obj.compactHltbStyled===true,
     nativeCompactHeroHeight:integer(obj.nativeCompactHeroHeight),
     nativeCompactPlayBarHeight:integer(obj.nativeCompactPlayBarHeight),
     nativeCompactAliasCount:integer(obj.nativeCompactAliasCount),
