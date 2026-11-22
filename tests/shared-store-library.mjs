@@ -48,7 +48,7 @@ test("Steam adapter preserves the existing native Steam appID and availability",
 test("Steam and GOG use one shared responsive full library grid and poster frame",()=>{
   const shared=read("src/SharedLibraryGrid.tsx");
   const dashboard=read("src/Dashboard.tsx");
-  const gog=read("src/GogLibraryPage.tsx");
+  const gog=read("src/GogDashboardCard.tsx");
   const theme=read("src/theme.ts");
   assert.match(shared,/className="gl-full-grid-scroll"/);
   assert.match(shared,/className="gl-full-grid"/);
@@ -56,20 +56,20 @@ test("Steam and GOG use one shared responsive full library grid and poster frame
   assert.match(shared,/className="gl-poster-name"/);
   assert.match(dashboard,/SharedLibraryGrid scrollRef=\{fullGridScrollRef\} gridRef=\{fullGridLayoutRef\}/);
   assert.match(dashboard,/SharedLibraryCardFace title=\{game.title\}/);
-  assert.match(gog,/SharedLibraryGrid gridRef=\{gridRef\}/);
-  assert.match(gog,/SharedLibraryCardFace title=\{game.title\}/);
+  assert.match(dashboard,/renderEntry\(entry,index,"grid"\)/);
+  assert.match(gog,/SharedLibraryCardFace title=\{entry.title\}/);
   assert.doesNotMatch(gog,/className="gl-gog-grid"/);
   assert.doesNotMatch(theme,/.gl-gog-grid\{/);
 });
 
-test("Common details shell supports store capabilities, but GOG has no fake install",()=>{
+test("Common details shell opens GOG from Dashboard without fake installation",()=>{
   const details=read("src/SharedLibraryDetails.tsx");
-  const gog=read("src/GogLibraryPage.tsx");
+  const dashboard=read("src/Dashboard.tsx");
   assert.match(details,/UnifiedLibraryGame/);
   assert.match(details,/actions \? <div className="gl-actions"/);
-  assert.match(gog,/SharedLibraryDetails game=\{fromGogLibraryGame\(detailGame\)\}/);
-  assert.match(gog,/onCancelButton=\{onFocusRail\}/);
-  assert.match(gog,/getGridColumnCount\(gridRef.current,5\)/);
-  assert.match(gog,/gridNeighbor\(index,visible.length,columns,direction\)/);
-  assert.doesNotMatch(gog,/SteamClient\.Apps\.RunGame/);
+  assert.match(dashboard,/detailGog \? <SharedLibraryDetails/);
+  assert.match(dashboard,/onBack=\{closeGogDetails\}/);
+  assert.match(dashboard,/getGridColumnCount\(fullGridLayoutRef.current\)/);
+  assert.match(dashboard,/gridNeighbor\(index,gridShown.length,columns,direction\)/);
+  assert.doesNotMatch(dashboard,/GogLibraryPage/);
 });
