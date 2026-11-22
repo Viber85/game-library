@@ -2307,4 +2307,12 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-gog-detail-info .gl-gog-detail-footnote{font-size:11px;}
 }
 
+/* Common Dashboard poster: subtle store identity, no separate GOG layout. */
+.gl-root .gl-poster .gl-gog-store-marker {
+  position:absolute;bottom:9px;left:9px;z-index:3;pointer-events:none;
+  padding:3px 7px;border-radius:5px;background:rgba(3,12,26,.83);
+  color:#c4f5e0;font-size:10px;font-weight:800;line-height:1.2;
+  letter-spacing:.055em;box-shadow:0 0 0 1px rgba(151,211,182,.28);
+}
+
 `;
