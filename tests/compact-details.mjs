@@ -169,7 +169,7 @@ test("Native diagnostics verify that CSS is loaded AND really matches",()=>{
   assert.match(probe,/--glm-compact-details-effective/);
   assert.match(probe,/compactCssLoaded/);
   assert.match(probe,/compactStyleActive/);
-  assert.match(runtime,/compactStyleActive:inspected.compactStyleActive/);
+  assert.match(runtime,/compactStyleActive:nativeRead.compactStyleActive/);
   assert.match(panel,/Native Steam hero/);
   assert.match(controller,/selectCompactDetails/);
   assert.match(backend,/async def set_compact_details\(self, enabled: bool\)/);
