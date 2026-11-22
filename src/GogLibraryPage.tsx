@@ -201,7 +201,7 @@ export function GogLibraryPage({onFocusRail}:{onFocusRail:()=>void}){
         {filtered.length===0&&<div className="gl-gog-empty">
           <h2>{query.trim()?"No matching GOG games":"No games in your GOG library"}</h2>
           <p>Try another title or refresh the account library.</p>
-        </div>
+        </div>}
         {current&&<div className="gl-gog-details">
           <span className="gl-gog-owned"><MdCheckCircle/> Owned on GOG</span>
           <strong>{current.title}</strong>
