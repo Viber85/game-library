@@ -20,7 +20,7 @@ test("Dashboard owns ALL controller navigation; visual components are isolated",
   assert.match(dashboard,/onMenuButton=\{\(e:GamepadEvent\)=>\{/);
   assert.match(dashboard,/onOptionsButton=\{\(e:GamepadEvent\)=>\{consume\(e\);onSort\(\);\}\}/);
   assert.match(dashboard,/focusRail\(railIndex\)/);
-  assert.match(dashboard,/onMove=\{button=>moveInGrid\(index,button\)\}/);
+  assert.match(dashboard,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
   assert.match(dashboard,/resumeRunningGame\(runningGame,\(window as any\)\.SteamUIStore/);
 });
 
