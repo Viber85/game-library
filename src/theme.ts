@@ -2506,6 +2506,13 @@ html:has(.gl-root.gl-own-status-only) #header {
   height:100%;border-radius:inherit;background:#54d9ee;
   transition:width 350ms ease;
 }
+.gl-root .gl-details-download-diagnostics{
+  margin-top:16px;padding:10px 12px;
+  border:1px solid rgba(127,184,217,.2);
+  border-radius:8px;color:#a7bdd0;
+  background:rgba(13,35,55,.38);
+  font-size:11px;line-height:1.6;overflow-wrap:anywhere;
+}
 .gl-root .gl-details-tabs{
   position:relative;z-index:2;display:flex;align-items:center;
   flex-wrap:wrap;gap:7px;margin-top:17px;
