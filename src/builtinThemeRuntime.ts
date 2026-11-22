@@ -55,6 +55,9 @@ export type ThemeDiagnostics={
   compactPosterShown:boolean;
   compactMatchedRecently:boolean;
   compactMatchAgeSeconds:number;
+  libraryUIVisible:boolean;
+  nativeHeaderCount:number;
+  nativePlayBarCount:number;
   computedFieldColor:string;
   computedRootColor:string;
   sampleClasses:string[];
@@ -77,7 +80,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "83";
+const STYLE_REVISION = "84";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -403,6 +406,7 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       gameRoots:0,gameSections:0,compactEnabled:compactDetails,
       compactCssLoaded:false,compactStyleActive:false,compactPosterShown:false,
       compactMatchedRecently:false,compactMatchAgeSeconds:-1,
+      libraryUIVisible:false,nativeHeaderCount:0,nativePlayBarCount:0,
       computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
       colorSamples:[],surfaceElements:0,detectedRoute:"other",
@@ -478,6 +482,9 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       compactStyleActive:inspected.compactStyleActive,
       compactPosterShown:inspected.compactPosterShown,
       compactMatchedRecently,compactMatchAgeSeconds:compactMatchAge,
+      libraryUIVisible:inspected.libraryUIVisible,
+      nativeHeaderCount:inspected.nativeHeaderCount,
+      nativePlayBarCount:inspected.nativePlayBarCount,
       computedFieldColor:inspected.fieldColor,
       computedRootColor:inspected.rootColor,sampleClasses:inspected.sampleClasses,
       colorSamples:inspected.colorSamples,surfaceElements:inspected.surfaceElements,
