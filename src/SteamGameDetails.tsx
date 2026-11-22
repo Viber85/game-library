@@ -93,8 +93,10 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
   const statusRef=useRef<HTMLDivElement>(null);
   const focusRefs=useRef<Record<string,HTMLDivElement|null>>({});
   const backRef=useRef<HTMLDivElement>(null);
+  const userChangedFocus=useRef(false);
 
   useEffect(()=>{
+    userChangedFocus.current=false;
     setTab("activity");
     setHltb(null);
     setRequired(typeof game.requiredBytes==="number"&&game.requiredBytes>0?
@@ -114,9 +116,11 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     // frame. Re-take native focus unless the user already focused another
     // control on this page.
     const retry=window.setTimeout(()=>{
-      const active=document.activeElement;
-      if(!rootRef.current?.contains(active))focusBack();
-    },110);
+      // Even if document.activeElement is our Back button, Steam's *native*
+      // gamepad focus may still point to the old Library grid. Retry BTakeFocus
+      // after the new Focusable tree is registered, unless a user moved it.
+      if(!userChangedFocus.current)focusBack();
+    },140);
     return ()=>{
       window.cancelAnimationFrame(frame);
       window.clearTimeout(retry);
@@ -185,7 +189,8 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     noFocusRing:true as const,
     onButtonDown:onMove(id),
     onCancelButton:onBack,
-    onCancelActionDescription:"Back to Game Library",
+    onGamepadFocus:()=>{if(id!=="back")userChangedFocus.current=true;},
+    onCancelActionDescription:"Back to previous Game Library screen",
   });
 
   const hltbData=hltb?.status==="ok"?hltb.data:null;
