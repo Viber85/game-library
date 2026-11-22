@@ -4,7 +4,7 @@ import {
   subscribeThemeStatus, themeRuntimeStatus, runThemeDiagnostics,
   type ThemeDiagnostics, type ThemeStatus,
 } from "./builtinThemeRuntime";
-import { selectBuiltinTheme,selectCompactDetails } from "./themeController";
+import { selectBuiltinTheme } from "./themeController";
 
 /** Future themes will be added to the built-in theme registry, not CSS Loader. */
 export function BuiltinThemePanel(){
@@ -23,13 +23,6 @@ export function BuiltinThemePanel(){
       .catch(e=>setError("Unable to change system theme: "+String(e)))
       .finally(()=>setBusy(false));
   };
-  const changeCompact=(next:boolean)=>{
-    if(busy||current.selected!=="midnight")return;
-    setError("");setDiagnostics(null);setBusy(true);
-    void selectCompactDetails(next)
-      .catch(e=>setError("Unable to update Compact Game Details: "+String(e)))
-      .finally(()=>setBusy(false));
-  };
   const enabled=current.selected==="midnight";
   const applied=current.appliedTabs;
   return <PanelSection title="Game Library · Appearance">
@@ -41,12 +34,6 @@ export function BuiltinThemePanel(){
         disabled={busy}
         onChange={change}
       />
-    </PanelSectionRow>
-    <PanelSectionRow>
-      <ToggleField label="Compact Game Details · Test"
-        description="Steam's native Game Details in a tighter layout inspired by Game Library. Keeps Install/Play, controller settings, activity, your stuff and the Game Info tabs. Switch off to restore the original layout. Requires Midnight."
-        checked={current.compactDetails} disabled={busy||!enabled}
-        onChange={changeCompact}/>
     </PanelSectionRow>
     <PanelSectionRow>
       <div style={{fontSize:12,opacity:.86,lineHeight:1.5}}>
@@ -74,56 +61,6 @@ export function BuiltinThemePanel(){
       }}>
         {checking?"Inspecting Steam UI…":"Read CEF diagnostics (no reload)"}
       </ButtonItem>
-    </PanelSectionRow>}
-    {diagnostics&&<PanelSectionRow>
-      <div style={{fontSize:12,lineHeight:1.5,whiteSpace:"pre-wrap",overflowWrap:"anywhere",
-        padding:10,border:"1px solid #397397",borderRadius:9,background:"#071b2c"}}>
-        <strong>Compact Game Details — Quick check</strong>
-        <div>Native game evidence: {diagnostics.nativeEvidenceSource==="live"
-          ?"LIVE ORIGINAL STEAM DETAILS":diagnostics.nativeEvidenceSource==="before-qam"
-          ?"CAPTURED BEFORE DECKY · "+diagnostics.nativeEvidenceAgeSeconds+"s ago"
-          :"NOT VERIFIED · Open original Steam Details before Decky"}</div>
-        <div>Option enabled: {diagnostics.compactEnabled?"YES":"NO"}</div>
-        <div>Midnight CSS verified: {diagnostics.applied?"YES":"NO"}</div>
-        <div>Compact styling in native game: {diagnostics.nativeEvidenceSource==="unverified"?"NOT VERIFIED":diagnostics.compactCssLoaded?"CONFIRMED":"NOT CONFIRMED"}</div>
-        <div>Native Steam hero: {diagnostics.nativeHeroFound?"FOUND":"NOT FOUND"}
-          {" · "}{diagnostics.nativeHeroStyled?"STYLE APPLIED":"Style not confirmed"}
-          {diagnostics.nativeHeroHeight>0?" · "+diagnostics.nativeHeroHeight+" px":""}</div>
-        <div>Native Steam Play/Install: {diagnostics.nativePlayBarFound?"FOUND":"NOT FOUND"}
-          {diagnostics.nativePlayBarSource?" ("+diagnostics.nativePlayBarSource+")":""}
-          {" · "}{diagnostics.nativePlayBarStyled?"STYLE APPLIED":"Style not confirmed"}
-          {diagnostics.nativePlayBarHeight>0?" · "+diagnostics.nativePlayBarHeight+" px":""}</div>
-        <div>Native style directly verified recently: {diagnostics.nativeEvidenceSource==="live"
-          ?"YES · live":diagnostics.nativeEvidenceSource==="before-qam"
-          ?"YES · "+diagnostics.nativeEvidenceAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
-        <div>Verified native Play panel surfaces: {diagnostics.nativePlaySurfaceCount}</div>
-        <div>Visible blue panels found: {diagnostics.nativeEvidenceSource==="unverified"?"NOT VERIFIED":diagnostics.nativePaintCount}</div>
-        <div>Panels confirmed dark by actual computed paint: {diagnostics.nativeEvidenceSource==="unverified"
-          ?"NOT VERIFIED":diagnostics.nativePaintNeutralized}</div>
-        <div>HLTB in original Steam Details: {diagnostics.nativeEvidenceSource==="unverified"
-          ?"NOT VERIFIED":diagnostics.hltbFound?"FOUND":"NOT FOUND"}
-          {" · "}{diagnostics.nativeEvidenceSource==="unverified"?"No game-only sample":
-          diagnostics.hltbStyled?"STYLE APPLIED":"Style not confirmed"}</div>
-        <div>Current Steam CSS-module aliases resolved: {diagnostics.nativeAliasesResolved}/6</div>
-        <div>Global compact CSS selector (not proof of a changed element):
-          {" "}{diagnostics.compactMatchedRecently
-          ?"Matched "+diagnostics.compactMatchAgeSeconds+"s ago":"Not confirmed"}</div>
-        <div>Native Steam game header: {diagnostics.nativeHeaderCount} readable-class matches</div>
-        <div>Native Steam Play bar: {diagnostics.nativePlayBarCount} readable-class matches</div>
-        <div>Game Library UI currently visible: {diagnostics.libraryUIVisible?"YES":"NO"}</div>
-        <div style={{opacity:.78,fontSize:11,marginTop:5}}>
-          A verified Midnight stylesheet or root selector does NOT prove that
-          native hero/Play controls changed. The verified per-element native
-          style and pixel heights above are the actual test. If they are
-          missing, we need the Steam class mapping, not another blind CSS edit.
-          A computed dark color on two DOM elements does not prove the large
-          visible Steam bars are both dark. The measurements above must come
-          from one native-game-only snapshot. If the evidence is unverified,
-          close this panel, open the original Steam Details page, then return.
-          Steam may use hashed class names, so zero readable-class matches alone
-          are not a failure. The verified layout-match status is authoritative.
-        </div>
-      </div>
     </PanelSectionRow>}
     {diagnostics&&<PanelSectionRow>
       <div style={{fontSize:12,lineHeight:1.5,whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>
@@ -206,22 +143,6 @@ export function BuiltinThemePanel(){
         {diagnostics.specialSettingsRowColor&&
           <div>Special row actual fill: {diagnostics.specialSettingsRowColor}</div>}
         <div>Game page / sections: {diagnostics.gameRoots} / {diagnostics.gameSections}</div>
-        <div><strong>Compact Details requested:</strong> {diagnostics.compactEnabled?"Yes":"No"}</div>
-        {diagnostics.compactEnabled&&<>
-          <div>Compact CSS injected: {diagnostics.compactCssLoaded?"Yes":"Not confirmed"}</div>
-          <div>Compact CSS matching native game now:
-            {" "}{diagnostics.compactStyleActive?"YES — active":"Not confirmed (QAM can hide game page)"}
-          </div>
-          <div>Last actual game match: {diagnostics.compactMatchedRecently
-            ?"Confirmed "+diagnostics.compactMatchAgeSeconds+"s ago":
-            "Never confirmed in the last 3 minutes"}</div>
-          <div>Decorative cover loaded: {diagnostics.compactPosterShown?"Yes":"No / unavailable"}</div>
-          <div style={{opacity:.75,fontSize:11}}>
-            For an accurate result, visit a Steam game's native Details page,
-            then immediately open Decky and press Read CEF diagnostics.
-            A saved Game Details snapshot is used when QAM hides the page.
-          </div>
-        </>}
         {diagnostics.computedFieldColor&&
           <div>Actual row background: {diagnostics.computedFieldColor}</div>}
         {diagnostics.sampleClasses.length>0&&
