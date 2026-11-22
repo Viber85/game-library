@@ -54,6 +54,6 @@ test("Source/Installed state, Clear, controller focus, Search rail unchanged",()
   assert.match(view,/onFocusResults\(\)/);
   assert.match(view,/onFocusRail\(\)/);
   assert.match(dash,/\{ id: "search", label: "Search", icon: MdSearch, go: openLocalSearch \}/);
-  assert.match(dash,/activate=\{\(\)=>openGameDetails\(game\)\}/);
+  assert.match(dash,/openGameDetails\(entry.steam\)/);
   assert.match(read("system-theme/settings-gamepad-focus.css"),/background:#163a5e !important/);
 });
