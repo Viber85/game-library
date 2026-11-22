@@ -22,6 +22,9 @@ export type ThemeProbe={
   deckyFieldColor:string;
   gameRoots:number;
   gameSections:number;
+  compactCssLoaded:boolean;
+  compactStyleActive:boolean;
+  compactPosterShown:boolean;
   fieldColor:string;
   rootColor:string;
   sampleClasses:string[];
@@ -132,6 +135,11 @@ export const THEME_PROBE_SCRIPT=`(() => {
     deckyFieldColor: deckyField?getComputedStyle(deckyField).backgroundColor:'',
     gameRoots: count(games),
     gameSections: count(sections),
+    compactCssLoaded: Array.from(document.querySelectorAll('style')).some(el=>
+      el.textContent?.includes('--glm-compact-details-effective')),
+    compactStyleActive: getComputedStyle(document.documentElement)
+      .getPropertyValue('--glm-compact-details-effective').trim()==='1',
+    compactPosterShown: document.documentElement.hasAttribute('data-glm-compact-poster'),
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
     rootColor: getComputedStyle(surface).backgroundColor,
     sampleClasses: Array.from(classNames),
@@ -165,6 +173,9 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     deckyFieldColor:typeof obj.deckyFieldColor==='string'?obj.deckyFieldColor.slice(0,60):'',
     gameRoots:integer(obj.gameRoots),
     gameSections:integer(obj.gameSections),
+    compactCssLoaded:obj.compactCssLoaded===true,
+    compactStyleActive:obj.compactStyleActive===true,
+    compactPosterShown:obj.compactPosterShown===true,
     fieldColor:typeof obj.fieldColor==="string"?obj.fieldColor.slice(0,60):"",
     rootColor:typeof obj.rootColor==="string"?obj.rootColor.slice(0,60):"",
     routeKind:obj.routeKind==="settings"?"settings":obj.routeKind==="game"?"game":"other",
