@@ -25,7 +25,7 @@ test("GOG uses Dashboard's grid and provider-specific details instead of a separ
   assert.match(card,/onActivate=\{onActivate\}/);
   assert.match(card,/onButtonDown=\{direction\}/);
   assert.match(card,/GogArtwork game=\{entry.gog\}/);
-  assert.match(sharedDetails,/onCancelButton=\{onBack\}/);
+  assert.match(sharedDetails,/onCancelButton:onBack/);
   assert.doesNotMatch(page,/GogLibraryPage|SteamClient\.Apps\.RunGame\(entry\.gog/);
 });
 
