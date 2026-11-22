@@ -92,11 +92,9 @@ export function GogMobilePairingPanel({accountId,onConnected}:{
             Scan this QR code using your phone camera.
             <div style={{opacity:.75}}>Both devices must use the same trusted Wi-Fi.</div>
           </div>
-          <button type="button" style={{padding:6,border:0,background:"transparent",
-            color:"#a6dfff",fontSize:12,textDecoration:"underline"}}
-            onClick={()=>setShowDetails(v=>!v)}>
+          <ButtonItem layout="below" onClick={()=>setShowDetails(v=>!v)}>
             {showDetails?"Hide local URL":"Show local URL if you cannot scan"}
-          </button>
+          </ButtonItem>
           {showDetails&&<div style={{maxWidth:"100%",overflowWrap:"anywhere",
             fontSize:12,color:"#e7f4ff"}}>{pair.url}</div>}
         </div>
