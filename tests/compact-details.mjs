@@ -37,15 +37,23 @@ function fakeSteamCEF(){
     onload=null;onerror=null;
     set src(url){this.url=url;images.push(this);}
   }
+  const heroAttrs=new Map();
+  const hero={
+    querySelectorAll:()=>heroAssets,
+    setAttribute:(key,value)=>heroAttrs.set(key,String(value)),
+    removeAttribute:key=>heroAttrs.delete(key),
+    hasAttribute:key=>heroAttrs.has(key),
+    getBoundingClientRect:()=>({height:218,width:800,top:0,bottom:218}),
+  };
   const document={
     documentElement:root,
     querySelectorAll:()=>heroAssets,
-    querySelector:()=>null,
+    querySelector:selector=>styleState.active&&selector.includes('sharedappdetailsheader_TopCapsule')?hero:null,
   };
   const ctx={document,window,Image:MockImage,getComputedStyle:()=>({
     getPropertyValue:key=>key==="--glm-compact-details-effective"&&styleState.active?"1":"",
   })};
-  return {ctx,root,location,styleState,heroAssets,attrs,props,images,timers,cleared};
+  return {ctx,root,hero,location,styleState,heroAssets,attrs,props,images,timers,cleared};
 }
 
 test("real CSS DOM match activates layout even without route and falls back safely",()=>{
@@ -90,6 +98,8 @@ test("Steam Game Mode static URL can recover game ID from visible native hero",(
     getBoundingClientRect:()=>({width:820,height:220,top:30,bottom:250}),
   });
   vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  assert.equal(fake.images.length,0);
+  for(const {f} of fake.timers.values())f();
   assert.equal(fake.images.length,1);
   assert.match(fake.images[0].url,/apps\/1091500\/library_600x900\.jpg/);
   fake.images[0].onload();
@@ -172,15 +182,20 @@ test("Native diagnostics verify that CSS is loaded AND really matches",()=>{
 test("Webpack semantic classes map to safe exact native hero/playbar selectors",()=>{
   const source='[class*="sharedappdetailsheader_TopCapsule"] {} '+
     '[class*="appdetailsplaysection_PlayBar"] {} '+
+    '[class*="basicappdetailssectionstyler_PlaySection"] {} '+
+    '[class*="appactionbutton_PlayButtonContainer"] {} '+
     '[class*="sharedappdetailsheader_TitleSection"] {} '+
     '[class*="appdetailssection_SectionHeader"] {}';
   const compiled=expandThemeClassAliases(source,{
     sharedappdetailsheader:{TopCapsule:"_nativeHeroX",TitleSection:"_nativeTitleX"},
     appdetailsplaysection:{PlayBar:"_nativeBarX"},
+    basicappdetailssectionstyler:{PlaySection:"_nativePlaySectionX"},
+    appactionbutton:{PlayButtonContainer:"_nativePlayButtonX"},
     appdetailssection:{SectionHeader:"_nativeSectionsX"},
   });
   const hints=nativeCompactHintsFromCss(compiled);
   assert.deepEqual(hints,{hero:"_nativeHeroX",playbar:"_nativeBarX",
+    playsection:"_nativePlaySectionX",playbutton:"_nativePlayButtonX",
     title:"_nativeTitleX",sections:"_nativeSectionsX"});
   assert.match(compactHintsInjection(hints),/window\.__gameLibraryNativeCompactHints14=/);
   assert.equal(nativeCompactHintsFromCss(source).hero,"");
