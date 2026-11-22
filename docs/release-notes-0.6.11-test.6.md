@@ -9,9 +9,16 @@ The phone pairing page in v0.6.11-test.5 could display a blank **Forbidden** res
 - The GOG code is still validated against the official \`https://embed.gog.com/on_login_success\` callback, cannot be submitted repeatedly, and is never echoed back to the phone.
 - No change to other Game Library functionality, Steam libraries or Unifideck.
 
+## GOG login now opens in a separate phone tab
+
+- Scanning the QR opens the Game Library pairing page in the phone browser.
+- Tapping **Open GOG sign-in in new tab** requests a distinct browser tab through a direct, user-initiated `window.open(..., "_blank")` call. The original pairing page remains available to paste the GOG success URL.
+- Keeps the native `target="_blank"` link as a fallback if scripting is unavailable.
+- Some QR scanner in-app previews do not support multiple tabs and may still ignore this. The phone page now explains how to switch to the normal Chrome/Safari browser or long-press the login link and choose Open in new tab. The plugin cannot override this limitation of the host browser.
+
 ## How to verify
 1. Install **v0.6.11-test.6** from the new ZIP. Reopen **GOG Integration** and start **a new QR pairing session**; old QR links cannot be reused.
-2. Open the pairing page on the phone connected to the same private Wi-Fi as the handheld.
+2. Open the pairing page on the phone connected to the same private Wi-Fi as the handheld. Use Chrome or Safari rather than an in-app QR preview if possible.
 3. Sign in at GOG in the phone browser, then paste the final GOG success URL containing \`code=\` into the Game Library phone form.
 4. Press Connect GOG to Game Library. The phone should display **GOG authorization sent** rather than Forbidden, while Game Library exchanges the code and shows the connection outcome.
 
