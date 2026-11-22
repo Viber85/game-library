@@ -29,10 +29,12 @@ test("matches reference components: hero, portrait, game metadata, HLTB, actions
     /<SystemStatusBar/,/onNativeDetails/,/play\(\{\.\.\.game,installed:true\}\)/,
     /getLibraryGames\(\)/,/requestNativeRequiredInstallBytes/
   ])assert.match(source,match);
-  assert.match(source,/Install opens Steam's original installer/);
+  assert.match(source,/Install opens Steam's drive selection and confirmation dialog/);
+  assert.match(source,/openSteamInstallWizard\(game\.id,game\.nonSteam\)/);
+  assert.match(source,/if\(result\.opened\)return/);
   assert.match(source,/onActivate=\{action\}/);
   assert.doesNotMatch(source,/SteamClient\.Apps\.InstallApp\(/,
-    "Never bypass Steam's install-disk and entitlement prompts with an unverified API.");
+    "Native Steam installs must run through its verified install wizard, not an unverified Apps API.");
 });
 
 test("HLTB uses only real three provider times; fourth metric is authentic personal playtime",()=>{
