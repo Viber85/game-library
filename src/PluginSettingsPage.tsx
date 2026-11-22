@@ -2,15 +2,17 @@ import {useEffect,useRef,useState} from "react";
 import {callable} from "@decky/api";
 import {Focusable,GamepadButton,Navigation,type GamepadEvent} from "@decky/ui";
 import {MdArrowBack,MdChevronRight,MdHome,MdStorage,MdImage,MdSystemUpdate,
-  MdToggleOff,MdToggleOn,MdViewList,MdStorefront} from "react-icons/md";
+  MdToggleOff,MdToggleOn,MdViewList,MdStorefront,MdCheckCircle} from "react-icons/md";
 import {SystemStatusBar} from "./SystemStatusBar";
 import {notifyHomeSetting} from "./pluginSettingsEvents";
 import {SteamGridDBPanel} from "./SteamGridDBPanel";
 import {UpdatesPanel} from "./UpdatesPanel";
-import {GogIntegrationPanel} from "./GogIntegrationPanel";
+import {GogIntegrationPanel,type GogAccount} from "./GogIntegrationPanel";
+import {getActiveUserId} from "./steam";
 
 const getSettings=callable<[],{default_home:boolean}>("get_dashboard_settings");
 const setSettings=callable<[boolean],boolean>("set_dashboard_settings");
+const readGogAccount=callable<[string],GogAccount>("get_gog_account");
 type SettingsTool="steamgriddb"|"updates"|"gog";
 type Props={
   firstRef:{current:HTMLDivElement|null};
@@ -28,6 +30,8 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
   const [loaded,setLoaded]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
+  const [gogAccount,setGogAccount]=useState<GogAccount|null>(null);
+  const steamId=getActiveUserId()||"";
   const [activeTool,setActiveTool]=useState<SettingsTool|null>(null);
   const [toolLastIndex,setToolLastIndex]=useState(2);
   const statusRef=useRef<HTMLDivElement>(null);
@@ -47,6 +51,14 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
     const frame=window.requestAnimationFrame(()=>actions.current[initialIndex.current]?.focus());
     return ()=>{active=false;window.cancelAnimationFrame(frame);firstRef.current=null;};
   },[]);
+  useEffect(()=>{
+    if(!steamId)return;
+    let live=true;
+    void readGogAccount(steamId).then(value=>{
+      if(live)setGogAccount(value);
+    }).catch(()=>{if(live)setGogAccount(null);});
+    return ()=>{live=false;};
+  },[steamId,activeTool]);
   useEffect(()=>{
     if(!activeTool)return;
     const frame=window.requestAnimationFrame(()=>toolBackRef.current?.focus());
@@ -185,7 +197,11 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
           onActivate={()=>openTool("gog")} onCancelButton={onBack}
           onButtonDown={(e:GamepadEvent)=>direction(e,2)}>
           <MdStorefront/><div><strong>GOG Integration</strong>
-            <span>Connect GOG and synchronize purchased games</span></div>
+            <span>{gogAccount?.connected?
+              (gogAccount.count??0)+" owned games · Account connected":
+              "Connect GOG and synchronize purchased games"}</span></div>
+          {gogAccount?.connected&&<MdCheckCircle
+            className="gl-gog-connected-check" aria-label="GOG account connected"/>}
           <MdChevronRight/>
         </Focusable>
         <Focusable className="gl-plugin-setting-row" focusClassName="gl-focused" noFocusRing
