@@ -38,6 +38,7 @@ import {SteamGameDetails} from "./SteamGameDetails";
 import {openSteamControllerEditor} from "./steamControllerEditor";
 import {armControllerSettingsReturn,armGameDetailsWebReturn,consumeControllerSettingsReturn,clearControllerSettingsReturn,type GameDetailsReturnTarget} from "./controllerSettingsReturn";
 import {steamStorePageUrl,validHltbGameUrl} from "./gameDetailsLinks";
+import {GAME_DETAILS_ROUTE,stageGameDetailsRoute,clearGameDetailsRoute,type GameDetailsRouteSession} from "./gameDetailsRoute";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {useGogDashboardCatalog} from "./useGogDashboardCatalog";
 import {combineDashboardEntries,combineSearchEntries,searchGogEntries,
@@ -172,8 +173,8 @@ function GameCard({
 }
 
 
-export function Dashboard({initialMode="home",originRoute}:
-  {initialMode?:"home"|"library"|"appearance"|"search"|"collections"|"tabs"|"settings";originRoute?:DetailsOriginRoute}={}) {
+export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
+  {initialMode?:"home"|"library"|"appearance"|"search"|"collections"|"tabs"|"settings";originRoute?:DetailsOriginRoute;detailRouteSession?:GameDetailsRouteSession|null}={}) {
   const searchMode=initialMode==="search";
   const nativeMenuKind=initialMode==="tabs"?"tabs":
     initialMode==="settings"?"settings":
@@ -192,10 +193,10 @@ export function Dashboard({initialMode="home",originRoute}:
       searchMode?SEARCH_ROUTE:collectionsMode?COLLECTIONS_ROUTE:
       tabsMode?TABS_ROUTE:settingsMode?PLUGIN_SETTINGS_ROUTE:"/library/home");
   // Read a single return snapshot only if this exact original route mounts.
-  const [detailsReturn]=useState(()=>peekDetailsOrigin(actualRoute));
+  const [detailsReturn]=useState(()=>detailRouteSession?null:peekDetailsOrigin(actualRoute));
   // Steam Controller Settings replaces our entire React route. B must
   // restore the previously open custom Game Details, not generic Library.
-  const [controllerReturn]=useState(()=>consumeControllerSettingsReturn(actualRoute));
+  const [controllerReturn]=useState(()=>detailRouteSession?null:consumeControllerSettingsReturn(actualRoute));
   useEffect(()=>{
     if(detailsReturn)consumeDetailsOrigin(actualRoute);
   },[actualRoute,detailsReturn]);
@@ -206,7 +207,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const {games:gogGames}=useGogDashboardCatalog(gogAccountId,gogCatalogEnabled);
   const [gogDetailsId,setGogDetailsId]=useState<string|null>(null);
   const [steamDetailsGame,setSteamDetailsGame]=useState<LibraryGame|null>(()=>
-    controllerReturn?getLibraryGames().find(g=>g.id===controllerReturn.appId)??null:null);
+    detailRouteSession?.game??(controllerReturn?getLibraryGames().find(g=>g.id===controllerReturn.appId)??null:null));
   // The native Steam route's B returns here once. When the library inventory
   // is not immediately available, retry ONLY until the game first resolves.
   // Do not re-open Details after the user's next B explicitly closes it!
@@ -270,7 +271,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const pendingGridIndex = useRef<number | null>(null);
   const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
   const steamReturnTarget=useRef<GameDetailsReturnTarget|null>(
-    controllerReturn?.target??null);
+    detailRouteSession?.target??controllerReturn?.target??null);
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const searchBackRef=useRef<HTMLDivElement>(null);
