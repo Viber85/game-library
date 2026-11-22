@@ -534,6 +534,15 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   <strong>{nativeDownload.transfer.percent===null?
                     "Waiting for Steam":nativeDownload.transfer.percent+"%"}</strong>
                 </div>
+              </div>
+              <div className="gl-details-download-main">
+                <div className="gl-details-download-track" role="progressbar"
+                    aria-label="Steam download progress"
+                    aria-valuemin={0} aria-valuemax={100}
+                    aria-valuenow={nativeDownload.transfer.percent??undefined}>
+                  <div className="gl-details-download-fill"
+                    style={{width:(nativeDownload.transfer.percent??0)+"%"}}/>
+                </div>
                 <div className="gl-details-download-controls">
                   <Focusable {...onAction("download-toggle")}
                       className="gl-details-focus gl-details-download-control"
@@ -554,13 +563,6 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   </Focusable>
                 </div>
               </div>
-              <div className="gl-details-download-track" role="progressbar"
-                  aria-label="Steam download progress"
-                  aria-valuemin={0} aria-valuemax={100}
-                  aria-valuenow={nativeDownload.transfer.percent??undefined}>
-                <div className="gl-details-download-fill"
-                  style={{width:(nativeDownload.transfer.percent??0)+"%"}}/>
-              </div>
               <div className="gl-details-download-metrics" aria-label="Steam download size and time">
                 {nativeDownload.metrics.totalBytes!==null&&
                   nativeDownload.metrics.downloadedBytes!==null&&<>
@@ -580,6 +582,10 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
             </div>}
           {installMode==="install"&&
             <div className="gl-details-install-help">Install opens Steam's drive selection and confirmation dialog.</div>}
+          {cancelFeedback&&
+            <div className="gl-details-download-feedback" role="status">
+              {cancelFeedback}
+            </div>}
         </div>
       </div>
 
