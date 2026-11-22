@@ -2250,21 +2250,14 @@ html:has(.gl-root.gl-own-status-only) #header {
 }
 
 /* Independent read-only GOG library: styled within our route, never Steam DOM. */
-.gl-root .gl-gog-library{display:flex;flex:1;min-height:0;flex-direction:column;gap:12px;padding:10px 0 12px;}
+.gl-root .gl-gog-library{display:flex;flex:1;min-height:0;flex-direction:column;gap:12px;padding:10px 0 4px;}
 .gl-root .gl-gog-header{display:flex;align-items:center;justify-content:space-between;gap:20px;}
-.gl-root .gl-gog-header h2{font-size:22px;margin:0 0 5px;}
-.gl-root .gl-gog-header span{font-size:13px;color:#a4c0d8;}
 .gl-root .gl-gog-controls{display:flex;gap:10px;align-items:center;}
 .gl-root .gl-gog-controls .gl-grid-back{display:flex;align-items:center;gap:7px;white-space:nowrap;}
 .gl-root .gl-gog-search{display:flex;align-items:flex-end;gap:20px;min-height:56px;}
 .gl-root .gl-gog-search>div{max-width:420px;flex:1;}
 .gl-root .gl-gog-search span{font-size:13px;opacity:.8;padding-bottom:10px;}
 .gl-root .gl-gog-search input{width:100%;}
-.gl-root .gl-gog-scroll{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;}
-.gl-root .gl-gog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:15px 12px;align-items:start;padding:8px 6px 12px;}
-.gl-root .gl-gog-grid .gl-gog-game{width:100%;height:190px;min-width:0;flex:none;}
-.gl-root .gl-gog-grid .gl-gog-game .gl-poster{height:100%;}
 .gl-root .gl-gog-details{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   padding:11px 16px;border:1px solid #264c6c;background:#0c233a;border-radius:10px;}
 .gl-root .gl-gog-details strong{font-size:15px;}
@@ -2279,8 +2272,6 @@ html:has(.gl-root.gl-own-status-only) #header {
  .gl-root .gl-gog-header{align-items:flex-start;}
  .gl-root .gl-gog-controls{gap:5px;}
  .gl-root .gl-gog-controls .gl-grid-back{padding:6px;font-size:12px;}
- .gl-root .gl-gog-grid{grid-template-columns:repeat(auto-fill,minmax(94px,1fr));}
- .gl-root .gl-gog-grid .gl-gog-game{height:154px;}
 }
 
 /* GOG account status is a single green success marker, not a decorative badge. */
