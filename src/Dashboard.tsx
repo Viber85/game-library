@@ -34,6 +34,7 @@ import {PluginSettingsPage} from "./PluginSettingsPage";
 import {GogDashboardCard} from "./GogDashboardCard";
 import {GogArtwork} from "./GogArtwork";
 import {SharedLibraryDetails} from "./SharedLibraryDetails";
+import {SteamGameDetails} from "./SteamGameDetails";
 import {useGogDashboardCatalog} from "./useGogDashboardCatalog";
 import {combineDashboardEntries,combineSearchEntries,searchGogEntries,
   type DashboardEntry} from "./dashboardCatalog";
@@ -194,6 +195,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const gogCatalogEnabled=initialMode==="home"||initialMode==="library"||searchMode;
   const {games:gogGames}=useGogDashboardCatalog(gogAccountId,gogCatalogEnabled);
   const [gogDetailsId,setGogDetailsId]=useState<string|null>(null);
+  const [steamDetailsGame,setSteamDetailsGame]=useState<LibraryGame|null>(null);
   const [selectedGogId,setSelectedGogId]=useState<string|null>(null);
   const gogDetailBackRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
@@ -394,6 +396,13 @@ export function Dashboard({initialMode="home",originRoute}:
     });
   };
   const openGameDetails=(game:LibraryGame)=>{
+    // Our own Details component, not a patch to the native Steam page.
+    const index=gridShown.findIndex(entry=>
+      entry.store==="steam"&&entry.steam.id===game.id);
+    if(index>=0)lastGridFocusIndex.current=index;
+    setSteamDetailsGame(game);
+  };
+  const openNativeGameDetails=(game:LibraryGame)=>{
     rememberGameDetails(game);
     openDetails(game);
   };
@@ -603,6 +612,14 @@ export function Dashboard({initialMode="home",originRoute}:
     setSelectedGogId(first?.store==="gog"?first.gog.id:null);
     setViewAll(false);
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
+  };
+  const closeSteamDetails=()=>{
+    setSteamDetailsGame(null);
+    window.requestAnimationFrame(()=>{
+      if(collectionsMode)collectionsEntryRef.current?.focus();
+      else if(viewAll||searchMode)focusGrid(lastGridFocusIndex.current);
+      else gameRefs.current[lastGridFocusIndex.current]?.focus();
+    });
   };
   const closeGogDetails=()=>{
     setGogDetailsId(null);
@@ -858,22 +875,20 @@ export function Dashboard({initialMode="home",originRoute}:
         </Focusable>
       </aside>
 
-      <div className="gl-main">
-        {collectionsMode
+      <div className={"gl-main"+(steamDetailsGame?" gl-main-details":"")}>
+        {steamDetailsGame
+          ? <SteamGameDetails key={steamDetailsGame.id}
+              game={steamDetailsGame}
+              onBack={closeSteamDetails}
+              onNativeDetails={()=>openNativeGameDetails(steamDetailsGame)}
+              onFocusRail={()=>focusRail(railIndex)}/>
+          : collectionsMode
           ? <CollectionsPage key={collectionsPageRevision}
               firstRef={collectionsEntryRef}
               games={games} tabs={tabs} membershipRevision={membershipRevision}
               onFocusRail={()=>focusRail(railIndex)}
               onHome={()=>Navigation.Navigate("/library/home")}
-              onOpenGame={game=>{
-                // Preserve this *exact* Collections route across native
-                // Steam game details without modifying global Back behavior.
-                rememberDetailsOrigin({
-                  route:COLLECTIONS_ROUTE,tabId:tab.id,gameId:game.id,
-                  viewAll:false,gridLimit:60,gridScrollTop:0,gridFocusIndex:0,
-                });
-                openDetails(game);
-              }}/>
+              onOpenGame={game=>openGameDetails(game)/>
           : initialMode==="appearance"
           ? <AppearancePage firstRef={appearanceEntryRef}
               onFocusRail={()=>focusRail(railIndex)}
