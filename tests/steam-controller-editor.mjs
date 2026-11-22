@@ -38,7 +38,7 @@ test("React adapter uses Decky Navigation.Navigate and preserves original native
   assert.match(core,/\/controllerconfigurator\/main/);
   assert.doesNotMatch(core,/ExecuteSteamURL|ShowControllerConfigurator/);
   const dashboard=read("src/Dashboard.tsx");
-  assert.match(page,/onOpenControllerSettings:()=>void/);
+  assert.ok(page.includes("onOpenControllerSettings:()=>void;"));
   assert.match(page,/const openController=onOpenControllerSettings/);
   assert.match(dashboard,/void openSteamControllerEditor\(game\.id\)/);
   const action=page.slice(page.indexOf("const openController="),
