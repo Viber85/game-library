@@ -621,6 +621,36 @@ class Plugin:
         except (OSError, RuntimeError, ValueError):
             return {"status": "error", "cover": None, "hero": None}
 
+    async def gog_steamgriddb_art(self, account_id: str, product_id: str, title: str):
+        """Optional artwork for an owned GOG game, never a forged Steam AppID.
+
+        Requires saved SteamGridDB key and opt-in. Validates against the
+        GOG account's own cached product IDs and exact titles before lookup.
+        """
+        if (type(account_id) is not str or type(product_id) is not str or
+            type(title) is not str or not (2 <= len(title.strip()) <= 180) or
+            not product_id.isdecimal() or len(product_id) > 20):
+            return {"status": "invalid", "cover": None, "hero": None}
+        if _read_preferences().get("steamgriddb_enabled", True) is not True:
+            return {"status": "disabled", "cover": None, "hero": None}
+        try:
+            library = await asyncio.to_thread(_load_gog().library, account_id)
+            if not library.get("ok") or not any(
+                str(game.get("id")) == product_id and
+                game.get("title") == title for game in library.get("games", [])
+                if isinstance(game, dict)
+            ):
+                return {"status": "invalid", "cover": None, "hero": None}
+            provider = _load_steamgriddb()
+            key = provider.read_key(_steamgriddb_config_dir())
+            if not key:
+                return {"status": "needs_key", "cover": None, "hero": None}
+            if self._steamgriddb_service is None:
+                self._steamgriddb_service = provider.ArtworkService(_steamgriddb_cache_path())
+            return await asyncio.to_thread(self._steamgriddb_service.lookup, title, key)
+        except (OSError, RuntimeError, ValueError, TypeError):
+            return {"status": "error", "cover": None, "hero": None}
+
     def _nonsteam_size_cache_service(self):
         if self._nonsteam_size_service is None:
             self._nonsteam_size_service = _load_nonsteam_size().NonSteamSizeService()
