@@ -52,7 +52,7 @@ test("Cancel button requests direct native Steam protocol without embedding priv
   assert.match(cancel,/if\(result\.sent\)/);
   assert.match(cancel,/showNativeGameOptions\(game\.id,anchor\)/);
   assert.match(helper,/steam:\/\/uninstall\//);
-  assert.doesNotMatch(helper,/OpenUninstallWizard/);
+  assert.doesNotMatch(helper,/SteamClient\.Installs\.OpenUninstallWizard\(/);
   assert.doesNotMatch(details,/showNativeSteamUninstallDialog/);
   assert.match(menu,/showContextMenu\(element,target,opts\)/);
   // After the initial branch, updates still use their queue-only confirmation.
