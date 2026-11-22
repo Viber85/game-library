@@ -115,3 +115,35 @@ test("controller icon invokes direct Steam Input configurator, not original game
     source.indexOf("const action=",source.indexOf("const openController=")));
   assert.doesNotMatch(controllerAction,/onNativeDetails\(\)/);
 });
+
+test("gear and physical Start share the exact native Steam game menu, not Settings page",()=>{
+  const menu=read("src/nativeGameContextMenu.tsx");
+  const card=read("src/Dashboard.tsx");
+  assert.match(menu,/export function showNativeGameOptions\(gameId:number,anchor:EventTarget\|null\)/);
+  assert.match(card,/showNativeGameOptions\(game\.id,e\.currentTarget\)/);
+  assert.match(source,/import \{showNativeGameOptions\} from "\.\/nativeGameContextMenu"/);
+  assert.match(source,/const openGameOptions=\(\)=>\{/);
+  assert.match(source,/showNativeGameOptions\(game\.id,anchor\)/);
+  assert.match(source,/onActivate=\{openGameOptions\}/);
+  assert.match(source,/onMenuButton=\{\(e:GamepadEvent\)=>\{/);
+  assert.match(source,/onMenuActionDescription="Game options"/);
+  const gear=source.slice(source.indexOf('title="Steam game options (same as Start)"'),
+    source.indexOf("<MdSettings/>"));
+  assert.doesNotMatch(gear,/onActivate=\{onNativeDetails\}/);
+});
+
+test("controller prioritizes working SharedJSContext and never uses native properties as fallback",()=>{
+  const adapter=read("src/steamControllerEditor.ts");
+  const start=adapter.indexOf('const candidates=[');
+  const shared=adapter.indexOf('title==="SharedJSContext"',start);
+  const direct=adapter.indexOf("return openControllerFromClient(appId,client)",start);
+  assert.ok(start>=0&&shared>start&&direct>shared);
+  assert.match(adapter,/execute\(title,false,script\)/);
+  assert.match(adapter,/title==="SharedJSContext"/);
+  assert.equal((adapter.match(/openControllerFromClient\(appId,client\)/g)||[]).length,1,
+    "Fallback cannot open duplicate controller popup windows");
+  const action=source.slice(source.indexOf("const openController="),
+    source.indexOf("const action="));
+  assert.doesNotMatch(action,/onNativeDetails\(/);
+  assert.match(action,/showNativeGameOptions\(game\.id,anchor\)/);
+});
