@@ -61,6 +61,5 @@ export async function openSteamControllerEditor(
   const client=deps?.client===undefined?
     (globalThis as unknown as {SteamClient?:SteamClientLike}).SteamClient:
     deps.client;
-  if(openControllerFromClient(appId,client))return true;
   return openControllerFromClient(appId,client);
 }
