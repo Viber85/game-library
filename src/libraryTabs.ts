@@ -58,7 +58,7 @@ export function withGogBuiltin(tabs:readonly LibraryTab[]):LibraryTab[]{
 /** A legacy 0.6.0/0.6.1 single filter becomes one Smart rule on read. */
 export function smartRulesForTab(tab:LibraryTab):SmartRule[]{
   if(tab.rules!==undefined)return tab.rules;
-  return tab.filter==="all"?[]:[{type:tab.filter}];
+  return tab.filter==="all"||tab.filter==="gog"?[]:[{type:tab.filter}];
 }
 export function matchesSmartRule(game:LibraryGame,rule:SmartRule):boolean{
   switch(rule.type){
@@ -127,7 +127,7 @@ export function newLibraryTab(tabs:readonly LibraryTab[],title:string,
   return normalizeLibraryTabs([...tabs,{
     id,title:title.trim(),position:tabs.length,visible:true,kind:"custom" as const,
     filter,mode,members:[],
-    rules:filter==="all"?[]:[{type:filter}],ruleJoin:"all" as const,
+    rules:filter==="all"||filter==="gog"?[]:[{type:filter}],ruleJoin:"all" as const,
     forceInclude:[],forceExclude:[],
   }]);
 }
