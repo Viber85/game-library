@@ -736,6 +736,56 @@ export function Dashboard({initialMode="home",originRoute}:
     return false;
   };
 
+  /** One card renderer for Steam, GOG and future catalog providers. */
+  const renderEntry=(entry:DashboardEntry,index:number,mode:"grid"|"home")=>{
+    const select=()=>{
+      if(entry.store==="steam"){
+        setSelectedId(entry.steam.id);setSelectedGogId(null);
+      }else{
+        setSelectedId(undefined);setSelectedGogId(entry.gog.id);
+      }
+      if(mode==="grid"){
+        lastGridFocusIndex.current=index;
+        if(index>=gridLimit-12&&gridLimit<gridShown.length)
+          setGridLimit(limit=>Math.min(limit+60,gridShown.length));
+      }
+    };
+    const move=(button:GamepadButton)=>{
+      if(mode==="grid"){moveInGrid(index,button);return;}
+      if(button===GamepadButton.DIR_DOWN){
+        homeActionRefs.current[0]?.focus();return;
+      }
+      if(button===GamepadButton.DIR_LEFT)
+        index===0?focusRail(railIndex):goToGame(index-1);
+      else if(button===GamepadButton.DIR_RIGHT){
+        if(index===previewGames.length-1&&gridShown.length>INITIAL_GAME_COUNT)
+          viewMoreRef.current?.focus();
+        else goToGame(index+1);
+      }else if(button===GamepadButton.DIR_UP)focusPill(tabs.indexOf(tab));
+      else if(button===GamepadButton.BUMPER_LEFT)cycleTab(-1);
+      else if(button===GamepadButton.BUMPER_RIGHT)cycleTab(1);
+    };
+    const cardRef=(node:HTMLDivElement|null)=>{
+      if(mode==="grid")fullGridRefs.current[index]=node;
+      else gameRefs.current[index]=node;
+    };
+    const activate=()=>entry.store==="steam"?
+      (mode==="home"?runGameAction(entry.steam):openGameDetails(entry.steam)):
+      openGogDetails(entry,index);
+    if(entry.store==="steam")return <GameCard key={entry.key}
+      game={entry.steam} index={index} captureVertical={mode==="grid"}
+      onSelect={select} onMove={move} onSort={showSortMenu}
+      cardRef={cardRef} activate={activate}
+      onCancel={mode==="grid"?exitGrid:undefined}
+      showInstallSize={mode==="grid"&&initialMode==="library"}
+      selectedForSize={selectedId===entry.steam.id}/>;
+    return <GogDashboardCard key={entry.key} entry={entry} accountId={gogAccountId}
+      index={index} onSelect={select} onMove={move}
+      onSort={showSortMenu} onActivate={activate}
+      onCancel={mode==="grid"?exitGrid:()=>focusRail(railIndex)}
+      cardRef={cardRef}/>;
+  };
+
   return (
     <div ref={nativeMenuRoot}
       // Steam renders its original #header over custom Decky routes. The
@@ -830,6 +880,10 @@ export function Dashboard({initialMode="home",originRoute}:
           : settingsMode ? <PluginSettingsPage firstRef={settingsEntryRef}
               onFocusRail={()=>focusRail(railIndex)}
               onBack={()=>Navigation.Navigate("/library/home")}/>
+          : detailGog ? <SharedLibraryDetails
+              game={fromGogLibraryGame(detailGog)}
+              cover={<GogArtwork game={detailGog} accountId={gogAccountId} expanded/>}
+              onBack={closeGogDetails} backRef={gogDetailBackRef}/>
           : searchMode ? <>
         <header className="gl-header gl-library-topbar" aria-label="Search navigation">
           <div className="gl-topbar-titles"><span className="gl-topbar-current">Search</span></div>
@@ -855,7 +909,7 @@ export function Dashboard({initialMode="home",originRoute}:
           <div className="gl-grid-heading">
             <div><h2>Results</h2>
               <span aria-live="polite">{searchSelection.query.trim()
-                ?shown.length+" matching games · Steam / Epic / GOG / Other"
+                ?gridShown.length+" matching games · Steam / Epic / GOG / Other"
                 :"Search across your entire game library"}</span>
             </div>
             <div className="gl-grid-header-actions">
@@ -904,19 +958,9 @@ export function Dashboard({initialMode="home",originRoute}:
             </Focusable>)}
             <div className="gl-sort-menu-hint">A Select · B Close</div>
           </Focusable>}
-          {shown.length>0
+          {gridShown.length>0
             ? <SharedLibraryGrid scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}>
-                  {visibleGridGames.map((game,index)=><GameCard key={game.id}
-                    game={game} index={index} captureVertical
-                    onSelect={()=>{
-                      setSelectedId(game.id);
-                      if(index>=gridLimit-12&&gridLimit<shown.length)
-                        setGridLimit(limit=>Math.min(limit+60,shown.length));
-                    }}
-                    activate={()=>openGameDetails(game)}
-                    onCancel={exitGrid} onSort={showSortMenu}
-                    onMove={button=>moveInGrid(index,button)}
-                    cardRef={el=>{fullGridRefs.current[index]=el;}}/>)}
+                {visibleGridGames.map((entry,index)=>renderEntry(entry,index,"grid"))}
               </SharedLibraryGrid>
             : <div className="gl-search-empty">
                 <MdLibraryBooks aria-hidden="true"/>
@@ -925,7 +969,7 @@ export function Dashboard({initialMode="home",originRoute}:
                   ?"Try another title or change the source / availability filters."
                   :"Enter a title to search Steam, Epic, GOG and other shortcuts."}</p>
               </div>}
-          <div className="gl-grid-hint">A: Game details · Y: Sort · Start: Game options · B: Back</div>
+          <div className="gl-grid-hint">A: Game details · Y: Sort · Start: Steam options · B: Back</div>
         </section>
           </> : <>
         {!viewAll && selected && <div className="gl-scene" aria-hidden="true">
@@ -1016,15 +1060,14 @@ export function Dashboard({initialMode="home",originRoute}:
               total={metaProgress.total}/>
           </div>}
 
-        {tab.id==="GOG" ? <GogLibraryPage onFocusRail={()=>focusRail(railIndex)}/> :
-          shown.length > 0 ? (
+        {gridShown.length > 0 ? (
           viewAll ? (
             <section className={"gl-grid-page"+
               (libraryAlphabetActive?" gl-alphabet-enabled":"")}
               aria-label={"All games: "+tab.title}>
               <div className="gl-grid-heading">
                 <div><h2>{initialMode==="library"?"Library · "+tab.title:tab.title}</h2>
-                  <span>{shown.length} games · Midnight Library</span></div>
+                  <span>{gridShown.length} games · Midnight Library</span></div>
                 <div className="gl-grid-header-actions">
                   {initialMode==="library"&&<Focusable
                     ref={nativeLibraryRef}
@@ -1061,28 +1104,12 @@ export function Dashboard({initialMode="home",originRoute}:
                     total={metaProgress.total}/>
                 </div>}
               <SharedLibraryGrid scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}>
-                  {visibleGridGames.map((game,index)=>(
-                    <GameCard key={game.id} game={game} index={index}
-                      onSelect={()=>{
-                        setSelectedId(game.id);
-                        if(index>=gridLimit-12 && gridLimit<shown.length)
-                          setGridLimit(v=>Math.min(v+60,shown.length));
-                      }}
-                      activate={()=>openGameDetails(game)}
-                      onSort={showSortMenu}
-                      showInstallSize={initialMode==="library"}
-                      selectedForSize={selectedId===game.id}
-                      captureVertical
-                      onCancel={exitGrid}
-                      onMove={button=>moveInGrid(index,button)}
-                      cardRef={el=>{fullGridRefs.current[index]=el;}}
-                    />
-                  ))}
+                  {visibleGridGames.map((entry,index)=>renderEntry(entry,index,"grid"))}
               </SharedLibraryGrid>
               {libraryAlphabetActive&&<LibraryAlphabetIndicator
                 key={tab.id+":"+sort}
-                games={visibleGridGames} allGames={shown}
-                focusedGameId={selectedId}
+                games={visibleGridGames} allGames={gridShown}
+                focusedGameId={selectedId} focusedGameKey={selectedGridKey}
                 descending={sort==="alphabetical-desc"}
                 scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}
                 railRef={alphabetRailRef}
@@ -1090,7 +1117,7 @@ export function Dashboard({initialMode="home",originRoute}:
                 onReturnToGame={leaveAlphabet}
                 onOpenSort={showSortMenu}
                 onChangeTab={cycleTab}/>}
-              <div className="gl-grid-hint">Y: Sort · Start: Game options · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
+              <div className="gl-grid-hint">A: Game details · Y: Sort · Start: Steam options · B: {initialMode==="library"?"Home":"Back"} · L1/R1: Tabs</div>
             </section>
           ) : (
           <>
