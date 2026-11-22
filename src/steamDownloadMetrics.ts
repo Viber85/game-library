@@ -92,8 +92,13 @@ export function readSteamDownloadMetrics(
   // selected app's native queue counters are the next-best source.
   const bytes=overviewBytes(live)??itemBytes(item)??
     (item||live?appOverviewBytes(appOverview,appId):null);
-  const left=live&&live.paused!==true?
-    nonnegative(live.update_seconds_remaining):null;
+  // Steam's Downloads page uses overall estimated completion time,
+  // including staging and disk work. Older Steam builds expose only
+  // update_seconds_remaining (network download phase).
+  const left=live&&live.paused!==true?(
+    nonnegative(live.overall_estimated_time_remaining_sec) ??
+    nonnegative(live.update_seconds_remaining)
+  ):null;
   return {
     downloadedBytes:bytes?.downloadedBytes??null,
     totalBytes:bytes?.totalBytes??null,
