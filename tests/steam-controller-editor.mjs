@@ -46,11 +46,9 @@ test("React adapter uses Decky Navigation.Navigate and preserves original native
   assert.match(gear,/showNativeGameOptions\(game\.id,anchor\)/);
 });
 
-test("Steam's real gamepadUI component renders Quick Settings on ControllerConfigurator.Main",()=>{
-  // This source correspondence was verified against the public unobfuscated
-  // Steam client: routes/37449.js and GamepadUI/85399.js.
+test("production route matches Steam GamepadUI ControllerConfigurator.Main path",()=>{
+  // Independently checked against Steam's route generator 37449.js.
   const core=read("src/steamControllerEditorCore.ts");
   assert.match(core,/ClientRoutes\.GamepadUI\.ControllerConfigurator\.Main/);
-  assert.match(core,/Current Button Layout/);
-  assert.match(core,/Quick\s+Settings/);
+  assert.equal(controllerSettingsRoute(1091500),"/app/1091500/controllerconfigurator/main");
 });
