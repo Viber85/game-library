@@ -139,7 +139,7 @@ export const THEME_PROBE_SCRIPT=`(() => {
       el.textContent?.includes('--glm-compact-details-effective')),
     compactStyleActive: getComputedStyle(document.documentElement)
       .getPropertyValue('--glm-compact-details-effective').trim()==='1',
-    compactPosterShown: document.documentElement.hasAttribute('data-glm-compact-poster'),
+    compactPosterShown: document.documentElement?.hasAttribute?.('data-glm-compact-poster')===true,
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
     rootColor: getComputedStyle(surface).backgroundColor,
     sampleClasses: Array.from(classNames),
