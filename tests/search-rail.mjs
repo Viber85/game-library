@@ -41,9 +41,9 @@ test("Rail Search A/Right focuses editable field and other pages navigate to Sea
 });
 
 test("Unchanged focus and Game Details support across the library",()=>{
-  assert.match(dash,/onMove=\{button=>moveInGrid\(index,button\)\}/);
-  assert.match(dash,/activate=\{\(\)=>openGameDetails\(game\)\}/);
-  assert.match(dash,/onCancel=\{exitGrid\} onSort=\{showSortMenu\}/);
+  assert.match(dash,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
+  assert.match(dash,/openGameDetails\(entry.steam\)/);
+  assert.match(dash,/onCancel=\{mode==="grid"\?exitGrid:undefined\}/);
   assert.match(dash,/if\(searchMode\)Navigation.Navigate\(searchBackRoute\(\)\)/);
   assert.match(dash,/focusRail\(railIndex\)/);
   assert.match(app,/Theme Hub/);
