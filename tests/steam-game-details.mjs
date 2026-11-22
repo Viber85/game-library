@@ -137,7 +137,7 @@ test("controller icon targets pre-edit Controller Settings rather than Edit Layo
   const core=read("src/steamControllerEditorCore.ts");
   assert.match(adapter,/Navigation\.Navigate\(route\)/);
   assert.match(core,/controllerconfigurator\/main/);
-  assert.doesNotMatch(adapter,/steam:\/\/controllerconfig|ShowControllerConfigurator/);
+  assert.doesNotMatch(adapter,/\.URL\.ExecuteSteamURL\(|\.Apps\.ShowControllerConfigurator\(/);
   const controllerAction=source.slice(source.indexOf("const openController="),source.indexOf("const action="));
   assert.match(controllerAction,/openSteamControllerEditor\(game\.id\)/);
   assert.doesNotMatch(controllerAction,/showNativeGameOptions\(|onNativeDetails\(/);
