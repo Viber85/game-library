@@ -25,15 +25,16 @@ test("HLTB only opens real game pages, not arbitrary navigation or invented IDs"
   ])assert.equal(validHltbGameUrl(url),false,url);
 });
 
-test("Steam Store button uses the client's native store app page, not original Details",()=>{
-  assert.equal(steamStorePageUrl(1091500,false),"steam://store/1091500");
-  assert.equal(steamStorePageUrl(730,false),"steam://store/730");
+test("Steam Store button uses the HTTPS store page for ExternalWeb return-path experiment",()=>{
+  assert.equal(steamStorePageUrl(1091500,false),"https://store.steampowered.com/app/1091500");
+  assert.equal(steamStorePageUrl(730,false),"https://store.steampowered.com/app/730");
   for(const appId of [0,-1,NaN,Infinity,1.5,0x80000000,2**32])
     assert.equal(steamStorePageUrl(appId,false),null);
   assert.equal(steamStorePageUrl(1091500,true),null);
   assert.match(source,/onActivate=\{isNativeSteam\?onOpenStore:onNativeDetails\}/);
   assert.match(source,/isNativeSteam\?"Steam Store":"Steam Details"/);
-  assert.match(dashboard,/Navigation\.NavigateToSteamWeb\(url\)/);
+  assert.doesNotMatch(dashboard,/Navigation\.NavigateToSteamWeb\(url\)/);
+  assert.match(dashboard,/Navigation\.NavigateToExternalWeb\(url\)/);
   assert.match(dashboard,/steamStorePageUrl\(game\.id,game\.nonSteam\)===url/);
 });
 
