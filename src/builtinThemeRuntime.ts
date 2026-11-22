@@ -9,15 +9,18 @@ import {
 } from "./themeProbe";
 import { createMidnightCssCompiler } from "./themeCssCompiler";
 import {sameThemeRuntimeStatus} from "./themeCycleCache";
+import {COMPACT_DETAILS_INSTALL_SCRIPT,COMPACT_DETAILS_REMOVE_SCRIPT} from "./compactDetailsDom";
 
 export type ThemeId = "midnight" | "off";
 export type ThemeBundle = {
   id: "midnight";
   name: string;
   css: Record<ThemeScope,string>;
+  compact_css?:string;
 };
 export type ThemeStatus = {
   selected:ThemeId;
+  compactDetails:boolean;
   appliedTabs:number;
   hasMain:boolean;
   hasMenu:boolean;
@@ -68,7 +71,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "81";
+const STYLE_REVISION = "82";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -89,12 +92,13 @@ const managedTabs=new Map<string,TabRecord>();
 const listeners=new Set<(next:ThemeStatus)=>void>();
 let theme:ThemeBundle|null=null;
 let desired:ThemeId="off";
+let compactDetails=false;
 let shuttingDown=false;
 let generation=0;
 let timer:ReturnType<typeof setInterval>|null=null;
 let chain=Promise.resolve();
 let status:ThemeStatus={
-  selected:"off",appliedTabs:0,hasMain:false,hasMenu:false,hasQAM:false,issue:"",
+  selected:"off",compactDetails:false,appliedTabs:0,hasMain:false,hasMenu:false,hasQAM:false,issue:"",
 };
 
 export function themeRuntimeStatus():ThemeStatus{return {...status};}
@@ -166,6 +170,16 @@ async function listTabs():Promise<SteamTab[]> {
   return [];
 }
 
+async function syncCompactDetailsDom(title:string,enabled:boolean):Promise<void>{
+  try{
+    const script=enabled?COMPACT_DETAILS_INSTALL_SCRIPT:COMPACT_DETAILS_REMOVE_SCRIPT;
+    await bounded(executeInTab(title,false,script),1600);
+  }catch{
+    // Native Steam UI can recreate its document as the route changes.
+    // Recheck on the next theme cycle; never alter controller focus.
+  }
+}
+
 async function ensureThemeAudit(title:string):Promise<void>{
   try{
     const response=await bounded(executeInTab(title,false,THEME_AUDIT_INSTALL_SCRIPT));
@@ -209,7 +223,10 @@ async function applyToTab(
   // Steam can rebuild QAM/Home's DOM without changing the DevTools tab title.
   if(previous?.signature===signature && previous.scope===scope &&
      await activeInTab(title)){
-    if(scope==="main")await ensureThemeAudit(title);
+    if(scope==="main"){
+      await syncCompactDetailsDom(title,compactDetails);
+      await ensureThemeAudit(title);
+    }
     return;
   }
   // Never uninstall a WORKING stylesheet before its replacement is
@@ -218,7 +235,8 @@ async function applyToTab(
   // active until the new sheet has been accepted and verified.
   if(!previous){
     // First installation / hot-reload can have orphaned prior-version CSS.
-    try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
+    if(scope==="main")await syncCompactDetailsDom(title,false);
+    try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));
     catch{/* Steam may have rebuilt the tab while we were checking. */}
   }
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
@@ -247,7 +265,10 @@ async function applyToTab(
       try{await bounded(removeCssFromTab(title,previous.cssId) as unknown as Promise<void>|void);}
       catch{/* Previous Steam document or CSS node may no longer exist. */}
     }
-    if(scope==="main")await ensureThemeAudit(title);
+    if(scope==="main"){
+      await syncCompactDetailsDom(title,compactDetails);
+      await ensureThemeAudit(title);
+    }
   }catch(e){
     // Keep the theme enabled and retry when Steam opens the menu again.
     console.warn("[game-library] theme injection deferred for",title,e);
@@ -267,7 +288,9 @@ async function syncTheme():Promise<void>{
     if(shuttingDown||desired!=="midnight"||epoch!==generation)break;
     let css=cssByScope.get(tab.scope);
     if(css===undefined){
-      css=compile!(theme.css[tab.scope])+markerCss;
+      const source=theme.css[tab.scope]+(tab.scope==="main"&&compactDetails
+        ? "\n"+(theme.compact_css??""):"");
+      css=compile!(source)+markerCss;
       cssByScope.set(tab.scope,css);
     }
     await applyToTab(tab.title,tab.scope,epoch,css);
@@ -310,6 +333,25 @@ function stopTimer(){
 }
 function startTimer(){
   if(timer===null)timer=setInterval(()=>{void queue(syncTheme);},RECHECK_MS);
+}
+
+/** Apply user opt-in to native Steam details only. The same compiled CSS
+ * pipeline resolves Steam's current hashed class names; atomic replacement
+ * never unmounts Steam's buttons, tabs or focus handlers. */
+export async function setCompactDetailsMode(enabled:boolean):Promise<void>{
+  if(shuttingDown)return;
+  if(enabled&&theme&&!theme.compact_css)
+    throw new Error("Compact details CSS is missing from the installed ZIP.");
+  if(compactDetails===enabled)return;
+  compactDetails=enabled;
+  ++generation;
+  report({compactDetails:enabled});
+  if(desired==="midnight"&&theme)await queue(syncTheme);
+  else if(!enabled){
+    const tabs=await listTabs();
+    for(const t of tabs.filter(t=>t.scope==="main"))
+      await syncCompactDetailsDom(t.title,false);
+  }
 }
 
 export async function setBuiltinTheme(
@@ -447,12 +489,14 @@ export function startBuiltInThemeRuntime(){
   shuttingDown=false;
   desired="off";
   generation++;
-  report({selected:"off",issue:""});
+  compactDetails=false;
+  report({selected:"off",compactDetails:false,issue:""});
 }
 export function stopBuiltInThemeRuntime(){
   ++generation;
   shuttingDown=true;
   desired="off";
+  compactDetails=false;
   stopTimer();
   void queue(cleanup).catch(e=>
     console.warn("[game-library] theme cleanup failed",e));
