@@ -95,9 +95,13 @@ export function readSteamDownloadMetrics(
   // Steam's Downloads page uses overall estimated completion time,
   // including staging and disk work. Older Steam builds expose only
   // update_seconds_remaining (network download phase).
+  const positiveETA=(value:unknown):number|null=>{
+    const seconds=nonnegative(value);
+    return seconds!==null&&seconds>0?seconds:null;
+  };
   const left=live&&live.paused!==true?(
-    nonnegative(live.overall_estimated_time_remaining_sec) ??
-    nonnegative(live.update_seconds_remaining)
+    positiveETA(live.overall_estimated_time_remaining_sec) ??
+    positiveETA(live.update_seconds_remaining)
   ):null;
   return {
     downloadedBytes:bytes?.downloadedBytes??null,
