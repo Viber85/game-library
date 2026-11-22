@@ -15,7 +15,7 @@ const base=(override={})=>({
 test("Steam Home starts Game Library only on fresh, untouched Game Mode",()=>{
   assert.equal(shouldOpenStartupHome(base()),true);
   assert.equal(shouldOpenStartupHome(base({route:"/routes/library/home"})),true);
-  assert.equal(shouldOpenStartupHome(base({route:"/routes/index.html"}),true),false);
+  assert.equal(shouldOpenStartupHome(base({route:"/routes/index.html"})),false);
   assert.equal(shouldOpenStartupHome(base({route:"/routes/index.html"}),true),true);
   assert.equal(safeStartupHomeRoute("/routes/index.html",false),false);
   assert.equal(safeStartupHomeRoute("/",true),true);
