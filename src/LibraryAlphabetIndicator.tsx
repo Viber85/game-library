@@ -5,12 +5,13 @@ import {
   alphabetLetters,firstGameByLetter,letterForTitle,nextPopulatedLetter,
   letterAtRailPosition,nearestPopulatedLetter,
 } from "./libraryAlphabet";
-import type {LibraryGame} from "./steam";
+type AlphabetGame={title:string;id?:number;key?:string};
 
 type Props={
-  games:readonly LibraryGame[];
-  allGames:readonly LibraryGame[];
+  games:readonly AlphabetGame[];
+  allGames:readonly AlphabetGame[];
   focusedGameId:number|undefined;
+  focusedGameKey?:string;
   descending:boolean;
   scrollRef:RefObject<HTMLDivElement|null>;
   gridRef:RefObject<HTMLDivElement|null>;
@@ -26,7 +27,7 @@ type Props={
  * screens (and non-alphabet sorts) the component is not mounted.
  */
 export function LibraryAlphabetIndicator({
-  games,allGames,focusedGameId,descending,scrollRef,gridRef,railRef,
+  games,allGames,focusedGameId,focusedGameKey,descending,scrollRef,gridRef,railRef,
   onJumpToGame,onReturnToGame,onOpenSort,onChangeTab,
 }:Props){
   const [letter,setLetter]=useState<string>("#");
@@ -63,12 +64,13 @@ export function LibraryAlphabetIndicator({
   };
 
   useEffect(()=>{
-    if(focusedGameId===undefined)return;
-    const index=games.findIndex(g=>g.id===focusedGameId);
+    if(focusedGameId===undefined&&focusedGameKey===undefined)return;
+    const index=games.findIndex(g=>focusedGameKey!==undefined?
+      g.key===focusedGameKey:g.id===focusedGameId);
     if(index<0)return;
     focusTime.current=Date.now();
     setCurrent(index,true);
-  },[focusedGameId,games]);
+  },[focusedGameId,focusedGameKey,games]);
 
   useEffect(()=>{
     const scroll=scrollRef.current;
@@ -133,7 +135,8 @@ export function LibraryAlphabetIndicator({
 
   const onRailFocus=()=>{
     setChoosing(true);
-    const selected=allGames.find(g=>g.id===focusedGameId);
+    const selected=allGames.find(g=>focusedGameKey!==undefined?
+      g.key===focusedGameKey:g.id===focusedGameId);
     const initial=selected?letterForTitle(selected.title):letter;
     setChoice(targets.has(initial)?initial:
       order.find(char=>targets.has(char))??null);
