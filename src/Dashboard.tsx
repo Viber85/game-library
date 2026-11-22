@@ -32,6 +32,7 @@ import {DEFAULT_LIBRARY_TABS,createLibraryTabResolver,gamesForLibraryTab,
 import {TabManager} from "./TabManager";
 import {PluginSettingsPage} from "./PluginSettingsPage";
 import {GogLibraryPage} from "./GogLibraryPage";
+import {SharedLibraryGrid,SharedLibraryCardFace} from "./SharedLibraryGrid";
 import {useNativeMenuGamepad} from "./nativeMenuGamepad";
 import { getAutoTabs, subscribeAutoTabs, type AutoTabSnapshot } from "./autoTabSource";
 import {sortForTab,sortGames,sortLabel,externalSortKind,SORT_OPTIONS,type HomeSort} from "./homeSort";
@@ -146,20 +147,18 @@ function GameCard({
       onOKActionDescription={activate ? "Game details" : gameActionLabel(game)}
       onOptionsActionDescription="Sort games"
     >
-      <div className="gl-poster" data-size-active={showInstallSize||undefined}>
+      <SharedLibraryCardFace title={game.title}
+          sizeActive={showInstallSize} installed={game.installed&&!showInstallSize}>
         {poster ? <img src={poster} alt="" loading="lazy" key={poster}
           onError={() => {
             if(covers[coverIndex])setCoverIndex(n=>n+1);
             else setRemoteCover(null);
           }} /> : null}
-        <span className="gl-poster-name">{game.title}</span>
         {showInstallSize&&<div className="gl-poster-meta">
           <SteamInstallSizeBadge key={"size-"+game.id} game={game} active={selectedForSize}/>
           <HltbPosterBadge key={"hltb-"+game.id} game={game} active={selectedForSize}/>
         </div>}
-        {game.installed && !showInstallSize &&
-          <MdCheckCircle className="gl-installed-indicator" aria-label="Installed" />}
-      </div>
+      </SharedLibraryCardFace>
     </Focusable>
   );
 }
@@ -851,8 +850,7 @@ export function Dashboard({initialMode="home",originRoute}:
             <div className="gl-sort-menu-hint">A Select · B Close</div>
           </Focusable>}
           {shown.length>0
-            ? <div className="gl-full-grid-scroll" ref={fullGridScrollRef}>
-                <div className="gl-full-grid" ref={fullGridLayoutRef}>
+            ? <SharedLibraryGrid scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}>
                   {visibleGridGames.map((game,index)=><GameCard key={game.id}
                     game={game} index={index} captureVertical
                     onSelect={()=>{
@@ -864,8 +862,7 @@ export function Dashboard({initialMode="home",originRoute}:
                     onCancel={exitGrid} onSort={showSortMenu}
                     onMove={button=>moveInGrid(index,button)}
                     cardRef={el=>{fullGridRefs.current[index]=el;}}/>)}
-                </div>
-              </div>
+              </SharedLibraryGrid>
             : <div className="gl-search-empty">
                 <MdLibraryBooks aria-hidden="true"/>
                 <h2>{searchSelection.query.trim()?"No matching games":"Find a game"}</h2>
@@ -1008,8 +1005,7 @@ export function Dashboard({initialMode="home",originRoute}:
                   <SortProgressNotice kind={sortKind} done={metaProgress.done}
                     total={metaProgress.total}/>
                 </div>}
-              <div className="gl-full-grid-scroll" ref={fullGridScrollRef}>
-                <div className="gl-full-grid" ref={fullGridLayoutRef}>
+              <SharedLibraryGrid scrollRef={fullGridScrollRef} gridRef={fullGridLayoutRef}>
                   {visibleGridGames.map((game,index)=>(
                     <GameCard key={game.id} game={game} index={index}
                       onSelect={()=>{
@@ -1027,8 +1023,7 @@ export function Dashboard({initialMode="home",originRoute}:
                       cardRef={el=>{fullGridRefs.current[index]=el;}}
                     />
                   ))}
-                </div>
-              </div>
+              </SharedLibraryGrid>
               {libraryAlphabetActive&&<LibraryAlphabetIndicator
                 key={tab.id+":"+sort}
                 games={visibleGridGames} allGames={shown}
