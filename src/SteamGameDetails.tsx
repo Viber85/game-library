@@ -557,7 +557,8 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   </Focusable>
                   <Focusable {...onAction("download-cancel")}
                       className="gl-details-focus gl-details-download-control gl-details-download-cancel"
-                      onOKActionDescription="Cancel download and remove its new-install data"
+                      onOKActionDescription={nativeDownload.downloadNature==="initial"?
+                        "Open native Steam Uninstall confirmation":"Remove update from Steam download queue"}
                       onActivate={confirmCancelDownload}>
                     <MdDeleteOutline/><span>{downloadBusy?"Sending...":cancelRequested?"Cancel requested":"Cancel download"}</span>
                   </Focusable>
