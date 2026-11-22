@@ -430,15 +430,41 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
     const clickedHomeDetails=initialMode==="home"&&!viewAll&&
       (homeActionRefs.current[1]===document.activeElement||
        homeActionRefs.current[1]?.contains(document.activeElement));
-    steamReturnTarget.current={
+    const target:GameDetailsReturnTarget={
       kind:collectionsMode?"collections":viewAll||searchMode?"grid":
         clickedHomeDetails?"home-action":"home-card",
       gameId:game.id,index:index>=0?index:lastGridFocusIndex.current,
       scrollTop:fullGridScrollRef.current?.scrollTop??0,
     };
-    setSteamDetailsGame(game);
+    steamReturnTarget.current=target;
+    if(detailRouteSession){
+      // Already on this dedicated route: changing the selected game is local.
+      setSteamDetailsGame(game);
+      return;
+    }
+    // Unlike transient React state, this route is an actual Steam navigation
+    // history entry. B from Controller Settings / HLTB / Store then returns
+    // directly here rather than replaying an older controller page.
+    if(!stageGameDetailsRoute({
+      game,originRoute:actualRoute,originMode:initialMode,target
+    }))return;
+    rememberGameDetails(game);
+    Navigation.Navigate(GAME_DETAILS_ROUTE);
   };
   const openControllerSettings=(game:LibraryGame)=>{
+    if(detailRouteSession){
+      // This page is now a native history entry; the next Steam B lands
+      // on it naturally. Do not arm old Library route-return machinery.
+      void openSteamControllerEditor(game.id).then(accepted=>{
+        if(!accepted)toaster.toast({
+          title:"Controller Settings unavailable",
+          body:"Steam could not open the controller settings page."
+        });
+      }).catch(error=>{
+        console.warn("[game-library] Controller Settings failed",error);
+      });
+      return;
+    }
     const target=steamReturnTarget.current;
     if(!target||!armControllerSettingsReturn({route:actualRoute,appId:game.id,target})){
       toaster.toast({title:"Controller Settings unavailable",body:"Game Details return location was not available."});
@@ -461,6 +487,19 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
       steamStorePageUrl(game.id,game.nonSteam)===url;
     if(!valid){
       toaster.toast({title:"Game Library",body:"The external game page link is unavailable."});
+      return;
+    }
+    if(detailRouteSession){
+      // HLTB and Store are opened *on top* of a registered Game Details
+      // route. Native B returns to this exact page without one-shot browser
+      // tokens, preventing a stale Controller Settings flash.
+      try{
+        if(kind==="hltb")Navigation.NavigateToExternalWeb(url);
+        else Navigation.NavigateToSteamWeb(url);
+      }catch(error){
+        console.warn("[game-library] could not open external page",error);
+        toaster.toast({title:"Game Library",body:"Could not open the selected game page."});
+      }
       return;
     }
     const target=steamReturnTarget.current;
@@ -490,7 +529,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
     }
   };
   const openNativeGameDetails=(game:LibraryGame)=>{
-    rememberGameDetails(game);
+    if(!detailRouteSession)rememberGameDetails(game);
     openDetails(game);
   };
   const runGameAction=(game:LibraryGame)=>{
@@ -706,6 +745,14 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
   const closeSteamDetails=()=>{
+    if(detailRouteSession){
+      // Restore the original selected game/grid when Steam pops this real
+      // route. No push navigation and no stale browser/controller redirects.
+      clearGameDetailsRoute();
+      clearControllerSettingsReturn();
+      Navigation.NavigateBack();
+      return;
+    }
     // Controller Settings -> Game Details is a one-shot restoration.
     // Game Details -> Library must NEVER schedule a second restoration.
     controllerRestorePending.current=false;
