@@ -159,6 +159,8 @@ test("Native sign-in survives Settings route unmount and keeps manual fallback o
   assert.match(frontend,/startNativeGogLogin\(\{/);
   assert.match(settings,/consumeGogReturn\(\)\?"gog":null/);
   assert.doesNotMatch(frontend,/useEffect\(\(\)=>\(\)=>\{nativeSession/);
-  assert.doesNotMatch(native,/CreatePopup|window\.open\(|SetBounds|SetVisible|Unifideck|unifideck/);
+  // Check executable code, not explanatory comments naming the old broken API.
+  const executable=native.slice(native.indexOf("type BrowserEvents="));
+  assert.doesNotMatch(executable,/CreatePopup|window\.open\(|SetBounds|SetVisible|Unifideck|unifideck/);
   assert.doesNotMatch(native,/document\.cookie|<iframe|localStorage|readFile/);
 });
