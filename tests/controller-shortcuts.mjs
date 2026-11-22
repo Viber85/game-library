@@ -23,7 +23,9 @@ test("Select/View shortcut is removed; START owns the native Steam context menu"
 });
 
 test("Both Home carousel and Midnight full grid pass the Sort callback",()=>{
-  assert.equal((source.match(/onSort=\{showSortMenu\}/g)||[]).length,3);
+  assert.equal((source.match(/onSort=\{showSortMenu\}/g)||[]).length,2);
+  assert.match(source,/renderEntry\(entry,index,"grid"\)/);
+  assert.match(source,/renderEntry\(entry,index,"home"\)/);
   assert.match(source,/className="gl-grid-page gl-search-page"/);
   assert.match(source,/onOptionsButton=\{\(e:GamepadEvent\)=>\{consume\(e\);showSortMenu\(\);\}\}/);
 });
@@ -34,15 +36,15 @@ test("Sort A/B restores the card that launched it instead of jumping to the filt
   assert.match(sortMenu,/else sortRef\.current\?\.focus\(\);/);
   assert.match(source,/onCancelButton=\{closeSortMenu\}/);
   assert.match(source,/onActivate=\{\(\)=>chooseSort\(option\.id\)\}/);
-  assert.match(source,/Y: Sort · Start: Game options/);
+  assert.match(source,/Y: Sort · Start: Steam options/);
 });
 
 test("Original A Play/Details, B Back, L1/R1 and grid movement unchanged",()=>{
   assert.match(card,/onActivate=\{activate \?\? \(\(\) => play\(game\)\)\}/);
   assert.match(card,/onCancelButton=\{onCancel\}/);
-  assert.match(source,/activate=\{\(\)=>openGameDetails\(game\)\}/);
+  assert.match(source,/openGameDetails\(entry.steam\)/);
   assert.match(source,/openDetails\(game\);/);
   assert.match(source,/GamepadButton\.BUMPER_LEFT/);
   assert.match(source,/GamepadButton\.BUMPER_RIGHT/);
-  assert.match(source,/onMove=\{button=>moveInGrid\(index,button\)\}/);
+  assert.match(source,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
 });
