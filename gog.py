@@ -9,6 +9,8 @@ import json
 import os
 import pathlib
 import re
+import socket
+import ssl
 import tempfile
 import time
 import urllib.error
@@ -25,6 +27,16 @@ _PROFILE = "https://embed.gog.com/userData.json"
 _MAX_PAGES = 500
 _MAX_GAMES = 25000
 _UA = "GameLibrary/0.6.11"
+# SteamOS / Decky Python processes can lack a complete system CA trust store.
+# Prefer Decky-provided certifi, then a verified Linux CA bundle. Never use
+# CERT_NONE, unverified_context(), or disable hostname verification.
+_CA_FILES = (
+    "/etc/ssl/certs/ca-certificates.crt",
+    "/etc/pki/tls/certs/ca-bundle.crt",
+    "/etc/ssl/ca-bundle.pem",
+    "/etc/ssl/cert.pem",
+)
+_TLS_CONTEXT = None
 
 
 class GogError(Exception):
@@ -78,37 +90,95 @@ def _atomic_json(path, value):
             os.unlink(name)
 
 
+def _tls_context():
+    """Verified HTTPS trust root, including Decky's bundled certifi when present."""
+    global _TLS_CONTEXT
+    if _TLS_CONTEXT is not None:
+        return _TLS_CONTEXT
+
+    paths = []
+    try:
+        import certifi
+        paths.append(certifi.where())
+    except (ImportError, OSError, AttributeError):
+        pass
+    paths.extend(_CA_FILES)
+    for candidate in paths:
+        try:
+            if candidate and pathlib.Path(candidate).is_file():
+                _TLS_CONTEXT = ssl.create_default_context(cafile=str(candidate))
+                return _TLS_CONTEXT
+        except (OSError, ValueError, ssl.SSLError):
+            continue
+    # Do not weaken verification if the operating system has no CA file.
+    _TLS_CONTEXT = ssl.create_default_context()
+    return _TLS_CONTEXT
+
+
+def _request_label(parsed):
+    """Stage names must never incorporate token/code/query strings."""
+    if parsed.hostname == "auth.gog.com":
+        return "GOG token exchange"
+    if parsed.path == "/userData.json":
+        return "GOG account profile"
+    return "GOG library synchronization"
+
+
+def _network_failure(error, stage):
+    """Classify Python/Decky network failures without leaking the request URL."""
+    reason = error.reason if isinstance(error, urllib.error.URLError) else error
+    if isinstance(reason, ssl.SSLCertVerificationError):
+        return (stage + ": HTTPS certificate validation failed on SteamOS. "
+                "Check the system date/time and trusted CA certificates.")
+    if isinstance(reason, ssl.SSLError):
+        return stage + ": TLS handshake failed. Verify SteamOS HTTPS certificate support."
+    if isinstance(reason, (socket.timeout, TimeoutError)):
+        return (stage + ": connection timed out. Check handheld networking, "
+                "DNS or IPv6 routing to GOG.")
+    if isinstance(reason, socket.gaierror):
+        return stage + ": DNS could not resolve GOG. Check the handheld's DNS/network."
+    if isinstance(reason, (ConnectionRefusedError, ConnectionResetError)):
+        return stage + ": connection was refused or reset by the remote server."
+    return stage + ": HTTPS connection failed on the handheld. Check SteamOS network/CA settings."
+
+
 def _http_json(url, access=None):
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme != "https" or parsed.hostname not in ("auth.gog.com", "embed.gog.com"):
         raise GogError("Invalid GOG endpoint.")
+    stage = _request_label(parsed)
     headers = {"Accept": "application/json", "User-Agent": _UA}
     if access:
         headers["Authorization"] = "Bearer " + access
     request = urllib.request.Request(url, headers=headers)
     try:
-        with urllib.request.urlopen(request, timeout=15) as response:
+        with urllib.request.urlopen(request, timeout=18, context=_tls_context()) as response:
             if response.status != 200:
-                raise GogError("GOG returned HTTP " + str(response.status) + ".")
+                raise GogError(stage + ": GOG returned HTTP " + str(response.status) + ".")
             body = response.read(2_000_001)
         if len(body) > 2_000_000:
-            raise GogError("GOG response was too large.")
+            raise GogError(stage + ": GOG response was too large.")
         data = json.loads(body)
         if not isinstance(data, dict):
             raise ValueError("Not an object")
         return data
     except urllib.error.HTTPError as error:
+        if error.code == 400 and parsed.hostname == "auth.gog.com":
+            raise GogError(
+                "GOG token exchange: GOG rejected this authorization code (HTTP 400). "
+                "Sign in again to get a fresh one-use code."
+            ) from None
         if error.code == 401:
-            raise GogError("GOG session expired. Sign in again.") from None
+            raise GogError(stage + ": GOG session expired. Sign in again.") from None
         if error.code == 403:
-            raise GogError("GOG denied access to this library.") from None
+            raise GogError(stage + ": access denied by GOG (HTTP 403).") from None
         if error.code == 429:
-            raise GogError("GOG request limit reached. Try again later.") from None
-        raise GogError("GOG returned HTTP " + str(error.code) + ".") from None
-    except (urllib.error.URLError, TimeoutError, OSError):
-        raise GogError("Unable to reach GOG. Check the internet connection.") from None
+            raise GogError(stage + ": GOG rate limit reached. Try again later.") from None
+        raise GogError(stage + ": GOG returned HTTP " + str(error.code) + ".") from None
+    except (urllib.error.URLError, TimeoutError, OSError, ssl.SSLError) as error:
+        raise GogError(_network_failure(error, stage)) from None
     except (UnicodeError, ValueError):
-        raise GogError("GOG returned an invalid response.") from None
+        raise GogError(stage + ": GOG returned invalid JSON.") from None
 
 
 def login_url():
