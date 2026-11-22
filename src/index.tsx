@@ -13,6 +13,7 @@ import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
 import {subscribeHomeSetting} from "./pluginSettingsEvents";
 import {returnDestinationFromHome,clearDetailsOrigin} from "./detailsReturn";
 import {startBrowserStartupHome} from "./startupHomeBrowser";
+import {GAME_DETAILS_ROUTE,readGameDetailsRoute,clearGameDetailsRoute} from "./gameDetailsRoute";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const LIBRARY_ROUTE = "/game-library/library";
@@ -60,6 +61,20 @@ function HomeReturnGate({native}:{native:ReactNode}){
   return <NativeHomeFallback native={native}>
     <Dashboard originRoute={HOME_ROUTE}/>
   </NativeHomeFallback>;
+}
+
+/** A real Game Mode route is essential for Steam's Back history.
+ * React-only details state inside /library caused B to replay Controller
+ * Settings when returning from Store and HLTB external pages.
+ */
+function RoutedGameDetails(){
+  const [session]=useState(()=>readGameDetailsRoute());
+  if(!session){
+    // Safe fallback on plugin refresh; never show stale Controller Settings.
+    return <Dashboard initialMode="library"/>;
+  }
+  return <Dashboard initialMode={session.originMode}
+    detailRouteSession={session}/>;
 }
 
 /** Keep a lightweight route gate even if the Home replacement is disabled.
@@ -159,6 +174,7 @@ export default definePlugin(() => {
     if(!enabled)cancelStartupHome();
     updateHomePatch();emit();
   });
+  routerHook.addRoute(GAME_DETAILS_ROUTE, RoutedGameDetails,{exact:true});
   routerHook.addRoute(DASHBOARD_ROUTE,
     ()=> <Dashboard originRoute={DASHBOARD_ROUTE}/>, { exact: true });
   routerHook.addRoute(LIBRARY_ROUTE, ()=> <Dashboard initialMode="library"/>,
@@ -210,11 +226,13 @@ export default definePlugin(() => {
       stopHomeSync();
       stopBuiltInThemeRuntime();
       clearDetailsOrigin();
+      clearGameDetailsRoute();
       listeners.clear();
       if(homePatch) {
         routerHook.removePatch(HOME_ROUTE, homePatch);
         homePatch = undefined;
       }
+      routerHook.removeRoute(GAME_DETAILS_ROUTE);
       routerHook.removeRoute(DASHBOARD_ROUTE);
       routerHook.removeRoute(LIBRARY_ROUTE);
       routerHook.removeRoute(APPEARANCE_ROUTE);
