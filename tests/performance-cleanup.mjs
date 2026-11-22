@@ -117,7 +117,7 @@ test("Dead helper exports are gone, real SteamGridDB image fallbacks remain",()=
   assert.match(source,/export function heroFallbackCandidates\(/);
   assert.match(source,/export function logoCandidates\(/);
   const panel=read("src/SteamGridDBPanel.tsx");
-  assert.match(panel,/Auto-fill missing Steam cover and hero/);
+  assert.match(panel,/Auto-fill missing Steam and GOG artwork/);
 });
 
 test("Midnight native CSS and current controller/theme behavior remain untouched",()=>{
