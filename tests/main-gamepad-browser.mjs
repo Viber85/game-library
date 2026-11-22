@@ -83,9 +83,9 @@ test("accepts normal Steam main window navigator alias for supported clients",()
 test("both link types invoke only ExternalWeb, never SteamWeb",()=>{
   const code=read("src/mainGamepadBrowser.ts");
   const dashboard=read("src/Dashboard.tsx");
-  assert.match(code,/const action=navigator\\?\\.ExternalWeb/);
-  assert.doesNotMatch(code,/navigator\\?\\.SteamWeb/);
-  assert.doesNotMatch(dashboard,/Navigation\\.NavigateToSteamWeb\\(url\\)/);
+  assert.ok(code.includes("const action=navigator?.ExternalWeb"));
+  assert.ok(!code.includes("navigator?.SteamWeb"));
+  assert.ok(!dashboard.includes("Navigation.NavigateToSteamWeb(url)"));
 });
 
 test("never leaks original Decky focused-window browser routing back into custom Details",()=>{
