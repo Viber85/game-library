@@ -11,7 +11,10 @@
  * The session persists across React route unmounts while Steam displays GOG.
  * Only the selected, exact GOG callback URL can complete authentication.
  */
+import {stabilizeGogKeyboardFocus,type FocusGuard} from "./gogKeyboardFocus";
+
 type BrowserEvents={
+  SetFocus?:(value:boolean)=>void;
   on?:(event:string,listener:(...args:any[])=>void)=>void;
   off?:(event:string,listener:(...args:any[])=>void)=>void;
 };
@@ -135,6 +138,7 @@ export function startNativeGogLogin(options:GogLoginOptions):GogLoginResult{
   let sawLoginPage=false;
   let trackedBrowser:BrowserInfo|null=null;
   let trackedView:BrowserEvents|null=null;
+  let keyboardFocusGuard:FocusGuard|null=null;
   let events:Array<[string,(...args:any[])=>void]>=[];
   let pollId:number|undefined;
   let timeoutId:number|undefined;
@@ -144,6 +148,8 @@ export function startNativeGogLogin(options:GogLoginOptions):GogLoginResult{
     closed=true;
     if(pollId!==undefined)root.clearInterval?.(pollId);
     if(timeoutId!==undefined)root.clearTimeout?.(timeoutId);
+    keyboardFocusGuard?.dispose();
+    keyboardFocusGuard=null;
     if(trackedView){
       for(const [name,listener] of events)
         try{trackedView.off?.(name,listener);}catch{/* Steam view may be gone. */}
@@ -194,6 +200,8 @@ export function startNativeGogLogin(options:GogLoginOptions):GogLoginResult{
     if(trackedBrowser===browser)return;
     // Steam alone creates and renders this view as ExternalWeb.
     if(browser.name!=="ExternalWeb")return;
+    keyboardFocusGuard?.dispose();
+    keyboardFocusGuard=null;
     if(trackedView){
       for(const [name,listener] of events)
         try{trackedView.off?.(name,listener);}catch{/* Steam view replaced */}
@@ -202,6 +210,12 @@ export function startNativeGogLogin(options:GogLoginOptions):GogLoginResult{
     const view=browser.GetBrowser?.();
     trackedView=view??null;
     firstBrowserSeen=true;
+    // Only for this explicitly user-initiated GOG login: prevent Steam's
+    // synchronous focus false/true cycle after each virtual keyboard key.
+    keyboardFocusGuard=stabilizeGogKeyboardFocus(view);
+    if(!keyboardFocusGuard.installed){
+      console.warn("[game-library] Steam did not permit the GOG keyboard focus workaround.");
+    }
     const attach=(name:string,handler:(...args:any[])=>void)=>{
       if(typeof view?.on!=="function")return;
       view.on(name,handler);
