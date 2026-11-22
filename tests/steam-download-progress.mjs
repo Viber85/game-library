@@ -73,13 +73,37 @@ test("after native install wizard, Play is blocked until ready, including queue 
   assert.equal(resolveInstallMode(false,null,null,false),"install");
 });
 
-test("completed item returns to Play when Steam declares ReadyToLaunch",()=>{
-  const list=[{appid:730,active:true,paused:false,completed:true,queue_index:-1,
+test("native status cannot mask an active Steam download",()=>{
+  const list=[{appid:730,active:true,paused:false,completed:false,queue_index:0,
+    update_type_info:[{has_update:true,overall_percent_complete:32}]}];
+  const transfer=resolveGameTransfer(730,list,{update_appid:730,
+    update_state:"Downloading",overall_percent_complete:44},11);
+  assert.deepEqual(transfer,{phase:"downloading",percent:44});
+  assert.equal(resolveInstallMode(true,11,transfer,false),"transfer");
+});
+
+test("SteamOS progress arrays use actual bytes when overall_percent_complete is missing",()=>{
+  const overview={update_appid:730,update_state:"Downloading",
+    progress:[{bytes_in_progress:250,bytes_total:1000},{bytes_in_progress:50,bytes_total:500}]};
+  assert.deepEqual(readSteamDownloadOverview(overview,730),
+    {phase:"downloading",percent:20});
+  const list=[{appid:730,active:true,paused:false,completed:false,queue_index:0,
+    update_type_info:[{has_update:true,completed_update:false,
+      progress:[{bytes_in_progress:100,bytes_total:1000}]}]}];
+  assert.deepEqual(readSteamDownloadItems(list,730),{phase:"downloading",percent:10});
+  const bytes=[{appid:730,active:true,paused:false,completed:false,queue_index:0,
+    downloaded_bytes:512,total_bytes:1024}];
+  assert.deepEqual(readSteamDownloadItems(bytes,730),{phase:"downloading",percent:50});
+});
+
+test("completed item returns to Play only after all native transfer sources finish",()=>{
+  const list=[{appid:730,active:false,paused:false,completed:true,queue_index:-1,
     update_type_info:[{has_update:true,overall_percent_complete:100}]}];
   const transfer=resolveGameTransfer(730,list,{update_appid:730,
-    update_state:"Downloading",overall_percent_complete:100},11);
+    update_state:"None",overall_percent_complete:100},11);
   assert.equal(transfer,null);
   assert.equal(resolveInstallMode(true,11,transfer,false),"play");
+  assert.equal(resolveInstallMode(true,11,null,true),"preparing");
 });
 
 test("Game Details shows live Steam progress and never routes an active download to native details",()=>{
@@ -96,6 +120,16 @@ test("Game Details shows live Steam progress and never routes an active download
   assert.match(details,/if\(installMode==="play"\)\{\s*play\(\{\.\.\.game,installed:true\}\)/);
   assert.match(hook,/RegisterForDownloadItems/);
   assert.match(hook,/RegisterForDownloadOverview/);
-  assert.match(hook,/reg\.unregister\?\.\(\)/);
+  assert.match(hook,/subscription\.unregister\?\.\(\)/);
   assert.match(theme,/\.gl-root \.gl-details-download-fill/);
+});
+
+test("diagnostics reveal which Steam source failed without assuming installed means playable",()=>{
+  const details=read("src/SteamGameDetails.tsx");
+  const hook=read("src/useSteamGameDownload.ts");
+  assert.match(details,/gl-details-download-diagnostics/);
+  assert.match(details,/Local queue item:/);
+  assert.match(hook,/findModuleChild\(/);
+  assert.match(hook,/GetDownloadItemForAppId/);
+  assert.match(details,/if\(nativeDownload\.transfer\|\|nativeDownload\.displayStatus===9\)/);
 });
