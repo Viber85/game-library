@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState,type Ref} from "react";
+import {useEffect,useRef,useState} from "react";
 import {Focusable,GamepadButton,Navigation,type GamepadEvent} from "@decky/ui";
 import {
   MdArrowBack,MdCheckCircle,MdDownload,MdInfo,MdOpenInNew,MdPlayArrow,
@@ -6,7 +6,7 @@ import {
 } from "react-icons/md";
 import type {LibraryGame} from "./steam";
 import {
-  getLibraryGames,gameActionLabel,lastPlayedLabel,openDetails,play,
+  getLibraryGames,gameActionLabel,lastPlayedLabel,play,
   playtimeLabel,posterCandidates
 } from "./steam";
 import {HeroBackdrop,GameLogo} from "./SelectedGameArtwork";
@@ -29,7 +29,7 @@ const PAGE_TABS:readonly {id:PageTab;label:string}[]=[
 
 const hours=(v:number|null|undefined)=>
   typeof v==="number"&&Number.isFinite(v)&&v>0?
-    v.toFixed(v>=10?1:1)+" hours":"—";
+    v.toFixed(1)+" hours":"—";
 
 function handleDirection(value:GamepadButton|undefined):FocusDirection|null{
   switch(value){
@@ -148,12 +148,12 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     const direction=handleDirection(event.detail?.button);
     if(!direction)return;
     const current=focusRefs.current[id];
-    if(focusSpatially(rootRef.current,current,direction,".gl-details-focus")){
-      event.preventDefault();event.stopPropagation();
-    }else if(direction==="left"&&id==="back"){
-      event.preventDefault();event.stopPropagation();
-      onFocusRail();
-    }
+    const moved=focusSpatially(rootRef.current,current,direction,
+      ".gl-details-focus");
+    // The native Steam focus engine must not jump to a hidden Library card
+    // when the custom game page has no next button in this direction.
+    event.preventDefault();event.stopPropagation();
+    if(!moved&&direction==="left"&&id==="back")onFocusRail();
   };
   const onAction=(id:string)=>({
     ref:focusRef(id),
