@@ -68,7 +68,7 @@ test("without a native install API, fail visibly instead of silently opening ori
 test("Game Details Install opens native wizard and retains same Game Details page",()=>{
   assert.match(details,/import \{openSteamInstallWizard\} from "\.\/steamInstallWizard"/);
   const action=details.slice(details.indexOf("const action=()=>{"),
-    details.indexOf("const showCommunity="));
+    details.indexOf("  // The native Uninstall dialog",details.indexOf("const action=()=>{")));
   assert.match(action,/if\(installMode==="play"\)\{\s*play\(\{\.\.\.game,installed:true\}\)/);
   assert.match(action,/if\(installMode==="transfer"\)\{/);
   assert.match(action,/const result=openSteamInstallWizard\(game\.id,game\.nonSteam\)/);

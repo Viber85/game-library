@@ -124,11 +124,10 @@ test("Game Details shows live Steam progress and never routes an active download
   assert.match(theme,/\.gl-root \.gl-details-download-fill/);
 });
 
-test("diagnostics reveal which Steam source failed without assuming installed means playable",()=>{
+test("download state remains sourced from Steam without a redundant Game Info diagnostics panel",()=>{
   const details=read("src/SteamGameDetails.tsx");
   const hook=read("src/useSteamGameDownload.ts");
-  assert.match(details,/gl-details-download-diagnostics/);
-  assert.match(details,/Local queue item:/);
+  assert.doesNotMatch(details,/gl-details-download-diagnostics/);
   assert.match(hook,/findModuleChild\(/);
   assert.match(hook,/GetDownloadItemForAppId/);
   assert.match(details,/if\(nativeDownload\.transfer\|\|nativeDownload\.displayStatus===9\)/);

@@ -44,7 +44,7 @@ test("Cancel button requests direct native Steam protocol without embedding priv
   const helper=read("src/nativeSteamUninstallUrl.ts");
   const menu=read("src/nativeGameContextMenu.tsx");
   const start=details.indexOf("  const confirmCancelDownload=()=>");
-  const end=details.indexOf("  const showCommunity=()=>",start);
+  const end=details.indexOf("  return <section",start);
   const cancel=details.slice(start,end);
   assert.ok(start>=0&&end>start);
   assert.match(cancel,/if\(nativeDownload\.downloadNature==="initial"\)/);
