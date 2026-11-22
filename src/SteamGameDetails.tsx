@@ -103,6 +103,8 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   const [wizardPending,setWizardPending]=useState(false);
   const [downloadBusy,setDownloadBusy]=useState(false);
   const [cancelRequested,setCancelRequested]=useState(false);
+  const [awaitingSteamUninstall,setAwaitingSteamUninstall]=useState(false);
+  const [cancelFeedback,setCancelFeedback]=useState<string|null>(null);
   const nativeDownload=useSteamGameDownload(game.id,game.nonSteam);
   const actualInstalled=nativeDownload.installed??installState;
   const installMode=resolveInstallMode(
@@ -123,6 +125,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   currentDownloadRef.current=nativeDownload;
   const busyRef=useRef(false);
   const cancelRequestedRef=useRef(false);
+  const cleanupStartedRef=useRef(false);
 
   useEffect(()=>{
     userChangedFocus.current=false;
@@ -135,7 +138,10 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     setDownloadBusy(false);
     busyRef.current=false;
     cancelRequestedRef.current=false;
+    cleanupStartedRef.current=false;
     setCancelRequested(false);
+    setAwaitingSteamUninstall(false);
+    setCancelFeedback(null);
     setPlaytime(game.playtimeMinutes);
     setLastPlayed(game.lastPlayed);
     // Native Game Mode focus is separate from document.activeElement.
@@ -287,11 +293,11 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
         :"Steam could not open the installation wizard for this game.";
     toaster.toast({title:"Install unavailable",body:message});
   };
-  // The Steam download list may update after we dispatch Cancel. Do not
-  // leave "Cancel requested" stuck if Steam refuses to remove the transfer.
+  // The native Uninstall dialog is a separate, user-confirmed Steam action.
+  // Never assume that opening it means the user selected Uninstall.
   useEffect(()=>{
     if(!cancelRequested)return;
-    if(!nativeDownload.transfer){
+    if(!nativeDownload.transfer&&!awaitingSteamUninstall){
       cancelRequestedRef.current=false;
       setCancelRequested(false);
       return;
@@ -299,11 +305,30 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     const timer=window.setTimeout(()=>{
       cancelRequestedRef.current=false;
       setCancelRequested(false);
-      toaster.toast({title:"Steam download is still listed",
-        body:"Steam has not yet confirmed cancellation. Check the Downloads page before retrying."});
-    },12000);
+      setAwaitingSteamUninstall(false);
+      setCancelFeedback("Steam has not confirmed removal. Check Steam Downloads or try Cancel again.");
+    },25000);
     return ()=>window.clearTimeout(timer);
-  },[cancelRequested,Boolean(nativeDownload.transfer),game.id]);
+  },[cancelRequested,Boolean(nativeDownload.transfer),awaitingSteamUninstall,game.id]);
+
+  // Only start Proton-prefix cleanup once the native Steam *uninstall*
+  // visibly completes. A dismissed uninstall dialog never authorizes cleanup.
+  useEffect(()=>{
+    if(!awaitingSteamUninstall||nativeDownload.transfer||
+       (nativeDownload.installed!==false&&nativeDownload.displayStatus!==9))
+      return;
+    const timer=window.setTimeout(()=>{
+      if(cleanupStartedRef.current)return;
+      cleanupStartedRef.current=true;
+      setAwaitingSteamUninstall(false);
+      cancelRequestedRef.current=false;
+      setCancelRequested(false);
+      setCancelFeedback("Steam no longer reports this installation. Checking its Proton data...");
+      inspectPrefixCleanup(game.id);
+    },3500);
+    return ()=>window.clearTimeout(timer);
+  },[awaitingSteamUninstall,Boolean(nativeDownload.transfer),
+     nativeDownload.installed,nativeDownload.displayStatus,game.id]);
 
   const downloadControls=()=>(
     window as unknown as {SteamClient?:{Downloads?:{
@@ -328,55 +353,51 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     }finally{busyRef.current=false;setDownloadBusy(false);}
   };
   const inspectPrefixCleanup=(appid:number)=>{
-    // This is independent of the native command response and must not block
-    // controller navigation or leave the Cancel button in "Working".
+    // Only invoked after Steam has reported this app absent, not merely
+    // because the native uninstall confirmation was opened.
     void withRequestTimeout(cleanupCancelledSteamGame(appid),38000)
       .then(cleanup=>{
         if(cleanup.ok){
-          toaster.toast({title:"Steam game data cleanup completed",
-            body:"The selected game's Proton prefix and shader cache were removed where safe."});
+          setCancelFeedback("Steam removed this installation. The game's Proton prefix and shader cache were cleaned where safe.");
         }else{
-          toaster.toast({title:"Steam game data cleanup not confirmed",
-            body:cleanup.status==="steam-busy"?
-              "Steam still has installation data on disk. Prefixes were preserved for safety.":
-              "Cleanup returned "+cleanup.status+". Some data may remain; check Steam Storage."});
+          setCancelFeedback(cleanup.status==="steam-busy"?
+            "Steam still has installation data on disk; Proton files were preserved. Check Steam Storage.":
+            "Steam removal was requested, but Proton cleanup is not confirmed ("+cleanup.status+").");
         }
       }).catch(error=>{
         console.warn("[game-library] Steam cancellation cleanup response unavailable",error);
-        toaster.toast({title:"Proton prefix cleanup unconfirmed",
-          body:"Steam cancellation was requested, but cleanup could not be verified. No deletion success is claimed."});
+        setCancelFeedback("Proton cleanup could not be verified. Some game data may remain on disk.");
       });
   };
   const cancelDownload=async(expectedNature:typeof nativeDownload.downloadNature)=>{
     const current=currentDownloadRef.current;
     if(busyRef.current||cancelRequestedRef.current||
        !current.transfer||current.downloadNature!==expectedNature){
-      toaster.toast({title:"Steam download changed",
-        body:"Download status changed since you opened the confirmation. Reopen Cancel to review it."});
+      setCancelFeedback("Download state changed. Open Cancel again to review this game.");
       return;
     }
     const client=downloadControls();
     busyRef.current=true;
     setDownloadBusy(true);
+    setCancelFeedback(null);
     try{
       const result=await nativeDownloadAction("cancel",game.id,game.nonSteam,
         current.downloadNature,client?.Downloads,client?.Installs);
       if(!result.ok){
-        toaster.toast({title:"Steam cancellation failed",
-          body:"Could not send the cancellation command ("+result.reason+")."});
+        setCancelFeedback("Steam could not open the removal action ("+result.reason+").");
         return;
       }
       cancelRequestedRef.current=true;
       setCancelRequested(true);
-      toaster.toast({title:"Cancel requested",
-        body:result.uninstallRequested?
-          "Steam is removing this game's partial install. Proton prefix cleanup will be checked separately.":
-          "The download was removed from Steam's queue. Existing game data is preserved."});
-      if(result.uninstallRequested)inspectPrefixCleanup(game.id);
+      if(result.uninstallRequested){
+        setAwaitingSteamUninstall(true);
+        setCancelFeedback("Steam Uninstall confirmation requested. Confirm removal in Steam; declining keeps the game and its Proton data.");
+      }else{
+        setCancelFeedback("Requested removal from Steam's download queue. Existing game files and Proton data are preserved.");
+      }
     }catch(error){
       console.warn("[game-library] Steam cancel action failed",error);
-      toaster.toast({title:"Steam cancellation failed",
-        body:"Steam did not confirm the cancellation request."});
+      setCancelFeedback("Steam could not accept the cancellation request.");
     }finally{
       busyRef.current=false;
       setDownloadBusy(false);
@@ -384,15 +405,17 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   };
   const confirmCancelDownload=()=>{
     if(downloadBusy||busyRef.current||cancelRequestedRef.current||!nativeDownload.transfer)return;
-    const initial=nativeDownload.downloadNature==="initial";
+    if(nativeDownload.downloadNature==="initial"){
+      // Same native uninstall entry used in Steam's context menu, including
+      // Steam's OWN confirmation; no prior RemoveFromDownloadList.
+      void cancelDownload("initial");
+      return;
+    }
     showModal(<ConfirmModal
-      strTitle={initial?"Cancel install and delete its Proton prefix?":"Cancel Steam download?"}
-      strDescription={initial?
-        "Steam will cancel this installation and remove its downloaded files. Its Proton prefix and game-specific shader cache will also be permanently deleted. Any local saves inside the prefix will be lost. Continue?":
-        "Steam will stop this game's current transfer. Because this is not verified as a new installation, existing installed files, Proton prefixes and saved games will NOT be deleted. Continue?"}
-      strOKButtonText={initial?"Cancel and delete":"Cancel download"}
+      strTitle="Remove Steam download from queue?"
+      strDescription="This game is installed or its install type is unknown. Only its pending transfer is removed; the game, Proton prefix and local saves are kept."
+      strOKButtonText="Remove from queue"
       strCancelButtonText="Keep downloading"
-      bDestructiveWarning
       onOK={()=>{void cancelDownload(nativeDownload.downloadNature);}}
     />);
   };
