@@ -242,18 +242,48 @@ def _active_session(account, *, renew=False):
     return session
 
 
-def _gog_image(value):
+# GOG-owned library images are often bare hashes under images-X.gog.com or
+# images-X.gog-statics.com. The bare resource is not a usable portrait.
+_IMAGE_HOST = re.compile(r"^images(?:-[0-9]+)?\.(?:gog\.com|gog-statics\.com)$", re.I)
+_BARE_HASH = re.compile(r"^[a-fA-F0-9]{32,128}$")
+
+
+def _gog_image_variants(value, *, portrait=True):
+    """Turn GOG's image hash into a tested CDN portrait and fallback.
+
+    URLs are generated only from a GOG image CDN and a bare hex hash; never
+    construct a third-party request from arbitrary artwork metadata.
+    """
     if not isinstance(value, str) or len(value) > 1024:
-        return ""
-    candidate = ("https:" + value) if value.startswith("//") else value
+        return "", ""
+    candidate = ("https:" + value) if value.startswith("//") else value.strip()
+    if _BARE_HASH.fullmatch(candidate):
+        candidate = "https://images.gog-statics.com/" + candidate
     try:
-        parsed = urllib.parse.urlparse(candidate)
-        if (parsed.scheme == "https" and parsed.hostname and
-            (parsed.hostname == "gog.com" or parsed.hostname.endswith(".gog.com"))):
-            return candidate
+        parsed = urllib.parse.urlsplit(candidate)
+        if (parsed.scheme != "https" or not _IMAGE_HOST.fullmatch(parsed.hostname or "")
+                or parsed.username or parsed.password or parsed.port
+                or parsed.query or parsed.fragment):
+            return "", ""
+        path = parsed.path
+        if not path or path == "/" or ".." in path or not path.startswith("/"):
+            return "", ""
+        # Legacy owned-library API often returns a 64-char SHA without a
+        # suffix. A Galaxy portrait suffix is needed for vertical game tiles.
+        basename = path.rsplit("/", 1)[-1]
+        if _BARE_HASH.fullmatch(basename):
+            if portrait:
+                return candidate + "_glx_vertical_cover.webp", candidate + "_196.jpg"
+            return candidate + ".jpg", ""
+        if not re.fullmatch(r"/[A-Za-z0-9/_-]+\.(?:jpe?g|png|webp)", path, re.I):
+            return "", ""
+        return candidate, ""
     except ValueError:
-        pass
-    return ""
+        return "", ""
+
+
+def _gog_image(value):
+    return _gog_image_variants(value)[0]
 
 
 def _library_items(access):
@@ -285,9 +315,12 @@ def _library_items(access):
             if not name or product_id in seen:
                 continue
             seen.add(product_id)
+            cover, cover_fallback = _gog_image_variants(item.get("image"))
+            background, _ = _gog_image_variants(item.get("backgroundImage"),
+                                                  portrait=False)
             games.append({"id": product_id, "title": name,
-                          "image": _gog_image(item.get("image")),
-                          "background": _gog_image(item.get("backgroundImage"))})
+                          "image": cover, "imageFallback": cover_fallback,
+                          "background": background})
             if len(games) > _MAX_GAMES:
                 raise GogError("GOG returned more games than the supported limit.")
     else:
@@ -303,7 +336,7 @@ def _sync_with_session(account, session):
             raise
         session = _active_session(account, renew=True)
         games = _library_items(session["access"])
-    value = {"games": games, "synced_at": int(time.time())}
+    value = {"games": games, "synced_at": int(time.time()), "artwork_schema": 2}
     _atomic_json(_folder(account) / "library.json", value)
     return {"ok": True, "count": len(games), "synced_at": value["synced_at"]}
 
@@ -331,7 +364,12 @@ def library(account):
     games = cache.get("games", []) if cache else []
     if not isinstance(games, list):
         games = []
-    return {"ok": True, "games": games, "synced_at": cache.get("synced_at", 0) if cache else 0}
+    return {"ok": True, "games": games,
+            "synced_at": cache.get("synced_at", 0) if cache else 0,
+            # v0.6.11-test.7 discarded real GOG art hashes. Refresh once
+            # after upgrading instead of asking the user to reconnect.
+            "needs_art_refresh": bool(games and cache.get("artwork_schema", 0) < 2)
+            if cache else False}
 
 
 def connect(account, value):
