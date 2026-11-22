@@ -888,7 +888,7 @@ export function Dashboard({initialMode="home",originRoute}:
               games={games} tabs={tabs} membershipRevision={membershipRevision}
               onFocusRail={()=>focusRail(railIndex)}
               onHome={()=>Navigation.Navigate("/library/home")}
-              onOpenGame={game=>openGameDetails(game)/>
+              onOpenGame={game=>openGameDetails(game)}/>
           : initialMode==="appearance"
           ? <AppearancePage firstRef={appearanceEntryRef}
               onFocusRail={()=>focusRail(railIndex)}
