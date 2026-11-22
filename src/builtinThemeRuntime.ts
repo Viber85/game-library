@@ -59,6 +59,15 @@ export type ThemeDiagnostics={
   libraryUIVisible:boolean;
   nativeHeaderCount:number;
   nativePlayBarCount:number;
+  nativeHeroFound:boolean;
+  nativePlayBarFound:boolean;
+  nativeHeroStyled:boolean;
+  nativePlayBarStyled:boolean;
+  nativeHeroHeight:number;
+  nativePlayBarHeight:number;
+  nativeAliasesResolved:number;
+  nativeStyledRecently:boolean;
+  nativeStyleAgeSeconds:number;
   computedFieldColor:string;
   computedRootColor:string;
   sampleClasses:string[];
@@ -411,6 +420,10 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       compactCssLoaded:false,compactStyleActive:false,compactPosterShown:false,
       compactMatchedRecently:false,compactMatchAgeSeconds:-1,
       libraryUIVisible:false,nativeHeaderCount:0,nativePlayBarCount:0,
+      nativeHeroFound:false,nativePlayBarFound:false,
+      nativeHeroStyled:false,nativePlayBarStyled:false,
+      nativeHeroHeight:0,nativePlayBarHeight:0,nativeAliasesResolved:0,
+      nativeStyledRecently:false,nativeStyleAgeSeconds:-1,
       computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
       colorSamples:[],surfaceElements:0,detectedRoute:"other",
@@ -446,6 +459,11 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
     const compactLastAt=audit?.latestCompact?.at??0;
     const compactMatchAge=compactLastAt?Math.round((Date.now()-compactLastAt)/1000):-1;
     const compactMatchedRecently=compactMatchAge>=0&&compactMatchAge<=180;
+    const nativeLastAt=audit?.latestNativeCompact?.at??0;
+    const nativeStyleAge=nativeLastAt?Math.round((Date.now()-nativeLastAt)/1000):-1;
+    const nativeStyledRecently=nativeStyleAge>=0&&nativeStyleAge<=180;
+    const nativeRead=nativeStyledRecently?
+      audit!.latestNativeCompact!.probe:inspected;
     const onSettings=inspected.settingsRoots>0 || inspected.deckySettingsActive;
     const onGame=inspected.gameRoots>0;
     const details=!probe.visibleUI?"Selected CEF tab does not expose the Steam Game Mode DOM.":
@@ -489,6 +507,14 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       libraryUIVisible:inspected.libraryUIVisible,
       nativeHeaderCount:inspected.nativeHeaderCount,
       nativePlayBarCount:inspected.nativePlayBarCount,
+      nativeHeroFound:nativeRead.nativeCompactHeroFound,
+      nativePlayBarFound:nativeRead.nativeCompactPlayBarFound,
+      nativeHeroStyled:nativeRead.nativeCompactHeroStyled,
+      nativePlayBarStyled:nativeRead.nativeCompactPlayBarStyled,
+      nativeHeroHeight:nativeRead.nativeCompactHeroHeight,
+      nativePlayBarHeight:nativeRead.nativeCompactPlayBarHeight,
+      nativeAliasesResolved:nativeRead.nativeCompactAliasCount,
+      nativeStyledRecently,nativeStyleAgeSeconds:nativeStyleAge,
       computedFieldColor:inspected.fieldColor,
       computedRootColor:inspected.rootColor,sampleClasses:inspected.sampleClasses,
       colorSamples:inspected.colorSamples,surfaceElements:inspected.surfaceElements,
