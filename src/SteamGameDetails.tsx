@@ -306,8 +306,8 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
       cancelRequestedRef.current=false;
       setCancelRequested(false);
       setAwaitingSteamUninstall(false);
-      setCancelFeedback("Steam has not confirmed removal. Check Steam Downloads or try Cancel again.");
-    },25000);
+      setCancelFeedback("Steam has not confirmed uninstalling this game. Use Steam options > Manage > Uninstall, or retry.");
+    },12000);
     return ()=>window.clearTimeout(timer);
   },[cancelRequested,Boolean(nativeDownload.transfer),awaitingSteamUninstall,game.id]);
 
@@ -391,7 +391,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
       setCancelRequested(true);
       if(result.uninstallRequested){
         setAwaitingSteamUninstall(true);
-        setCancelFeedback("Steam Uninstall confirmation requested. Confirm removal in Steam; declining keeps the game and its Proton data.");
+        setCancelFeedback("Uninstall confirmed and sent to Steam. Checking for actual removal; this is not yet complete.");
       }else{
         setCancelFeedback("Requested removal from Steam's download queue. Existing game files and Proton data are preserved.");
       }
@@ -405,17 +405,15 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   };
   const confirmCancelDownload=()=>{
     if(downloadBusy||busyRef.current||cancelRequestedRef.current||!nativeDownload.transfer)return;
-    if(nativeDownload.downloadNature==="initial"){
-      // Same native uninstall entry used in Steam's context menu, including
-      // Steam's OWN confirmation; no prior RemoveFromDownloadList.
-      void cancelDownload("initial");
-      return;
-    }
+    const initial=nativeDownload.downloadNature==="initial";
     showModal(<ConfirmModal
-      strTitle="Remove Steam download from queue?"
-      strDescription="This game is installed or its install type is unknown. Only its pending transfer is removed; the game, Proton prefix and local saves are kept."
-      strOKButtonText="Remove from queue"
+      strTitle={initial?"Cancel and uninstall this game?":"Remove Steam download from queue?"}
+      strDescription={initial?
+        "This uses Steam's actual Uninstall command, as in its Library menu. It removes the unfinished game. The game's Proton prefix may contain local saves and will be cleaned only after Steam confirms removal. Continue?":
+        "This game is installed or the download type is unknown. Only its pending transfer is removed; the existing game, Proton prefix and local saves are kept."}
+      strOKButtonText={initial?"Uninstall game":"Remove from queue"}
       strCancelButtonText="Keep downloading"
+      bDestructiveWarning={initial}
       onOK={()=>{void cancelDownload(nativeDownload.downloadNature);}}
     />);
   };
@@ -585,7 +583,19 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
             <div className="gl-details-install-help">Install opens Steam's drive selection and confirmation dialog.</div>}
           {cancelFeedback&&
             <div className="gl-details-download-feedback" role="status">
-              {cancelFeedback}
+              <span>{cancelFeedback}</span>
+              {!awaitingSteamUninstall&&nativeDownload.transfer&&
+                 nativeDownload.downloadNature==="initial"&&
+                <Focusable {...onAction("native-uninstall-fallback")}
+                    className="gl-details-focus gl-details-download-fallback"
+                    onOKActionDescription="Open Steam's original game options to choose Manage then Uninstall"
+                    onActivate={()=>{
+                      const anchor=focusRefs.current["native-uninstall-fallback"]||
+                        focusRefs.current["download-cancel"];
+                      if(!showNativeGameOptions(game.id,anchor))onNativeDetails();
+                    }}>
+                  Steam options · Manage · Uninstall
+                </Focusable>}
             </div>}
         </div>
       </div>
