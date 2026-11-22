@@ -103,10 +103,10 @@ test("Return snapshot expires and will not hijack Home hours later",()=>{
 
 test("Dashboard captures return immediately before native Steam details",()=>{
   assert.match(dashboard,/rememberDetailsOrigin\(\{[\s\S]*?route:actualRoute,[\s\S]*?tabId:tab\.id,[\s\S]*?gameId:game\.id,[\s\S]*?viewAll,[\s\S]*?gridLimit,[\s\S]*?gridScrollTop:/);
-  assert.match(dashboard,/const openGameDetails=\\(game:LibraryGame\\)=>\\{[\\s\\S]*?setSteamDetailsGame\\(game\\);/);
-  assert.match(dashboard,/const openNativeGameDetails=\\(game:LibraryGame\\)=>\\{\\s*rememberGameDetails\\(game\\);\\s*openDetails\\(game\\);/);
-  assert.match(dashboard,/onNativeDetails=\\{\\(\\)=>openNativeGameDetails\\(steamDetailsGame\\)\\}/);
-  assert.match(dashboard,/onBack=\\{closeSteamDetails\\}/);
+  assert.match(dashboard,/const openGameDetails=\(game:LibraryGame\)=>\{[\s\S]*?setSteamDetailsGame\(game\);/);
+  assert.match(dashboard,/const openNativeGameDetails=\(game:LibraryGame\)=>\{\s*rememberGameDetails\(game\);\s*openDetails\(game\);/);
+  assert.match(dashboard,/onNativeDetails=\{\(\)=>openNativeGameDetails\(steamDetailsGame\)\}/);
+  assert.match(dashboard,/onBack=\{closeSteamDetails\}/);
   assert.match(dashboard,/openGameDetails\(entry.steam\)/);
   assert.match(dashboard,/onActivate=\{\(\) => openGameDetails\(selected\)\}/);
   assert.match(dashboard,/if\(!game\.installed\)rememberGameDetails\(game\);/);
