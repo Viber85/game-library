@@ -19,8 +19,10 @@ test("Owned GOG games open a real details page via A and keep native Steam IDs u
   assert.match(page,/onActivate=\{\(\)=>openDetail\(game\)\}/);
   assert.match(page,/setDetailId\(game\.id\)/);
   assert.match(page,/detailGame\?/);
-  assert.match(page,/Back to GOG Library/);
-  assert.match(page,/onCancelButton=\{closeDetail\}/);
+  const sharedDetails=read("src/SharedLibraryDetails.tsx");
+  assert.match(sharedDetails,/Back to Library/);
+  assert.match(sharedDetails,/onCancelButton=\{onBack\}/);
+  assert.match(page,/onBack=\{closeDetail\}/);
   assert.match(page,/getGridColumnCount\(gridRef\.current,5\)/);
   assert.match(page,/gridNeighbor\(index,visible\.length,columns,direction\)/);
   assert.match(page,/GogArtwork game=\{game\} accountId=\{steamId\}/);
