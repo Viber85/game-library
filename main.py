@@ -209,7 +209,11 @@ def _builtin_theme_bundle(theme_id):
                 raise OSError("Bundled CSS unavailable: " + filename)
             chunks.append(path.read_text(encoding="utf-8"))
         result[scope] = "\n".join(chunks)
-    return {"id": theme_id, "name": "Midnight", "css": result}
+    compact = assets / "game-details-compact.css"
+    if not compact.is_file() or compact.is_symlink() or compact.stat().st_size > 100_000:
+        raise OSError("Bundled compact details CSS unavailable")
+    return {"id": theme_id, "name": "Midnight", "css": result,
+            "compact_css": compact.read_text(encoding="utf-8")}
 
 
 
@@ -527,10 +531,24 @@ class Plugin:
             return {"ok": False, "reason": "Failed to save manual collections"}
 
     async def get_theme_settings(self):
-        """Midnight is the built-in default; Off restores native Steam colors."""
-        theme = _read_preferences().get("theme_id", "midnight")
+        """Midnight is default; compact Steam game details is opt-in."""
+        settings = _read_preferences()
+        theme = settings.get("theme_id", "midnight")
         return {"theme_id": theme if theme in ("midnight", "off") else "midnight",
+                "compact_details": settings.get("compact_details", False) is True,
                 "available": [{"id": "midnight", "name": "Midnight"}]}
+
+    async def set_compact_details(self, enabled: bool):
+        """Visual-only per-installation preference; no Steam file modification."""
+        if type(enabled) is not bool:
+            return False
+        try:
+            saved = _read_preferences()
+            saved["compact_details"] = enabled
+            _write_preferences(saved)
+            return True
+        except OSError:
+            return False
 
     async def set_theme_settings(self, theme_id: str):
         if theme_id not in ("midnight", "off") or type(theme_id) is not str:
