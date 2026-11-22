@@ -23,6 +23,8 @@ import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
 import {toaster} from "@decky/api";
 import {openSteamInstallWizard} from "./steamInstallWizard";
+import {useSteamGameDownload} from "./useSteamGameDownload";
+import {resolveInstallMode,transferLabel} from "./steamDownloadProgressCore";
 
 type PageTab="activity"|"your-stuff"|"community"|"game-info";
 const PAGE_TABS:readonly {id:PageTab;label:string}[]=[
@@ -91,6 +93,16 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     typeof game.requiredBytes==="number"&&game.requiredBytes>0?
       game.requiredBytes:readNativeRequiredInstallBytes(game.id));
   const [installState,setInstallState]=useState(game.installed);
+  const [wizardPending,setWizardPending]=useState(false);
+  const nativeDownload=useSteamGameDownload(game.id,game.nonSteam);
+  const actualInstalled=nativeDownload.installed??installState;
+  const installMode=resolveInstallMode(
+    actualInstalled,nativeDownload.displayStatus,nativeDownload.transfer,wizardPending
+  );
+  const primaryLabel=installMode==="transfer"&&nativeDownload.transfer?
+    transferLabel(nativeDownload.transfer):
+    installMode==="preparing"?"Preparing...":
+    gameActionLabel({...game,installed:installMode==="play"});
   const [playtime,setPlaytime]=useState(game.playtimeMinutes);
   const [lastPlayed,setLastPlayed]=useState(game.lastPlayed);
   const rootRef=useRef<HTMLElement>(null);
@@ -106,6 +118,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     setRequired(typeof game.requiredBytes==="number"&&game.requiredBytes>0?
       game.requiredBytes:readNativeRequiredInstallBytes(game.id));
     setInstallState(game.installed);
+    setWizardPending(false);
     setPlaytime(game.playtimeMinutes);
     setLastPlayed(game.lastPlayed);
     // Native Game Mode focus is separate from document.activeElement.
@@ -168,6 +181,19 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     return ()=>window.clearInterval(timer);
   },[game.id]);
 
+  // Steam marks a new install "installed" before all of its content is
+  // available. Keep "Preparing" during the wizard -> queue handoff, but
+  // never leave the UI stuck if the user cancels Steam's install dialog.
+  useEffect(()=>{
+    if(!wizardPending)return;
+    if(nativeDownload.transfer||nativeDownload.displayStatus===11){
+      setWizardPending(false);
+      return;
+    }
+    const timeout=window.setTimeout(()=>setWizardPending(false),15000);
+    return ()=>window.clearTimeout(timeout);
+  },[wizardPending,nativeDownload.transfer,nativeDownload.displayStatus]);
+
   const focusId=(id:string)=>focusRefs.current[id]?.focus();
   const focusRef=(id:string)=>(el:HTMLDivElement|null)=>{
     focusRefs.current[id]=el;
@@ -217,14 +243,23 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   // Game Details screen when Steam's B returns to the previous route.
   const openController=onOpenControllerSettings;
   const action=()=>{
-    if(installState){
+    // A partly-installed game must never be sent to RunGame or Steam Details.
+    // Show its REAL Steam queue position and progress until ReadyToLaunch.
+    if(installMode==="transfer"){
+      toaster.toast({
+        title:"Steam download",
+        body:"Steam is managing this transfer. Progress is shown below."
+      });
+      return;
+    }
+    if(installMode==="preparing")return;
+    if(installMode==="play"){
       play({...game,installed:true});
       return;
     }
-    // Open the *actual* Steam installer directly from this Game Details.
-    // Never navigate to /library/app/:id merely to reach an Install button.
+    // Open Steam's real location-picker without starting a second download.
     const result=openSteamInstallWizard(game.id,game.nonSteam);
-    if(result.opened)return;
+    if(result.opened){setWizardPending(true);return;}
     const message=result.reason==="non-steam"
       ?"Non-Steam games must be installed through their original launcher."
       :result.reason==="unavailable"
@@ -275,7 +310,10 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
           <div className="gl-details-ownership">
             <MdCheckCircle/> {game.nonSteam?"Steam shortcut":"Owned on Steam"}
             <span className="gl-details-dot">·</span>
-            <span>{installState?"Installed":"Not installed"}</span>
+            <span>{installMode==="transfer"&&nativeDownload.transfer?
+              transferLabel(nativeDownload.transfer):
+              installMode==="preparing"?"Preparing installation":
+              installMode==="play"?"Installed":"Not installed"}</span>
           </div>
 
           <div className="gl-details-hltb" aria-label="HowLongToBeat times and your playtime">
@@ -295,14 +333,17 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
           <div className="gl-details-action-row">
             <Focusable {...onAction("primary")}
                 className="gl-details-focus gl-details-primary"
-                onOKActionDescription={installState?"Play game":"Open Steam installation wizard"}
+                onOKActionDescription={installMode==="play"?"Play game":
+                  installMode==="transfer"?"Show Steam download status":
+                  installMode==="preparing"?"Waiting for Steam installer":
+                  "Open Steam installation wizard"}
                 onActivate={action}>
-              {installState?<MdPlayArrow/>:<MdDownload/>}
-              <strong>{gameActionLabel({...game,installed:installState})}</strong>
+              {installMode==="play"?<MdPlayArrow/>:<MdDownload/>}
+              <strong>{primaryLabel}</strong>
             </Focusable>
             <div className="gl-details-space">
-              <span>{installState?"PLAYED":"SPACE REQUIRED"}</span>
-              <strong>{installState?playtimeLabel(playtime):formatSpace(required)}</strong>
+              <span>{installMode==="play"?"PLAYED":"SPACE REQUIRED"}</span>
+              <strong>{installMode==="play"?playtimeLabel(playtime):formatSpace(required)}</strong>
             </div>
             {hltbLink&&<Focusable {...onAction("hltb")}
                 className="gl-details-focus gl-details-secondary"
@@ -332,7 +373,24 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                 onMenuActionDescription="Game options"
                 onActivate={openGameOptions}><MdSettings/></Focusable>
           </div>
-          {!installState&&
+          {installMode==="transfer"&&nativeDownload.transfer&&
+            <div className="gl-details-download" aria-label="Steam installation progress">
+              <div className="gl-details-download-caption">
+                <span>{transferLabel(nativeDownload.transfer)}</span>
+                <strong>{nativeDownload.transfer.percent===null?
+                  "Waiting for Steam":nativeDownload.transfer.percent+"%"}</strong>
+              </div>
+              <div className="gl-details-download-track" role="progressbar"
+                  aria-label="Steam download progress"
+                  aria-valuemin={0} aria-valuemax={100}
+                  aria-valuenow={nativeDownload.transfer.percent??undefined}>
+                <div className="gl-details-download-fill"
+                  style={{width:(nativeDownload.transfer.percent??0)+"%"}}/>
+              </div>
+            </div>}
+          {installMode==="preparing"&&
+            <div className="gl-details-install-help">Steam is preparing the download queue...</div>}
+          {installMode==="install"&&
             <div className="gl-details-install-help">Install opens Steam's drive selection and confirmation dialog.</div>}
         </div>
       </div>
