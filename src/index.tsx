@@ -12,6 +12,7 @@ import { loadDefaultTheme } from "./themeController";
 import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
 import {subscribeHomeSetting} from "./pluginSettingsEvents";
 import {returnDestinationFromHome,clearDetailsOrigin} from "./detailsReturn";
+import {startBrowserStartupHome} from "./startupHomeBrowser";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const LIBRARY_ROUTE = "/game-library/library";
@@ -30,6 +31,7 @@ type HomePatch = Parameters<typeof routerHook.addPatch>[1];
 let homePatch: HomePatch | undefined;
 let defaultHome = true;
 let unloaded = false;
+let cancelStartupHome:()=>void=()=>{};
 const listeners = new Set<() => void>();
 
 function emit() { for (const notify of listeners) notify(); }
@@ -99,6 +101,7 @@ function ControlPanel() {
     void setSettings(enabled).then((saved) => {
       if (!saved) throw new Error("Settings could not be saved");
       defaultHome = enabled;
+      if(!enabled)cancelStartupHome();
       setHome(enabled);
       updateHomePatch();
       emit();
@@ -113,7 +116,7 @@ function ControlPanel() {
         <PanelSectionRow>
           <ToggleField
             label="Use as Steam Home"
-            description="Show Game Library when Game Mode opens Home, including on return from Desktop and after reboot. Turn off to restore Steam's original Home."
+            description="Show Game Library as Steam Home. On a fresh Game Mode startup, open it once when Steam is still on Home. Does not interrupt games, settings or other navigation."
             checked={home}
             disabled={busy}
             onChange={changeHome}
@@ -152,7 +155,9 @@ function ControlPanel() {
 export default definePlugin(() => {
   unloaded = false;
   const stopHomeSync=subscribeHomeSetting(enabled=>{
-    defaultHome=enabled;updateHomePatch();emit();
+    defaultHome=enabled;
+    if(!enabled)cancelStartupHome();
+    updateHomePatch();emit();
   });
   routerHook.addRoute(DASHBOARD_ROUTE,
     ()=> <Dashboard originRoute={DASHBOARD_ROUTE}/>, { exact: true });
@@ -181,6 +186,14 @@ export default definePlugin(() => {
     defaultHome = saved.default_home !== false;
     updateHomePatch();
     emit();
+    // Steam may have already mounted native Home before Decky registered
+    // our route patch. Navigate once to our own Home if this is still a
+    // fresh, untouched startup; never hijack games or existing navigation.
+    cancelStartupHome();
+    cancelStartupHome=startBrowserStartupHome(
+      ()=>defaultHome&&!unloaded,()=>!!homePatch,
+      route=>Navigation.Navigate(route)
+    );
   }).catch((error) => {
     console.warn("[game-library] settings unavailable; retaining default Home behavior", error);
     if(!unloaded) { updateHomePatch(); emit(); }
@@ -192,6 +205,7 @@ export default definePlugin(() => {
     icon: <MdLibraryBooks />,
     onDismount() {
       unloaded = true;
+      cancelStartupHome();
       stopAutoTabSource();
       stopHomeSync();
       stopBuiltInThemeRuntime();
