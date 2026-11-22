@@ -159,9 +159,12 @@ export function BuiltinThemePanel(){
         <div><strong>Compact Details requested:</strong> {diagnostics.compactEnabled?"Yes":"No"}</div>
         {diagnostics.compactEnabled&&<>
           <div>Compact CSS injected: {diagnostics.compactCssLoaded?"Yes":"Not confirmed"}</div>
-          <div>Compact CSS matching native game:
-            {" "}{diagnostics.compactStyleActive?"YES — real layout rule activated":"Not confirmed"}
+          <div>Compact CSS matching native game now:
+            {" "}{diagnostics.compactStyleActive?"YES — active":"Not confirmed (QAM can hide game page)"}
           </div>
+          <div>Last actual game match: {diagnostics.compactMatchedRecently
+            ?"Confirmed "+diagnostics.compactMatchAgeSeconds+"s ago":
+            "Never confirmed in the last 3 minutes"}</div>
           <div>Decorative cover loaded: {diagnostics.compactPosterShown?"Yes":"No / unavailable"}</div>
           <div style={{opacity:.75,fontSize:11}}>
             For an accurate result, visit a Steam game's native Details page,
