@@ -1,7 +1,7 @@
 {
   "name": "game-library",
-  "description": "Minimalist SteamOS game library with safe native game options and live download details",
-  "version": "0.6.11-test.42",
+  "description": "Minimalist SteamOS game library with Steam-native uninstall links and live downloads",
+  "version": "0.6.11-test.43",
   "private": true,
   "type": "module",
   "scripts": {
