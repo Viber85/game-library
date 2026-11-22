@@ -255,3 +255,63 @@ test("Root-matched CSS is not treated as proof that native elements changed",()=
   assert.match(runtime,/nativeStyledRecently/);
   assert.match(runtime,/nativeHeroHeight:nativeRead.nativeCompactHeroHeight/);
 });
+
+test("PlaySection fallback styles real Steam actions when native PlayBar is absent",()=>{
+  const fake=fakeSteamCEF();
+  const sectionAttrs=new Map();
+  const section={
+    setAttribute:(key,value)=>sectionAttrs.set(key,String(value)),
+    removeAttribute:key=>sectionAttrs.delete(key),
+    hasAttribute:key=>sectionAttrs.has(key),
+    getBoundingClientRect:()=>({height:84}),
+  };
+  fake.ctx.document.querySelector=selector=>
+    selector==='[class~="_nativeHeroX"]'?fake.hero:
+    selector==='[class~="_nativeSectionX"]'?section:null;
+  fake.ctx.getComputedStyle=node=>({
+    getPropertyValue:key=>key==="--glm-compact-details-effective"?"1":
+      key==="--glm-compact-hero-applied"&&node===fake.hero?"1":
+      key==="--glm-compact-playsection-applied"&&node===section&&
+        section.hasAttribute("data-glm-native-compact-playsection")?"1":""
+  });
+  vm.runInNewContext(compactHintsInjection({
+    hero:"_nativeHeroX",playbar:"",playsection:"_nativeSectionX",
+    playbutton:"",title:"",sections:""
+  })+COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  const native=fake.ctx.window.__gameLibraryCompactDetails14.native;
+  assert.equal(native.hero,true);
+  assert.equal(native.playbar,true);
+  assert.equal(native.playSource,"PlaySection");
+  assert.equal(native.playStyle,true);
+  assert.equal(native.playHeight,84);
+  assert.equal(section.hasAttribute("data-glm-native-compact-playsection"),true);
+  vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+  assert.equal(section.hasAttribute("data-glm-native-compact-playsection"),false);
+});
+
+test("portrait remains stable across missing hero imagery and brief QAM transitions",()=>{
+  const fake=fakeSteamCEF();
+  fake.location.pathname="/routes/index.html";
+  fake.heroAssets.push({
+    src:"https://steamcdn-a.akamaihd.net/steam/apps/1091500/library_hero.jpg",
+    currentSrc:"",style:{backgroundImage:""},
+  });
+  vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
+  for(const {f} of fake.timers.values())f();
+  assert.equal(fake.images.length,1);
+  fake.images[0].onload();
+  assert.equal(fake.root.getAttribute("data-glm-compact-poster"),"1");
+  fake.heroAssets.length=0;
+  for(const {f} of fake.timers.values())f();
+  assert.equal(fake.root.getAttribute("data-glm-compact-poster"),"1",
+    "Steam's hero video is not proof of a game change");
+  fake.styleState.active=false;
+  for(const {f} of fake.timers.values())f();
+  assert.equal(fake.root.getAttribute("data-glm-compact-poster"),"1",
+    "Short DOM transition must not clear the portrait");
+  fake.styleState.active=true;
+  for(const {f} of fake.timers.values())f();
+  assert.equal(fake.root.getAttribute("data-glm-compact-poster"),"1");
+  vm.runInNewContext(COMPACT_DETAILS_REMOVE_SCRIPT,fake.ctx);
+  assert.equal(fake.root.getAttribute("data-glm-compact-poster"),undefined);
+});
