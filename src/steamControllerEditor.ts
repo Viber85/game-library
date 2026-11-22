@@ -1,40 +1,8 @@
 import {executeInTab,fetchNoCors} from "@decky/api";
 import {identifySteamTabs,fallbackMainTitlesPresent} from "./themeTabs";
+import {openControllerFromClient,controllerEditorScript,type SteamClientLike} from "./steamControllerEditorCore";
 
-type SteamClientLike={Apps?:{ShowControllerConfigurator?:(appid:number)=>void}};
 type BrowserExecutor=(tabTitle:string,isIFrame:boolean,code:string)=>Promise<{success:boolean;result:unknown}>;
-
-/** Steam documents this exact function as the controller configurator.
- * Do NOT send the gamepad button to /library/app/:id or the game's
- * Settings page: those are distinct screens, as seen on the MSI Claw.
- */
-export function openControllerFromClient(
-  appId:number,client:SteamClientLike|null|undefined
-):boolean{
-  if(!Number.isSafeInteger(appId)||appId<=0||appId>0xffffffff)return false;
-  const apps=client?.Apps;
-  const open=apps?.ShowControllerConfigurator;
-  if(typeof open!=="function")return false;
-  try{open.call(apps,appId);return true;}
-  catch(error){
-    console.warn("[game-library] native controller editor failed",error);
-    return false;
-  }
-}
-
-export function controllerEditorScript(appId:number):string{
-  if(!Number.isSafeInteger(appId)||appId<=0||appId>0xffffffff)
-    throw new Error("Invalid Steam AppID");
-  // All data in this source is a validated integer; no user-supplied strings.
-  return `(() => {
-    try {
-      const apps=globalThis.SteamClient?.Apps;
-      if(typeof apps?.ShowControllerConfigurator!=="function")return false;
-      apps.ShowControllerConfigurator(${appId});
-      return true;
-    } catch { return false; }
-  })()`;
-}
 
 /** On some Decky routes SteamClient is available only in the real Steam CEF
  * tab, not in the plugin's own React window. Use Decky's existing verified
