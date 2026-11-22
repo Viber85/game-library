@@ -22,7 +22,6 @@ import {type FocusDirection} from "./spatialFocus";
 import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
-import {showNativeSteamUninstallDialog} from "./nativeSteamUninstallDialog";
 import {toaster,callable} from "@decky/api";
 import {openSteamInstallWizard} from "./steamInstallWizard";
 import {useSteamGameDownload} from "./useSteamGameDownload";
@@ -307,7 +306,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
       cancelRequestedRef.current=false;
       setCancelRequested(false);
       setAwaitingSteamUninstall(false);
-      setCancelFeedback("Steam has not confirmed uninstalling this game. Use Steam options > Manage > Uninstall, or retry.");
+      setCancelFeedback("Steam has not confirmed removal. Press Cancel download again, then choose Manage → Uninstall.");
     },12000);
     return ()=>window.clearTimeout(timer);
   },[cancelRequested,Boolean(nativeDownload.transfer),awaitingSteamUninstall,game.id]);
@@ -407,20 +406,17 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   const confirmCancelDownload=()=>{
     if(downloadBusy||busyRef.current||cancelRequestedRef.current||!nativeDownload.transfer)return;
     if(nativeDownload.downloadNature==="initial"){
-      // Directly present the *identical* Steam Uninstall modal shown by
-      // Library > Manage > Uninstall. Its own Cancel does nothing and its
-      // Uninstall button calls SteamClient.Installs.OpenUninstallWizard
-      // after Steam has obtained the user's confirmation.
-      const ownerWindow=rootRef.current?.ownerDocument.defaultView??window;
-      if(showNativeSteamUninstallDialog(game.id,ownerWindow)){
+      // In v0.6.11-test.41 direct injection of Steam's private uninstall
+      // React modal crashed Game Mode with an undefined client_name.
+      // Only the native context menu is proven stable on this device.
+      const anchor=focusRefs.current["download-cancel"];
+      if(showNativeGameOptions(game.id,anchor)){
         cancelRequestedRef.current=true;
         setCancelRequested(true);
         setAwaitingSteamUninstall(true);
-        setCancelFeedback(null);
+        setCancelFeedback("Steam options opened. Select Manage → Uninstall to open Steam's original confirmation window.");
       }else{
-        // Some Steam updates may change the private modal export. In that
-        // case offer Steam's real context menu, never silently uninstall.
-        setCancelFeedback("Steam's Uninstall confirmation could not be opened directly. Use the original Steam options button below.");
+        setCancelFeedback("Could not open Steam options. Use the game's Settings menu → Manage → Uninstall.");
       }
       return;
     }
@@ -572,7 +568,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   <Focusable {...onAction("download-cancel")}
                       className="gl-details-focus gl-details-download-control gl-details-download-cancel"
                       onOKActionDescription={nativeDownload.downloadNature==="initial"?
-                        "Open Steam's original Uninstall confirmation dialog":"Remove update from Steam download queue"}
+                        "Open Steam options to choose Manage and Uninstall":"Remove update from Steam download queue"}
                       onActivate={confirmCancelDownload}>
                     <MdDeleteOutline/><span>{downloadBusy?"Sending...":cancelRequested?"Cancel requested":"Cancel download"}</span>
                   </Focusable>
