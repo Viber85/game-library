@@ -31,7 +31,7 @@ test("matches reference components: hero, portrait, game metadata, HLTB, actions
   ])assert.match(source,match);
   assert.match(source,/Install opens Steam's drive selection and confirmation dialog/);
   assert.match(source,/openSteamInstallWizard\(game\.id,game\.nonSteam\)/);
-  assert.match(source,/if\(result\.opened\)return/);
+  assert.match(source,/if\(result\.opened\)\{setWizardPending\(true\);return;\}/);
   assert.match(source,/onActivate=\{action\}/);
   assert.doesNotMatch(source,/SteamClient\.Apps\.InstallApp\(/,
     "Native Steam installs must run through its verified install wizard, not an unverified Apps API.");
