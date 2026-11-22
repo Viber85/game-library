@@ -249,7 +249,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "19";
+const AUDIT_REVISION = "20";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
