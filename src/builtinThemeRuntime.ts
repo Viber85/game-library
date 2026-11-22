@@ -49,6 +49,10 @@ export type ThemeDiagnostics={
   deckyFieldColor:string;
   gameRoots:number;
   gameSections:number;
+  compactEnabled:boolean;
+  compactCssLoaded:boolean;
+  compactStyleActive:boolean;
+  compactPosterShown:boolean;
   computedFieldColor:string;
   computedRootColor:string;
   sampleClasses:string[];
@@ -71,7 +75,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "82";
+const STYLE_REVISION = "83";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -394,7 +398,9 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       domEvidence:[],focusTrace:[],focusAnomalies:[],specialSettingsRows:0,specialSettingsRowColor:"",
       deckySettingsActive:false,deckyObservedDom:false,deckyLiveCssMatched:false,
       deckyFieldRows:0,deckyFieldColor:"",
-      gameRoots:0,gameSections:0,computedFieldColor:"",
+      gameRoots:0,gameSections:0,compactEnabled:compactDetails,
+      compactCssLoaded:false,compactStyleActive:false,compactPosterShown:false,
+      computedFieldColor:"",
       computedRootColor:"",sampleClasses:[],
       colorSamples:[],surfaceElements:0,detectedRoute:"other",
       watcherRunning:false,watcherTicks:0,watcherAgeSeconds:0,
@@ -461,7 +467,11 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       deckyFieldRows:inspected.deckyFieldRows,
       deckyFieldColor:inspected.deckyFieldColor,
       gameRoots:inspected.gameRoots,
-      gameSections:inspected.gameSections,computedFieldColor:inspected.fieldColor,
+      gameSections:inspected.gameSections,
+      compactEnabled:compactDetails,compactCssLoaded:inspected.compactCssLoaded,
+      compactStyleActive:inspected.compactStyleActive,
+      compactPosterShown:inspected.compactPosterShown,
+      computedFieldColor:inspected.fieldColor,
       computedRootColor:inspected.rootColor,sampleClasses:inspected.sampleClasses,
       colorSamples:inspected.colorSamples,surfaceElements:inspected.surfaceElements,
       detectedRoute:inspected.routeKind,
