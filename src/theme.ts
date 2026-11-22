@@ -2489,17 +2489,23 @@ html:has(.gl-root.gl-own-status-only) #header {
   font-size:10px;color:#a9c4d8;padding:2px 4px 0;line-height:1.3;
 }
 .gl-root .gl-details-download{
-  margin-top:10px;max-width:460px;padding:1px 4px 0;
+  margin-top:10px;max-width:560px;padding:1px 4px 0;
+}
+.gl-root .gl-details-download-header{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:6px 14px;min-width:0;
 }
 .gl-root .gl-details-download-caption{
-  display:flex;justify-content:space-between;align-items:center;
-  gap:10px;margin-bottom:6px;font-size:11px;color:#b9d4e6;
+  display:flex;align-items:center;
+  gap:10px;margin-bottom:0;font-size:11px;color:#b9d4e6;
+  white-space:nowrap;
 }
 .gl-root .gl-details-download-caption strong{
   color:#dffaff;font-variant-numeric:tabular-nums;font-size:12px;
 }
 .gl-root .gl-details-download-track{
-  height:6px;width:100%;overflow:hidden;border-radius:999px;
+  height:6px;width:100%;max-width:340px;margin-top:9px;
+  overflow:hidden;border-radius:999px;
   background:rgba(146,191,221,.19);
 }
 .gl-root .gl-details-download-fill{
@@ -2520,7 +2526,7 @@ html:has(.gl-root.gl-own-status-only) #header {
 }
 .gl-root .gl-details-download-controls{
   display:flex;align-items:center;flex-wrap:wrap;
-  gap:7px;margin-top:9px;
+  gap:7px;margin-top:0;
 }
 .gl-root .gl-details-download-control{
   display:inline-flex;align-items:center;justify-content:center;
