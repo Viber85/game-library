@@ -92,6 +92,8 @@ export function BuiltinThemePanel(){
         <div>Native style directly verified recently: {diagnostics.nativeStyledRecently?
           "YES · "+diagnostics.nativeStyleAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
         <div>Verified native Play panel surfaces: {diagnostics.nativePlaySurfaceCount}</div>
+        <div>Visible blue panels found: {diagnostics.nativePaintCount}</div>
+        <div>Panels confirmed dark by actual computed paint: {diagnostics.nativePaintNeutralized}</div>
         <div>HLTB row: {diagnostics.hltbFound?"FOUND":"NOT FOUND"}
           {" · "}{diagnostics.hltbStyled?"MINIMAL STYLE APPLIED":"Style not confirmed"}</div>
         <div>Current Steam CSS-module aliases resolved: {diagnostics.nativeAliasesResolved}/6</div>
