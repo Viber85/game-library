@@ -46,7 +46,7 @@ export function SteamGridDBPanel(){
       }
       setDraft("");
       await update();
-      setNotice("Key saved locally. Missing Steam covers and heroes will be filled automatically.");
+      setNotice("Key saved locally. Missing Steam and GOG artwork will be filled automatically.");
     }).catch(()=>setError("SteamGridDB verification request failed. See the plugin error status."))
       .finally(()=>setBusy(false));
   };
@@ -74,8 +74,8 @@ export function SteamGridDBPanel(){
   return <PanelSection title="Game Library · SteamGridDB Artwork">
     <PanelSectionRow>
       <ToggleField
-        label="Auto-fill missing Steam cover and hero"
-        description="Only when Steam's existing image is unavailable. Search by exact game name; custom and native artwork always take priority."
+        label="Auto-fill missing Steam and GOG artwork"
+        description="Steam uses its own images first; GOG uses GOG covers first. For missing images only, match by exact game title. Native artwork always takes priority."
         checked={settings?.enabled===true&&settings.has_key}
         disabled={busy||!settings?.has_key}
         onChange={toggle}
