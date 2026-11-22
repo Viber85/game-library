@@ -2518,6 +2518,22 @@ html:has(.gl-root.gl-own-status-only) #header {
 .gl-root .gl-details-download-metrics b{
   color:#91b7d0;font-weight:650;margin-right:3px;
 }
+.gl-root .gl-details-download-controls{
+  display:flex;align-items:center;flex-wrap:wrap;
+  gap:7px;margin-top:9px;
+}
+.gl-root .gl-details-download-control{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:5px;min-height:30px;padding:5px 11px;
+  border:1px solid rgba(99,194,229,.45);border-radius:7px;
+  color:#b8ebfa;background:rgba(14,45,71,.6);
+  font-size:11px;font-weight:710;cursor:pointer;white-space:nowrap;
+}
+.gl-root .gl-details-download-control svg{font-size:16px;}
+.gl-root .gl-details-download-cancel{
+  border-color:rgba(232,125,134,.45);color:#ffc6cc;
+  background:rgba(66,25,43,.35);
+}
 .gl-root .gl-details-download-diagnostics{
   margin-top:16px;padding:10px 12px;
   border:1px solid rgba(127,184,217,.2);
