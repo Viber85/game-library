@@ -65,6 +65,8 @@ export type ThemeDiagnostics={
   nativePlayBarStyled:boolean;
   nativePlayBarSource:string;
   nativePlaySurfaceCount:number;
+  nativePaintCount:number;
+  nativePaintNeutralized:number;
   hltbFound:boolean;
   hltbStyled:boolean;
   nativeHeroHeight:number;
@@ -94,7 +96,7 @@ const DEBUG_TABS_URL = "http://localhost:8080/json";
 const MARKER = "--game-library-midnight-active";
 // Version the marker so Steam cannot mistakenly keep last release's CSS
 // after an in-place Decky update (the old style node survives hot reload).
-const STYLE_REVISION = "87";
+const STYLE_REVISION = "88";
 const markerCss = `\n:root { ${MARKER}: ${STYLE_REVISION}; }\n`;
 const checkMarker = `(() => getComputedStyle(document.documentElement).getPropertyValue('${MARKER}').trim())()`;
 const CLEANUP_SCRIPT = `(() => {
@@ -428,7 +430,8 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       libraryUIVisible:false,nativeHeaderCount:0,nativePlayBarCount:0,
       nativeHeroFound:false,nativePlayBarFound:false,
       nativeHeroStyled:false,nativePlayBarStyled:false,nativePlayBarSource:"",
-      nativePlaySurfaceCount:0,hltbFound:false,hltbStyled:false,
+      nativePlaySurfaceCount:0,nativePaintCount:0,nativePaintNeutralized:0,
+      hltbFound:false,hltbStyled:false,
       nativeHeroHeight:0,nativePlayBarHeight:0,nativeAliasesResolved:0,
       nativeStyledRecently:false,nativeStyleAgeSeconds:-1,
       computedFieldColor:"",
@@ -547,6 +550,8 @@ export async function runThemeDiagnostics():Promise<ThemeDiagnostics>{
       nativePlayBarStyled:nativeRead.nativeCompactPlayBarStyled,
       nativePlayBarSource:nativeRead.nativeCompactPlaySource,
       nativePlaySurfaceCount:nativeRead.nativeCompactSurfaceCount,
+      nativePaintCount:nativeRead.nativeCompactPaintCount,
+      nativePaintNeutralized:nativeRead.nativeCompactPaintNeutralized,
       hltbFound:inspected.compactHltbFound,
       hltbStyled:inspected.compactHltbStyled,
       nativeHeroHeight:nativeRead.nativeCompactHeroHeight,
