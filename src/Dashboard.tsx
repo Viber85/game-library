@@ -206,11 +206,17 @@ export function Dashboard({initialMode="home",originRoute}:
   const [gogDetailsId,setGogDetailsId]=useState<string|null>(null);
   const [steamDetailsGame,setSteamDetailsGame]=useState<LibraryGame|null>(()=>
     controllerReturn?getLibraryGames().find(g=>g.id===controllerReturn.appId)??null:null);
+  // The native Steam route's B returns here once. When the library inventory
+  // is not immediately available, retry ONLY until the game first resolves.
+  // Do not re-open Details after the user's next B explicitly closes it!
+  const controllerRestorePending=useRef(Boolean(controllerReturn&&!steamDetailsGame));
   useEffect(()=>{
-    if(!controllerReturn||steamDetailsGame)return;
+    if(!controllerRestorePending.current||!controllerReturn)return;
     const restored=games.find(g=>g.id===controllerReturn.appId);
-    if(restored)setSteamDetailsGame(restored);
-  },[controllerReturn,games,steamDetailsGame]);
+    if(!restored)return;
+    controllerRestorePending.current=false;
+    setSteamDetailsGame(restored);
+  },[controllerReturn,games]);
   useNativeMenuGamepad(steamDetailsGame?"details":nativeMenuKind,nativeMenuRoot);
   const [selectedGogId,setSelectedGogId]=useState<string|null>(null);
   const gogDetailBackRef=useRef<HTMLDivElement>(null);
@@ -665,8 +671,9 @@ export function Dashboard({initialMode="home",originRoute}:
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
   const closeSteamDetails=()=>{
-    // Never call Library's exitGrid, Steam Back, or Navigation.Navigate here.
-    // Same Dashboard instance retains tab, sort, selected game and position.
+    // Controller Settings -> Game Details is a one-shot restoration.
+    // Game Details -> Library must NEVER schedule a second restoration.
+    controllerRestorePending.current=false;
     setSteamDetailsGame(null);
   };
   useEffect(()=>{
