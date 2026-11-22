@@ -74,7 +74,7 @@ test("nearest control geometry excludes hidden and disabled menu buttons",()=>{
   assert.equal(nextGamepadControl(scope,right,"right",".gl-tab-manager-action"),null);
 });
 
-test("native focus capture installs only in non-Home/Library/Search menus",()=>{
+test("native focus capture activates in Game Details without altering normal Home/Library navigation",()=>{
   const bridge=read("src/nativeMenuGamepad.ts");
   const dashboard=read("src/Dashboard.tsx");
   const diagnostics=read("src/LibraryDiagnostics.tsx");
@@ -90,7 +90,8 @@ test("native focus capture installs only in non-Home/Library/Search menus",()=>{
   assert.match(dashboard,/initialMode==="settings"\?"settings":/);
   assert.match(dashboard,/initialMode==="appearance"\?"appearance":/);
   assert.match(dashboard,/initialMode==="collections"\?"collections":null/);
-  assert.match(dashboard,/useNativeMenuGamepad\(nativeMenuKind,nativeMenuRoot\)/);
+  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\?"details":nativeMenuKind,nativeMenuRoot\)/);
+  assert.match(bridge,/details:"\.gl-game-details \.gl-details-focus"/);
   assert.doesNotMatch(dashboard,/initialMode==="home"\?"home":/);
   assert.match(diagnostics,/useNativeMenuGamepad\("diagnostics",menuRoot\)/);
 });
