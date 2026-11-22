@@ -152,7 +152,7 @@ test("Smart exceptions override AND/OR, do not modify Manual or built-ins",()=>{
   assert.equal(gamesForLibraryTab(DEFAULT_LIBRARY_TABS[0],games).games.length,4);
   const manual=newLibraryTab(DEFAULT_LIBRARY_TABS,"Manual","all","custom-manualtest","manual");
   const untouched=assignSmartExceptions(manual,manual[6].id,"include",[1]);
-  assert.deepEqual(untouched[5].forceInclude,[]);
+  assert.deepEqual(untouched[6].forceInclude,[]);
 });
 
 test("Smart editor is reachable from Settings Tab Manager with live preview",()=>{
