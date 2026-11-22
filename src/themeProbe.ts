@@ -32,6 +32,7 @@ export type ThemeProbe={
   nativeCompactPlayBarFound:boolean;
   nativeCompactHeroStyled:boolean;
   nativeCompactPlayBarStyled:boolean;
+  nativeCompactPlaySource:string;
   nativeCompactHeroHeight:number;
   nativeCompactPlayBarHeight:number;
   nativeCompactAliasCount:number;
@@ -158,6 +159,7 @@ export const THEME_PROBE_SCRIPT=`(() => {
     nativeCompactPlayBarFound:nativeCompact?.playbar===true,
     nativeCompactHeroStyled:nativeCompact?.heroStyle===true,
     nativeCompactPlayBarStyled:nativeCompact?.playStyle===true,
+    nativeCompactPlaySource:String(nativeCompact?.playSource||"").slice(0,24),
     nativeCompactHeroHeight:Number(nativeCompact?.heroHeight)||0,
     nativeCompactPlayBarHeight:Number(nativeCompact?.playHeight)||0,
     nativeCompactAliasCount:Number(nativeCompact?.aliases)||0,
@@ -204,6 +206,7 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     nativeCompactPlayBarFound:obj.nativeCompactPlayBarFound===true,
     nativeCompactHeroStyled:obj.nativeCompactHeroStyled===true,
     nativeCompactPlayBarStyled:obj.nativeCompactPlayBarStyled===true,
+    nativeCompactPlaySource:["PlayBar","PlaySection","PlayButton"].includes(obj.nativeCompactPlaySource)?obj.nativeCompactPlaySource:"",
     nativeCompactHeroHeight:integer(obj.nativeCompactHeroHeight),
     nativeCompactPlayBarHeight:integer(obj.nativeCompactPlayBarHeight),
     nativeCompactAliasCount:integer(obj.nativeCompactAliasCount),
