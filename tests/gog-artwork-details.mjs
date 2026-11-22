@@ -14,20 +14,19 @@ test("GOG Settings main card shows green checked account status only when linked
   assert.match(page,/owned games · Account connected/);
 });
 
-test("Owned GOG games open a real details page via A and keep native Steam IDs untouched",()=>{
-  const page=read("src/GogLibraryPage.tsx");
-  assert.match(page,/onActivate=\{\(\)=>openDetail\(game\)\}/);
-  assert.match(page,/setDetailId\(game\.id\)/);
-  assert.match(page,/detailGame\?/);
+test("GOG uses Dashboard's grid and provider-specific details instead of a separate page",()=>{
+  const page=read("src/Dashboard.tsx");
+  const card=read("src/GogDashboardCard.tsx");
   const sharedDetails=read("src/SharedLibraryDetails.tsx");
-  assert.match(sharedDetails,/Back to Library/);
+  assert.match(page,/renderEntry\(entry,index,"grid"\)/);
+  assert.match(page,/openGogDetails\(entry,index\)/);
+  assert.match(page,/detailGog \? <SharedLibraryDetails/);
+  assert.match(page,/onBack=\{closeGogDetails\}/);
+  assert.match(card,/onActivate=\{onActivate\}/);
+  assert.match(card,/onButtonDown=\{direction\}/);
+  assert.match(card,/GogArtwork game=\{entry.gog\}/);
   assert.match(sharedDetails,/onCancelButton=\{onBack\}/);
-  assert.match(page,/onBack=\{closeDetail\}/);
-  assert.match(page,/getGridColumnCount\(gridRef\.current,5\)/);
-  assert.match(page,/gridNeighbor\(index,visible\.length,columns,direction\)/);
-  assert.match(page,/GogArtwork game=\{game\} accountId=\{steamId\}/);
-  assert.match(page,/GogArtwork game=\{detailGame\} accountId=\{steamId\} expanded/);
-  assert.doesNotMatch(page,/openDetails\(game\)|SteamClient\.Apps\.RunGame/);
+  assert.doesNotMatch(page,/GogLibraryPage|SteamClient\.Apps\.RunGame\(entry\.gog/);
 });
 
 test("GOG native images are preferred; SteamGridDB is an opt-in visibility-aware fallback",()=>{
