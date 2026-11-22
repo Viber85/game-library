@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import {Focusable,GamepadButton,Navigation,type GamepadEvent} from "@decky/ui";
 import {
-  MdArrowBack,MdCheckCircle,MdDownload,MdInfo,MdOpenInNew,MdPlayArrow,
+  MdArrowBack,MdCheckCircle,MdDownload,MdOpenInNew,MdPlayArrow,
   MdSettings,MdSportsEsports,MdStorefront,MdAccessTime,MdVideogameAsset
 } from "react-icons/md";
 import type {LibraryGame} from "./steam";
@@ -75,12 +75,14 @@ function DetailPoster({game}:{game:LibraryGame}){
 /** Steam's own game installation wizard remains authoritative. We never
  * claim a download began merely because the user selected Install.
  */
-export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpenControllerSettings}:{
+export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpenControllerSettings,onOpenHltb,onOpenStore}:{
   game:LibraryGame;
   onBack:()=>void;
   onNativeDetails:()=>void;
   onFocusRail:()=>void;
   onOpenControllerSettings:()=>void;
+  onOpenHltb:(url:string)=>void;
+  onOpenStore:()=>void;
 }){
   const [tab,setTab]=useState<PageTab>("activity");
   const [hltb,setHltb]=useState<HltbReply|null>(null);
@@ -292,14 +294,14 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
             {hltbLink&&<Focusable {...onAction("hltb")}
                 className="gl-details-focus gl-details-secondary"
                 onOKActionDescription="Open real HowLongToBeat page"
-                onActivate={()=>Navigation.NavigateToSteamWeb(hltbLink)}>
+                onActivate={()=>onOpenHltb(hltbLink)}>
               HLTB details <MdOpenInNew/>
             </Focusable>}
             <Focusable {...onAction("steam")}
                 className="gl-details-focus gl-details-secondary"
-                onOKActionDescription="Original Steam game details"
-                onActivate={onNativeDetails}>
-              Steam Details <MdOpenInNew/>
+                onOKActionDescription={isNativeSteam?"Open Steam Store page":"Open Steam game details"}
+                onActivate={isNativeSteam?onOpenStore:onNativeDetails}>
+              {isNativeSteam?"Steam Store":"Steam Details"} <MdOpenInNew/>
             </Focusable>
             <Focusable {...onAction("controller")}
                 className="gl-details-focus gl-details-icon-button"
@@ -380,10 +382,6 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
             {game.releaseDate!==undefined&&game.releaseDate>0&&
               <div><small>RELEASE YEAR</small><strong>{new Date(game.releaseDate*1000).getFullYear()}</strong></div>}
           </div>
-          <Focusable {...onAction("original-info")}
-              className="gl-details-focus gl-details-secondary"
-              onOKActionDescription="Original Steam details and install options"
-              onActivate={onNativeDetails}><MdInfo/> Original Steam Details <MdOpenInNew/></Focusable>
         </>}
       </div>
       <footer className="gl-details-footer">A Select · B Back · D-pad / Left stick Navigate · Steam controls remain available</footer>
