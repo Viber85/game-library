@@ -1,6 +1,6 @@
 {
   "name": "game-library",
-  "description": "Minimalist SteamOS game library and native game-details theme",
+  "description": "Minimalist SteamOS game library with native install/uninstall dialogs and live download details",
   "version": "0.6.11-test.41",
   "private": true,
   "type": "module",
