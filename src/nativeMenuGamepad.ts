@@ -118,8 +118,13 @@ export function handleNativeMenuDirection(
   if(!scope.contains(target)){
     if(kind==="diagnostics"||direction!=="right"||
       !target.closest(".gl-sidebar .gl-rail-item"))return false;
-    const entry=scope.querySelector<HTMLElement>(CONTROLS[kind]);
-    if(!entry||!takeNativeGamepadFocus(trees,entry,event.detail!.button!))return false;
+    const entry=kind==="details"?
+      scope.querySelector<HTMLElement>(".gl-game-details .gl-details-back"):
+      scope.querySelector<HTMLElement>(CONTROLS[kind]);
+    if(!entry)return false;
+    const accepted=takeNativeGamepadFocus(trees,entry,event.detail!.button!)||
+      (kind==="details"&&focusNativeMenuControl(entry,event.detail!.button!));
+    if(!accepted)return false;
     consume();
     return true;
   }
@@ -133,9 +138,10 @@ export function handleNativeMenuDirection(
   if(!next&&direction==="left"&&kind!=="diagnostics"){
     const rail=scope.parentElement?.querySelector<HTMLElement>(
       ".gl-sidebar .gl-rail-item.gl-rail-current");
-    if(rail&&takeNativeGamepadFocus(trees,rail,event.detail!.button!)){
-      consume();return true;
-    }
+    const accepted=rail&&(
+      takeNativeGamepadFocus(trees,rail,event.detail!.button!)||
+      (kind==="details"&&focusNativeMenuControl(rail,event.detail!.button!)));
+    if(accepted){consume();return true;}
   }
   if(!next)return false;
   if(!takeNativeGamepadFocus(trees,next,event.detail!.button!))return false;
