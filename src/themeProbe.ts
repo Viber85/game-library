@@ -239,6 +239,7 @@ export type ThemeAudit={
   installed:boolean;
   latestSettings:ThemeAuditSample|null;
   latestGame:ThemeAuditSample|null;
+  latestCompact:ThemeAuditSample|null;
   latestOther:ThemeAuditSample|null;
   recentDomEvidence:ThemeDomEvidence[];
   focusTrace:ThemeFocusFrame[];
@@ -604,7 +605,7 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   state = { revision, intervalId: null, observer: null, frameId: null,
     focusFrameId:null,onFocus:null,lastFocusCaptureAt:0,
     focusTrace:[],focusAnomalies:[],onScroll:null,
-    latestSettings:null,latestGame:null,latestOther:null,
+    latestSettings:null,latestGame:null,latestCompact:null,latestOther:null,
     recentDomEvidence:[],lastDomSurveyAt:0,sampleTicks:0,lastScanAt:0 };
   window[key] = state;
   const sample = () => {
@@ -637,6 +638,8 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
       if (probe.gameRoots > 0 || probe.gameSections > 0 ||
           probe.routeKind === 'game' && probe.surfaceElements >= 3)
         state.latestGame = { at, probe };
+      if (probe.compactStyleActive === true)
+        state.latestCompact = { at, probe };
     } catch (error) {
       /* Steam may be rebuilding its React tree; retry on the next tick. */
     }
@@ -774,6 +777,7 @@ export const THEME_AUDIT_READ_SCRIPT = `(() => {
     installed: Boolean(state && state.revision === "${AUDIT_REVISION}"),
     latestSettings: state?.latestSettings || null,
     latestGame: state?.latestGame || null,
+    latestCompact: state?.latestCompact || null,
     latestOther: state?.latestOther || null,
     recentDomEvidence:state?.recentDomEvidence || [],
     focusTrace:state?.focusTrace || [],
@@ -830,6 +834,7 @@ export function parseThemeAudit(value:unknown):ThemeAudit|null {
     installed:obj.installed===true,
     latestSettings:read(obj.latestSettings),
     latestGame:read(obj.latestGame),
+    latestCompact:read(obj.latestCompact),
     latestOther:read(obj.latestOther),
     recentDomEvidence:Array.isArray(obj.recentDomEvidence)?
       obj.recentDomEvidence.slice(0,8).flatMap(entry=>{
