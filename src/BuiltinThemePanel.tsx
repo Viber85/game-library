@@ -91,6 +91,9 @@ export function BuiltinThemePanel(){
           {diagnostics.nativePlayBarHeight>0?" · "+diagnostics.nativePlayBarHeight+" px":""}</div>
         <div>Native style directly verified recently: {diagnostics.nativeStyledRecently?
           "YES · "+diagnostics.nativeStyleAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
+        <div>Verified native Play panel surfaces: {diagnostics.nativePlaySurfaceCount}</div>
+        <div>HLTB row: {diagnostics.hltbFound?"FOUND":"NOT FOUND"}
+          {" · "}{diagnostics.hltbStyled?"MINIMAL STYLE APPLIED":"Style not confirmed"}</div>
         <div>Current Steam CSS-module aliases resolved: {diagnostics.nativeAliasesResolved}/6</div>
         <div>Global compact CSS selector (not proof of a changed element):
           {" "}{diagnostics.compactMatchedRecently
