@@ -1,0 +1,111 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {readFileSync} from "node:fs";
+import {nativeDownloadAction,readSteamDownloadNature}
+  from "../src/steamDownloadActionsCore.ts";
+
+const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
+
+test("native Steam initial install classification uses real update_is_install and buildid",()=>{
+  const active={update_appid:730,update_state:"Downloading",update_is_install:true};
+  const rows=[{remote_client_id:"0",item_data:[
+    {appid:730,completed:false,active:true,buildid:0,queue_index:0}
+  ]}];
+  assert.equal(readSteamDownloadNature(730,rows,active),"initial");
+  assert.equal(readSteamDownloadNature(730,rows,{
+    ...active,update_is_install:false
+  }),"update");
+  assert.equal(readSteamDownloadNature(730,rows,null),"initial");
+  assert.equal(readSteamDownloadNature(730,[{
+    ...rows[0],item_data:[{...rows[0].item_data[0],buildid:123456}]
+  }],null),"update");
+  assert.equal(readSteamDownloadNature(730,[],null),"unknown");
+  assert.equal(readSteamDownloadNature(730,[{
+    remote_client_id:"74",item_data:[{appid:730,active:true,buildid:0}]
+  }],null),"unknown");
+});
+
+test("Pause and Resume affect only one AppID, on Steam's local client",async()=>{
+  const calls=[];
+  const downloads={
+    PauseAppUpdate:(...args)=>calls.push(["pause",...args]),
+    ResumeAppUpdate:(...args)=>calls.push(["resume",...args])
+  };
+  assert.deepEqual(await nativeDownloadAction("pause",730,false,"initial",downloads),
+    {ok:true,uninstallRequested:false});
+  assert.deepEqual(await nativeDownloadAction("resume",730,false,"initial",downloads),
+    {ok:true,uninstallRequested:false});
+  assert.deepEqual(calls,[["pause",730,"0"],["resume",730,"0"]]);
+});
+
+test("cancel fresh install uses Steam queue removal and no-prompt native uninstall",async()=>{
+  const calls=[];
+  const downloads={
+    PauseAppUpdate:(...args)=>{calls.push(["pause",...args]);},
+    RemoveFromDownloadList:(...args)=>{calls.push(["remove",...args]);}
+  };
+  const installs={
+    OpenUninstallWizard:(...args)=>calls.push(["uninstall",...args])
+  };
+  assert.deepEqual(await nativeDownloadAction("cancel",730,false,"initial",downloads,installs),
+    {ok:true,uninstallRequested:true});
+  assert.deepEqual(calls,[["pause",730,"0"],["remove",730,"0"],
+    ["uninstall",[730],true]]);
+});
+
+test("updates and unverified installs never trigger uninstall or prefix deletion",async()=>{
+  for(const nature of ["update","unknown"]){
+    let uninstallCalls=0;
+    const downloads={
+      PauseAppUpdate:()=>{},
+      RemoveFromDownloadList:()=>{}
+    };
+    const installs={OpenUninstallWizard:()=>{uninstallCalls++;}};
+    assert.deepEqual(await nativeDownloadAction("cancel",730,false,
+      nature,downloads,installs),{ok:true,uninstallRequested:false});
+    assert.equal(uninstallCalls,0);
+  }
+});
+
+test("invalid IDs, shortcuts or unavailable APIs never start deletion",async()=>{
+  let calls=0;
+  const downloads={
+    PauseAppUpdate:()=>calls++,
+    RemoveFromDownloadList:()=>calls++
+  };
+  const installs={OpenUninstallWizard:()=>calls++};
+  for(const id of [-1,0,1.1,NaN,0x80000000]){
+    assert.deepEqual(await nativeDownloadAction("cancel",id,false,"initial",downloads,installs),
+      {ok:false,uninstallRequested:false,reason:"invalid-app"});
+  }
+  assert.deepEqual(await nativeDownloadAction("cancel",730,true,"initial",downloads,installs),
+    {ok:false,uninstallRequested:false,reason:"invalid-app"});
+  assert.deepEqual(await nativeDownloadAction("cancel",730,false,"initial",downloads,{}),
+    {ok:false,uninstallRequested:false,reason:"unavailable"});
+  assert.equal(calls,0);
+});
+
+test("a Steam command failure does not claim the download was cancelled",async()=>{
+  const downloads={PauseAppUpdate(){throw Error("Steam rejected cancel");},
+    RemoveFromDownloadList(){throw Error("should not run");}};
+  const result=await nativeDownloadAction("cancel",730,false,"initial",downloads,
+    {OpenUninstallWizard(){}});
+  assert.deepEqual(result,{ok:false,uninstallRequested:false,reason:"failed"});
+});
+
+test("Game Details requires explicit confirmation and uses protected backend cleanup",()=>{
+  const src=read("src/SteamGameDetails.tsx");
+  const backend=read("main.py");
+  const packageScript=read("scripts/package.sh");
+  assert.match(src,/showModal\(<ConfirmModal/);
+  assert.match(src,/bDestructiveWarning/);
+  assert.match(src,/downloadBusy/);
+  assert.match(src,/currentDownloadRef\.current/);
+  assert.match(src,/current\.downloadNature!==expectedNature/);
+  assert.match(src,/gl-details-download-controls/);
+  assert.match(src,/onAction\("download-toggle"\)/);
+  assert.match(src,/onAction\("download-cancel"\)/);
+  assert.match(src,/cleanupCancelledSteamGame\(game\.id\)/);
+  assert.match(backend,/async def cleanup_cancelled_steam_game\(self, appid: int\):/);
+  assert.match(packageScript,/steam_cancel_cleanup\.py/);
+});
