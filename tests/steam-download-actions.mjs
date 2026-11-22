@@ -67,6 +67,26 @@ test("updates and unverified installs never trigger uninstall or prefix deletion
   }
 });
 
+test("cancel still removes queued install when Steam's Pause API throws",async()=>{
+  const calls=[];
+  const downloads={
+    PauseAppUpdate:()=>{calls.push("pause");throw Error("cannot pause queued item");},
+    RemoveFromDownloadList:(id,client)=>calls.push(["remove",id,client])
+  };
+  const installs={OpenUninstallWizard:(ids,confirmed)=>calls.push(["uninstall",ids,confirmed])};
+  assert.deepEqual(await nativeDownloadAction("cancel",730,false,
+    "initial",downloads,installs),{ok:true,uninstallRequested:true});
+  assert.deepEqual(calls,["pause",["remove",730,"0"],["uninstall",[730],true]]);
+});
+
+test("cancel without Pause API can still remove a queued transfer",async()=>{
+  const calls=[];
+  const downloads={RemoveFromDownloadList:(id,client)=>calls.push([id,client])};
+  assert.deepEqual(await nativeDownloadAction("cancel",730,false,
+    "update",downloads,null),{ok:true,uninstallRequested:false});
+  assert.deepEqual(calls,[[730,"0"]]);
+});
+
 test("invalid IDs, shortcuts or unavailable APIs never start deletion",async()=>{
   let calls=0;
   const downloads={
