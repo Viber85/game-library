@@ -236,7 +236,7 @@ async function applyToTab(
   if(!previous){
     // First installation / hot-reload can have orphaned prior-version CSS.
     if(scope==="main")await syncCompactDetailsDom(title,false);
-    try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));
+    try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
     catch{/* Steam may have rebuilt the tab while we were checking. */}
   }
   if(shuttingDown||desired!=="midnight"||epoch!==generation||!theme)return;
@@ -318,6 +318,7 @@ async function cleanup():Promise<void> {
   // instance after a hot-reload. Only styles with our unique marker match.
   const tabs=await listTabs();
   for(const {title,scope} of tabs){
+    if(scope==="main")await syncCompactDetailsDom(title,false);
     try{await bounded(executeInTab(title,false,CLEANUP_SCRIPT));}
     catch{/* browser may have closed */}
     if(scope==="main"){
