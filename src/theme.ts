@@ -2488,6 +2488,24 @@ html:has(.gl-root.gl-own-status-only) #header {
 .gl-root .gl-details-install-help{
   font-size:10px;color:#a9c4d8;padding:2px 4px 0;line-height:1.3;
 }
+.gl-root .gl-details-download{
+  margin-top:10px;max-width:460px;padding:1px 4px 0;
+}
+.gl-root .gl-details-download-caption{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;margin-bottom:6px;font-size:11px;color:#b9d4e6;
+}
+.gl-root .gl-details-download-caption strong{
+  color:#dffaff;font-variant-numeric:tabular-nums;font-size:12px;
+}
+.gl-root .gl-details-download-track{
+  height:6px;width:100%;overflow:hidden;border-radius:999px;
+  background:rgba(146,191,221,.19);
+}
+.gl-root .gl-details-download-fill{
+  height:100%;border-radius:inherit;background:#54d9ee;
+  transition:width 350ms ease;
+}
 .gl-root .gl-details-tabs{
   position:relative;z-index:2;display:flex;align-items:center;
   flex-wrap:wrap;gap:7px;margin-top:17px;
