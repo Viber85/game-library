@@ -2315,4 +2315,21 @@ html:has(.gl-root.gl-own-status-only) #header {
   letter-spacing:.055em;box-shadow:0 0 0 1px rgba(151,211,182,.28);
 }
 
+/* Separate compact game-details option under the existing Theme choices. */
+.gl-root .gl-appearance-compact-option {
+  display:flex;width:100%;margin-top:12px;min-height:62px;
+  background:linear-gradient(100deg,#0b2944,#0c223b);
+  border:1px solid rgba(85,158,217,.32);
+}
+.gl-root .gl-appearance-compact-option .gl-appearance-card-icon {
+  color:#61caff;font-size:25px;flex-shrink:0;
+}
+.gl-root .gl-appearance-compact-option.gl-focused {
+  outline:2px solid #d8f5ff;outline-offset:-2px;
+  box-shadow:0 0 13px rgba(41,174,239,.37);
+}
+.gl-root .gl-appearance-option-off {
+  font-size:12px;font-weight:700;color:#a8bcd0;padding:2px 8px;
+}
+
 `;
