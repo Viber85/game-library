@@ -48,3 +48,19 @@ export function identifySteamTabs(value:unknown):SteamTab[]{
   return [...tabs].map(([title,scope])=>({title,scope}))
     .sort((a,b)=>weight(a)-weight(b));
 }
+
+
+/** Chromium may omit the Steam route from a tab URL even when it contains
+ * the actual native Game Mode document. Discover known tab titles from the
+ * DevTools listing, then require a LIVE Steam DOM check before targeting them.
+ * Never treat a title match alone as permission to inject styles. */
+export function fallbackMainTitlesPresent(value:unknown):string[]{
+  if(!Array.isArray(value))return [];
+  const titles=new Set<string>();
+  for(const item of value){
+    if(!item||typeof item!=="object")continue;
+    const title=(item as BrowserTab).title;
+    if(typeof title==="string"&&title.length<=180)titles.add(title.trim());
+  }
+  return FALLBACK_MAIN_TITLES.filter(title=>titles.has(title));
+}
