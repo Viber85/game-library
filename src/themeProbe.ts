@@ -110,6 +110,26 @@ export const THEME_PROBE_SCRIPT=`(() => {
            Number(css.opacity)===0)return false;
         current=current.parentElement;
       }
+      // An offscreen/inactive QAM route can keep a nonzero bounding box and
+      // opacity even while Steam's actual Game Details is on top. Testing
+      // geometry alone incorrectly suppressed EVERY pre-QAM snapshot on this
+      // Steam client. Require real browser hit-testing of GL's rendered
+      // foreground descendants; an obscured React root does not count.
+      if(typeof document.elementFromPoint==="function"){
+        const x0=Math.max(0,rect.left),x1=Math.min(window.innerWidth,rect.right);
+        const y0=Math.max(0,rect.top),y1=Math.min(window.innerHeight,rect.bottom);
+        if(x1<=x0||y1<=y0)return false;
+        for(const xf of [.15,.35,.5,.65,.85]){
+          for(const yf of [.2,.45,.7]){
+            const node=document.elementFromPoint(
+              Math.floor(x0+(x1-x0)*xf),Math.floor(y0+(y1-y0)*yf));
+            if(node && (node===el||el.contains?.(node)))return true;
+          }
+        }
+        return false;
+      }
+      // Synthetic older CEF mocks can omit hit-testing; treat them
+      // conservatively. Actual Chromium always supplies elementFromPoint.
       return true;
     }catch{return false;}
   });
@@ -322,7 +342,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "23";
+const AUDIT_REVISION = "24";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
