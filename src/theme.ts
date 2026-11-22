@@ -2506,6 +2506,18 @@ html:has(.gl-root.gl-own-status-only) #header {
   height:100%;border-radius:inherit;background:#54d9ee;
   transition:width 350ms ease;
 }
+.gl-root .gl-details-download-metrics{
+  display:flex;align-items:center;flex-wrap:wrap;
+  gap:4px 14px;margin-top:7px;
+  color:#cadde9;font-size:10px;line-height:1.4;
+  font-variant-numeric:tabular-nums;
+}
+.gl-root .gl-details-download-metrics span{
+  white-space:nowrap;
+}
+.gl-root .gl-details-download-metrics b{
+  color:#91b7d0;font-weight:650;margin-right:3px;
+}
 .gl-root .gl-details-download-diagnostics{
   margin-top:16px;padding:10px 12px;
   border:1px solid rgba(127,184,217,.2);
