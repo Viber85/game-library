@@ -41,7 +41,7 @@ test("GOG phone bridge uses local-only address, bounded tokens and no external r
   assert.match(service,/self\.server\.shutdown\(\)/);
   assert.match(service,/self\.headers\.get\("Host"\) != session\.host/);
   assert.match(service,/self\.headers\.get\("Origin"\)/);
-  assert.match(service,/self\.log_message/);
+  assert.match(service,/def log_message\(self,/);
   assert.match(service,/default-src 'none'/);
   assert.match(service,/Referrer-Policy/);
   assert.match(qr,/MIT License/);
