@@ -34,6 +34,8 @@ export type ThemeProbe={
   nativeCompactPlayBarStyled:boolean;
   nativeCompactPlaySource:string;
   nativeCompactSurfaceCount:number;
+  nativeCompactPaintCount:number;
+  nativeCompactPaintNeutralized:number;
   compactHltbFound:boolean;
   compactHltbStyled:boolean;
   nativeCompactHeroHeight:number;
@@ -165,6 +167,8 @@ export const THEME_PROBE_SCRIPT=`(() => {
     nativeCompactPlayBarStyled:nativeCompact?.playStyle===true,
     nativeCompactPlaySource:String(nativeCompact?.playSource||"").slice(0,24),
     nativeCompactSurfaceCount:Number(nativeCompact?.surfaceCount)||0,
+    nativeCompactPaintCount:Number(nativeCompact?.paintCount)||0,
+    nativeCompactPaintNeutralized:Number(nativeCompact?.paintNeutralized)||0,
     compactHltbFound:!!compactHltb,
     compactHltbStyled:!!compactHltb&&getComputedStyle(compactHltb)
       .getPropertyValue("--glm-compact-hltb-applied").trim()==="1",
@@ -216,6 +220,8 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     nativeCompactPlayBarStyled:obj.nativeCompactPlayBarStyled===true,
     nativeCompactPlaySource:typeof obj.nativeCompactPlaySource==="string"&&["PlayBar","PlaySection","PlayButton"].includes(obj.nativeCompactPlaySource)?obj.nativeCompactPlaySource:"",
     nativeCompactSurfaceCount:integer(obj.nativeCompactSurfaceCount),
+    nativeCompactPaintCount:integer(obj.nativeCompactPaintCount),
+    nativeCompactPaintNeutralized:integer(obj.nativeCompactPaintNeutralized),
     compactHltbFound:obj.compactHltbFound===true,
     compactHltbStyled:obj.compactHltbStyled===true,
     nativeCompactHeroHeight:integer(obj.nativeCompactHeroHeight),
