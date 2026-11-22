@@ -36,7 +36,8 @@ import {GogArtwork} from "./GogArtwork";
 import {SharedLibraryDetails} from "./SharedLibraryDetails";
 import {SteamGameDetails} from "./SteamGameDetails";
 import {openSteamControllerEditor} from "./steamControllerEditor";
-import {armControllerSettingsReturn,consumeControllerSettingsReturn,clearControllerSettingsReturn,type GameDetailsReturnTarget} from "./controllerSettingsReturn";
+import {armControllerSettingsReturn,armGameDetailsWebReturn,consumeControllerSettingsReturn,clearControllerSettingsReturn,type GameDetailsReturnTarget} from "./controllerSettingsReturn";
+import {steamStorePageUrl,validHltbGameUrl} from "./gameDetailsLinks";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {useGogDashboardCatalog} from "./useGogDashboardCatalog";
 import {combineDashboardEntries,combineSearchEntries,searchGogEntries,
@@ -58,7 +59,7 @@ import { AchievementsCard } from "./AchievementsCard";
 import { getGridColumnCount, gridNeighbor, canEnterNavigationRail, type GridDirection } from "./gridNavigation";
 import { resumeRunningGame } from "./runningGame";
 import {
-  consumeDetailsOrigin,peekDetailsOrigin,rememberDetailsOrigin,
+  consumeDetailsOrigin,peekDetailsOrigin,rememberDetailsOrigin,clearDetailsOrigin,
   type DetailsOriginRoute,
 } from "./detailsReturn";
 
@@ -454,6 +455,39 @@ export function Dashboard({initialMode="home",originRoute}:
       toaster.toast({title:"Controller Settings unavailable",body:"Steam did not accept the controller settings route."});
     });
   };
+  const openGameDetailsWeb=(game:LibraryGame,kind:"hltb"|"store",url:string)=>{
+    const valid=kind==="hltb"?validHltbGameUrl(url):
+      steamStorePageUrl(game.id,game.nonSteam)===url;
+    if(!valid){
+      toaster.toast({title:"Game Library",body:"The external game page link is unavailable."});
+      return;
+    }
+    const target=steamReturnTarget.current;
+    // The external browser, like native Controller Settings, can unmount our
+    // React-only Game Details. Preserve the exact source route and game so
+    // Steam B lands on our Details instead of a stale Controller Settings
+    // screen or the generic Library list.
+    if(!target||!armGameDetailsWebReturn({route:actualRoute,appId:game.id,target})){
+      toaster.toast({title:"Game Library",body:"Cannot preserve the game details return location."});
+      return;
+    }
+    rememberGameDetails(game);
+    try{
+      if(kind==="hltb"){
+        // ExternalWeb uses Steam's external-site navigator. SteamWeb here
+        // unexpectedly replayed the previous controllerconfigurator history.
+        Navigation.NavigateToExternalWeb(url);
+      }else{
+        // Mirrors Steam's own "Store Page" action and uses its store client.
+        Navigation.NavigateToSteamWeb(url);
+      }
+    }catch(error){
+      clearControllerSettingsReturn(game.id);
+      clearDetailsOrigin();
+      console.warn("[game-library] external game page navigation failed",error);
+      toaster.toast({title:"Game Library",body:"Steam could not open the requested page."});
+    }
+  };
   const openNativeGameDetails=(game:LibraryGame)=>{
     rememberGameDetails(game);
     openDetails(game);
@@ -674,6 +708,11 @@ export function Dashboard({initialMode="home",originRoute}:
     // Controller Settings -> Game Details is a one-shot restoration.
     // Game Details -> Library must NEVER schedule a second restoration.
     controllerRestorePending.current=false;
+    // If the web browser only overlaid the existing Dashboard, there is no
+    // route remount to consume the pending one-shot return. Clear it now
+    // so visiting Home later cannot reopen an old game accidentally.
+    if(steamDetailsGame)clearControllerSettingsReturn(steamDetailsGame.id);
+    clearDetailsOrigin();
     setSteamDetailsGame(null);
   };
   useEffect(()=>{
@@ -984,6 +1023,11 @@ export function Dashboard({initialMode="home",originRoute}:
               onBack={closeSteamDetails}
               onNativeDetails={()=>openNativeGameDetails(steamDetailsGame)}
               onOpenControllerSettings={()=>openControllerSettings(steamDetailsGame)}
+              onOpenHltb={url=>openGameDetailsWeb(steamDetailsGame,"hltb",url)}
+              onOpenStore={()=>{
+                const url=steamStorePageUrl(steamDetailsGame.id,steamDetailsGame.nonSteam);
+                if(url)openGameDetailsWeb(steamDetailsGame,"store",url);
+              }}
               onFocusRail={()=>focusRail(railIndex)}/>
           : collectionsMode
           ? <CollectionsPage key={collectionsPageRevision}
