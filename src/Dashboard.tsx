@@ -192,7 +192,7 @@ export function Dashboard({initialMode="home",originRoute}:
   const [games, setGames] = useState<LibraryGame[]>(() => getLibraryGames());
   const gogAccountId=getActiveUserId();
   const gogCatalogEnabled=initialMode==="home"||initialMode==="library"||searchMode;
-  const {games:gogGames,status:gogStatus}=useGogDashboardCatalog(gogAccountId,gogCatalogEnabled);
+  const {games:gogGames}=useGogDashboardCatalog(gogAccountId,gogCatalogEnabled);
   const [gogDetailsId,setGogDetailsId]=useState<string|null>(null);
   const [selectedGogId,setSelectedGogId]=useState<string|null>(null);
   const gogDetailBackRef=useRef<HTMLDivElement>(null);
@@ -606,7 +606,10 @@ export function Dashboard({initialMode="home",originRoute}:
   };
   const closeGogDetails=()=>{
     setGogDetailsId(null);
-    window.requestAnimationFrame(()=>focusGrid(lastGridFocusIndex.current));
+    window.requestAnimationFrame(()=>{
+      if(viewAll||searchMode)focusGrid(lastGridFocusIndex.current);
+      else gameRefs.current[lastGridFocusIndex.current]?.focus();
+    });
   };
   useEffect(()=>{
     if(!gogDetailsId)return;
@@ -1226,14 +1229,20 @@ export function Dashboard({initialMode="home",originRoute}:
           )
         ) : (
           <div className="gl-empty">
-            <h1>{!tabResult.supported ? "Open this tab in Steam" : games.length === 0 ? "Your library is not available yet" : "No games in this tab"}</h1>
+            <h1>{!tabResult.supported ? "Open this tab in Steam" :
+              tab.id==="GOG"?"No GOG games in your library":
+              games.length===0&&gogGames.length===0?"Your library is not available yet":
+              "No games in this tab"}</h1>
             <p>{!tabResult.supported ? tabResult.reason
-              : games.length === 0 ? (hasLibraryStore()
-                ? "Steam has not returned app overviews yet." : "Steam collectionStore is not ready.")
-                : "Choose another tab to find games."}</p>
+              : tab.id==="GOG"?"Connect or refresh your GOG account in Plugin Settings.":
+                games.length===0&&gogGames.length===0?(hasLibraryStore()
+                  ?"Steam has not returned app overviews yet.":"Steam collectionStore is not ready.")
+                  :"Choose another tab to find games."}</p>
             <Focusable className="gl-button gl-primary" focusClassName="gl-focused" noFocusRing
-              onActivate={() => Navigation.Navigate("/library")} onOKActionDescription="Open Steam library">
-              Open Steam Library
+              onActivate={()=>Navigation.Navigate(tab.id==="GOG"?
+                "/game-library/plugin-settings":"/library")}
+              onOKActionDescription={tab.id==="GOG"?"Open Plugin Settings":"Open Steam library"}>
+              {tab.id==="GOG"?"GOG Settings":"Open Steam Library"}
             </Focusable>
           </div>
         )}
