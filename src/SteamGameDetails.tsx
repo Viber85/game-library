@@ -20,7 +20,6 @@ import {requestNativeRequiredInstallBytes,readNativeRequiredInstallBytes}
 import {type FocusDirection} from "./spatialFocus";
 import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
-import {openSteamControllerEditor} from "./steamControllerEditor";
 import {showNativeGameOptions} from "./nativeGameContextMenu";
 import {toaster} from "@decky/api";
 
@@ -76,11 +75,12 @@ function DetailPoster({game}:{game:LibraryGame}){
 /** Steam's own game installation wizard remains authoritative. We never
  * claim a download began merely because the user selected Install.
  */
-export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
+export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpenControllerSettings}:{
   game:LibraryGame;
   onBack:()=>void;
   onNativeDetails:()=>void;
   onFocusRail:()=>void;
+  onOpenControllerSettings:()=>void;
 }){
   const [tab,setTab]=useState<PageTab>("activity");
   const [hltb,setHltb]=useState<HltbReply|null>(null);
@@ -181,7 +181,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
     // same gamepad press. Take the Steam nav-tree focus, not DOM focus.
     event.preventDefault();event.stopPropagation();
     if(next)focusNativeMenuControl(next,event.detail!.button!);
-    else if(direction==="left"&&id==="back")onFocusRail();
+    else if(direction==="left")onFocusRail();
   };
   const onAction=(id:string)=>({
     ref:focusRef(id),
@@ -210,23 +210,9 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail}:{
       body:"Steam's native game menu is unavailable here. Open Steam Details to access its options."
     });
   };
-  const openController=()=>{
-    // Open Steam's own Controller Settings PAGE for the selected app, exactly
-    // the one with Current Button Layout, Edit Layout and Quick Settings.
-    // Do not substitute the Start/gear context menu if navigation fails.
-    void openSteamControllerEditor(game.id).then(accepted=>{
-      if(!accepted)toaster.toast({
-        title:"Controller Settings unavailable",
-        body:"Steam did not accept the controller-settings page command. Open original Steam Details and select its controller icon."
-      });
-    }).catch(error=>{
-      console.warn("[game-library] native Controller Settings navigation failed",error);
-      toaster.toast({
-        title:"Controller Settings unavailable",
-        body:"Open original Steam Details and select its controller icon."
-      });
-    });
-  };
+  // Dashboard owns native route handoff so it can restore this React
+  // Game Details screen when Steam's B returns to the previous route.
+  const openController=onOpenControllerSettings;
   const action=()=>{
     if(installState)play({...game,installed:true});
     else onNativeDetails();
