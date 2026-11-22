@@ -119,7 +119,7 @@ test("UI uses Steam's own confirmation and delays prefix cleanup until native re
   const action=src.slice(start,end);
   assert.ok(start>=0&&end>start);
   assert.match(src,/if\(nativeDownload\.downloadNature==="initial"\)\{/);
-  assert.match(src,/showNativeSteamUninstallDialog\(game\.id,ownerWindow\)/);
+  assert.match(src,/showNativeGameOptions\(game\.id,anchor\)/);
   assert.match(src,/strOKButtonText="Remove from queue"/);
   assert.doesNotMatch(src,/strOKButtonText=\{initial\?"Uninstall game"/);
   assert.match(src,/showModal\(<ConfirmModal/);
