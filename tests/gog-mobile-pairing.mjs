@@ -47,6 +47,8 @@ test("GOG phone bridge uses local-only address, bounded tokens and no external r
   assert.match(service,/def log_message\(self,/);
   assert.match(service,/default-src 'none'/);
   assert.match(service,/Referrer-Policy/);
+  assert.match(service,/window\.open\(link\.href, "_blank"\)/);
+  assert.match(service,/script-src 'self'/);
   assert.match(qr,/MIT License/);
   assert.doesNotMatch(service,/remote\.ngrok|api\.qrserver|chart\.googleapis|unifideck/);
 });
