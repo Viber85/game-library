@@ -66,3 +66,27 @@ test("real Dashboard arms return before leaving and restores same card state",()
   assert.match(source,/const steamReturnTarget=useRef<GameDetailsReturnTarget\|null>\(\s*controllerReturn\?\.target\?\?null\)/);
   assert.match(source,/const \[controllerReturn\]=useState\(\(\)=>consumeControllerSettingsReturn\(actualRoute\)\)/);
 });
+
+test("second B closes restored Game Details once; delayed inventory cannot reopen it",()=>{
+  const dashboard=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
+  assert.match(dashboard,
+    /const controllerRestorePending=useRef\(Boolean\(controllerReturn&&!steamDetailsGame\)\)/);
+  assert.match(dashboard,
+    /if\(!controllerRestorePending\.current\|\|!controllerReturn\)return;/);
+  assert.match(dashboard,
+    /if\(!restored\)return;\s*controllerRestorePending\.current=false;\s*setSteamDetailsGame\(restored\);/);
+  assert.match(dashboard,
+    /const closeSteamDetails=\(\)=>\{[\s\S]*?controllerRestorePending\.current=false;\s*setSteamDetailsGame\(null\);/);
+  assert.doesNotMatch(dashboard,/if\(!controllerReturn\|\|steamDetailsGame\)return;/,
+    "Old effect re-opened Details immediately after the user pressed B");
+  assert.match(dashboard,/onBack=\{closeSteamDetails\}/);
+});
+
+test("focus bridge remains unchanged for Details and both directions of sidebar",()=>{
+  const dashboard=readFileSync(new URL("../src/Dashboard.tsx",import.meta.url),"utf8");
+  const details=readFileSync(new URL("../src/SteamGameDetails.tsx",import.meta.url),"utf8");
+  assert.match(dashboard,/useNativeMenuGamepad\(steamDetailsGame\?"details":nativeMenuKind,nativeMenuRoot\)/);
+  assert.match(dashboard,/focusNativeMenuControl\(back,GamepadButton\.DIR_RIGHT\)/);
+  assert.match(dashboard,/focusNativeMenuControl\(railRefs\.current\[target\],GamepadButton\.DIR_LEFT\)/);
+  assert.match(details,/else if\(direction==="left"\)onFocusRail\(\)/);
+});
