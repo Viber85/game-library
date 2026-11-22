@@ -46,7 +46,7 @@ test("Cancel initial install invokes the native Steam Uninstall confirmation dir
   const installs={OpenUninstallWizard:(...args)=>calls.push(["uninstall",...args])};
   assert.deepEqual(await nativeDownloadAction("cancel",730,false,"initial",downloads,installs),
     {ok:true,uninstallRequested:true});
-  assert.deepEqual(calls,[["uninstall",[730],false]],
+  assert.deepEqual(calls,[["uninstall",[730],true]],
     "Do not pause or remove a new install from queue before the native Uninstall action");
 });
 
@@ -59,7 +59,7 @@ test("native Uninstall can open even when Steam rejects Pause and has no Downloa
     {ok:true,uninstallRequested:true});
   assert.deepEqual(await nativeDownloadAction("cancel",730,false,"initial",null,installs),
     {ok:true,uninstallRequested:true});
-  assert.deepEqual(calls,[[[730],false],[[730],false]]);
+  assert.deepEqual(calls,[[[730],true],[[730],true]]);
 });
 
 test("updates and unknown transfers only leave the queue, never uninstall existing content",async()=>{
@@ -82,7 +82,7 @@ test("native Uninstall acknowledgement timeout cannot trap controller UI",async(
   const start=Date.now();
   assert.deepEqual(await nativeDownloadAction("cancel",730,false,
     "initial",null,installs,35),{ok:true,uninstallRequested:true});
-  assert.deepEqual(calls,[[[730],false]]);
+  assert.deepEqual(calls,[[[730],true]]);
   assert.ok(Date.now()-start<900);
 });
 
@@ -118,10 +118,11 @@ test("UI uses Steam's own confirmation and delays prefix cleanup until native re
   const end=src.indexOf("  const confirmCancelDownload=()=>",start);
   const action=src.slice(start,end);
   assert.ok(start>=0&&end>start);
-  assert.match(src,/if\(nativeDownload\.downloadNature==="initial"\)/);
-  assert.match(src,/void cancelDownload\("initial"\)/);
+  assert.match(src,/const initial=nativeDownload\.downloadNature==="initial"/);
+  assert.match(src,/strOKButtonText=\{initial\?"Uninstall game":"Remove from queue"\}/);
+  assert.match(src,/bDestructiveWarning=\{initial\}/);
   assert.match(src,/showModal\(<ConfirmModal/);
-  assert.match(src,/setCancelFeedback\("Steam Uninstall confirmation requested/);
+  assert.match(src,/setCancelFeedback\("Uninstall confirmed and sent to Steam/);
   assert.match(src,/if\(!awaitingSteamUninstall\|\|nativeDownload\.transfer/);
   assert.match(src,/inspectPrefixCleanup\(game\.id\)/);
   assert.doesNotMatch(action,/inspectPrefixCleanup\(game\.id\)/,
@@ -130,6 +131,8 @@ test("UI uses Steam's own confirmation and delays prefix cleanup until native re
   assert.match(action,/finally\{\s*busyRef\.current=false;\s*setDownloadBusy\(false\)/);
   assert.match(src,/gl-details-download-feedback/);
   assert.match(src,/role="status"/);
+  assert.match(src,/native-uninstall-fallback/);
+  assert.match(src,/showNativeGameOptions\(game\.id,anchor\)/);
   assert.match(backend,/async def cleanup_cancelled_steam_game\(self, appid: int\):/);
   assert.match(packageScript,/steam_cancel_cleanup\.py/);
 });
