@@ -62,8 +62,10 @@ test("native local status overrides remote and the premature installed flag",()=
 
 test("after native install wizard, Play is blocked until ready, including queue and pause",()=>{
   assert.equal(resolveInstallMode(true,null,null,true),"preparing");
-  assert.equal(resolveInstallMode(true,19,null,false),"transfer");
-  assert.equal(resolveInstallMode(true,22,null,false),"transfer");
+  const queued=resolveGameTransfer(730,[],null,19);
+  const paused=resolveGameTransfer(730,[],null,22);
+  assert.equal(resolveInstallMode(true,19,queued,false),"transfer");
+  assert.equal(resolveInstallMode(true,22,paused,false),"transfer");
   assert.equal(resolveInstallMode(false,9,null,false),"install");
   assert.equal(resolveInstallMode(true,24,null,false),"install");
   assert.equal(resolveInstallMode(true,11,null,false),"play");
