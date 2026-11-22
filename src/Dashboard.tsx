@@ -1099,6 +1099,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
           : detailGog ? <SharedLibraryDetails
               game={fromGogLibraryGame(detailGog)}
               cover={<GogArtwork game={detailGog} accountId={gogAccountId} expanded/>}
+              gogAccountId={gogAccountId}
               onBack={closeGogDetails} backRef={gogDetailBackRef}/>
           : searchMode ? <>
         <header className="gl-header gl-library-topbar" aria-label="Search navigation">
