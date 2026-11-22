@@ -64,20 +64,20 @@ class OwnTabsTests(unittest.TestCase):
                 original=asyncio.run(Plugin().get_library_tabs("42"))
                 self.assertTrue(original["ok"])
                 self.assertEqual([t["id"] for t in original["tabs"]],
-                    ["AllGames","Installed","Steam","NonSteam","Favorites"])
+                    ["AllGames","Installed","Steam","NonSteam","GOG","Favorites"])
                 tabs=original["tabs"]
                 tabs[0]["title"]="Every game"
                 tabs[1]["visible"]=False
                 tabs.append({"id":"custom-rpg123","title":"RPG", "kind":"custom",
-                             "filter":"not-installed","position":5,"visible":True})
+                             "filter":"not-installed","position":6,"visible":True})
                 saved=asyncio.run(Plugin().save_library_tabs("42",tabs))
                 self.assertTrue(saved["ok"], saved)
-                self.assertEqual(len(asyncio.run(Plugin().get_library_tabs("42"))["tabs"]),6)
+                self.assertEqual(len(asyncio.run(Plugin().get_library_tabs("42"))["tabs"]),7)
                 self.assertEqual(asyncio.run(Plugin().get_library_tabs("99"))["tabs"][0]["title"],"All Games")
                 persisted=json.loads((own/"game_library.json").read_text())
                 self.assertIn("42",persisted["tabs_by_user"])
                 self.assertNotIn("99",persisted["tabs_by_user"])
-                self.assertEqual(persisted["tabs_by_user"]["42"][5]["filter"],"not-installed")
+                self.assertEqual(persisted["tabs_by_user"]["42"][6]["filter"],"not-installed")
                 self.assertEqual(asyncio.run(Plugin().get_dashboard_settings()),
                                  {"default_home":True})
                 self.assertTrue(asyncio.run(Plugin().set_dashboard_settings(False)))
@@ -109,22 +109,22 @@ class OwnTabsTests(unittest.TestCase):
             own.mkdir()
             with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
                 original=asyncio.run(Plugin().get_library_tabs("42"))["tabs"]
-                self.assertEqual(len(original),5)
+                self.assertEqual(len(original),6)
                 manual={"id":"custom-manual-rpg","title":"My RPG",
-                        "position":5,"visible":True,"kind":"custom",
+                        "position":6,"visible":True,"kind":"custom",
                         "filter":"all","mode":"manual","members":[4,2,999]}
                 saved=asyncio.run(Plugin().save_library_tabs("42",original+[manual]))
                 self.assertTrue(saved["ok"],saved)
-                self.assertEqual(saved["tabs"][5]["members"],[2,4,999])
-                self.assertEqual(saved["tabs"][5]["mode"],"manual")
-                self.assertEqual(len(asyncio.run(Plugin().get_library_tabs("99"))["tabs"]),5)
+                self.assertEqual(saved["tabs"][6]["members"],[2,4,999])
+                self.assertEqual(saved["tabs"][6]["mode"],"manual")
+                self.assertEqual(len(asyncio.run(Plugin().get_library_tabs("99"))["tabs"]),6)
                 changed=saved["tabs"]
                 for invalid_members in ([0],[True],[2,2],[3.5],[9007199254740992]):
                     broken=[dict(t) for t in changed]
-                    broken[5]["members"]=invalid_members
+                    broken[6]["members"]=invalid_members
                     self.assertFalse(asyncio.run(
                         Plugin().save_library_tabs("42",broken))["ok"])
-                self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"][5]["members"],
+                self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"][6]["members"],
                                  [2,4,999])
                 self.assertFalse(asyncio.run(
                     Plugin().save_library_tabs("42",changed+
@@ -138,22 +138,22 @@ class OwnTabsTests(unittest.TestCase):
             with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
                 original=asyncio.run(Plugin().get_library_tabs("42"))["tabs"]
                 legacy={"id":"custom-old123","title":"Old filtered tab",
-                        "position":5,"visible":True,"kind":"custom",
+                        "position":6,"visible":True,"kind":"custom",
                         "filter":"not-installed","mode":"smart","members":[]}
                 saved=asyncio.run(Plugin().save_library_tabs("42",original+[legacy]))
                 self.assertTrue(saved["ok"],saved)
-                self.assertEqual(saved["tabs"][5]["rules"],[{"type":"not-installed"}])
-                self.assertEqual(saved["tabs"][5]["ruleJoin"],"all")
+                self.assertEqual(saved["tabs"][6]["rules"],[{"type":"not-installed"}])
+                self.assertEqual(saved["tabs"][6]["ruleJoin"],"all")
                 smart=saved["tabs"]
-                smart[5]["rules"]=[{"type":"installed"},{"type":"steam"}]
-                smart[5]["ruleJoin"]="any"
-                smart[5]["forceInclude"]=[3,12]
-                smart[5]["forceExclude"]=[9]
+                smart[6]["rules"]=[{"type":"installed"},{"type":"steam"}]
+                smart[6]["ruleJoin"]="any"
+                smart[6]["forceInclude"]=[3,12]
+                smart[6]["forceExclude"]=[9]
                 saved=asyncio.run(Plugin().save_library_tabs("42",smart))
                 self.assertTrue(saved["ok"],saved)
-                self.assertEqual(saved["tabs"][5]["forceInclude"],[3,12])
-                self.assertEqual(saved["tabs"][5]["forceExclude"],[9])
-                self.assertEqual(saved["tabs"][5]["ruleJoin"],"any")
+                self.assertEqual(saved["tabs"][6]["forceInclude"],[3,12])
+                self.assertEqual(saved["tabs"][6]["forceExclude"],[9])
+                self.assertEqual(saved["tabs"][6]["ruleJoin"],"any")
                 self.assertEqual(asyncio.run(Plugin().get_library_tabs("99"))["tabs"],
                                  original)
                 invalid_rules=(
@@ -166,20 +166,51 @@ class OwnTabsTests(unittest.TestCase):
                 )
                 for rules in invalid_rules:
                     bad=[dict(t) for t in saved["tabs"]]
-                    bad[5]["rules"]=rules
+                    bad[6]["rules"]=rules
                     self.assertFalse(asyncio.run(
                         Plugin().save_library_tabs("42",bad))["ok"])
                 bad=[dict(t) for t in saved["tabs"]]
-                bad[5]["forceExclude"]=[3]
+                bad[6]["forceExclude"]=[3]
                 self.assertFalse(asyncio.run(Plugin().save_library_tabs("42",bad))["ok"])
                 bad=[dict(t) for t in saved["tabs"]]
                 bad[0]["rules"]=[{"type":"steam"}]
                 self.assertFalse(asyncio.run(Plugin().save_library_tabs("42",bad))["ok"])
                 bad=[dict(t) for t in saved["tabs"]]
-                bad[5]["ruleJoin"]="neither"
+                bad[6]["ruleJoin"]="neither"
                 self.assertFalse(asyncio.run(Plugin().save_library_tabs("42",bad))["ok"])
-                self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"][5]["rules"],
+                self.assertEqual(asyncio.run(Plugin().get_library_tabs("42"))["tabs"][6]["rules"],
                                  [{"type":"installed"},{"type":"steam"}])
+
+    def test_existing_saved_tabs_migrate_gog_without_reordering_or_loss(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            own=pathlib.Path(tmp)/"Game Library"
+            own.mkdir()
+            with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
+                # Simulate a saved 0.6.11-test.9 profile: five built-ins
+                # with custom visibility/order and one manual collection.
+                old=main._own_tab_defaults()
+                old=[t for t in old if t["id"]!="GOG"]
+                old.append({"id":"custom-existing123","title":"My games",
+                            "position":5,"visible":True,"kind":"custom",
+                            "filter":"all","mode":"manual","members":[17,19]})
+                old[1]["visible"]=False
+                prefs=main._read_preferences()
+                prefs["tabs_by_user"]={"42":old}
+                main._write_preferences(prefs)
+                migrated=asyncio.run(Plugin().get_library_tabs("42"))["tabs"]
+                self.assertEqual(len(migrated),7)
+                self.assertEqual([t["id"] for t in migrated[:6]],
+                    ["AllGames","Installed","Steam","NonSteam","Favorites","custom-existing123"])
+                self.assertEqual(migrated[6]["id"],"GOG")
+                self.assertTrue(migrated[6]["visible"])
+                self.assertFalse(migrated[1]["visible"])
+                self.assertEqual(migrated[5]["members"],[17,19])
+                self.assertTrue(asyncio.run(Plugin().save_library_tabs("42",migrated))["ok"])
+                again=asyncio.run(Plugin().get_library_tabs("42"))["tabs"]
+                self.assertEqual(migrated,again)
+                again[6]["visible"]=False
+                self.assertTrue(asyncio.run(Plugin().save_library_tabs("42",again))["ok"])
+                self.assertFalse(asyncio.run(Plugin().get_library_tabs("42"))["tabs"][6]["visible"])
 
     def test_ignores_tabmaster_configuration_and_disabled_state(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -193,7 +224,7 @@ class OwnTabsTests(unittest.TestCase):
             with mock.patch.dict(os.environ,{"DECKY_PLUGIN_SETTINGS_DIR":str(own)}):
                 response=asyncio.run(Plugin().get_library_tabs("42"))
                 self.assertTrue(response["ok"])
-                self.assertEqual(len(response["tabs"]),5)
+                self.assertEqual(len(response["tabs"]),6)
                 self.assertFalse(hasattr(Plugin(),"get_tabmaster_tabs"))
                 self.assertFalse(hasattr(Plugin(),"set_tab_source"))
 
