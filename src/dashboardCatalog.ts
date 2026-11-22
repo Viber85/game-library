@@ -1,7 +1,7 @@
 import type {LibraryGame} from "./steam";
 import type {GogOwnedGame} from "./GogArtwork";
 import type {HomeSort} from "./homeSort";
-import {normalizeSearchText,type SearchSource,type SearchInstall} from "./librarySearch";
+import {normalizeSearchText,type SearchSource,type SearchInstall} from "./librarySearch.ts";
 import {fromGogLibraryGame,fromSteamLibraryGame,type UnifiedLibraryGame} from "./unifiedLibraryGame";
 
 /** Dashboard-specific view of a provider-owned game. Native Steam IDs never
