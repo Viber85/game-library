@@ -107,6 +107,30 @@ def _svg_qr(text):
     return base64.b64encode(svg.encode("ascii")).decode("ascii")
 
 
+# JavaScript runs only on the phone after a real user tap, and opens the
+# official GOG URL in a new browsing context. We deliberately keep the local
+# pairing page open, so the user can return and submit the one-use code.
+_GOG_NEW_TAB_JS = r"""(() => {
+  const link = document.getElementById("gog-login-link");
+  const status = document.getElementById("gog-tab-status");
+  if (!link || !status) return;
+  link.addEventListener("click", event => {
+    // Preserve native modified clicks and long-press "Open in new tab".
+    if (event.defaultPrevented || event.button !== 0 ||
+        event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    let opened = null;
+    try {
+      opened = window.open(link.href, "_blank");
+      if (opened) opened.opener = null;
+    } catch (_) {}
+    status.textContent = opened
+      ? "GOG opened in a new tab. After signing in, return to this Game Library tab."
+      : "The QR scanner browser blocked a new tab. Open this QR page in Chrome or Safari, or long-press the GOG button and choose Open in new tab.";
+  });
+})();"""
+
+
 def _html_page(session, message="", *, error=False):
     url = html.escape(session.login_url, quote=True)
     title = "Game Library · GOG"
@@ -134,7 +158,11 @@ background:#154e5a}.alert.error{background:#713640}
 </style></head><body><main><div class="panel"><h1>%s</h1>
 <p>Connect your account without typing on the SteamOS keyboard.</p>
 <p class="step">1 · Open GOG in another browser tab</p>
-<a class="button" href="%s" target="_blank" rel="noopener noreferrer">Open GOG sign-in</a>
+<a id="gog-login-link" class="button" href="%s" target="_blank" rel="noopener noreferrer">Open GOG sign-in in new tab</a>
+<p id="gog-tab-status" class="hint" role="status" aria-live="polite">
+This button opens GOG separately and keeps this Game Library form open.
+If your QR scanner uses an in-app preview, first choose Open in Chrome or Safari.
+</p>
 <p>Log in using your normal phone browser. Never enter your password in this page.</p>
 <p class="step">2 · Copy the GOG success-page address</p>
 <p>After GOG signs you in, tap the address bar and copy the full URL
@@ -147,8 +175,8 @@ placeholder="Paste the complete GOG success URL here"></textarea>
 <button type="submit">Connect GOG to Game Library</button></form>%s
 <p class="hint">This page is served only by your handheld on local Wi-Fi.
 The code is transferred once, never your password. Close this page afterward.</p>
-</div></main></body></html>"""
-            % (title, title, url, action, session.form_token, note)).encode("utf-8")
+</div></main><script src="/%s/new-tab.js" defer></script></body></html>"""
+            % (title, title, url, action, session.form_token, note, session.secret)).encode("utf-8")
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -169,7 +197,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Content-Security-Policy",
-                         "default-src 'none'; style-src 'unsafe-inline'; "
+                         "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; "
                          "form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
         self.end_headers()
 
@@ -210,6 +238,10 @@ class _Handler(BaseHTTPRequestHandler):
             return session.phase in ("waiting", "error") and time.time() < session.expires_at
 
     def do_GET(self):
+        if self._permitted("/new-tab.js"):
+            self._send(200, _GOG_NEW_TAB_JS.encode("utf-8"),
+                       "application/javascript; charset=utf-8")
+            return
         if not self._permitted("/"):
             self._send(404, b"Unavailable")
             return
