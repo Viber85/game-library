@@ -104,7 +104,7 @@ test("Return snapshot expires and will not hijack Home hours later",()=>{
 test("Dashboard captures return immediately before native Steam details",()=>{
   assert.match(dashboard,/rememberDetailsOrigin\(\{[\s\S]*?route:actualRoute,[\s\S]*?tabId:tab\.id,[\s\S]*?gameId:game\.id,[\s\S]*?viewAll,[\s\S]*?gridLimit,[\s\S]*?gridScrollTop:/);
   assert.match(dashboard,/const openGameDetails=\(game:LibraryGame\)=>\{\s*rememberGameDetails\(game\);\s*openDetails\(game\);/);
-  assert.match(dashboard,/activate=\{\(\)=>openGameDetails\(game\)\}/);
+  assert.match(dashboard,/openGameDetails\(entry.steam\)/);
   assert.match(dashboard,/onActivate=\{\(\) => openGameDetails\(selected\)\}/);
   assert.match(dashboard,/if\(!game\.installed\)rememberGameDetails\(game\);/);
   assert.match(dashboard,/onActivate=\{\(\) => runGameAction\(selected\)\}/);
@@ -117,7 +117,7 @@ test("Fullscreen grid and Home restore tab, selected game, batch size, scroll an
   assert.match(dashboard,/detailsReturn\?\.viewAll/);
   assert.match(dashboard,/detailsReturn\?\.gridLimit/);
   assert.match(dashboard,/restorePending\.current/);
-  assert.match(dashboard,/shown\.findIndex\(game=>game\.id===snapshot\.gameId\)/);
+  assert.match(dashboard,/gridShown\.findIndex\(entry=>entry.store==="steam"&&/);
   assert.match(dashboard,/fullGridScrollRef\.current\.scrollTop=snapshot\.gridScrollTop/);
   assert.match(dashboard,/focusGrid\(target\)/);
   assert.match(dashboard,/gameRefs\.current\[index\]/);
@@ -131,7 +131,7 @@ test("Saved custom tab survives Steam login and restores correct focus",()=>{
   assert.match(dashboard,/restorePending\.current\?\.tabId===activeTab/);
   assert.match(dashboard,/if\(tabs\.some\(t=>t\.id===activeTab\)\)return/);
   assert.match(dashboard,/setActiveTab\(tabs\[0\]\?\.id \?\? "AllGames"\)/);
-  assert.match(dashboard,/\[initialMode,viewAll,tab\.id,activeTab,shown\.length,gridLimit\]/);
+  assert.match(dashboard,/\[initialMode,viewAll,tab\.id,activeTab,gridShown\.length,gridLimit\]/);
 });
 
 test("Native Steam Game Details B is handled on return route, not globally rebound",()=>{
