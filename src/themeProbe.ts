@@ -28,6 +28,13 @@ export type ThemeProbe={
   libraryUIVisible:boolean;
   nativeHeaderCount:number;
   nativePlayBarCount:number;
+  nativeCompactHeroFound:boolean;
+  nativeCompactPlayBarFound:boolean;
+  nativeCompactHeroStyled:boolean;
+  nativeCompactPlayBarStyled:boolean;
+  nativeCompactHeroHeight:number;
+  nativeCompactPlayBarHeight:number;
+  nativeCompactAliasCount:number;
   fieldColor:string;
   rootColor:string;
   sampleClasses:string[];
@@ -80,6 +87,7 @@ export const THEME_PROBE_SCRIPT=`(() => {
     : /(?:library\\/app\\/|library\\/game\\/|game\\/details\\/)/i.test(route) ? 'game' : 'other';
   // Bounded scan of live CSS backgrounds on the page; no text, URLs, values,
   // app names or image data are accessed. Useful if CSS modules are hashed.
+  const nativeCompact=window.__gameLibraryCompactDetails14?.native;
   const surfaces = new Map();
   let surfaceElements = 0;
   if(count('.BasicUI,#GamepadUI_Full_Root,[class*="gamepadui_BasicUI"]')>0){
@@ -146,6 +154,13 @@ export const THEME_PROBE_SCRIPT=`(() => {
     libraryUIVisible:count('.gl-root')>0,
     nativeHeaderCount:count('[class*="sharedappdetailsheader_TopCapsule"]'),
     nativePlayBarCount:count('[class*="appdetailsplaysection_PlayBar"]'),
+    nativeCompactHeroFound:nativeCompact?.hero===true,
+    nativeCompactPlayBarFound:nativeCompact?.playbar===true,
+    nativeCompactHeroStyled:nativeCompact?.heroStyle===true,
+    nativeCompactPlayBarStyled:nativeCompact?.playStyle===true,
+    nativeCompactHeroHeight:Number(nativeCompact?.heroHeight)||0,
+    nativeCompactPlayBarHeight:Number(nativeCompact?.playHeight)||0,
+    nativeCompactAliasCount:Number(nativeCompact?.aliases)||0,
     fieldColor: target ? getComputedStyle(target).backgroundColor : '',
     rootColor: getComputedStyle(surface).backgroundColor,
     sampleClasses: Array.from(classNames),
@@ -185,6 +200,13 @@ export function parseThemeProbe(input:unknown):ThemeProbe|null{
     libraryUIVisible:obj.libraryUIVisible===true,
     nativeHeaderCount:integer(obj.nativeHeaderCount),
     nativePlayBarCount:integer(obj.nativePlayBarCount),
+    nativeCompactHeroFound:obj.nativeCompactHeroFound===true,
+    nativeCompactPlayBarFound:obj.nativeCompactPlayBarFound===true,
+    nativeCompactHeroStyled:obj.nativeCompactHeroStyled===true,
+    nativeCompactPlayBarStyled:obj.nativeCompactPlayBarStyled===true,
+    nativeCompactHeroHeight:integer(obj.nativeCompactHeroHeight),
+    nativeCompactPlayBarHeight:integer(obj.nativeCompactPlayBarHeight),
+    nativeCompactAliasCount:integer(obj.nativeCompactAliasCount),
     fieldColor:typeof obj.fieldColor==="string"?obj.fieldColor.slice(0,60):"",
     rootColor:typeof obj.rootColor==="string"?obj.rootColor.slice(0,60):"",
     routeKind:obj.routeKind==="settings"?"settings":obj.routeKind==="game"?"game":"other",
@@ -249,6 +271,7 @@ export type ThemeAudit={
   latestSettings:ThemeAuditSample|null;
   latestGame:ThemeAuditSample|null;
   latestCompact:ThemeAuditSample|null;
+  latestNativeCompact:ThemeAuditSample|null;
   latestOther:ThemeAuditSample|null;
   recentDomEvidence:ThemeDomEvidence[];
   focusTrace:ThemeFocusFrame[];
@@ -258,7 +281,7 @@ export type ThemeAudit={
 };
 
 const AUDIT_KEY = "__gameLibraryMidnightCssAudit";
-const AUDIT_REVISION = "21";
+const AUDIT_REVISION = "22";
 
 /**
  * Some SteamOS clients hash every CSS-module class. Identify only a
@@ -614,7 +637,7 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
   state = { revision, intervalId: null, observer: null, frameId: null,
     focusFrameId:null,onFocus:null,lastFocusCaptureAt:0,
     focusTrace:[],focusAnomalies:[],onScroll:null,
-    latestSettings:null,latestGame:null,latestCompact:null,latestOther:null,
+    latestSettings:null,latestGame:null,latestCompact:null,latestNativeCompact:null,latestOther:null,
     recentDomEvidence:[],lastDomSurveyAt:0,sampleTicks:0,lastScanAt:0 };
   window[key] = state;
   const sample = () => {
@@ -649,6 +672,9 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
         state.latestGame = { at, probe };
       if (probe.compactStyleActive === true)
         state.latestCompact = { at, probe };
+      if (probe.nativeCompactHeroStyled===true ||
+          probe.nativeCompactPlayBarStyled===true)
+        state.latestNativeCompact = { at, probe };
     } catch (error) {
       /* Steam may be rebuilding its React tree; retry on the next tick. */
     }
@@ -787,6 +813,7 @@ export const THEME_AUDIT_READ_SCRIPT = `(() => {
     latestSettings: state?.latestSettings || null,
     latestGame: state?.latestGame || null,
     latestCompact: state?.latestCompact || null,
+    latestNativeCompact: state?.latestNativeCompact || null,
     latestOther: state?.latestOther || null,
     recentDomEvidence:state?.recentDomEvidence || [],
     focusTrace:state?.focusTrace || [],
@@ -844,6 +871,7 @@ export function parseThemeAudit(value:unknown):ThemeAudit|null {
     latestSettings:read(obj.latestSettings),
     latestGame:read(obj.latestGame),
     latestCompact:read(obj.latestCompact),
+    latestNativeCompact:read(obj.latestNativeCompact),
     latestOther:read(obj.latestOther),
     recentDomEvidence:Array.isArray(obj.recentDomEvidence)?
       obj.recentDomEvidence.slice(0,8).flatMap(entry=>{
