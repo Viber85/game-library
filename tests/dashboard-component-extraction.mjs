@@ -59,7 +59,10 @@ test("sort progress, statuses and no-game layouts are unchanged",()=>{
   assert.match(notice,/Sorting as data loads · Games without data appear last/);
   assert.match(dashboard,/gl-sort-progress-slot gl-sort-progress-grid/);
   assert.match(dashboard,/gl-sort-progress-slot gl-sort-progress-home/);
-  assert.match(dashboard,/className="gl-full-grid-scroll"/);
+  const sharedGrid=read("src/SharedLibraryGrid.tsx");
+  assert.match(dashboard,/SharedLibraryGrid scrollRef=\{fullGridScrollRef\}/);
+  assert.match(sharedGrid,/className="gl-full-grid-scroll"/);
+  assert.match(sharedGrid,/className="gl-full-grid"/);
   assert.match(dashboard,/className="gl-footer"/);
 });
 
