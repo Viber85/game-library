@@ -148,7 +148,7 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
           <p>{activeTool==="updates"?
             "Check for Game Library releases and install verified updates.":
             activeTool==="gog"?"Connect your GOG account and sync your purchased games.":
-            "Configure missing cover and hero artwork with your personal API key."}</p>
+            "Use SteamGridDB as a fallback for missing Steam and GOG artwork."}</p>
         </div>
         <Focusable className="gl-plugin-settings-tool-content" ref={toolContentRef}
           flow-children="column" onCancelButton={closeTool}
@@ -209,7 +209,7 @@ export function PluginSettingsPage({firstRef,onFocusRail,onBack}:Props){
           onActivate={()=>openTool("steamgriddb")} onCancelButton={onBack}
           onButtonDown={(e:GamepadEvent)=>direction(e,3)}>
           <MdImage/><div><strong>SteamGridDB Integration</strong>
-            <span>Missing Steam covers, hero artwork and API key</span></div>
+            <span>Missing Steam/GOG covers, hero artwork and API key</span></div>
           <MdChevronRight/>
         </Focusable>
         <span className="gl-tab-manager-caption">MAINTENANCE</span>
