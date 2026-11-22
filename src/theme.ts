@@ -2315,6 +2315,18 @@ html:has(.gl-root.gl-own-status-only) #header {
   letter-spacing:.055em;box-shadow:0 0 0 1px rgba(151,211,182,.28);
 }
 
+/* GOG reuses Steam's actual Game Details composition, without borrowing
+   Steam's app IDs or pretending a GOG install can run before gogdl exists. */
+.gl-root .gl-details-gog-poster{position:relative;}
+.gl-root .gl-details-gog-poster .gl-gog-artwork{inset:0;}
+.gl-root .gl-gog-install-pending{
+  display:inline-flex;align-items:center;gap:8px;
+  opacity:.58;cursor:default;user-select:none;
+  pointer-events:none;
+}
+.gl-root .gl-gog-steam-details .gl-details-context>svg{
+  flex:none;font-size:23px;color:#89c7e8;
+}
 /* Separate compact game-details option under the existing Theme choices. */
 .gl-root .gl-appearance-compact-option {
   display:flex;width:100%;margin-top:12px;min-height:62px;
