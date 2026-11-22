@@ -1,7 +1,7 @@
 import {
   executeInTab, fetchNoCors, injectCssIntoTab, removeCssFromTab,
 } from "@decky/api";
-import { identifySteamTabs, FALLBACK_MAIN_TITLES, type ThemeScope, type SteamTab } from "./themeTabs";
+import { identifySteamTabs, fallbackMainTitlesPresent, FALLBACK_MAIN_TITLES, type ThemeScope, type SteamTab } from "./themeTabs";
 import {
   STEAM_PAGE_CHECK_SCRIPT, THEME_PROBE_SCRIPT, parseThemeProbe, type ThemeProbe,
   THEME_AUDIT_INSTALL_SCRIPT, THEME_AUDIT_READ_SCRIPT,
@@ -146,7 +146,8 @@ async function listTabs():Promise<SteamTab[]> {
   try{
     const response=await bounded(fetchNoCors(DEBUG_TABS_URL));
     if(response.ok){
-      const parsed=identifySteamTabs(await bounded(response.json()));
+      const listed=await bounded(response.json());
+      const parsed=identifySteamTabs(listed);
       if(parsed.length){
         const checked:SteamTab[]=[];
         for(const tab of parsed) {
@@ -158,17 +159,17 @@ async function listTabs():Promise<SteamTab[]> {
             if(value.success&&value.result===true)checked.push(tab);
           }catch{ /* ephemeral CEF tab: skip and retry next cycle */ }
         }
-        if(checked.some(t=>t.scope==="main"))return checked;
-        // If only overlays were found, still attempt the known visible Home
-        // titles before returning; don't silently style overlays alone.
-        for(const title of FALLBACK_MAIN_TITLES){
+        // A valid Steam native UI tab can have a blank/opaque DevTools URL.
+        // Previously we returned after the FIRST main tab and skipped these
+        // listed alternatives, potentially styling only the plugin's route.
+        // Probe only titles ACTUALLY listed by CEF, and require the real DOM.
+        for(const title of fallbackMainTitlesPresent(listed)){
           if(checked.some(t=>t.title===title))continue;
           try{
             const result=await bounded(executeInTab(title,false,STEAM_PAGE_CHECK_SCRIPT),1500);
-            if(result.success&&result.result===true){
-              return [{title,scope:"main"},...checked];
-            }
-          }catch{ /* try next candidate */ }
+            if(result.success&&result.result===true)
+              checked.push({title,scope:"main"});
+          }catch{ /* ephemeral or offscreen CEF tab: skip */ }
         }
         return checked;
       }
