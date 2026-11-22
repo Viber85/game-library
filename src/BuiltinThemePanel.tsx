@@ -156,6 +156,19 @@ export function BuiltinThemePanel(){
         {diagnostics.specialSettingsRowColor&&
           <div>Special row actual fill: {diagnostics.specialSettingsRowColor}</div>}
         <div>Game page / sections: {diagnostics.gameRoots} / {diagnostics.gameSections}</div>
+        <div><strong>Compact Details requested:</strong> {diagnostics.compactEnabled?"Yes":"No"}</div>
+        {diagnostics.compactEnabled&&<>
+          <div>Compact CSS injected: {diagnostics.compactCssLoaded?"Yes":"Not confirmed"}</div>
+          <div>Compact CSS matching native game:
+            {" "}{diagnostics.compactStyleActive?"YES — real layout rule activated":"Not confirmed"}
+          </div>
+          <div>Decorative cover loaded: {diagnostics.compactPosterShown?"Yes":"No / unavailable"}</div>
+          <div style={{opacity:.75,fontSize:11}}>
+            For an accurate result, visit a Steam game's native Details page,
+            then immediately open Decky and press Read CEF diagnostics.
+            A saved Game Details snapshot is used when QAM hides the page.
+          </div>
+        </>}
         {diagnostics.computedFieldColor&&
           <div>Actual row background: {diagnostics.computedFieldColor}</div>}
         {diagnostics.sampleClasses.length>0&&
