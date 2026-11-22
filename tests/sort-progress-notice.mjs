@@ -23,7 +23,9 @@ test("Grid status appears in a dedicated row ABOVE the scrolling game covers and
   const page=ui.indexOf('className={"gl-grid-page"+');
   const header=ui.indexOf('className="gl-grid-heading"',page);
   const slot=ui.indexOf('className="gl-sort-progress-slot gl-sort-progress-grid"',page);
-  const scroll=ui.indexOf('className="gl-full-grid-scroll"',page);
+  // Layout now lives in SharedLibraryGrid; its invocation stays below progress.
+  const scroll=ui.indexOf('<SharedLibraryGrid scrollRef={fullGridScrollRef}',page);
+  assert.match(source("src/SharedLibraryGrid.tsx"),/className="gl-full-grid-scroll"/);
   const hint=ui.indexOf('className="gl-grid-hint"',page);
   assert.ok(page>=0&&header>page&&slot>header&&scroll>slot&&hint>scroll);
   assert.match(css,/\.gl-root \.gl-sort-progress-grid \{[\s\S]*?flex:0 0 auto;/);
