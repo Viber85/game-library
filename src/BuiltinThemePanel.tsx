@@ -82,13 +82,26 @@ export function BuiltinThemePanel(){
         <div>Option enabled: {diagnostics.compactEnabled?"YES":"NO"}</div>
         <div>Midnight CSS verified: {diagnostics.applied?"YES":"NO"}</div>
         <div>Compact stylesheet present: {diagnostics.compactCssLoaded?"YES":"NOT CONFIRMED"}</div>
-        <div>Compact layout matched Steam page: {diagnostics.compactMatchedRecently
-          ?"YES · "+diagnostics.compactMatchAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
+        <div>Native Steam hero: {diagnostics.nativeHeroFound?"FOUND":"NOT FOUND"}
+          {" · "}{diagnostics.nativeHeroStyled?"STYLE APPLIED":"Style not confirmed"}
+          {diagnostics.nativeHeroHeight>0?" · "+diagnostics.nativeHeroHeight+" px":""}</div>
+        <div>Native Steam Play/Install: {diagnostics.nativePlayBarFound?"FOUND":"NOT FOUND"}
+          {" · "}{diagnostics.nativePlayBarStyled?"STYLE APPLIED":"Style not confirmed"}
+          {diagnostics.nativePlayBarHeight>0?" · "+diagnostics.nativePlayBarHeight+" px":""}</div>
+        <div>Native style directly verified recently: {diagnostics.nativeStyledRecently?
+          "YES · "+diagnostics.nativeStyleAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
+        <div>Current Steam CSS-module aliases resolved: {diagnostics.nativeAliasesResolved}/4</div>
+        <div>Global compact CSS selector (not proof of a changed element):
+          {" "}{diagnostics.compactMatchedRecently
+          ?"Matched "+diagnostics.compactMatchAgeSeconds+"s ago":"Not confirmed"}</div>
         <div>Native Steam game header: {diagnostics.nativeHeaderCount} readable-class matches</div>
         <div>Native Steam Play bar: {diagnostics.nativePlayBarCount} readable-class matches</div>
         <div>Game Library UI present in snapshot: {diagnostics.libraryUIVisible?"YES":"NO"}</div>
         <div style={{opacity:.78,fontSize:11,marginTop:5}}>
-          A verified Midnight stylesheet does not mean Compact matched the game.
+          A verified Midnight stylesheet or root selector does NOT prove that
+          native hero/Play controls changed. The verified per-element native
+          style and pixel heights above are the actual test. If they are
+          missing, we need the Steam class mapping, not another blind CSS edit.
           If the snapshot shows Game Library UI, close this panel, open a Steam
           game's original Details page, then immediately reopen diagnostics.
           Steam may use hashed class names, so zero readable-class matches alone
