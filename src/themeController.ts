@@ -21,8 +21,7 @@ async function loadCss():Promise<ThemeBundle> {
   const result=await bundle("midnight");
   if(!result.ok || !result.css?.main || !result.css?.overlay)
     throw new Error("Bundled Midnight CSS is missing: "+(result.error??"No data"));
-  cssCache={id:"midnight",name:result.name,css:result.css,
-    compact_css:result.compact_css};
+  cssCache={id:"midnight",name:result.name,css:result.css};
   return cssCache;
 }
 
@@ -32,7 +31,11 @@ export async function loadDefaultTheme():Promise<void>{
   try{
     const setting=await read();
     mode=setting.theme_id==="off"?"off":"midnight";
-    await setCompactDetailsMode(setting.compact_details===true);
+    // Retire the Compact Details experiment even if an older ZIP had it ON.
+    await setCompactDetailsMode(false);
+    // Silently clear persisted legacy preference. Failure is non-fatal:
+    // runtime and backend independently prevent re-enabling it.
+    if(setting.compact_details===true)void writeCompact(false).catch(()=>undefined);
   }catch(error){
     console.warn("[game-library] Cannot read theme preference, defaulting to Midnight",error);
   }
@@ -50,13 +53,9 @@ export async function selectBuiltinTheme(id:ThemeId):Promise<void> {
   await setBuiltinTheme(id,resolved);
 }
 
-/** Persist and apply independent compact Game Details layout choice.
- * Off returns to the exact native Steam layout with its existing buttons. */
+/** Kept for compatibility with old callers; only rollback is permitted. */
 export async function selectCompactDetails(enabled:boolean):Promise<void>{
-  const selected=await loadCss();
-  if(enabled&&!selected.compact_css)
-    throw new Error("Compact Game Details CSS missing from installation");
-  if(!await writeCompact(enabled))
-    throw new Error("Unable to save Compact Game Details preference");
-  await setCompactDetailsMode(enabled);
+  if(enabled)throw new Error("Compact Game Details has been retired");
+  await setCompactDetailsMode(false);
+  await writeCompact(false);
 }
