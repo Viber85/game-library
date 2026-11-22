@@ -2,6 +2,12 @@
 import importlib.util
 import json
 import os
+import socket
+import ssl
+import sys
+import types
+import urllib.error
+import urllib.request
 import pathlib
 import tempfile
 import time
@@ -82,6 +88,87 @@ class GogPhaseOneTests(unittest.TestCase):
         self.assertFalse(reply["ok"])
         self.assertEqual(gog.library("42")["games"], old["games"])
         self.assertEqual(gog.library("42")["synced_at"], 101)
+
+    def test_uses_decky_certifi_when_present_and_keeps_tls_verified(self):
+        """Decky may bundle certifi even when system Python lacks a CA store."""
+        bundle = os.path.join(self.temp.name, "trusted.pem")
+        with open(bundle, "w", encoding="ascii") as file:
+            file.write("fake test CA content")
+        context = object()
+        fake_certifi = types.SimpleNamespace(where=lambda: bundle)
+        gog._TLS_CONTEXT = None
+        try:
+            with mock.patch.dict(sys.modules, {"certifi": fake_certifi}), \
+                 mock.patch.object(gog.ssl, "create_default_context",
+                                   return_value=context) as create:
+                self.assertIs(gog._tls_context(), context)
+                create.assert_called_once_with(cafile=bundle)
+                self.assertIs(gog._tls_context(), context)
+                create.assert_called_once()
+        finally:
+            gog._TLS_CONTEXT = None
+
+    def test_backend_https_uses_verified_context_and_never_logs_codes(self):
+        sensitive_code = "sensitive1234oneusecode"
+        url = "https://auth.gog.com/token?code=" + sensitive_code
+        fake_response = mock.MagicMock()
+        fake_response.status = 200
+        fake_response.read.return_value = b'{"access_token":"abc","refresh_token":"xyz"}'
+        fake_response.__enter__.return_value = fake_response
+        context = object()
+        with mock.patch.object(gog, "_tls_context", return_value=context), \
+             mock.patch.object(urllib.request, "urlopen",
+                               return_value=fake_response) as request:
+            result = gog._http_json(url)
+        self.assertEqual(result["access_token"], "abc")
+        self.assertIs(request.call_args.kwargs["context"], context)
+        self.assertEqual(request.call_args.kwargs["timeout"], 18)
+
+        bad_request = urllib.error.HTTPError(
+            url, 400, "Bad Request", {}, None
+        )
+        with mock.patch.object(gog, "_tls_context", return_value=context), \
+             mock.patch.object(urllib.request, "urlopen", side_effect=bad_request), \
+             self.assertRaises(gog.GogError) as failure:
+            gog._http_json(url)
+        self.assertIn("token exchange", str(failure.exception))
+        self.assertIn("fresh one-use code", str(failure.exception))
+        self.assertNotIn(sensitive_code, str(failure.exception))
+
+    def test_gog_tls_dns_and_timeout_errors_are_distinguishable(self):
+        errors = [
+            (urllib.error.URLError(ssl.SSLCertVerificationError("fake TLS error")),
+             "certificate validation failed"),
+            (urllib.error.URLError(socket.gaierror(-3, "fake DNS error")),
+             "DNS could not resolve"),
+            (urllib.error.URLError(TimeoutError("fake timeout")),
+             "connection timed out"),
+            (urllib.error.URLError(ConnectionRefusedError("fake refused")),
+             "connection was refused"),
+        ]
+        with mock.patch.object(gog, "_tls_context", return_value=object()):
+            for error, expected in errors:
+                with self.subTest(expected=expected), \
+                     mock.patch.object(urllib.request, "urlopen", side_effect=error), \
+                     self.assertRaises(gog.GogError) as failure:
+                    gog._http_json("https://auth.gog.com/token?code=secret123")
+                self.assertIn(expected, str(failure.exception))
+                self.assertIn("GOG token exchange", str(failure.exception))
+                self.assertNotIn("secret123", str(failure.exception))
+
+    def test_connection_failure_does_not_erase_existing_cached_games(self):
+        account = "4242"
+        session = {"access": "test-access", "refresh": "refresh",
+                   "expires_at": time.time() + 2000}
+        gog._atomic_json(gog._folder(account) / "session.json", session)
+        cache = {"games": [{"id": "1", "title": "Existing", "image": ""}],
+                 "synced_at": 111}
+        gog._atomic_json(gog._folder(account) / "library.json", cache)
+        with mock.patch.object(gog, "_http_json",
+                               side_effect=gog.GogError("GOG library synchronization: DNS failed")):
+            result = gog.sync(account)
+        self.assertFalse(result["ok"])
+        self.assertEqual(gog.library(account)["games"], cache["games"])
 
     def test_no_foreign_plugin_or_steam_folder_lookup(self):
         src = (ROOT / "gog.py").read_text(encoding="utf-8")
