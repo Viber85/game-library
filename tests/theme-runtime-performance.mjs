@@ -73,9 +73,10 @@ test("runtime scans live Steam CSS aliases once per sync, still verifies every t
   assert.match(runtime,/await activeInTab\(title\)/);
   assert.match(runtime,/await bounded\(injectCssIntoTab\(title,css\)/);
   assert.match(runtime,/await bounded\(removeCssFromTab\(title,previous\.cssId\)/);
-  assert.match(runtime,/if\(scope==="main"\)await ensureThemeAudit\(title\)/);
+  assert.match(runtime,/await syncCompactDetailsDom\(title,compactDetails\)/);
+  assert.match(runtime,/await ensureThemeAudit\(title\)/);
   assert.match(runtime,/const RECHECK_MS = 6500/);
-  assert.match(runtime,/const STYLE_REVISION = "81"/);
+  assert.match(runtime,/const STYLE_REVISION = "82"/);
   assert.match(compiler,/const modules=getSteamModules\(\)/);
   assert.match(compiler,/const compileWithCache=createThemeAliasCache\(expandThemeClassAliases\)/);
 });
