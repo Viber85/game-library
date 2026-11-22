@@ -110,7 +110,8 @@ test("controller icon invokes direct Steam Input configurator, not original game
   const adapter=read("src/steamControllerEditor.ts");
   assert.match(core,/controllerconfigurator\/main/);
   assert.match(adapter,/Navigation\.Navigate\(route\)/);
-  assert.match(source,/openSteamControllerEditor\(game\.id\)/);
+  assert.match(source,/const openController=onOpenControllerSettings/);
+  assert.match(dashboard,/void openSteamControllerEditor\(game\.id\)/);
   const controllerAction=source.slice(source.indexOf("const openController="),
     source.indexOf("const action=",source.indexOf("const openController=")));
   assert.doesNotMatch(controllerAction,/onNativeDetails\(\)/);
@@ -139,8 +140,34 @@ test("controller icon targets pre-edit Controller Settings rather than Edit Layo
   assert.match(core,/controllerconfigurator\/main/);
   assert.doesNotMatch(adapter,/\.URL\.ExecuteSteamURL\(|\.Apps\.ShowControllerConfigurator\(/);
   const controllerAction=source.slice(source.indexOf("const openController="),source.indexOf("const action="));
-  assert.match(controllerAction,/openSteamControllerEditor\(game\.id\)/);
+  assert.match(controllerAction,/const openController=onOpenControllerSettings/);
+  assert.match(dashboard,/onOpenControllerSettings=\{\(\)=>openControllerSettings\(steamDetailsGame\)\}/);
   assert.doesNotMatch(controllerAction,/showNativeGameOptions\(|onNativeDetails\(/);
   const gear=source.slice(source.indexOf("const openGameOptions="),source.indexOf("const openController="));
   assert.match(gear,/showNativeGameOptions\(game\.id,anchor\)/);
+});
+
+test("native Controller Settings B preserves React-only Game Details on same origin route",()=>{
+  const returnState=read("src/controllerSettingsReturn.ts");
+  assert.match(returnState,/export function armControllerSettingsReturn\(/);
+  assert.match(returnState,/export function consumeControllerSettingsReturn\(/);
+  assert.match(returnState,/MAX_AGE_MS=10\*60\*1000/);
+  assert.match(dashboard,/const \[controllerReturn\]=useState\(\(\)=>consumeControllerSettingsReturn\(actualRoute\)\)/);
+  assert.match(dashboard,/controllerReturn\?getLibraryGames\(\)\.find\(g=>g.id===controllerReturn.appId\)/);
+  assert.match(dashboard,/armControllerSettingsReturn\(\{route:actualRoute,appId:game.id,target\}\)/);
+  assert.match(dashboard,/rememberGameDetails\(game\)/);
+  assert.match(dashboard,/onOpenControllerSettings=\{\(\)=>openControllerSettings\(steamDetailsGame\)\}/);
+  assert.match(dashboard,/controllerReturn\?\.target\?\?null/);
+});
+
+test("focus can leave custom Details LEFT for rail and reenter RIGHT from the rail",()=>{
+  const menu=read("src/nativeMenuGamepad.ts");
+  assert.match(source,/else if\(direction==="left"\)onFocusRail\(\)/);
+  assert.match(dashboard,/focusNativeMenuControl\(railRefs\.current\[target\],GamepadButton\.DIR_LEFT\)/);
+  assert.match(dashboard,/const focusDetailsFromRail=\(\)=>\{/);
+  assert.match(dashboard,/focusNativeMenuControl\(back,GamepadButton\.DIR_RIGHT\)/);
+  assert.match(dashboard,/if\(steamDetailsGame\)focusDetailsFromRail\(\); else goToGame\(\)/);
+  assert.match(dashboard,/onCancelButton=\{\(\) => steamDetailsGame\?focusDetailsFromRail\(\):goToGame\(\)\}/);
+  assert.match(menu,/kind==="details"\?[\s\S]*?\.gl-game-details \.gl-details-back/);
+  assert.match(menu,/kind==="details"&&focusNativeMenuControl\(rail,event\.detail!\.button!\)/);
 });
