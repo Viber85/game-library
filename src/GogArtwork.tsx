@@ -15,7 +15,9 @@ const EMPTY:ArtworkReply={status:"unavailable",cover:null,hero:null};
  * Only query SteamGridDB when native GOG artwork is absent or fails, and only
  * for visible tiles. Cached title matches are reused across tabs/details.
  */
-function getGogSteamGridFallback(account:string,game:GogOwnedGame):Promise<ArtworkReply>{
+export function getGogSteamGridFallback(
+  account:string,game:Pick<GogOwnedGame,"id"|"title">
+):Promise<ArtworkReply>{
   if(!account||!game.id||!game.title)return Promise.resolve(EMPTY);
   const key=[account,game.id,game.title.toLowerCase()].join(":");
   const cached=artworkCache.get(key);
