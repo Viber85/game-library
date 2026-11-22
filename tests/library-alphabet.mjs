@@ -45,11 +45,11 @@ test("Phase one is ONLY for dedicated Library full grid sorted A-Z or Z-A",()=>{
     assert.equal(alphabetIndicatorEnabled("library",sort,true),false);
   assert.match(dash,/alphabetIndicatorEnabled\(initialMode,sort,viewAll\)/);
   assert.match(dash,/libraryAlphabetActive&&<LibraryAlphabetIndicator/);
-  assert.match(dash,/games=\{visibleGridGames\} allGames=\{shown\}/);
+  assert.match(dash,/games=\{visibleGridGames\} allGames=\{gridShown\}/);
   assert.match(dash,/focusedGameId=\{selectedId\}/);
   assert.match(dash,/railRef=\{alphabetRailRef\}/);
   assert.match(dash,/key=\{tab\.id\+":"\+sort\}/);
-  assert.match(dash,/const visibleGridGames = useMemo\(\(\)=>shown\.slice\(0,gridLimit\)/);
+  assert.match(dash,/const visibleGridGames = useMemo\(\(\)=>gridShown\.slice\(0,gridLimit\)/);
 });
 
 test("Indicator reads focus and scroll, only announcing a changed letter",()=>{
@@ -72,11 +72,11 @@ test("Indicator reads focus and scroll, only announcing a changed letter",()=>{
 });
 
 test("Existing Library grid focus, card options and tabs remain unchanged",()=>{
-  assert.match(dash,/const target=gridNeighbor\(index,shown\.length,columns,direction\)/);
+  assert.match(dash,/const target=gridNeighbor\(index,gridShown\.length,columns,direction\)/);
   assert.match(dash,/if\(target!==index\)focusGrid\(target\)/);
-  assert.match(dash,/cardRef=\{el=>\{fullGridRefs\.current\[index\]=el;\}\}/);
+  assert.match(dash,/fullGridRefs\.current\[index\]=node/);
   assert.match(dash,/onSort=\{showSortMenu\}/);
-  assert.match(dash,/onMove=\{button=>moveInGrid\(index,button\)\}/);
+  assert.match(dash,/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
   assert.match(dash,/if\(button===GamepadButton\.BUMPER_LEFT\)\{cycleTab\(-1\);return;\}/);
 });
 
@@ -125,7 +125,7 @@ test("Only the right edge of a full or partial row enters the A-Z rail",()=>{
 });
 
 test("Focusable alphabet supports gamepad right entry, A jump, B/left return, LB/RB tabs and Y sorting",()=>{
-  assert.match(dash,/libraryAlphabetActive&&direction==="right"&&[\s\S]*?isRightEdgeGame\(index,shown\.length,columns\)/);
+  assert.match(dash,/libraryAlphabetActive&&direction==="right"&&[\s\S]*?isRightEdgeGame\(index,gridShown\.length,columns\)/);
   assert.match(dash,/alphabetReturnGridIndex\.current=index;/);
   assert.match(dash,/alphabetRailRef\.current\?\.focus\(\)/);
   assert.match(dash,/const jumpFromAlphabet=\(index:number\)=>\{/);
