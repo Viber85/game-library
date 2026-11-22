@@ -1,4 +1,4 @@
-import {GAME_DETAILS_ROUTE} from "./gameDetailsRoute";
+import {GAME_DETAILS_ROUTE} from "./gameDetailsRoute.ts";
 
 /** Real SteamOS Game Mode navigation is scoped to a SteamUIWindowInstance.
  * Decky's Navigation.NavigateToSteamWeb/ExternalWeb helpers resolve the
