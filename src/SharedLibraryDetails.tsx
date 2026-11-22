@@ -35,7 +35,7 @@ export function SharedLibraryDetails({
   game,cover,onBack,backRef,onFocusRail,actions,gogAccountId="",
 }:{
   game:UnifiedLibraryGame;
-  cover:ReactNode;
+  cover:(onImageLoaded:(url:string)=>void)=>ReactNode;
   onBack:()=>void;
   onFocusRail?:()=>void;
   backRef?:Ref<HTMLDivElement>;
@@ -48,6 +48,11 @@ export function SharedLibraryDetails({
   const [nativeHeroFailed,setNativeHeroFailed]=useState(false);
   const [remoteHero,setRemoteHero]=useState<string|null>(null);
   const [remoteHeroFailed,setRemoteHeroFailed]=useState(false);
+  // Remember the image that ACTUALLY loaded on the game's card.
+  // GOG/SGDB hero has priority; the card is the last visual fallback.
+  const [loadedCardImage,setLoadedCardImage]=useState<{
+    gameKey:string;url:string;
+  }|null>(null);
   const [artworkRevision,setArtworkRevision]=useState(0);
   const rootRef=useRef<HTMLElement>(null);
   const focusRefs=useRef<Record<string,HTMLDivElement|null>>({});
@@ -129,6 +134,15 @@ export function SharedLibraryDetails({
     game.hero:null;
   const hero=nativeHero&&!nativeHeroFailed?nativeHero:
     !remoteHeroFailed?remoteHero:null;
+  const cardHero=loadedCardImage?.gameKey===game.key?
+    loadedCardImage.url:null;
+  const displayedHero=hero||cardHero;
+  const onCardImageLoaded=(url:string)=>{
+    if(!url.startsWith("https://"))return;
+    setLoadedCardImage(previous=>
+      previous?.gameKey===game.key&&previous.url===url?
+        previous:{gameKey:game.key,url});
+  };
   useEffect(()=>subscribeArtworkSettingsChanged(()=>{
     setRemoteHero(null);
     setRemoteHeroFailed(false);
@@ -154,11 +168,14 @@ export function SharedLibraryDetails({
       aria-label={game.title+" details"}>
     <div className="gl-details-scroller">
       <div className="gl-details-hero" aria-hidden="true">
-        {hero&&<img className="gl-hero" src={hero} alt=""
-          onError={()=>{
-            if(hero===nativeHero)setNativeHeroFailed(true);
-            else setRemoteHeroFailed(true);
-          }}/>} 
+        {displayedHero&&<img className={
+            "gl-hero"+(!hero?" gl-hero-card-fallback":"")}
+            src={displayedHero} alt=""
+            onError={()=>{
+              if(hero===nativeHero)setNativeHeroFailed(true);
+              else if(hero)setRemoteHeroFailed(true);
+              else setLoadedCardImage(null);
+            }}/>} 
         <div className="gl-details-hero-shade"/>
       </div>
       <header className="gl-details-top">
@@ -179,7 +196,9 @@ export function SharedLibraryDetails({
       </header>
 
       <div className="gl-details-intro">
-        <div className="gl-details-poster gl-details-gog-poster">{cover}</div>
+        <div className="gl-details-poster gl-details-gog-poster">
+          {cover(onCardImageLoaded)}
+        </div>
         <div className="gl-details-intro-copy">
           <div className="gl-details-source">
             <span><MdStorefront/> {store.toUpperCase()}</span>
