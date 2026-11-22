@@ -56,7 +56,7 @@ test("all 4 directional gamepad buttons use Steam focusables and bounded spatial
   assert.match(source,/focusRefs/);
   assert.match(source,/backRef\.current\?\.focus\(\)/);
   assert.match(source,/onFocusRail\(\)/);
-  assert.match(source,/\.gl-details-focus:is\(\.gl-focused/);
+  assert.match(css,/\.gl-details-focus:is\(\.gl-focused/);
 });
 
 test("native four-way layout logic selects physically adjacent controls, not random DOM order",()=>{
