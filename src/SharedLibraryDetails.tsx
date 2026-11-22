@@ -7,7 +7,8 @@ import {
 import type {UnifiedLibraryGame} from "./unifiedLibraryGame";
 import {requestGogHltbTimes,requestProtonRating,type HltbReply,type ProtonRating} from "./metadataRequests";
 import {SystemStatusBar} from "./SystemStatusBar";
-import {focusNativeMenuControl} from "./nativeMenuGamepad";
+import {directionFromButton,focusNativeMenuControl} from "./nativeMenuGamepad";
+import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {getGogSteamGridFallback} from "./GogArtwork";
 import {subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 
@@ -31,11 +32,12 @@ const hours=(value:number|null|undefined)=>
     value.toFixed(1)+" hours":"—";
 
 export function SharedLibraryDetails({
-  game,cover,onBack,backRef,actions,gogAccountId="",
+  game,cover,onBack,backRef,onFocusRail,actions,gogAccountId="",
 }:{
   game:UnifiedLibraryGame;
   cover:ReactNode;
   onBack:()=>void;
+  onFocusRail?:()=>void;
   backRef?:Ref<HTMLDivElement>;
   actions?:ReactNode;
   gogAccountId?:string;
@@ -47,14 +49,32 @@ export function SharedLibraryDetails({
   const [remoteHero,setRemoteHero]=useState<string|null>(null);
   const [remoteHeroFailed,setRemoteHeroFailed]=useState(false);
   const [artworkRevision,setArtworkRevision]=useState(0);
+  const rootRef=useRef<HTMLElement>(null);
+  const focusRefs=useRef<Record<string,HTMLDivElement|null>>({});
+  const changedFocus=useRef(false);
   const statusRef=useRef<HTMLDivElement>(null);
   const internalBackRef=useRef<HTMLDivElement|null>(null);
   const store=STORE_LABELS[game.store];
   const status=game.availability==="installed"?"Installed":
     game.availability==="not-installed"?"Not installed":"Owned";
   useEffect(()=>{
+    changedFocus.current=false;
     setTab("activity");setHltb(null);setProton(null);
     setNativeHeroFailed(false);setRemoteHero(null);setRemoteHeroFailed(false);
+    // Steam's gamepad navigation tree is independent from browser focus.
+    // Transfer native focus from the old GOG library card to this page,
+    // retrying once after the new Focusable nodes register with Game Mode.
+    const focusBack=()=>{
+      const target=internalBackRef.current;
+      if(target&&!changedFocus.current)
+        focusNativeMenuControl(target,GamepadButton.DIR_DOWN);
+    };
+    const frame=window.requestAnimationFrame(focusBack);
+    const retry=window.setTimeout(focusBack,140);
+    return ()=>{
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(retry);
+    };
   },[game.key]);
   useEffect(()=>{
     if(game.store!=="gog")return;
@@ -71,6 +91,34 @@ export function SharedLibraryDetails({
     },220);
     return ()=>{active=false;window.clearTimeout(timer);};
   },[game.key,game.store,game.storeId,game.title]);
+  const focusRef=(id:string)=>(node:HTMLDivElement|null)=>{
+    focusRefs.current[id]=node;
+    if(id==="back"){
+      internalBackRef.current=node;
+      if(typeof backRef==="function")backRef(node);
+      else if(backRef&&"current" in backRef)backRef.current=node;
+    }
+  };
+  const onMove=(id:string)=>(event:GamepadEvent)=>{
+    const direction=directionFromButton(event.detail?.button);
+    if(!direction)return;
+    const current=focusRefs.current[id];
+    const next=rootRef.current&&current?
+      nextGamepadControl(rootRef.current,current,direction,
+        ".gl-game-details .gl-details-focus"):null;
+    // Keep the hidden Library grid from handling the same D-pad press.
+    stop(event);
+    if(next)focusNativeMenuControl(next,event.detail!.button!);
+    else if(direction==="left")onFocusRail?.();
+  };
+  const onAction=(id:string)=>({
+    ref:focusRef(id),
+    onButtonDown:onMove(id),
+    onCancelButton:onBack,
+    onGamepadFocus:()=>{if(id!=="back")changedFocus.current=true;},
+    onCancelActionDescription:"Back to previous Game Library screen",
+  });
+
   const hltbData=hltb?.status==="ok"?hltb.data:null;
   const tier=proton?.status==="ok"?proton.tier:null;
   const tierLabel=tier?tier.charAt(0).toUpperCase()+tier.slice(1):"Not rated";
@@ -102,7 +150,7 @@ export function SharedLibraryDetails({
   },[game.store,game.storeId,game.title,game.key,gogAccountId,
      nativeHero,nativeHeroFailed,remoteHero,remoteHeroFailed,artworkRevision]);
 
-  return <section className="gl-game-details gl-gog-steam-details gl-unified-details"
+  return <section ref={rootRef} className="gl-game-details gl-gog-steam-details gl-unified-details"
       aria-label={game.title+" details"}>
     <div className="gl-details-scroller">
       <div className="gl-details-hero" aria-hidden="true">
@@ -114,19 +162,11 @@ export function SharedLibraryDetails({
         <div className="gl-details-hero-shade"/>
       </div>
       <header className="gl-details-top">
-        <Focusable ref={node=>{
-            internalBackRef.current=node;
-            if(typeof backRef==="function")backRef(node);
-            else if(backRef&&"current" in backRef)backRef.current=node;
-          }} className="gl-details-focus gl-details-back"
+        <Focusable {...onAction("back")}
+            className="gl-details-focus gl-details-back"
             focusClassName="gl-focused" noFocusRing
-            onActivate={onBack} onCancelButton={onBack}
-            onButtonDown={(event:GamepadEvent)=>{
-              if(event.detail?.button===GamepadButton.DIR_LEFT||
-                 event.detail?.button===GamepadButton.DIR_UP){
-                stop(event);onBack();
-              }
-            }}>
+            onActivate={onBack}
+            onOKActionDescription="Return to previous screen">
           <MdArrowBack/> Back to Library
         </Focusable>
         <SystemStatusBar statusRef={statusRef} onStatusButtonDown={event=>{
@@ -192,11 +232,11 @@ export function SharedLibraryDetails({
       </div>
 
       <nav className="gl-details-tabs" aria-label="Game details sections">
-        {TABS.map(item=><Focusable key={item.id}
+        {TABS.map(item=><Focusable key={item.id} {...onAction("tab-"+item.id)}
             className={"gl-details-focus gl-details-tab"+
               (tab===item.id?" gl-details-tab-active":"")}
             focusClassName="gl-focused" noFocusRing
-            onActivate={()=>setTab(item.id)} onCancelButton={onBack}
+            onActivate={()=>setTab(item.id)}
             onOKActionDescription={item.label}>
           {item.label}
           {item.id==="game-info"&&<MdCheckCircle aria-hidden="true"/>}
