@@ -12,6 +12,7 @@ import { loadDefaultTheme } from "./themeController";
 import { startAutoTabSource, stopAutoTabSource } from "./autoTabSource";
 import {subscribeHomeSetting} from "./pluginSettingsEvents";
 import {returnDestinationFromHome,clearDetailsOrigin} from "./detailsReturn";
+import {stopGogLogin} from "./gogNativeLogin";
 
 const DASHBOARD_ROUTE = "/game-library/dashboard";
 const LIBRARY_ROUTE = "/game-library/library";
@@ -192,6 +193,7 @@ export default definePlugin(() => {
     icon: <MdLibraryBooks />,
     onDismount() {
       unloaded = true;
+      stopGogLogin();
       stopAutoTabSource();
       stopHomeSync();
       stopBuiltInThemeRuntime();
