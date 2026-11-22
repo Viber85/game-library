@@ -472,10 +472,31 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
           </div>
           {installMode==="transfer"&&nativeDownload.transfer&&
             <div className="gl-details-download" aria-label="Steam installation progress">
-              <div className="gl-details-download-caption">
-                <span>{transferLabel(nativeDownload.transfer)}</span>
-                <strong>{nativeDownload.transfer.percent===null?
-                  "Waiting for Steam":nativeDownload.transfer.percent+"%"}</strong>
+              <div className="gl-details-download-header">
+                <div className="gl-details-download-caption">
+                  <span>{transferLabel(nativeDownload.transfer)}</span>
+                  <strong>{nativeDownload.transfer.percent===null?
+                    "Waiting for Steam":nativeDownload.transfer.percent+"%"}</strong>
+                </div>
+                <div className="gl-details-download-controls">
+                  <Focusable {...onAction("download-toggle")}
+                      className="gl-details-focus gl-details-download-control"
+                      onOKActionDescription={nativeDownload.transfer.phase==="paused"||
+                        nativeDownload.transfer.phase==="queued"?"Resume download":"Pause download"}
+                      onActivate={()=>{void toggleDownload();}}>
+                    {nativeDownload.transfer.phase==="paused"||
+                      nativeDownload.transfer.phase==="queued"?
+                      <MdPlayArrow/>:<MdPause/>}
+                    <span>{nativeDownload.transfer.phase==="paused"||
+                      nativeDownload.transfer.phase==="queued"?"Resume":"Pause"}</span>
+                  </Focusable>
+                  <Focusable {...onAction("download-cancel")}
+                      className="gl-details-focus gl-details-download-control gl-details-download-cancel"
+                      onOKActionDescription="Cancel download and remove its new-install data"
+                      onActivate={confirmCancelDownload}>
+                    <MdDeleteOutline/><span>{downloadBusy?"Working...":"Cancel download"}</span>
+                  </Focusable>
+                </div>
               </div>
               <div className="gl-details-download-track" role="progressbar"
                   aria-label="Steam download progress"
@@ -495,25 +516,6 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                 <span><b>Time left</b> {nativeDownload.transfer.phase==="paused"||
                   nativeDownload.transfer.phase==="queued"?"—":
                   formatDownloadTime(nativeDownload.metrics.remainingSeconds)}</span>
-              </div>
-              <div className="gl-details-download-controls">
-                <Focusable {...onAction("download-toggle")}
-                    className="gl-details-focus gl-details-download-control"
-                    onOKActionDescription={nativeDownload.transfer.phase==="paused"||
-                      nativeDownload.transfer.phase==="queued"?"Resume download":"Pause download"}
-                    onActivate={()=>{void toggleDownload();}}>
-                  {nativeDownload.transfer.phase==="paused"||
-                    nativeDownload.transfer.phase==="queued"?
-                    <MdPlayArrow/>:<MdPause/>}
-                  <span>{nativeDownload.transfer.phase==="paused"||
-                    nativeDownload.transfer.phase==="queued"?"Resume":"Pause"}</span>
-                </Focusable>
-                <Focusable {...onAction("download-cancel")}
-                    className="gl-details-focus gl-details-download-control gl-details-download-cancel"
-                    onOKActionDescription="Cancel download and remove its new-install data"
-                    onActivate={confirmCancelDownload}>
-                  <MdDeleteOutline/><span>{downloadBusy?"Working...":"Cancel download"}</span>
-                </Focusable>
               </div>
             </div>}
           {installMode==="preparing"&&
