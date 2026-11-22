@@ -33,7 +33,8 @@ class CompactDetailsSettingsTests(unittest.TestCase):
     def test_compact_css_is_a_separate_bundle_never_enabled_by_default(self):
         theme = main._builtin_theme_bundle("midnight")
         self.assertIn("compact_css", theme)
-        self.assertIn('data-glm-compact-details="1"', theme["compact_css"])
+        self.assertIn("sharedappdetailsheader_TopCapsule", theme["compact_css"])
+        self.assertIn("--glm-compact-details-effective:1", theme["compact_css"])
         self.assertNotIn("game-details-compact.css", theme["css"]["main"])
         self.assertNotIn("data-glm-compact-details", theme["css"]["overlay"])
         self.assertLess(len(theme["compact_css"].encode("utf-8")), 100_000)
