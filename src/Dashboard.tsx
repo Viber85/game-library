@@ -648,7 +648,14 @@ export function Dashboard({initialMode="home",originRoute}:
     }
     let frame=0;
     let retry:ReturnType<typeof setTimeout>|undefined;
+    let attempts=0;
     const restore=()=>{
+      if(++attempts>10){
+        // Never leave a repeating timeout running if Steam/React removed
+        // the old card from this tab during the Details transition.
+        steamReturnTarget.current=null;
+        return;
+      }
       if(!steamReturnTarget.current)return;
       const index=gridShown.findIndex(entry=>entry.store==="steam"&&
         entry.steam.id===snapshot.gameId);
