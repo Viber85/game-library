@@ -76,7 +76,7 @@ test("Default off, opt-in on, route switch and cleanup never change Steam UI act
 test("Repeated inject is idempotent and only one per-tab timer exists",()=>{
   const fake=fakeSteamCEF();
   vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
-  const first=fake.window;
+  const first=fake.ctx.window;
   const one=fake.images.length;
   vm.runInNewContext(COMPACT_DETAILS_INSTALL_SCRIPT,fake.ctx);
   assert.equal(fake.timers.size,1);
