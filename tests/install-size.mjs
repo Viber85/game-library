@@ -30,8 +30,8 @@ test("Existing native Steam size_on_disk remains authoritative for installed gam
 });
 
 test("Only dedicated Library grid shows size badge and does not prefetch 400 games",()=>{
-  assert.match(ui,/showInstallSize=\{initialMode==="library"\}/);
-  assert.match(ui,/selectedForSize=\{selectedId===game\.id\}/);
+  assert.match(ui,/showInstallSize=\{mode==="grid"&&initialMode==="library"\}/);
+  assert.match(ui,/selectedForSize=\{selectedId===entry\.steam\.id\}/);
   assert.match(ui,/showInstallSize&&<div className="gl-poster-meta">/);
   assert.match(ui,/<SteamInstallSizeBadge/);
   assert.match(ui,/<HltbPosterBadge/);
@@ -73,7 +73,7 @@ test("Steam Store fallback is explicitly estimated and not used as actual size s
   assert.match(badge,/estimate\?"~"\+formatted:"—"/);
   assert.match(read("src/homeSort.ts"),/sizeBytes/);
   assert.doesNotMatch(read("src/homeSort.ts"),/estimated_gb/);
-  assert.match(read("src/Dashboard.tsx"),/onMove=\{button=>moveInGrid\(index,button\)\}/);
+  assert.match(read("src/Dashboard.tsx"),/if\(mode==="grid"\)\{moveInGrid\(index,button\);return;\}/);
   assert.match(read("src/Dashboard.tsx"),/libraryAlphabetActive&&<LibraryAlphabetIndicator/);
 });
 
