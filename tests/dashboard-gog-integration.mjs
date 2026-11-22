@@ -45,7 +45,7 @@ test("GOG is a movable, persistent built-in tab visible in Tab Manager",()=>{
 
 test("All Games, GOG and Search use store-scoped IDs in same Dashboard grid",()=>{
   const combined=combineDashboardEntries(native,gog,"AllGames","alphabetical");
-  assert.deepEqual(combined.map(e=>e.key),["gog:123","steam:1","gog:987"]);
+  assert.deepEqual(combined.map(e=>e.key),["gog:123","gog:987","steam:1"]);
   assert.deepEqual(combineDashboardEntries(native,gog,"GOG","alphabetical")
     .map(e=>e.key),["gog:123","gog:987"]);
   assert.deepEqual(combineDashboardEntries(native,gog,"Steam","alphabetical")
@@ -56,7 +56,7 @@ test("All Games, GOG and Search use store-scoped IDs in same Dashboard grid",()=
   assert.deepEqual(searchGogEntries(gog,"cy","all","not-installed"),[]);
   assert.deepEqual(combineSearchEntries(native,
     searchGogEntries(gog,"cy","all","all"),"alphabetical")
-    .map(e=>e.key),["steam:1","gog:987"]);
+    .map(e=>e.key),["gog:987","steam:1"]);
 });
 
 test("GOG no longer uses an independent page or a fake Steam launch",()=>{
