@@ -1,32 +1,44 @@
-export type SteamClientLike={Apps?:{ShowControllerConfigurator?:(appid:number)=>void}};
-
-/** This is the documented Steam Input controller configurator, not the game's
- * Properties/Settings window. A missing function must NOT be substituted with
- * Navigation.Navigate("/library/app/:id").
+/** Native Steam Input Controller Settings page for ONE selected game.
+ * Uses Steam's public steam://controllerconfig/<AppID> deep link.
+ * This is distinct from ShowControllerConfigurator(), whose popup was not
+ * the full settings page the MSI Claw user requested.
  */
+export type SteamClientLike={
+  URL?:{ExecuteSteamURL?:(url:string)=>void};
+};
+
+export function controllerSettingsUrl(appId:number):string{
+  if(!Number.isSafeInteger(appId)||appId<=0||appId>0xffffffff)
+    throw new Error("Invalid Steam AppID");
+  return "steam://controllerconfig/"+appId;
+}
+
 export function openControllerFromClient(
   appId:number,client:SteamClientLike|null|undefined
 ):boolean{
-  if(!Number.isSafeInteger(appId)||appId<=0||appId>0xffffffff)return false;
-  const apps=client?.Apps;
-  const open=apps?.ShowControllerConfigurator;
-  if(typeof open!=="function")return false;
-  try{open.call(apps,appId);return true;}
+  let url:string;
+  try{url=controllerSettingsUrl(appId);}catch{return false;}
+  const api=client?.URL;
+  if(typeof api?.ExecuteSteamURL!=="function")return false;
+  try{api.ExecuteSteamURL.call(api,url);return true;}
   catch(error){
-    console.warn("[game-library] Steam controller editor failed",error);
+    console.warn("[game-library] native Steam controller settings URL failed",error);
     return false;
   }
 }
 
+/** Can run only in a CEF target actually exposed by Steam/Decky. The source
+ * interpolates validated numeric AppID only, never a user-controlled string.
+ * A boolean 'true' means the URL handler accepted the command, not proof of
+ * the screen's appearance; we still require on-device validation.
+ */
 export function controllerEditorScript(appId:number):string{
-  if(!Number.isSafeInteger(appId)||appId<=0||appId>0xffffffff)
-    throw new Error("Invalid Steam AppID");
-  // All data is validated numeric AppID; no user-controlled JS can be injected.
+  const url=controllerSettingsUrl(appId);
   return `(() => {
     try {
-      const apps=globalThis.SteamClient?.Apps;
-      if(typeof apps?.ShowControllerConfigurator!=="function")return false;
-      apps.ShowControllerConfigurator(${appId});
+      const api=globalThis.SteamClient?.URL;
+      if(typeof api?.ExecuteSteamURL!=="function")return false;
+      api.ExecuteSteamURL(${JSON.stringify(url)});
       return true;
     } catch { return false; }
   })()`;
