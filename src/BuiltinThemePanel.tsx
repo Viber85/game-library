@@ -76,6 +76,27 @@ export function BuiltinThemePanel(){
       </ButtonItem>
     </PanelSectionRow>}
     {diagnostics&&<PanelSectionRow>
+      <div style={{fontSize:12,lineHeight:1.5,whiteSpace:"pre-wrap",overflowWrap:"anywhere",
+        padding:10,border:"1px solid #397397",borderRadius:9,background:"#071b2c"}}>
+        <strong>Compact Game Details — Quick check</strong>
+        <div>Option enabled: {diagnostics.compactEnabled?"YES":"NO"}</div>
+        <div>Midnight CSS verified: {diagnostics.applied?"YES":"NO"}</div>
+        <div>Compact stylesheet present: {diagnostics.compactCssLoaded?"YES":"NOT CONFIRMED"}</div>
+        <div>Compact layout matched Steam page: {diagnostics.compactMatchedRecently
+          ?"YES · "+diagnostics.compactMatchAgeSeconds+"s ago":"NOT CONFIRMED"}</div>
+        <div>Native Steam game header: {diagnostics.nativeHeaderCount} readable-class matches</div>
+        <div>Native Steam Play bar: {diagnostics.nativePlayBarCount} readable-class matches</div>
+        <div>Game Library UI present in snapshot: {diagnostics.libraryUIVisible?"YES":"NO"}</div>
+        <div style={{opacity:.78,fontSize:11,marginTop:5}}>
+          A verified Midnight stylesheet does not mean Compact matched the game.
+          If the snapshot shows Game Library UI, close this panel, open a Steam
+          game's original Details page, then immediately reopen diagnostics.
+          Steam may use hashed class names, so zero readable-class matches alone
+          are not a failure. The verified layout-match status is authoritative.
+        </div>
+      </div>
+    </PanelSectionRow>}
+    {diagnostics&&<PanelSectionRow>
       <div style={{fontSize:12,lineHeight:1.5,whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>
         <strong>Actual Steam CSS check</strong>
         <div>CEF tab: {diagnostics.target}</div>
