@@ -35,6 +35,7 @@ import {GogDashboardCard} from "./GogDashboardCard";
 import {GogArtwork} from "./GogArtwork";
 import {SharedLibraryDetails} from "./SharedLibraryDetails";
 import {SteamGameDetails} from "./SteamGameDetails";
+import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {useGogDashboardCatalog} from "./useGogDashboardCatalog";
 import {combineDashboardEntries,combineSearchEntries,searchGogEntries,
   type DashboardEntry} from "./dashboardCatalog";
@@ -250,6 +251,10 @@ export function Dashboard({initialMode="home",originRoute}:
   const alphabetReturnGridIndex = useRef<number|null>(null);
   const pendingGridIndex = useRef<number | null>(null);
   const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
+  const steamReturnTarget=useRef<{
+    kind:"grid"|"home-card"|"home-action"|"collections";
+    gameId:number;index:number;scrollTop:number;
+  }|null>(null);
   const viewMoreRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const searchBackRef=useRef<HTMLDivElement>(null);
@@ -400,10 +405,20 @@ export function Dashboard({initialMode="home",originRoute}:
     });
   };
   const openGameDetails=(game:LibraryGame)=>{
-    // Our own Details component, not a patch to the native Steam page.
     const index=gridShown.findIndex(entry=>
       entry.store==="steam"&&entry.steam.id===game.id);
     if(index>=0)lastGridFocusIndex.current=index;
+    // The grid DOM is temporarily replaced by Game Details. Keep its exact
+    // position and focus target rather than B landing on generic Library Home.
+    const clickedHomeDetails=initialMode==="home"&&!viewAll&&
+      (homeActionRefs.current[1]===document.activeElement||
+       homeActionRefs.current[1]?.contains(document.activeElement));
+    steamReturnTarget.current={
+      kind:collectionsMode?"collections":viewAll||searchMode?"grid":
+        clickedHomeDetails?"home-action":"home-card",
+      gameId:game.id,index:index>=0?index:lastGridFocusIndex.current,
+      scrollTop:fullGridScrollRef.current?.scrollTop??0,
+    };
     setSteamDetailsGame(game);
   };
   const openNativeGameDetails=(game:LibraryGame)=>{
@@ -618,13 +633,50 @@ export function Dashboard({initialMode="home",originRoute}:
     window.requestAnimationFrame(()=>viewMoreRef.current?.focus());
   };
   const closeSteamDetails=()=>{
+    // Never call Library's exitGrid, Steam Back, or Navigation.Navigate here.
+    // Same Dashboard instance retains tab, sort, selected game and position.
     setSteamDetailsGame(null);
-    window.requestAnimationFrame(()=>{
-      if(collectionsMode)collectionsEntryRef.current?.focus();
-      else if(viewAll||searchMode)focusGrid(lastGridFocusIndex.current);
-      else gameRefs.current[lastGridFocusIndex.current]?.focus();
-    });
   };
+  useEffect(()=>{
+    if(steamDetailsGame||!steamReturnTarget.current)return;
+    const snapshot=steamReturnTarget.current;
+    if(snapshot.kind==="collections"){
+      // CollectionsPage already persists {section, tabId, gameId} and
+      // restores its actual card on remount. Don't override it with rail.
+      steamReturnTarget.current=null;
+      return;
+    }
+    let frame=0;
+    let retry:ReturnType<typeof setTimeout>|undefined;
+    const restore=()=>{
+      if(!steamReturnTarget.current)return;
+      const index=gridShown.findIndex(entry=>entry.store==="steam"&&
+        entry.steam.id===snapshot.gameId);
+      const targetIndex=index>=0?index:snapshot.index;
+      if(snapshot.kind==="grid"&&targetIndex>=gridLimit){
+        setGridLimit(limit=>Math.min(gridShown.length,Math.max(limit+60,targetIndex+1)));
+        return;
+      }
+      const target=snapshot.kind==="grid"?fullGridRefs.current[targetIndex]:
+        snapshot.kind==="home-action"?homeActionRefs.current[1]:
+        gameRefs.current[targetIndex];
+      if(!target?.isConnected){
+        // Wait one extra React commit when restoring large virtualized grids.
+        retry=window.setTimeout(restore,60);
+        return;
+      }
+      if(snapshot.kind==="grid"&&fullGridScrollRef.current)
+        fullGridScrollRef.current.scrollTop=snapshot.scrollTop;
+      focusNativeMenuControl(target,GamepadButton.DIR_DOWN);
+      lastGridFocusIndex.current=targetIndex;
+      steamReturnTarget.current=null;
+    };
+    frame=window.requestAnimationFrame(restore);
+    return ()=>{
+      window.cancelAnimationFrame(frame);
+      if(retry!==undefined)window.clearTimeout(retry);
+    };
+  },[steamDetailsGame,gridLimit]);
   const closeGogDetails=()=>{
     setGogDetailsId(null);
     window.requestAnimationFrame(()=>{
