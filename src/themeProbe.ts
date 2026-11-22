@@ -95,6 +95,24 @@ export const THEME_PROBE_SCRIPT=`(() => {
   // app names or image data are accessed. Useful if CSS modules are hashed.
   const nativeCompact=window.__gameLibraryCompactDetails14?.native;
   const compactHltb=document.querySelector("#hltb-for-deck");
+  // Presence alone is not visibility: a hidden Game Library React root
+  // may remain mounted on the native Steam game's Details screen.
+  const libraryUIVisible=Array.from(document.querySelectorAll(".gl-root")).some(el=>{
+    try{
+      if(typeof el.getBoundingClientRect!=="function")return true;
+      const rect=el.getBoundingClientRect();
+      if(rect.width<80||rect.height<60||rect.bottom<=0||rect.right<=0 ||
+         rect.top>=window.innerHeight||rect.left>=window.innerWidth)return false;
+      let current=el,depth=0;
+      while(current&&depth++<10){
+        const css=getComputedStyle(current);
+        if(css.display==="none"||css.visibility==="hidden"||
+           Number(css.opacity)===0)return false;
+        current=current.parentElement;
+      }
+      return true;
+    }catch{return false;}
+  });
   const surfaces = new Map();
   let surfaceElements = 0;
   if(count('.BasicUI,#GamepadUI_Full_Root,[class*="gamepadui_BasicUI"]')>0){
@@ -153,12 +171,15 @@ export const THEME_PROBE_SCRIPT=`(() => {
     deckyFieldColor: deckyField?getComputedStyle(deckyField).backgroundColor:'',
     gameRoots: count(games),
     gameSections: count(sections),
+    // Injected CSS can be in a browser-managed stylesheet rather than literal
+    // style text. Actual native element computed markers are more reliable.
     compactCssLoaded: Array.from(document.querySelectorAll('style')).some(el=>
-      el.textContent?.includes('--glm-compact-details-effective')),
+      el.textContent?.includes('--glm-compact-details-effective')) ||
+      nativeCompact?.heroStyle===true || nativeCompact?.playStyle===true,
     compactStyleActive: getComputedStyle(document.documentElement)
       .getPropertyValue('--glm-compact-details-effective').trim()==='1',
     compactPosterShown: document.documentElement?.hasAttribute?.('data-glm-compact-poster')===true,
-    libraryUIVisible:count('.gl-root')>0,
+    libraryUIVisible,
     nativeHeaderCount:count('[class*="sharedappdetailsheader_TopCapsule"]'),
     nativePlayBarCount:count('[class*="appdetailsplaysection_PlayBar"]'),
     nativeCompactHeroFound:nativeCompact?.hero===true,
@@ -692,8 +713,12 @@ export const THEME_AUDIT_INSTALL_SCRIPT = `(() => {
         state.latestGame = { at, probe };
       if (probe.compactStyleActive === true)
         state.latestCompact = { at, probe };
-      if (probe.nativeCompactHeroStyled===true ||
-          probe.nativeCompactPlayBarStyled===true)
+      // Preserve an unobscured native Steam Details snapshot. A visible
+      // Game Library/Decky route can retain the old native hero while changing
+      // which HLTB and blue panel elements are visible.
+      if (!probe.libraryUIVisible &&
+          (probe.nativeCompactHeroStyled===true ||
+           probe.nativeCompactPlayBarStyled===true))
         state.latestNativeCompact = { at, probe };
     } catch (error) {
       /* Steam may be rebuilding its React tree; retry on the next tick. */
