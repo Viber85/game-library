@@ -19,6 +19,23 @@ def _load_gog():
     return module
 
 
+_GOG_INSTALL_MODULE = None
+
+
+def _load_gog_install():
+    """Cached local download supervisor; jobs survive individual Decky RPC calls."""
+    global _GOG_INSTALL_MODULE
+    if _GOG_INSTALL_MODULE is None:
+        spec = importlib.util.spec_from_file_location(
+            "game_library_gog_installer", str(BASE / "gog_install.py"))
+        if spec is None or spec.loader is None:
+            raise RuntimeError("GOG installer missing from Game Library ZIP.")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _GOG_INSTALL_MODULE = module
+    return _GOG_INSTALL_MODULE
+
+
 def _load_gog_phone():
     """Load our own LAN pairing service once, preserving its active session."""
     spec = importlib.util.spec_from_file_location(
@@ -482,6 +499,22 @@ class Plugin:
         async with self._gog_lock:
             return await asyncio.to_thread(_load_gog().disconnect, account_id)
 
+    async def preflight_gog_install(self, account_id: str, product_id: str):
+        """Validate GOG ownership, official gogdl and real install size."""
+        return await asyncio.to_thread(
+            _load_gog_install().preflight, _load_gog(), BASE, account_id, product_id)
+
+    async def start_gog_install(self, account_id: str, product_id: str, location: str):
+        """Start a local GOG-only downloader, never Steam's native installer."""
+        return await asyncio.to_thread(
+            _load_gog_install().start, _load_gog(), BASE, account_id, product_id, location)
+
+    async def get_gog_install_status(self, account_id: str, product_id: str):
+        return _load_gog_install().snapshot(account_id, product_id)
+
+    async def cancel_gog_install(self, account_id: str, product_id: str):
+        return _load_gog_install().cancel(account_id, product_id)
+
     async def get_steam_clock_format(self, account_id: str = ""):
         """Read the same 12/24-hour preference used by SteamOS, never change it."""
         try:
@@ -816,6 +849,8 @@ class Plugin:
 
 
     async def _unload(self):
+        if _GOG_INSTALL_MODULE is not None:
+            await asyncio.to_thread(_GOG_INSTALL_MODULE.stop_all)
         if hasattr(self, "_gog_phone"):
             await asyncio.to_thread(self._gog_phone.shutdown)
 

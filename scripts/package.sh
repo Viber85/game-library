@@ -17,7 +17,17 @@ trap 'rm -rf "$stage"' EXIT
 dest="$stage/game-library"
 mkdir -p "$dest/dist"
 cp plugin.json main.py updates.py hltb.py protondb.py steamgriddb.py steam_size.py nonsteam_size.py system_status.py steam_cancel_cleanup.py package.json README.md "$dest/"
-cp gog.py gog_phone.py qrcodegen.py "$dest/"
+cp gog.py gog_phone.py qrcodegen.py gog_install.py "$dest/"
+# Official Heroic GOGDL v1.4.0 Linux x86_64 zipapp. Validate the release's
+# published SHA-256 rather than installing an unpinned build or using another
+# plugin's private binary. Source and GPL license accompany the package.
+mkdir -p "$dest/bin"
+gogdl_url="https://github.com/Heroic-Games-Launcher/heroic-gogdl/releases/download/v1.4.0/gogdl_linux_x86_64"
+curl -fLSs --retry 3 --connect-timeout 15 --max-time 120 "$gogdl_url" -o "$dest/bin/gogdl"
+printf '%s  %s\n' '2aa2b59c83d3bfbe7b60ead91c6297b263b5d1e6c233a04b7409bafe26738f02' "$dest/bin/gogdl" | sha256sum -c -
+chmod 755 "$dest/bin/gogdl"
+curl -fLSs --retry 3 --connect-timeout 15 --max-time 60   'https://raw.githubusercontent.com/Heroic-Games-Launcher/heroic-gogdl/v1.4.0/LICENSE'   -o "$dest/bin/GOGDL-LICENSE"
+
 cp -R system-theme "$dest/system-theme"
 cp dist/index.js "$dest/dist/index.js"
 
@@ -32,6 +42,9 @@ echo "Created: $output"
 unzip -Z1 "$output" | grep -qx 'game-library/plugin.json'
 unzip -Z1 "$output" | grep -qx 'game-library/main.py'
 unzip -Z1 "$output" | grep -qx 'game-library/gog.py'
+unzip -Z1 "$output" | grep -qx 'game-library/gog_install.py'
+unzip -Z1 "$output" | grep -qx 'game-library/bin/gogdl'
+unzip -Z1 "$output" | grep -qx 'game-library/bin/GOGDL-LICENSE'
 unzip -Z1 "$output" | grep -qx 'game-library/gog_phone.py'
 unzip -Z1 "$output" | grep -qx 'game-library/qrcodegen.py'
 unzip -Z1 "$output" | grep -qx 'game-library/updates.py'

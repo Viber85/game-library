@@ -2926,4 +2926,42 @@ html:has(.gl-root.gl-own-status-only) #header {
   }
 }
 
+
+/* v0.6.11-test.54: GOG-native installer controls reuse the Steam Game Details
+ * focus and download presentation without relying on Steam's queue. */
+.gl-root .gl-gog-steam-details .gl-gog-install-chooser,
+.gl-root .gl-gog-steam-details .gl-gog-install-progress{
+  display:flex;flex-direction:column;gap:7px;
+  color:#d7eafa;font-size:12px;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-locations{
+  display:flex;gap:7px;flex-wrap:wrap;
+}
+.gl-root .gl-gog-steam-details .gl-gog-storage-choice,
+.gl-root .gl-gog-steam-details .gl-gog-install-confirm,
+.gl-root .gl-gog-steam-details .gl-gog-install-dismiss,
+.gl-root .gl-gog-steam-details .gl-gog-install-cancel{
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid #447496;border-radius:9px;background:#102b43dc;
+  color:#e3f7ff;min-height:30px;min-width:0;
+  padding:5px 10px;cursor:pointer;font-size:11px;font-weight:750;
+}
+.gl-root .gl-gog-steam-details .gl-gog-storage-choice.selected{
+  border-color:#48d9ed;box-shadow:inset 0 0 0 1px #48d9ed;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-confirm{
+  width:160px;background:#48d9ed;color:#00233c;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-dismiss{
+  position:absolute;bottom:5px;right:5px;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-progress
+.gl-details-download-track{width:100%;height:7px;border-radius:10px;}
+.gl-root .gl-gog-steam-details .gl-gog-install-progress-footer{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-cancel{
+  margin-left:auto;border-color:#865c69;color:#ffccd1;
+}
+
 `;

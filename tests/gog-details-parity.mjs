@@ -3,7 +3,7 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 
-test("GOG details uses Steam layout CSS but not Steam install or launch APIs",()=>{
+test("GOG details uses Steam layout CSS and an independent installer, never Steam install APIs",()=>{
   const ui=read("src/SharedLibraryDetails.tsx");
   const css=read("src/theme.ts");
   const dashboard=read("src/Dashboard.tsx");
@@ -15,7 +15,10 @@ test("GOG details uses Steam layout CSS but not Steam install or launch APIs",()
   ])assert.ok(ui.includes(token),token+" missing from GOG details");
   assert.match(ui,/gl-details-gog-poster/);
   assert.match(ui,/aria-disabled="true"/);
-  assert.match(ui,/GOG installation requires a separate gogdl downloader/);
+  assert.match(ui,/preflightGogInstall\(gogAccountId,game\.storeId\)/);
+  assert.match(ui,/startGogInstall\(gogAccountId,game\.storeId,installLocation\)/);
+  assert.match(ui,/cancelGogInstall\(gogAccountId,game\.storeId\)/);
+  assert.match(ui,/role="progressbar"/);
   assert.match(css,/\.gl-root \.gl-gog-install-pending/);
   assert.match(css,/\.gl-root \.gl-details-gog-poster\{position:relative/);
   assert.match(dashboard,/detailGog \? <SharedLibraryDetails/);

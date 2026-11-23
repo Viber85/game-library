@@ -46,6 +46,8 @@ test("GOG shows independent unavailable fields without borrowing Steam download 
   assert.match(summary,/ACHIEVEMENTS/);
   assert.match(summary,/Unavailable/);
   assert.match(gog,/gl-gog-install-pending/);
+  assert.match(gog,/onAction\("install"\)/);
+  assert.match(gog,/gl-gog-install-progress/);
   assert.doesNotMatch(gog,/useSteamGameDownload|nativeDownload|openSteamInstallWizard|requestSteamUninstallLink/);
 });
 

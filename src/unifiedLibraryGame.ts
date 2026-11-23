@@ -62,7 +62,7 @@ export function fromGogLibraryGame(game:GogOwnedGame):UnifiedLibraryGame{
     cover:game.image||undefined,
     coverFallback:game.imageFallback||undefined,
     hero:game.background||undefined,
-    capabilities:["details"],
+    capabilities:["details","install"],
   };
 }
 

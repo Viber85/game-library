@@ -65,3 +65,13 @@ test("GOG single native Back control safely handles all directions and rail hand
   }
   assert.match(read("src/SharedLibraryDetails.tsx"),/else if\(direction==="left"\)onFocusRail\?\.\(\)/);
 });
+
+test("GOG installer buttons use existing native 4-direction focus handlers",()=>{
+  const page=read("src/SharedLibraryDetails.tsx");
+  for(const id of ["install","install-confirm","install-dismiss","install-cancel"]){
+    assert.match(page,new RegExp("onAction\\\\(\\\\\\\""+id+"\\\\\\\"\\\\)"));
+  }
+  assert.match(page,/onButtonDown:onMove\(id\)/);
+  assert.match(page,/onCancelButton:onBack/);
+  assert.doesNotMatch(page,/SteamClient\.Installs/);
+});
