@@ -44,7 +44,8 @@ test("GOG shows independent unavailable fields without borrowing Steam download 
   assert.match(summary,/SPACE REQUIRED/);
   assert.match(summary,/LAST PLAYED/);
   assert.match(summary,/ACHIEVEMENTS/);
-  assert.match(summary,/Unavailable/);
+  assert.match(summary,/achievementLabel/);
+  assert.match(gog,/achievements.status==="none"\?"No achievements":"Unavailable"/);
   assert.match(gog,/gl-gog-install-pending/);
   assert.match(gog,/onAction\("install"\)/);
   assert.match(gog,/gl-gog-install-progress/);
