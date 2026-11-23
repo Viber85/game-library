@@ -365,7 +365,7 @@ def _download_thread(key, binary, auth, user, target, product, config_dir):
                 state["status"] == "cancelled" else
                 "GOG download did not complete. Partial files were kept." if not complete else
                 "Download complete. Launch setup is not yet available.")
-            if complete:
+            if state["status"] == "downloaded":
                 state["percent"] = 100.0
                 _mark_completed(game_path)
     except Exception:
@@ -388,7 +388,7 @@ def start(gog, base, account, product, location, mode="new"):
             return {"ok": False, "reason": "Unknown GOG download operation."}
         key = (account, product)
         with _LOCK:
-            if key in _JOBS or _STATES.get(key, {}).get("status") in ("starting", "downloading"):
+            if key in _JOBS or _STATES.get(key, {}).get("status") in ("starting", "downloading", "paused"):
                 return {"ok": False, "reason": "This GOG game is already downloading."}
         plan = _preflight(gog, base, account, product)
         choice = next((x for x in plan["locations"] if x["key"] == location), None)
@@ -428,7 +428,7 @@ def start(gog, base, account, product, location, mode="new"):
         _mark_download(game, account, product, user)
         config_dir = _config_for_download(account, product, game, user)
         with _LOCK:
-            if key in _JOBS or _STATES.get(key, {}).get("status") in ("starting", "downloading"):
+            if key in _JOBS or _STATES.get(key, {}).get("status") in ("starting", "downloading", "paused"):
                 return {"ok": False, "reason": "This GOG game is already downloading."}
             _STATES[key] = {"status": "starting", "percent": 0.0,
                             "operation": mode,
@@ -446,19 +446,67 @@ def start(gog, base, account, product, location, mode="new"):
         return {"ok": False, "reason": "Could not begin GOG installation."}
 
 
+def pause(account, product):
+    """Pause only this plugin's live gogdl process group. No file changes."""
+    key = (str(account), str(product))
+    with _LOCK:
+        state, proc = _STATES.get(key), _JOBS.get(key)
+        if not state or state.get("status") != "downloading" or proc is None:
+            return {"ok": False, "reason": "GOG download is not running."}
+        if proc.poll() is not None:
+            return {"ok": False, "reason": "GOG download has already stopped."}
+        try:
+            os.killpg(proc.pid, signal.SIGSTOP)
+        except OSError:
+            return {"ok": False, "reason": "Could not pause the GOG download."}
+        state["status"] = "paused"
+        state["speed_mib"] = None
+        state["reason"] = "Download paused."
+    return {"ok": True, "status": "paused"}
+
+
+def resume(account, product):
+    """Continue the paused process (not a second downloader)."""
+    key = (str(account), str(product))
+    with _LOCK:
+        state, proc = _STATES.get(key), _JOBS.get(key)
+        if not state or state.get("status") != "paused" or proc is None:
+            return {"ok": False, "reason": "No paused GOG download to resume."}
+        if proc.poll() is not None:
+            return {"ok": False, "reason": "GOG downloader has already stopped."}
+        try:
+            os.killpg(proc.pid, signal.SIGCONT)
+        except OSError:
+            return {"ok": False, "reason": "Could not resume the GOG download."}
+        state["status"] = "downloading"
+        state["speed_mib"] = None
+        state["reason"] = ""
+    return {"ok": True, "status": "downloading"}
+
+
+def _terminate_download_group(proc, paused=False):
+    """Wake a paused process group before termination so workers cannot hang."""
+    if not proc:
+        return
+    try:
+        if paused:
+            os.killpg(proc.pid, signal.SIGCONT)
+        os.killpg(proc.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+
+
 def cancel(account, product):
     key = (str(account), str(product))
     with _LOCK:
         state = _STATES.get(key)
         proc = _JOBS.get(key)
-        if not state or state.get("status") not in ("starting", "downloading"):
+        if not state or state.get("status") not in ("starting", "downloading", "paused"):
             return {"ok": False, "reason": "No running GOG download."}
+        was_paused = state.get("status") == "paused"
         state["cancel_requested"] = True
         if proc:
-            try:
-                os.killpg(proc.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
+            _terminate_download_group(proc, paused=was_paused)
         else:
             state["status"] = "cancelled"
     return {"ok": True}
@@ -467,10 +515,8 @@ def cancel(account, product):
 def stop_all():
     with _LOCK:
         for state in _STATES.values():
-            if state.get("status") in ("starting", "downloading"):
+            if state.get("status") in ("starting", "downloading", "paused"):
                 state["cancel_requested"] = True
-        for proc in list(_JOBS.values()):
-            try:
-                os.killpg(proc.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
+        for key, proc in list(_JOBS.items()):
+            _terminate_download_group(
+                proc, paused=_STATES.get(key, {}).get("status") == "paused")

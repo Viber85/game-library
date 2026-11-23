@@ -513,6 +513,12 @@ class Plugin:
     async def get_gog_install_status(self, account_id: str, product_id: str):
         return _load_gog_install().snapshot(account_id, product_id)
 
+    async def pause_gog_install(self, account_id: str, product_id: str):
+        return _load_gog_install().pause(account_id, product_id)
+
+    async def resume_gog_install(self, account_id: str, product_id: str):
+        return _load_gog_install().resume(account_id, product_id)
+
     async def cancel_gog_install(self, account_id: str, product_id: str):
         return _load_gog_install().cancel(account_id, product_id)
 

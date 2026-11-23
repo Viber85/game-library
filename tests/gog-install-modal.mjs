@@ -45,3 +45,31 @@ test("recovery modes are explicit, validated and never remove partial game data"
   assert.match(backend,/GOGDL_CONFIG_PATH/);
   assert.doesNotMatch(backend,/shutil\.rmtree|os\.remove\(|shell=True|rm -rf/);
 });
+
+test("Continue and Start fresh immediately submit downloads, rather than only changing a radio state",()=>{
+  assert.match(modal,/const start=\(mode:GogInstallMode\)=>/);
+  assert.match(modal,/void onConfirm\(choice\.key,mode\)\.then/);
+  assert.match(modal,/onActivate=\{\(\)=>start\(choice\.existing==="untracked"\?"adopt":"resume"\)\}/);
+  assert.match(modal,/onActivate=\{\(\)=>start\("fresh"\)\}/);
+  assert.match(modal,/!hasExisting&&<Focusable/);
+  assert.match(modal,/onActivate=\{\(\)=>start\("new"\)\}/);
+  assert.doesNotMatch(modal,/setMode\(|onActivate=\{\(\)=>setMode/);
+  assert.match(modal,/\.catch\(error=>setError\(/);
+});
+
+test("Pause and Resume are real RPC actions, and UI displays both buttons beside Cancel",()=>{
+  assert.match(rpc,/pauseGogInstall=/);
+  assert.match(rpc,/resumeGogInstall=/);
+  assert.match(rpc,/"paused"/);
+  assert.match(main,/async def pause_gog_install\(/);
+  assert.match(main,/async def resume_gog_install\(/);
+  assert.match(backend,/def pause\(account, product\):/);
+  assert.match(backend,/def resume\(account, product\):/);
+  assert.match(backend,/signal\.SIGSTOP/);
+  assert.match(backend,/signal\.SIGCONT/);
+  assert.match(game,/onAction\("install-toggle"\)/);
+  assert.match(game,/onActivate=\{togglePause\}/);
+  assert.match(game,/\{isPaused\?"Resume":"Pause"\}/);
+  assert.match(game,/onAction\("install-cancel"\)/);
+  assert.match(game,/!isPaused&&typeof installSnapshot\.speed_mib==="number"/);
+});

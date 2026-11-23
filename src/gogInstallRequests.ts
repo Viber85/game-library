@@ -10,7 +10,7 @@ export type GogInstallPreflight={
   locations?:GogStorageLocation[];
 };
 export type GogInstallState={
-  status:"idle"|"starting"|"downloading"|"downloaded"|"cancelled"|"error";
+  status:"idle"|"starting"|"downloading"|"paused"|"downloaded"|"cancelled"|"error";
   percent?:number|null;written_bytes?:number|null;
   total_bytes?:number|null;speed_mib?:number|null;reason?:string;
   location?:string;cancel_requested?:boolean;
@@ -21,6 +21,8 @@ const check=callable<[string,string],GogInstallPreflight>("preflight_gog_install
 const install=callable<[string,string,string,GogInstallMode],GogInstallReply>("start_gog_install");
 const status=callable<[string,string],GogInstallState>("get_gog_install_status");
 const cancel=callable<[string,string],GogInstallReply>("cancel_gog_install");
+const pause=callable<[string,string],GogInstallReply>("pause_gog_install");
+const resume=callable<[string,string],GogInstallReply>("resume_gog_install");
 
 export const preflightGogInstall=(account:string,product:string)=>
   check(account,product);
@@ -30,3 +32,7 @@ export const getGogInstallStatus=(account:string,product:string)=>
   status(account,product);
 export const cancelGogInstall=(account:string,product:string)=>
   cancel(account,product);
+export const pauseGogInstall=(account:string,product:string)=>
+  pause(account,product);
+export const resumeGogInstall=(account:string,product:string)=>
+  resume(account,product);

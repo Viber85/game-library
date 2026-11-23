@@ -191,3 +191,57 @@ class GogInstallerTests(unittest.TestCase):
             thread.return_value.start.assert_called_once()
         self.assertEqual((game / "do-not-delete.dat").read_bytes(), b"original")
         self.assertTrue(pathlib.Path(reply["location"]).is_dir())
+
+    def test_pause_resume_and_cancel_keep_the_same_downloader_and_files(self):
+        key = ("1234", "730")
+        install._STATES[key] = {
+            "status": "downloading", "percent": 37,
+            "speed_mib": 12.5, "cancel_requested": False
+        }
+        proc = types.SimpleNamespace(pid=44531, poll=lambda: None)
+        install._JOBS[key] = proc
+        with mock.patch.object(install.os, "killpg") as signal_send:
+            self.assertEqual(install.pause(*key)["status"], "paused")
+            signal_send.assert_called_with(proc.pid, install.signal.SIGSTOP)
+            self.assertEqual(install._STATES[key]["percent"], 37)
+            self.assertIsNone(install._STATES[key]["speed_mib"])
+            self.assertFalse(install.start(self.gog, ROOT, "1234", "730", "internal")["ok"])
+            self.assertEqual(install.resume(*key)["status"], "downloading")
+            signal_send.assert_called_with(proc.pid, install.signal.SIGCONT)
+            self.assertEqual(install._STATES[key]["percent"], 37)
+            self.assertEqual(install.pause(*key)["status"], "paused")
+            signal_send.reset_mock()
+            self.assertTrue(install.cancel(*key)["ok"])
+            self.assertEqual(signal_send.call_args_list, [
+                mock.call(proc.pid, install.signal.SIGCONT),
+                mock.call(proc.pid, install.signal.SIGTERM)])
+            self.assertTrue(install._STATES[key]["cancel_requested"])
+
+    def test_pause_requires_a_running_owned_process_and_resume_requires_paused(self):
+        key = ("1234", "730")
+        self.assertFalse(install.pause(*key)["ok"])
+        self.assertFalse(install.resume(*key)["ok"])
+        install._STATES[key] = {"status": "starting", "speed_mib": None}
+        self.assertFalse(install.pause(*key)["ok"])
+        proc = types.SimpleNamespace(pid=77551, poll=lambda: None)
+        install._JOBS[key] = proc
+        install._STATES[key]["status"] = "downloading"
+        with mock.patch.object(install.os, "killpg", side_effect=OSError):
+            self.assertFalse(install.pause(*key)["ok"])
+        self.assertEqual(install._STATES[key]["status"], "downloading")
+        with mock.patch.object(install.os, "killpg"):
+            self.assertTrue(install.pause(*key)["ok"])
+        with mock.patch.object(install.os, "killpg", side_effect=OSError):
+            self.assertFalse(install.resume(*key)["ok"])
+        self.assertEqual(install._STATES[key]["status"], "paused")
+
+    def test_plugin_unload_wakes_paused_downloads_then_terminates_only_owned_groups(self):
+        key = ("1234", "730")
+        install._STATES[key] = {"status": "paused", "cancel_requested": False}
+        install._JOBS[key] = types.SimpleNamespace(pid=98932)
+        with mock.patch.object(install.os, "killpg") as signal_send:
+            install.stop_all()
+        self.assertEqual(signal_send.call_args_list, [
+            mock.call(98932, install.signal.SIGCONT),
+            mock.call(98932, install.signal.SIGTERM)])
+        self.assertTrue(install._STATES[key]["cancel_requested"])

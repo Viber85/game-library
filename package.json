@@ -1,7 +1,7 @@
 {
   "name": "game-library",
   "description": "SteamOS Game Library with native Steam downloads and independent GOG installation preflight and downloads",
-  "version": "0.6.11-test.55",
+  "version": "0.6.11-test.56",
   "private": true,
   "type": "module",
   "scripts": {

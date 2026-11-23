@@ -2,7 +2,7 @@ import {useEffect,useRef,useState,type ReactNode,type Ref} from "react";
 import {Focusable,GamepadButton,showModal,type GamepadEvent} from "@decky/ui";
 import {
   MdAccessTime,MdArrowBack,MdCheckCircle,MdDownload,
-  MdEmojiEvents,MdShield,MdStorefront,MdStorage,MdCancel
+  MdEmojiEvents,MdShield,MdStorefront,MdStorage,MdCancel,MdPause,MdPlayArrow
 } from "react-icons/md";
 import type {UnifiedLibraryGame} from "./unifiedLibraryGame";
 import {requestGogHltbTimes,requestProtonRating,type HltbReply,type ProtonRating} from "./metadataRequests";
@@ -13,6 +13,7 @@ import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {getGogSteamGridFallback} from "./GogArtwork";
 import {subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 import {preflightGogInstall,startGogInstall,getGogInstallStatus,cancelGogInstall,
+  pauseGogInstall,resumeGogInstall,
   type GogInstallMode,type GogInstallState} from "./gogInstallRequests";
 import {GogInstallModal} from "./GogInstallModal";
 
@@ -181,7 +182,8 @@ export function SharedLibraryDetails({
 
   const openInstall=()=>{
     if(game.store!=="gog"||!gogAccountId||installBusy)return;
-    if(installSnapshot.status==="starting"||installSnapshot.status==="downloading")return;
+    if(installSnapshot.status==="starting"||installSnapshot.status==="downloading"||
+       installSnapshot.status==="paused")return;
     if(installSnapshot.status==="downloaded"){
       setInstallError("Download complete. Proton launch setup is not available yet.");
       return;
@@ -212,11 +214,28 @@ export function SharedLibraryDetails({
     }).catch(error=>setInstallError(error instanceof Error?error.message:
       "Could not cancel GOG download.")).finally(()=>setInstallBusy(false));
   };
+  const togglePause=()=>{
+    if(!gogAccountId||installBusy)return;
+    const paused=installSnapshot.status==="paused";
+    if(!paused&&installSnapshot.status!=="downloading")return;
+    setInstallBusy(true);setInstallError("");
+    const action=paused?resumeGogInstall:pauseGogInstall;
+    void action(gogAccountId,game.storeId).then(reply=>{
+      if(!reply.ok)throw new Error(reply.reason||"Could not change GOG download status.");
+      setInstallSnapshot(previous=>({...previous,
+        status:paused?"downloading":"paused",
+        speed_mib:null,reason:paused?"":"Download paused."}));
+    }).catch(error=>setInstallError(error instanceof Error?error.message:
+      "Could not change GOG download status.")).finally(()=>setInstallBusy(false));
+  };
   const isDownloading=installSnapshot.status==="starting"||
-    installSnapshot.status==="downloading";
+    installSnapshot.status==="downloading"||
+    installSnapshot.status==="paused";
+  const isPaused=installSnapshot.status==="paused";
   const gogInstallLabel=installBusy?"Working…":
-    isDownloading?"Downloading"+(typeof installSnapshot.percent==="number"?
-      " "+installSnapshot.percent.toFixed(0)+"%":""):
+    isDownloading?(isPaused?"Paused":"Downloading")+
+      (typeof installSnapshot.percent==="number"?
+        " "+installSnapshot.percent.toFixed(0)+"%":""):
     installSnapshot.status==="downloaded"?"Downloaded":"Install";
   const sizeLabel=(bytes:number|null|undefined)=>{
     if(typeof bytes!=="number"||!Number.isFinite(bytes)||bytes<0)return "—";
@@ -332,6 +351,14 @@ export function SharedLibraryDetails({
                     style={{width:(installSnapshot.percent??0)+"%"}}/>
                 </div>
                 <div className="gl-details-download-controls">
+                  {installSnapshot.status!=="starting"&&
+                    <Focusable {...onAction("install-toggle")}
+                        className="gl-details-focus gl-details-download-control"
+                        onActivate={togglePause}
+                        onOKActionDescription={isPaused?"Resume GOG download":"Pause GOG download"}>
+                      {isPaused?<MdPlayArrow/>:<MdPause/>}
+                      <span>{isPaused?"Resume":"Pause"}</span>
+                    </Focusable>}
                   <Focusable {...onAction("install-cancel")}
                       className="gl-details-focus gl-details-download-control gl-details-download-cancel"
                       onActivate={stopInstall}
@@ -344,7 +371,7 @@ export function SharedLibraryDetails({
                   aria-label="GOG download bytes and speed">
                 <span><b>Downloaded</b> {sizeLabel(installSnapshot.written_bytes)}
                   {" / "}{sizeLabel(installSnapshot.total_bytes)}</span>
-                <span><b>Speed</b> {typeof installSnapshot.speed_mib==="number"?
+                <span><b>Speed</b> {!isPaused&&typeof installSnapshot.speed_mib==="number"?
                   installSnapshot.speed_mib.toFixed(1)+" MB/s":"—"}</span>
               </div>
             </div>}
