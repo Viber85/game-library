@@ -55,3 +55,36 @@ test("layout reserves a fixed-height scrollable progress slot and four-column HL
   assert.match(css,/\.gl-root \.gl-game-details \.gl-details-summary\{[\s\S]*?grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css,/\.gl-root \.gl-game-details \.gl-details-intro\{[\s\S]*?grid-template-columns:clamp\(190px,21vw,265px\)/);
 });
+
+test("both Game Details pages anchor their complete content below the unchanged top bar",()=>{
+  for(const source of [steam,gog]){
+    const header=source.indexOf('className="gl-details-top"');
+    const wrapper=source.indexOf('className="gl-details-content-block"');
+    const intro=source.indexOf('className="gl-details-intro"',wrapper);
+    const strip=source.indexOf('className="gl-details-hltb gl-details-hltb-strip"',intro);
+    const footer=source.indexOf('className="gl-details-footer"',strip);
+    assert.ok(0<header&&header<wrapper&&wrapper<intro&&intro<strip&&strip<footer);
+    assert.match(source.slice(strip,footer),/<\/div>/);
+  }
+  assert.match(css,/\.gl-root \.gl-game-details \.gl-details-content-block\{[\s\S]*?margin-top:auto/);
+  assert.match(css,/\.gl-root \.gl-game-details \.gl-details-content-block \.gl-details-intro\{\s*margin-top:0/);
+  assert.match(css,/\.gl-root \.gl-game-details \.gl-details-footer\{[\s\S]*?margin-top:0/);
+});
+
+test("Steam install is separate from the right-aligned HLTB, Store and icon actions",()=>{
+  const row=steam.slice(steam.indexOf('className="gl-details-action-row"'),
+    steam.indexOf('className="gl-details-progress-slot"'));
+  const primary=row.indexOf('onAction("primary")');
+  const group=row.indexOf('className="gl-details-action-tools"');
+  assert.ok(primary>0&&group>primary);
+  for(const id of ["hltb","steam","controller","settings"]){
+    assert.ok(row.indexOf('onAction("'+id+'")')>group,id+" remains in the right group");
+  }
+  assert.match(row,/onActivate=\{isNativeSteam\?onOpenStore:onNativeDetails\}/);
+  assert.match(row,/onActivate=\{openGameOptions\}/);
+  assert.match(row,/onActivate=\{openController\}/);
+  assert.match(css,/\.gl-root \.gl-game-details \.gl-details-action-tools\{[\s\S]*?justify-content:flex-end/);
+  assert.match(css,/margin-left:auto/);
+  assert.match(css,/\.gl-root \.gl-game-details \.gl-details-action-row \.gl-details-primary\{[\s\S]*?min-height:55px/);
+  assert.match(css,/\.gl-root \.gl-game-details \.gl-details-action-tools \.gl-details-icon-button\{[\s\S]*?width:50px/);
+});

@@ -1,7 +1,7 @@
 {
   "name": "game-library",
   "description": "SteamOS Game Library with native four-way controller navigation for Steam and GOG game details",
-  "version": "0.6.11-test.50",
+  "version": "0.6.11-test.51",
   "private": true,
   "type": "module",
   "scripts": {

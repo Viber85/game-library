@@ -188,6 +188,7 @@ export function SharedLibraryDetails({
         }}/>
       </header>
 
+      <div className="gl-details-content-block">
       <div className="gl-details-intro">
         <div className="gl-details-poster gl-details-gog-poster">
           {cover(onCardImageLoaded)}
@@ -259,6 +260,8 @@ export function SharedLibraryDetails({
             (game.playtimeMinutes/60).toFixed(1)+" hours":"—"}</strong>
           <span>YOUR PLAYTIME</span>
         </div>
+      </div>
+
       </div>
 
       <footer className="gl-details-footer">

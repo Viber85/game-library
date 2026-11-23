@@ -458,6 +458,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
         }}/>
       </header>
 
+      <div className="gl-details-content-block">
       <div className="gl-details-intro">
         <DetailPoster key={"cover-"+game.id} game={game}/>
         <div className="gl-details-intro-copy">
@@ -499,6 +500,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
               {installMode==="play"?<MdPlayArrow/>:<MdDownload/>}
               <strong>{primaryLabel}</strong>
             </Focusable>
+            <div className="gl-details-action-tools">
             {hltbLink&&<Focusable {...onAction("hltb")}
                 className="gl-details-focus gl-details-secondary"
                 onOKActionDescription="Open real HowLongToBeat page"
@@ -526,6 +528,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                 }}
                 onMenuActionDescription="Game options"
                 onActivate={openGameOptions}><MdSettings/></Focusable>
+            </div>
           </div>
           <div className="gl-details-progress-slot" aria-label="Download status and controls">
           {installMode==="transfer"&&nativeDownload.transfer&&
@@ -620,6 +623,8 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
         <div className="gl-details-hltb-cell">
           <strong>{playtimeLabel(playtime)}</strong><span>YOUR PLAYTIME</span>
         </div>
+      </div>
+
       </div>
 
       <footer className="gl-details-footer">A Select · B Back · D-pad / Left stick Navigate · Steam controls remain available</footer>

@@ -2819,4 +2819,110 @@ html:has(.gl-root.gl-own-status-only) #header {
   }
 }
 
+
+/* v0.6.11-test.51 — bottom-anchored details and separated native action groups.
+ * One content block moves as a unit; Steam's download slot remains the same
+ * height in every install state and Game Mode focusables remain unchanged. */
+.gl-root .gl-game-details .gl-details-scroller{
+  display:flex;flex-direction:column;
+}
+.gl-root .gl-game-details .gl-details-content-block{
+  position:relative;z-index:2;display:flex;flex-direction:column;
+  flex:0 0 auto;min-width:0;margin-top:auto;padding-bottom:4px;
+}
+.gl-root .gl-game-details .gl-details-content-block .gl-details-intro{
+  margin-top:0;
+}
+.gl-root .gl-game-details .gl-details-footer{
+  margin-top:0;flex:0 0 auto;padding-top:6px;
+}
+.gl-root .gl-game-details .gl-details-summary{
+  margin-top:16px;gap:10px;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell,
+.gl-root .gl-game-details .gl-details-summary .gl-achievement-card{
+  min-height:76px;padding:10px 12px;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell strong{
+  font-size:clamp(12px,1.25vw,17px);
+}
+.gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell small{
+  font-size:10px;
+}
+.gl-root .gl-game-details .gl-details-action-row{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;flex-wrap:wrap;column-gap:14px;row-gap:9px;
+  margin-top:16px;padding:0;border:0;
+}
+.gl-root .gl-game-details .gl-details-action-row .gl-details-primary{
+  flex:0 0 auto;width:clamp(180px,18vw,232px);min-height:55px;
+  padding:0 18px;font-size:19px;border-radius:12px;
+}
+.gl-root .gl-game-details .gl-details-action-tools{
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:10px;min-width:0;flex:0 1 auto;flex-wrap:nowrap;
+  margin-left:auto;
+}
+.gl-root .gl-game-details .gl-details-action-tools .gl-details-secondary{
+  min-height:50px;padding:0 16px;font-size:14px;
+  border-radius:11px;
+}
+.gl-root .gl-game-details .gl-details-action-tools .gl-details-icon-button{
+  min-height:50px;width:50px;border-radius:11px;
+}
+.gl-root .gl-game-details .gl-details-action-tools .gl-details-icon-button svg{
+  font-size:24px;
+}
+/* Narrow layouts can wrap the two action groups, but the secondary group
+ * remains right-aligned and never overlaps the installation button. */
+@media(max-width:1100px){
+  .gl-root .gl-game-details .gl-details-action-row .gl-details-primary{
+    min-height:48px;width:clamp(156px,18vw,200px);font-size:17px;
+  }
+  .gl-root .gl-game-details .gl-details-action-tools{gap:7px;}
+  .gl-root .gl-game-details .gl-details-action-tools .gl-details-secondary{
+    min-height:44px;padding:0 11px;font-size:12px;
+  }
+  .gl-root .gl-game-details .gl-details-action-tools .gl-details-icon-button{
+    min-height:44px;width:44px;
+  }
+}
+@media(max-width:850px){
+  .gl-root .gl-game-details .gl-details-summary{margin-top:12px;gap:6px;}
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell,
+  .gl-root .gl-game-details .gl-details-summary .gl-achievement-card{
+    min-height:58px;padding:6px;
+  }
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell small{
+    font-size:8px;
+  }
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell strong{
+    font-size:12px;
+  }
+  .gl-root .gl-game-details .gl-details-action-row{
+    gap:7px;margin-top:12px;
+  }
+  .gl-root .gl-game-details .gl-details-action-row .gl-details-primary{
+    min-height:43px;width:clamp(135px,20vw,170px);font-size:15px;
+  }
+  .gl-root .gl-game-details .gl-details-action-tools{gap:6px;}
+  .gl-root .gl-game-details .gl-details-action-tools .gl-details-secondary{
+    min-height:40px;padding:0 8px;font-size:11px;
+  }
+  .gl-root .gl-game-details .gl-details-action-tools .gl-details-icon-button{
+    min-height:40px;width:40px;
+  }
+}
+@media(max-width:650px){
+  .gl-root .gl-game-details .gl-details-action-row{
+    align-items:stretch;
+  }
+  .gl-root .gl-game-details .gl-details-action-tools{
+    max-width:100%;flex-wrap:wrap;justify-content:flex-end;
+  }
+  .gl-root .gl-game-details .gl-details-action-row .gl-details-primary{
+    width:140px;
+  }
+}
+
 `;
