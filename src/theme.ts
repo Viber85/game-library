@@ -2964,4 +2964,92 @@ html:has(.gl-root.gl-own-status-only) #header {
   margin-left:auto;border-color:#865c69;color:#ffccd1;
 }
 
+
+/* v0.6.11-test.55 — Steam-like GOG install dialog is rendered by Decky's
+ * own modal host, outside Game Library's .gl-root. Keep selectors unique. */
+.gl-gog-install-dialog{
+  width:min(580px,85vw);max-width:100%;max-height:75vh;overflow-y:auto;
+  display:flex;flex-direction:column;gap:12px;
+  padding:14px 18px 16px;color:#e7f4fc;box-sizing:border-box;
+}
+.gl-gog-install-dialog h2{font-size:22px;margin:0;font-weight:790;color:#f4fbff;}
+.gl-gog-install-dialog h3{font-size:13px;margin:5px 0 0;color:#a6c6db;}
+.gl-gog-dialog-lead{margin:0;color:#b5cadc;font-size:13px;}
+.gl-gog-dialog-size{
+  display:grid;grid-template-columns:1fr auto;gap:7px;
+  font-size:12px;padding:11px 14px;border-radius:10px;
+  background:rgba(16,43,67,.7);color:#a6c6d8;
+}
+.gl-gog-dialog-size strong{color:#eefbff;text-align:right;font-weight:740;}
+.gl-gog-dialog-drives{display:flex;flex-direction:column;gap:8px;}
+.gl-gog-dialog-drive{
+  display:flex;align-items:center;gap:14px;padding:12px 15px;
+  background:rgba(17,45,70,.85);border:1px solid rgba(103,169,210,.32);
+  border-radius:10px;cursor:pointer;min-height:51px;
+}
+.gl-gog-dialog-drive>svg:first-child{font-size:24px;color:#80b9e0;flex-shrink:0;}
+.gl-gog-dialog-drive>div{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;}
+.gl-gog-dialog-drive strong{font-size:14px;color:#f0fbff;}
+.gl-gog-dialog-drive span{font-size:11px;color:#b2ccdf;}
+.gl-gog-dialog-drive.is-selected,.gl-gog-dialog-strategy.is-selected{
+  border-color:#47d4ed;background:rgba(19,85,108,.64);
+}
+.gl-gog-drive-selected{color:#56ebf2;font-size:21px;}
+.gl-gog-dialog-existing{
+  padding:10px 12px;border:1px solid rgba(107,164,205,.3);
+  border-radius:10px;background:rgba(18,43,66,.62);
+  display:flex;flex-direction:column;gap:8px;
+}
+.gl-gog-dialog-existing-title{
+  display:flex;align-items:center;gap:7px;font-weight:750;font-size:12px;color:#eaf9ff;
+}
+.gl-gog-dialog-existing p{margin:0;font-size:11px;line-height:1.45;color:#a8c8de;}
+.gl-gog-dialog-strategy{
+  padding:9px 11px;border:1px solid rgba(102,173,209,.35);
+  border-radius:8px;display:flex;gap:8px;align-items:center;
+  font-size:12px;font-weight:700;cursor:pointer;color:#e4f4ff;
+}
+.gl-gog-dialog-strategy svg{font-size:17px;flex-shrink:0;}
+.gl-gog-dialog-existing .gl-gog-dialog-note{color:#a2dceb;font-size:11px;}
+.gl-gog-dialog-error{
+  padding:8px 10px;border:1px solid rgba(240,123,132,.5);
+  background:rgba(80,23,41,.4);color:#ffccd3;
+  font-size:12px;border-radius:8px;
+}
+.gl-gog-dialog-actions{
+  display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:7px;
+}
+.gl-gog-dialog-confirm,.gl-gog-dialog-cancel{
+  min-height:40px;padding:9px 20px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:14px;font-weight:740;cursor:pointer;
+}
+.gl-gog-dialog-confirm{border:1px solid #5de4f2;color:#052538;background:#54d9ee;}
+.gl-gog-dialog-cancel{border:1px solid rgba(132,187,221,.35);color:#d4edf8;background:#193950;}
+.gl-gog-install-dialog :is(.gpfocus,.gl-focused,:focus-visible){
+  outline:2px solid #bcf3ff!important;outline-offset:2px;
+  box-shadow:0 0 11px rgba(78,214,245,.55);
+}
+/* Same progress anatomy as Steam: horizontal track + action row.
+ * The former GOG track lived in a flex column and inherited a 230px
+ * flex-basis, which was interpreted as a huge vertical bar. */
+.gl-root .gl-gog-steam-details .gl-gog-install-progress .gl-details-download-main{
+  display:flex;flex-direction:row;align-items:center;flex-wrap:wrap;
+  gap:9px 13px;margin-top:9px;min-height:30px;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-progress .gl-details-download-track{
+  display:block;height:6px!important;min-height:6px!important;
+  max-height:6px!important;flex:1 1 200px;max-width:340px;
+  min-width:140px;overflow:hidden;border-radius:999px;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-progress .gl-details-download-fill{
+  display:block;height:100%;min-height:0;border-radius:inherit;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-progress .gl-details-download-controls{
+  display:flex;align-items:center;
+}
+.gl-root .gl-gog-steam-details .gl-gog-install-progress .gl-details-download-metrics{
+  margin-top:7px;
+}
+
 `;

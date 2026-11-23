@@ -66,12 +66,17 @@ test("GOG single native Back control safely handles all directions and rail hand
   assert.match(read("src/SharedLibraryDetails.tsx"),/else if\(direction==="left"\)onFocusRail\?\.\(\)/);
 });
 
-test("GOG installer buttons use existing native 4-direction focus handlers",()=>{
+test("GOG install opens a Decky modal and progress cancel retains native focus",()=>{
   const page=read("src/SharedLibraryDetails.tsx");
-  for(const id of ["install","install-confirm","install-dismiss","install-cancel"]){
-    assert.ok(page.includes('onAction("'+id+'")'),id+" has a native focusable action");
+  const modal=read("src/GogInstallModal.tsx");
+  for(const id of ["install","install-cancel"]){
+    assert.ok(page.includes('onAction("'+id+'")'),id+" uses native focus");
   }
+  assert.match(page,/showModal\(<GogInstallModal/);
   assert.match(page,/onButtonDown:onMove\(id\)/);
   assert.match(page,/onCancelButton:onBack/);
+  assert.match(modal,/<ModalRoot onCancel=\{dismiss\}/);
+  assert.match(modal,/preferredFocus=\{index===0\}/);
+  assert.match(modal,/onCancelButton=\{dismiss\}/);
   assert.doesNotMatch(page,/SteamClient\.Installs/);
 });

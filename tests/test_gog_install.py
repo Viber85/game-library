@@ -97,3 +97,97 @@ class GogInstallerTests(unittest.TestCase):
         self.assertIsNotNone(install._RATE.search(
             " + Download\t- 10.15 MiB/s (raw) / 20.1 MiB/s"))
         self.assertEqual(install.snapshot("1234","730")["status"],"idle")
+
+
+    def test_zero_disk_size_is_unknown_and_not_displayed_as_zero_gigabytes(self):
+        self.assertIsNone(install._size_info({"size": {"*": {"disk_size": 0}}}))
+        self.assertEqual(install._size_info({"size": {"*": {"disk_size": 1024}}}), 1024)
+
+    def test_existing_download_detection_is_scoped_to_game_and_account(self):
+        root = pathlib.Path(self.temp.name)
+        game = root / "Test Game"
+        self.assertEqual(install._existing_status(game, "1234", "730"), "empty")
+        game.mkdir()
+        (game / "part.bin").write_bytes(b"partial")
+        self.assertEqual(install._existing_status(game, "1234", "730"), "untracked")
+        (game / install._INSTALL_MARKER).write_text('{"store":"gog","product":"730","account":"'+
+            install._fingerprint("1234")+'","completed":false}')
+        self.assertEqual(install._existing_status(game, "1234", "730"), "resumable")
+        self.assertEqual(install._existing_status(game, "5678", "730"), "blocked")
+        self.assertEqual(install._existing_status(game, "1234", "999"), "blocked")
+        (game / install._INSTALL_MARKER).write_text('{"store":"gog","product":"730","account":"'+
+            install._fingerprint("1234")+'","completed":true}')
+        self.assertEqual(install._existing_status(game, "1234", "730"), "complete")
+
+    def test_prior_test54_partial_can_be_adopted_only_with_explicit_mode(self):
+        root = pathlib.Path(self.temp.name)
+        game = root / "Test Game"
+        game.mkdir()
+        (game / "partial.bin").write_bytes(b"keep")
+        plan = {"ok": True, "folder": "Test Game", "size_bytes": None,
+                "locations": [{"key": "internal", "path": str(root),
+                               "free_bytes": 2 * 1024**3}]}
+        user = types.SimpleNamespace(pw_uid=1000, pw_gid=1000,
+                                     pw_dir=self.temp.name)
+        with mock.patch.object(install, "_preflight", return_value=plan), \
+             mock.patch.object(install, "_home", return_value=(root, user)), \
+             mock.patch.object(install, "_gogdl", return_value=root / "gogdl"), \
+             mock.patch.object(install, "_auth_file", return_value=(root / "auth", user)), \
+             mock.patch.object(install, "_config_for_download", return_value=root), \
+             mock.patch.object(install.threading, "Thread") as thread:
+            denied = install.start(self.gog, ROOT, "1234", "730", "internal")
+            self.assertFalse(denied["ok"])
+            approved = install.start(self.gog, ROOT, "1234", "730",
+                                     "internal", "adopt")
+            self.assertTrue(approved["ok"])
+            thread.return_value.start.assert_called_once()
+        self.assertEqual((game / "partial.bin").read_bytes(), b"keep")
+        self.assertEqual(install._existing_status(game, "1234", "730"), "resumable")
+
+    def test_resume_after_restart_uses_verified_marker_and_does_not_erase_data(self):
+        root = pathlib.Path(self.temp.name)
+        game = root / "Test Game"
+        game.mkdir()
+        (game / "partial.bin").write_bytes(b"resume")
+        marker = game / install._INSTALL_MARKER
+        marker.write_text('{"store":"gog","product":"730","account":"'+
+            install._fingerprint("1234")+'","completed":false}')
+        plan = {"ok": True, "folder": "Test Game", "size_bytes": None,
+                "locations": [{"key": "internal", "path": str(root),
+                               "free_bytes": 2 * 1024**3}]}
+        user = types.SimpleNamespace(pw_uid=1000, pw_gid=1000,
+                                     pw_dir=self.temp.name)
+        with mock.patch.object(install, "_preflight", return_value=plan), \
+             mock.patch.object(install, "_home", return_value=(root, user)), \
+             mock.patch.object(install, "_gogdl", return_value=root / "gogdl"), \
+             mock.patch.object(install, "_auth_file", return_value=(root / "auth", user)), \
+             mock.patch.object(install, "_config_for_download", return_value=root), \
+             mock.patch.object(install.threading, "Thread") as thread:
+            result = install.start(self.gog, ROOT, "1234", "730", "internal", "resume")
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["location"], str(game))
+            thread.return_value.start.assert_called_once()
+        self.assertEqual((game / "partial.bin").read_bytes(), b"resume")
+
+    def test_start_fresh_never_deletes_previous_folder(self):
+        root = pathlib.Path(self.temp.name)
+        game = root / "Test Game"
+        game.mkdir()
+        (game / "do-not-delete.dat").write_bytes(b"original")
+        plan = {"ok": True, "folder": "Test Game", "size_bytes": None,
+                "locations": [{"key": "internal", "path": str(root),
+                               "free_bytes": 2 * 1024**3}]}
+        user = types.SimpleNamespace(pw_uid=1000, pw_gid=1000,
+                                     pw_dir=self.temp.name)
+        with mock.patch.object(install, "_preflight", return_value=plan), \
+             mock.patch.object(install, "_home", return_value=(root, user)), \
+             mock.patch.object(install, "_gogdl", return_value=root / "gogdl"), \
+             mock.patch.object(install, "_auth_file", return_value=(root / "auth", user)), \
+             mock.patch.object(install, "_config_for_download", return_value=root), \
+             mock.patch.object(install.threading, "Thread") as thread:
+            reply = install.start(self.gog, ROOT, "1234", "730", "internal", "fresh")
+            self.assertTrue(reply["ok"])
+            self.assertIn(".game-library-restarts", reply["location"])
+            thread.return_value.start.assert_called_once()
+        self.assertEqual((game / "do-not-delete.dat").read_bytes(), b"original")
+        self.assertTrue(pathlib.Path(reply["location"]).is_dir())

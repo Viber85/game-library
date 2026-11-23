@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState,type ReactNode,type Ref} from "react";
-import {Focusable,GamepadButton,type GamepadEvent} from "@decky/ui";
+import {Focusable,GamepadButton,showModal,type GamepadEvent} from "@decky/ui";
 import {
   MdAccessTime,MdArrowBack,MdCheckCircle,MdDownload,
   MdEmojiEvents,MdShield,MdStorefront,MdStorage,MdCancel
@@ -13,7 +13,8 @@ import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {getGogSteamGridFallback} from "./GogArtwork";
 import {subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 import {preflightGogInstall,startGogInstall,getGogInstallStatus,cancelGogInstall,
-  type GogInstallPreflight,type GogInstallState} from "./gogInstallRequests";
+  type GogInstallMode,type GogInstallState} from "./gogInstallRequests";
+import {GogInstallModal} from "./GogInstallModal";
 
 const stop=(event:GamepadEvent)=>{
   event.preventDefault();
@@ -50,8 +51,6 @@ export function SharedLibraryDetails({
   }|null>(null);
   const [artworkRevision,setArtworkRevision]=useState(0);
   const [installBusy,setInstallBusy]=useState(false);
-  const [installPlan,setInstallPlan]=useState<GogInstallPreflight|null>(null);
-  const [installLocation,setInstallLocation]=useState("");
   const [installSize,setInstallSize]=useState<number|null>(null);
   const [installSnapshot,setInstallSnapshot]=useState<GogInstallState>({status:"idle"});
   const [installError,setInstallError]=useState("");
@@ -188,23 +187,21 @@ export function SharedLibraryDetails({
       return;
     }
     setInstallBusy(true);setInstallError("");
-    void preflightGogInstall(gogAccountId,game.storeId).then(result=>{
-      if(!result.ok)throw new Error(result.reason||"GOG download unavailable.");
-      setInstallPlan(result);
-      setInstallSize(result.size_bytes??null);
-      setInstallLocation(result.locations?.[0]?.key||"");
+    void preflightGogInstall(gogAccountId,game.storeId).then(plan=>{
+      if(!plan.ok)throw new Error(plan.reason||"GOG download unavailable.");
+      if(!plan.locations?.length)throw new Error("No writable storage location is available.");
+      setInstallSize(plan.size_bytes??null);
+      // Steam's native InstallApp wizard requires a Steam AppID, so GOG uses
+      // its own equivalent controller-accessible modal, not inline buttons.
+      showModal(<GogInstallModal title={game.title} plan={plan}
+        onConfirm={async(location:string,mode:GogInstallMode)=>{
+          const reply=await startGogInstall(gogAccountId,game.storeId,location,mode);
+          if(!reply.ok)throw new Error(reply.reason||"GOG download could not start.");
+          setInstallSnapshot({status:"starting",percent:0});
+          setInstallError("");
+        }}/>);
     }).catch(error=>setInstallError(error instanceof Error?error.message:
       "GOG install preflight failed.")).finally(()=>setInstallBusy(false));
-  };
-  const confirmInstall=()=>{
-    if(!installLocation||!gogAccountId||installBusy)return;
-    setInstallBusy(true);setInstallError("");
-    void startGogInstall(gogAccountId,game.storeId,installLocation).then(reply=>{
-      if(!reply.ok)throw new Error(reply.reason||"GOG download could not start.");
-      setInstallPlan(null);
-      setInstallSnapshot({status:"starting",percent:0});
-    }).catch(error=>setInstallError(error instanceof Error?error.message:
-      "GOG download could not start.")).finally(()=>setInstallBusy(false));
   };
   const stopInstall=()=>{
     if(!gogAccountId||installBusy)return;
@@ -316,57 +313,42 @@ export function SharedLibraryDetails({
               </div>}
           </div>
           <div className="gl-details-progress-slot" aria-label="Download status and controls">
-          {game.store==="gog"&&installPlan&&
-            <div className="gl-gog-install-chooser" aria-label="Choose GOG storage location">
-              <div>Install {sizeLabel(installPlan.size_bytes)} · Windows build</div>
-              <div className="gl-gog-install-locations">
-                {(installPlan.locations||[]).map(item=>
-                  <Focusable key={item.key} {...onAction("disk-"+item.key)}
-                    className={"gl-details-focus gl-gog-storage-choice"+
-                      (installLocation===item.key?" selected":"")}
-                    onActivate={()=>setInstallLocation(item.key)}>
-                    {item.label} · {sizeLabel(item.free_bytes)} free
-                  </Focusable>)}
-              </div>
-              <Focusable {...onAction("install-confirm")}
-                  className="gl-details-focus gl-gog-install-confirm"
-                  onActivate={confirmInstall} onOKActionDescription="Start GOG download">
-                <MdDownload/> Start download
-              </Focusable>
-              <Focusable {...onAction("install-dismiss")}
-                  className="gl-details-focus gl-gog-install-dismiss"
-                  onActivate={()=>setInstallPlan(null)}
-                  onOKActionDescription="Cancel storage selection">
-                Back
-              </Focusable>
-            </div>}
           {game.store==="gog"&&isDownloading&&
-            <div className="gl-gog-install-progress" aria-label="GOG download progress">
-              <div className="gl-details-download-caption">
-                <span>GOG DOWNLOAD</span>
-                <strong>{typeof installSnapshot.percent==="number"?
-                  installSnapshot.percent.toFixed(1)+"%":"Preparing"}</strong>
+            <div className="gl-details-download gl-gog-install-progress"
+                aria-label="GOG installation progress">
+              <div className="gl-details-download-header">
+                <div className="gl-details-download-caption">
+                  <span>GOG DOWNLOAD</span>
+                  <strong>{typeof installSnapshot.percent==="number"?
+                    installSnapshot.percent.toFixed(1)+"%":"Preparing"}</strong>
+                </div>
               </div>
-              <div className="gl-details-download-track" role="progressbar"
-                  aria-label="GOG downloaded percentage" aria-valuemin={0}
-                  aria-valuemax={100} aria-valuenow={installSnapshot.percent??undefined}>
-                <div className="gl-details-download-fill"
+              <div className="gl-details-download-main">
+                <div className="gl-details-download-track" role="progressbar"
+                    aria-label="GOG download progress" aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={installSnapshot.percent??undefined}>
+                  <div className="gl-details-download-fill"
                     style={{width:(installSnapshot.percent??0)+"%"}}/>
+                </div>
+                <div className="gl-details-download-controls">
+                  <Focusable {...onAction("install-cancel")}
+                      className="gl-details-focus gl-details-download-control gl-details-download-cancel"
+                      onActivate={stopInstall}
+                      onOKActionDescription="Cancel GOG download and keep partial files">
+                    <MdCancel/> Cancel download
+                  </Focusable>
+                </div>
               </div>
-              <div className="gl-gog-install-progress-footer">
-                <span>{sizeLabel(installSnapshot.written_bytes)} /
-                  {" "}{sizeLabel(installSnapshot.total_bytes)}</span>
-                <span>{typeof installSnapshot.speed_mib==="number"?
+              <div className="gl-details-download-metrics"
+                  aria-label="GOG download bytes and speed">
+                <span><b>Downloaded</b> {sizeLabel(installSnapshot.written_bytes)}
+                  {" / "}{sizeLabel(installSnapshot.total_bytes)}</span>
+                <span><b>Speed</b> {typeof installSnapshot.speed_mib==="number"?
                   installSnapshot.speed_mib.toFixed(1)+" MB/s":"—"}</span>
-                <Focusable {...onAction("install-cancel")}
-                    className="gl-details-focus gl-gog-install-cancel"
-                    onActivate={stopInstall}
-                    onOKActionDescription="Cancel GOG download and keep partial files">
-                  <MdCancel/> Cancel download
-                </Focusable>
               </div>
             </div>}
-          {game.store==="gog"&&!isDownloading&&!installPlan&&
+          {game.store==="gog"&&!isDownloading&&
             <div className="gl-details-install-help">
               {installSnapshot.reason||
                 "GOG installs use the bundled downloader. Choose Install and a storage location."}

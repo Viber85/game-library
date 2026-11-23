@@ -5,6 +5,7 @@ never touches other launchers' credentials/installs and never deletes files.
 Windows downloads are deliberately NOT marked playable before Proton support.
 """
 import hashlib
+import secrets
 import json
 import os
 import pathlib
@@ -161,9 +162,119 @@ def _size_info(raw):
         return None
     all_sizes = value.get("*", {})
     if isinstance(all_sizes, dict) and isinstance(all_sizes.get("disk_size"), int):
-        return max(0, all_sizes["disk_size"])
+        return all_sizes["disk_size"] if all_sizes["disk_size"] > 0 else None
     return None
 
+
+
+# A marker proves that an install folder is managed by this plugin and is
+# scoped to the matching Steam user and GOG product. Old test.54 folders do
+# not have the marker; the user can explicitly adopt them, or download into
+# a fresh separate folder without moving/deleting the old folder.
+_INSTALL_MARKER = ".game-library-gog-install.json"
+_VALID_MODES = frozenset({"new", "resume", "adopt", "fresh"})
+
+
+def _fingerprint(account):
+    return hashlib.sha256(account.encode("ascii")).hexdigest()[:24]
+
+
+def _existing_status(game, account, product):
+    if game.is_symlink():
+        return "blocked"
+    if not game.exists():
+        return "empty"
+    if not game.is_dir():
+        return "blocked"
+    marker = game / _INSTALL_MARKER
+    if marker.is_symlink():
+        return "blocked"
+    if marker.exists():
+        try:
+            if marker.stat().st_size > 4096:
+                return "blocked"
+            info = json.loads(marker.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return "blocked"
+        if (info.get("store") == "gog" and info.get("product") == product
+                and info.get("account") == _fingerprint(account)):
+            return "resumable" if info.get("completed") is not True else "complete"
+        return "blocked"
+    # GOGDL's game metadata from another product means this directory cannot
+    # safely be adopted as a partial install of the selected product.
+    try:
+        for entry in game.iterdir():
+            if entry.is_symlink():
+                return "blocked"
+            if entry.name.startswith("goggame-") and entry.name.endswith(".info"):
+                if entry.name != "goggame-" + product + ".info":
+                    return "blocked"
+    except OSError:
+        return "blocked"
+    return "untracked"
+
+
+def _create_user_directories(path, user):
+    missing = []
+    parent = path
+    while not parent.exists() and parent != parent.parent:
+        missing.append(parent)
+        parent = parent.parent
+    if parent.is_symlink() or not parent.is_dir():
+        raise ValueError("Unsafe GOG storage location.")
+    for item in reversed(missing):
+        if item.is_symlink():
+            raise ValueError("Unsafe GOG storage location.")
+        item.mkdir(mode=0o755)
+        if os.geteuid() == 0:
+            try:
+                os.chown(item, user.pw_uid, user.pw_gid)
+            except OSError:
+                pass
+
+
+def _mark_download(game, account, product, user):
+    _create_user_directories(game, user)
+    marker = game / _INSTALL_MARKER
+    if marker.is_symlink():
+        raise ValueError("Unsafe GOG download marker.")
+    data = {"store": "gog", "account": _fingerprint(account),
+            "product": product, "completed": False}
+    temp = game / (_INSTALL_MARKER + ".tmp")
+    if temp.is_symlink():
+        raise ValueError("Unsafe GOG download marker.")
+    with temp.open("w", encoding="utf-8") as fh:
+        os.fchmod(fh.fileno(), 0o600)
+        json.dump(data, fh)
+    if os.geteuid() == 0:
+        try:
+            os.chown(temp, user.pw_uid, user.pw_gid)
+        except OSError:
+            pass
+    temp.replace(marker)
+
+
+def _config_for_download(account, product, game, user):
+    """Never reuse Heroic's or test.54's global gogdl manifest directory."""
+    home, _ = _home()
+    suffix = hashlib.sha256(str(game).encode("utf-8")).hexdigest()[:16]
+    root = (home / ".local" / "share" / "game-library" / "gogdl"
+            / account / product / suffix)
+    _create_user_directories(root, user)
+    return root
+
+
+def _mark_completed(game):
+    marker = game / _INSTALL_MARKER
+    try:
+        if marker.is_symlink() or not marker.is_file():
+            return
+        data = json.loads(marker.read_text(encoding="utf-8"))
+        if data.get("store") == "gog":
+            data["completed"] = True
+            marker.write_text(json.dumps(data), encoding="utf-8")
+    except (OSError, ValueError):
+        pass
 
 def _preflight(gog, base, account, product):
     account, product = _account_and_game(gog, account, product)
@@ -186,7 +297,9 @@ def _preflight(gog, base, account, product):
             or folder_name in (".", "..")):
         raise ValueError("GOG returned an unsafe game directory.")
     size = _size_info(info)
-    locations = _locations()
+    locations = [{**location, "existing": _existing_status(
+        pathlib.Path(location["path"]) / folder_name, account, product)}
+        for location in _locations()]
     return {"ok": True, "product_id": product, "folder": folder_name,
             "size_bytes": size, "locations": locations, "platform": "windows"}
 
@@ -207,7 +320,7 @@ def snapshot(account, product):
         return dict(state) if state else {"status": "idle", "percent": None}
 
 
-def _download_thread(key, binary, auth, user, target, product):
+def _download_thread(key, binary, auth, user, target, product, config_dir):
     with _LOCK:
         state = _STATES[key]
     proc = None
@@ -221,12 +334,17 @@ def _download_thread(key, binary, auth, user, target, product):
                 state.update(status="cancelled",
                              reason="Download cancelled before it started.")
                 return
+        env = dict(os.environ)
+        env["HOME"] = str(pathlib.Path(user.pw_dir))
+        env["GOGDL_CONFIG_PATH"] = str(config_dir)
         proc = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, text=True, bufsize=1,
-                                start_new_session=True, **opts)
+                                start_new_session=True, env=env, **opts)
         with _LOCK:
             _JOBS[key] = proc
             state["status"] = "downloading"
+            if state.get("cancel_requested"):
+                os.killpg(proc.pid, signal.SIGTERM)
         for line in proc.stdout:
             progress = _PROGRESS.search(line)
             rate = _RATE.search(line)
@@ -249,6 +367,7 @@ def _download_thread(key, binary, auth, user, target, product):
                 "Download complete. Launch setup is not yet available.")
             if complete:
                 state["percent"] = 100.0
+                _mark_completed(game_path)
     except Exception:
         with _LOCK:
             state.update(status="error", reason="GOG downloader failed to start.")
@@ -262,9 +381,11 @@ def _download_thread(key, binary, auth, user, target, product):
             _JOBS.pop(key, None)
 
 
-def start(gog, base, account, product, location):
+def start(gog, base, account, product, location, mode="new"):
     try:
         account, product = _account_and_game(gog, account, product)
+        if mode not in _VALID_MODES:
+            return {"ok": False, "reason": "Unknown GOG download operation."}
         key = (account, product)
         with _LOCK:
             if key in _JOBS or _STATES.get(key, {}).get("status") in ("starting", "downloading"):
@@ -273,44 +394,52 @@ def start(gog, base, account, product, location):
         choice = next((x for x in plan["locations"] if x["key"] == location), None)
         if not choice:
             return {"ok": False, "reason": "Selected storage location is unavailable."}
-        if plan["size_bytes"] is not None and choice["free_bytes"] < (
-                plan["size_bytes"] + 512 * 1024 * 1024):
-            return {"ok": False, "reason": "Not enough free storage for this game."}
-        target = pathlib.Path(choice["path"])
-        game = target / plan["folder"]
-        if game.exists() or game.is_symlink():
-            return {"ok": False, "reason": "Install directory already exists; no files were modified."}
+        root = pathlib.Path(choice["path"])
+        game = root / plan["folder"]
+        existing = _existing_status(game, account, product)
+        if mode == "new" and existing != "empty":
+            return {"ok": False, "reason": "Existing game directory detected. Choose Continue or Start fresh."}
+        if mode == "resume" and existing != "resumable":
+            return {"ok": False, "reason": "No verified Game Library download to resume."}
+        if mode == "adopt" and existing != "untracked":
+            return {"ok": False, "reason": "This existing directory cannot be safely adopted."}
+        if mode == "fresh" and existing == "empty":
+            return {"ok": False, "reason": "No prior download here. Use Install instead."}
         home, user = _home()
-        for ancestor in (target, target.parent, target.parent.parent):
+        target = root
+        if mode == "fresh":
+            # A fresh download does not delete, move or overwrite the old
+            # folder; the new install lives under its own provider-scoped root.
+            target = root / ".game-library-restarts" / product / (
+                str(int(time.time())) + "-" + secrets.token_hex(4))
+            game = target / plan["folder"]
+        if (plan["size_bytes"] is not None and mode in ("new", "fresh")
+                and choice["free_bytes"] < plan["size_bytes"] + 512 * 1024 * 1024):
+            return {"ok": False, "reason": "Not enough free storage for this game."}
+        if mode in ("resume", "adopt") and choice["free_bytes"] < 128 * 1024 * 1024:
+            return {"ok": False, "reason": "At least 128 MB free space is required to resume."}
+        for ancestor in (game, target, root, root.parent):
             if ancestor.is_symlink():
                 return {"ok": False, "reason": "Unsafe storage path."}
-        to_create = []
-        entry = target
-        while not entry.exists() and entry != entry.parent:
-            to_create.append(entry)
-            entry = entry.parent
-        for entry in reversed(to_create):
-            entry.mkdir(mode=0o755)
-            if os.geteuid() == 0:
-                try:
-                    os.chown(entry, user.pw_uid, user.pw_gid)
-                except OSError:
-                    # Some removable filesystems have no POSIX ownership.
-                    pass
-        auth, user = _auth_file(gog, account)
+        if mode == "fresh" and game.exists():
+            return {"ok": False, "reason": "Could not create a unique GOG installation directory."}
         binary = _gogdl(base)
+        auth, user = _auth_file(gog, account)
+        _mark_download(game, account, product, user)
+        config_dir = _config_for_download(account, product, game, user)
         with _LOCK:
             if key in _JOBS or _STATES.get(key, {}).get("status") in ("starting", "downloading"):
                 return {"ok": False, "reason": "This GOG game is already downloading."}
             _STATES[key] = {"status": "starting", "percent": 0.0,
+                            "operation": mode,
                             "written_bytes": None, "total_bytes": None,
                             "speed_mib": None, "reason": "",
                             "location": str(game), "cancel_requested": False}
             thread = threading.Thread(target=_download_thread,
-                      args=(key, binary, auth, user, target, product),
+                      args=(key, binary, auth, user, target, product, config_dir),
                       daemon=True, name="game-library-gog-download")
             thread.start()
-        return {"ok": True, "status": "starting"}
+        return {"ok": True, "status": "starting", "location": str(game), "operation": mode}
     except ValueError as error:
         return {"ok": False, "reason": str(error)}
     except Exception:

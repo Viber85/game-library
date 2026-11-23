@@ -504,10 +504,11 @@ class Plugin:
         return await asyncio.to_thread(
             _load_gog_install().preflight, _load_gog(), BASE, account_id, product_id)
 
-    async def start_gog_install(self, account_id: str, product_id: str, location: str):
+    async def start_gog_install(self, account_id: str, product_id: str, location: str,
+                                mode: str = "new"):
         """Start a local GOG-only downloader, never Steam's native installer."""
         return await asyncio.to_thread(
-            _load_gog_install().start, _load_gog(), BASE, account_id, product_id, location)
+            _load_gog_install().start, _load_gog(), BASE, account_id, product_id, location, mode)
 
     async def get_gog_install_status(self, account_id: str, product_id: str):
         return _load_gog_install().snapshot(account_id, product_id)

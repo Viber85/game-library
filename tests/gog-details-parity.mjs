@@ -16,9 +16,12 @@ test("GOG details uses Steam layout CSS and an independent installer, never Stea
   assert.match(ui,/gl-details-gog-poster/);
   assert.match(ui,/aria-disabled="true"/);
   assert.match(ui,/preflightGogInstall\(gogAccountId,game\.storeId\)/);
-  assert.match(ui,/startGogInstall\(gogAccountId,game\.storeId,installLocation\)/);
+  assert.match(ui,/startGogInstall\(gogAccountId,game\.storeId,location,mode\)/);
+  assert.match(ui,/showModal\(<GogInstallModal/);
   assert.match(ui,/cancelGogInstall\(gogAccountId,game\.storeId\)/);
   assert.match(ui,/role="progressbar"/);
+  assert.match(ui,/gl-details-download-main/);
+  assert.doesNotMatch(ui,/gl-gog-install-chooser/);
   assert.match(css,/\.gl-root \.gl-gog-install-pending/);
   assert.match(css,/\.gl-root \.gl-details-gog-poster\{position:relative/);
   assert.match(dashboard,/detailGog \? <SharedLibraryDetails/);
