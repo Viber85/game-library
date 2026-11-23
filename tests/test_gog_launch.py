@@ -20,8 +20,6 @@ class FakeInstaller:
         if account not in ("1234", "5678") or product not in ("730", "999"):
             raise ValueError("Unknown GOG account or game")
         return account, product
-    def _account(self, account):
-        return account
     def _locations(self):
         return [{"key":"internal", "path":str(self.root)}]
     def _existing_status(self, path, account, product):
@@ -44,6 +42,9 @@ class GogLaunchTests(unittest.TestCase):
         self.root = pathlib.Path(self.temp.name)
         self.installer = FakeInstaller(self.root)
         self.gog = object()
+        # Production gog_install.py exposes _account_and_game, not _account.
+        # Do not let a FakeInstaller-only method conceal AttributeError.
+        self.assertFalse(hasattr(self.installer, "_account"))
 
     def completed_game(self, path, account="1234", product="730"):
         path.mkdir(parents=True)
@@ -194,3 +195,25 @@ class GogLaunchTests(unittest.TestCase):
                                  str(game),"Game.exe",0x90000030)
         self.assertFalse(result["ok"])
         self.assertIn("Unsafe",result["reason"])
+
+    def test_register_works_with_actual_gog_installer_interface(self):
+        """Regression for test.59: Steam created shortcut, then Python crashed
+        because register invoked nonexistent installer._account()."""
+        game = self.completed_game(self.root / "Commandos")
+        (game / "comandos.exe").write_bytes(b"windows")
+        reply = launch.register(
+            self.installer, self.gog, "1234", "730",
+            str(game), "comandos.exe", 0x90000101)
+        self.assertTrue(reply["ok"], reply)
+        self.assertEqual(reply["app_id"], 0x90000101)
+        self.assertFalse(reply["ready"])
+        stored = launch.inspect(self.installer, self.gog, "1234", "730")
+        self.assertEqual(stored["status"], "registered")
+        self.assertEqual(stored["shortcut"]["relative"], "comandos.exe")
+        finish = launch.finalize(
+            self.installer, self.gog, "1234", "730",
+            0x90000101, "proton_experimental")
+        self.assertTrue(finish["ok"], finish)
+        self.assertEqual(launch.inspect(
+            self.installer, self.gog, "1234", "730")["status"], "ready")
+

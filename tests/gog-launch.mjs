@@ -106,3 +106,11 @@ test("failed shortcut metadata registration does not duplicate Steam shortcut in
   assert.match(bridge,/pendingGogShortcuts\.delete\(key\)/);
   assert.match(bridge,/retry Set up Play without restarting Game Library/);
 });
+
+test("GOG launch registration never calls a nonexistent installer account method",()=>{
+  const register=backend.slice(backend.indexOf("def register("),backend.indexOf("def finalize("));
+  assert.match(register,/state = _inspect\(installer, gog, account, product\)/);
+  assert.doesNotMatch(register,/installer\._account\(/);
+  assert.match(register,/installer\._account_and_game/);
+  assert.match(register,/type\(error\)\.__name__/);
+});

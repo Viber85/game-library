@@ -244,7 +244,10 @@ def register(installer, gog, account, product, install_dir, relative, app_id):
             if old["app_id"] != app_id or old["relative"] != relative:
                 raise ValueError("A Steam shortcut is already recorded for this installation.")
             return {"ok": True, "app_id": app_id, "ready": old["ready"]}
-        account = installer._account(account)
+        # _inspect() already validates account and ownership through
+        # installer._account_and_game(gog, ...). The GOG installer has NO
+        # _account() method. Calling it previously raised AttributeError after
+        # Steam had already created the shortcut (test.59).
         payload = {"account": hashlib.sha256(account.encode("ascii")).hexdigest()[:24],
                    "product": product, "relative": relative, "app_id": app_id,
                    "tool": None}
@@ -255,9 +258,9 @@ def register(installer, gog, account, product, install_dir, relative, app_id):
     except OSError as e:
         logging.warning("GOG shortcut registry write failed, errno=%s", e.errno)
         return {"ok": False, "reason": "GOG shortcut metadata could not be saved (OS error %s)." % (e.errno or "unknown")}
-    except Exception:
+    except Exception as error:
         logging.exception("Unexpected GOG shortcut registration failure")
-        return {"ok": False, "reason": "GOG shortcut registration failed (backend error; check Decky log)."}
+        return {"ok": False, "reason": "GOG shortcut registration failed (%s; see Decky log)." % type(error).__name__}
 
 
 def finalize(installer, gog, account, product, app_id, tool):
@@ -278,6 +281,6 @@ def finalize(installer, gog, account, product, app_id, tool):
     except OSError as e:
         logging.warning("GOG Proton marker write failed, errno=%s", e.errno)
         return {"ok": False, "reason": "GOG Proton settings could not be saved (OS error %s)." % (e.errno or "unknown")}
-    except Exception:
+    except Exception as error:
         logging.exception("Unexpected GOG launch finalization failure")
-        return {"ok": False, "reason": "GOG Proton configuration failed (backend error; check Decky log)."}
+        return {"ok": False, "reason": "GOG Proton configuration failed (%s; see Decky log)." % type(error).__name__}
