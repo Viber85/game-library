@@ -25,7 +25,7 @@ test("matches reference components: hero, portrait, game metadata, HLTB, actions
   for(const match of [
     /<HeroBackdrop/,/<GameLogo/,/<DetailPoster/,/<ProtonDBBadge/,
     /gl-details-hltb/,/gl-details-action-row/,/gl-details-hero/,
-    /gl-details-metrics/,/gl-details-meta-cell/,/<AchievementsCard game=\{game\} compact\/>/,
+    /gl-details-summary/,/gl-details-hltb-strip/,/gl-details-meta-cell/,/<AchievementsCard game=\{game\} compact\/>/,
     /<SystemStatusBar/,/onNativeDetails/,/play\(\{\.\.\.game,installed:true\}\)/,
     /getLibraryGames\(\)/,/requestNativeRequiredInstallBytes/
   ])assert.match(source,match);

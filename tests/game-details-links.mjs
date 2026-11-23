@@ -67,7 +67,8 @@ test("closing Details clears an unconsumed web token, avoids stale controller me
 });
 
 test("Game Details metadata replaces the removed Game Info tab",()=>{
-  assert.match(source,/gl-details-metrics/);
+  assert.match(source,/gl-details-summary/);
+  assert.match(source,/gl-details-hltb-strip/);
   assert.match(source,/gl-details-meta-cell/);
   assert.match(source,/lastPlayedLabel\(lastPlayed\)/);
   assert.doesNotMatch(source,/<h2>Game Info<\/h2>|gl-details-tabs|View in Steam/);

@@ -2669,4 +2669,154 @@ html:has(.gl-root.gl-own-status-only) #header {
   .gl-root .gl-details-hltb-cell,.gl-root .gl-details-meta-cell,.gl-root .gl-details-metrics .gl-achievement-card{min-height:55px;}
   .gl-root .gl-details-info-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
+
+/* v0.6.11-test.50 — Steam and GOG installation-first Game Details.
+ * Layout reference: 3 compact installation metadata tiles above actions,
+ * a stable progress slot below actions, and 4 HLTB tiles below the poster.
+ * Keep all rules scoped to our own Game Library, never native Steam UI. */
+.gl-root .gl-game-details .gl-details-intro{
+  grid-template-columns:clamp(190px,21vw,265px) minmax(0,1fr);
+  align-items:start;column-gap:clamp(18px,2.1vw,28px);row-gap:0;
+  margin-top:clamp(62px,8vh,92px);
+}
+.gl-root .gl-game-details .gl-details-poster{
+  align-self:start;aspect-ratio:2/3;border-radius:14px;
+}
+.gl-root .gl-game-details .gl-details-intro-copy{
+  justify-content:flex-start;min-width:0;
+  padding-top:3px;
+}
+.gl-root .gl-game-details .gl-details-hero{
+  height:clamp(220px,31vh,330px);
+}
+.gl-root .gl-game-details .gl-details-summary{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;min-width:0;margin-top:14px;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell{
+  justify-content:flex-start;min-width:0;min-height:69px;
+  padding:9px clamp(7px,.9vw,12px);gap:9px;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell>svg{
+  font-size:21px;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell small{
+  font-size:9px;line-height:1.15;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell strong{
+  font-size:clamp(11px,1.15vw,15px);
+}
+.gl-root .gl-game-details .gl-details-summary .gl-achievement-card{
+  height:auto;min-height:69px;max-height:none;
+  margin:0;flex:auto;min-width:0;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-achievement-card .gl-achievement-stats{
+  display:flex;flex-direction:column;align-items:stretch;
+  gap:6px;width:100%;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-achievement-card .gl-achievement-stats strong{
+  font-size:clamp(11px,1.1vw,14px);line-height:1.15;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-achievement-card .gl-achievement-track{
+  flex:none;width:100%;min-width:0;max-width:none;height:5px;
+}
+.gl-root .gl-game-details .gl-details-summary .gl-achievement-card .gl-achievement-content{
+  min-width:0;gap:4px;
+}
+.gl-root .gl-game-details .gl-details-action-row{
+  grid-column:auto;display:flex;align-items:center;flex-wrap:wrap;
+  border:0;padding:0;margin-top:14px;margin-bottom:0;gap:7px;
+}
+.gl-root .gl-game-details .gl-details-progress-slot{
+  display:block;box-sizing:border-box;height:124px;
+  min-height:124px;max-height:124px;flex:none;
+  overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;scrollbar-color:#214966 transparent;
+  padding-top:11px;
+}
+.gl-root .gl-game-details .gl-details-progress-slot .gl-details-download{
+  margin:0;max-width:none;padding:0;
+}
+.gl-root .gl-game-details .gl-details-progress-slot .gl-details-install-help{
+  padding:2px 0;max-width:100%;
+}
+.gl-root .gl-game-details .gl-details-progress-slot .gl-details-download-feedback{
+  max-width:none;
+}
+.gl-root .gl-game-details .gl-details-hltb.gl-details-hltb-strip{
+  position:relative;z-index:2;flex:none;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;margin-top:clamp(12px,2vh,21px);min-width:0;
+}
+.gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell{
+  min-height:80px;padding:10px 7px;
+}
+.gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell strong{
+  font-size:clamp(16px,1.6vw,22px);
+}
+.gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell span{
+  font-size:clamp(9px,.85vw,11px);
+}
+@media(max-width:1180px),(max-height:760px){
+  .gl-root .gl-game-details .gl-details-intro{
+    grid-template-columns:clamp(175px,22vw,235px) minmax(0,1fr);
+    margin-top:clamp(51px,7.4vh,70px);column-gap:17px;
+  }
+  .gl-root .gl-game-details .gl-details-summary{gap:7px;margin-top:12px;}
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell{
+    min-height:59px;padding:7px;gap:6px;
+  }
+  .gl-root .gl-game-details .gl-details-summary .gl-achievement-card{min-height:59px;}
+  .gl-root .gl-game-details .gl-details-progress-slot{
+    height:108px;min-height:108px;max-height:108px;padding-top:8px;
+  }
+  .gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell{
+    min-height:70px;
+  }
+  .gl-root .gl-game-details .gl-details-hltb.gl-details-hltb-strip{gap:8px;margin-top:13px;}
+}
+@media(max-width:850px){
+  .gl-root .gl-game-details .gl-details-intro{
+    grid-template-columns:clamp(125px,23vw,185px) minmax(0,1fr);
+    column-gap:12px;margin-top:48px;
+  }
+  .gl-root .gl-game-details .gl-details-summary{gap:6px;margin-top:9px;}
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell{
+    min-height:56px;padding:5px;gap:5px;
+  }
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell>svg{font-size:18px;}
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell small{font-size:8px;}
+  .gl-root .gl-game-details .gl-details-summary .gl-achievement-card{min-height:56px;}
+  .gl-root .gl-game-details .gl-details-action-row{gap:6px;margin-top:10px;}
+  .gl-root .gl-game-details .gl-details-progress-slot{
+    height:104px;min-height:104px;max-height:104px;
+  }
+  .gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell{min-height:63px;}
+}
+@media(max-width:650px){
+  .gl-root .gl-game-details .gl-details-intro{
+    grid-template-columns:105px minmax(0,1fr);margin-top:24px;column-gap:11px;
+  }
+  .gl-root .gl-game-details .gl-details-summary{
+    grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
+  }
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell>svg{display:none;}
+  .gl-root .gl-game-details .gl-details-summary .gl-details-meta-cell{
+    justify-content:center;min-height:51px;
+  }
+  .gl-root .gl-game-details .gl-details-progress-slot{
+    height:98px;min-height:98px;max-height:98px;
+  }
+  .gl-root .gl-game-details .gl-details-hltb.gl-details-hltb-strip{
+    grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;
+  }
+  .gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell{
+    min-height:55px;padding:4px 2px;
+  }
+  .gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell strong{font-size:11px;}
+  .gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell span{
+    font-size:7px;white-space:normal;
+  }
+}
+
 `;

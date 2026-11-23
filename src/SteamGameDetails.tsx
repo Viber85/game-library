@@ -3,7 +3,7 @@ import {Focusable,GamepadButton,showModal,ConfirmModal,type GamepadEvent} from "
 import {
   MdArrowBack,MdCheckCircle,MdDownload,MdOpenInNew,MdPlayArrow,
   MdSettings,MdSportsEsports,MdStorefront,MdAccessTime,MdVideogameAsset,
-  MdPause,MdDeleteOutline
+  MdPause,MdDeleteOutline,MdStorage
 } from "react-icons/md";
 import type {LibraryGame} from "./steam";
 import {
@@ -475,27 +475,19 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
               installMode==="play"?"Installed":"Not installed"}</span>
           </div>
 
-          <div className="gl-details-hltb gl-details-metrics" aria-label="HowLongToBeat, last played and achievements">
-            <div className="gl-details-hltb-cell">
-              <strong>{hours(hltbData?.main)}</strong><span>MAIN STORY</span>
-            </div>
-            <div className="gl-details-hltb-cell">
-              <strong>{hours(hltbData?.extras)}</strong><span>MAIN + EXTRAS</span>
-            </div>
-            <div className="gl-details-hltb-cell">
-              <strong>{hours(hltbData?.completionist)}</strong><span>COMPLETIONIST</span>
-            </div>
-            <div className="gl-details-hltb-cell">
-              <strong>{playtimeLabel(playtime)}</strong><span>YOUR PLAYTIME</span>
+          <div className="gl-details-summary" aria-label="Game installation and progress summary">
+            <div className="gl-details-meta-cell gl-details-meta-space">
+              <MdStorage aria-hidden="true"/><div>
+                <small>SPACE REQUIRED</small><strong>{formatSpace(required)}</strong>
+              </div>
             </div>
             <div className="gl-details-meta-cell">
-              <MdAccessTime/><div>
+              <MdAccessTime aria-hidden="true"/><div>
                 <small>LAST PLAYED</small><strong>{lastPlayedLabel(lastPlayed)}</strong>
               </div>
             </div>
             <AchievementsCard game={game} compact/>
           </div>
-        </div>
         <div className="gl-details-action-row">
             <Focusable {...onAction("primary")}
                 className="gl-details-focus gl-details-primary"
@@ -507,10 +499,6 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
               {installMode==="play"?<MdPlayArrow/>:<MdDownload/>}
               <strong>{primaryLabel}</strong>
             </Focusable>
-            <div className="gl-details-space">
-              <span>{installMode==="play"?"PLAYED":"SPACE REQUIRED"}</span>
-              <strong>{installMode==="play"?playtimeLabel(playtime):formatSpace(required)}</strong>
-            </div>
             {hltbLink&&<Focusable {...onAction("hltb")}
                 className="gl-details-focus gl-details-secondary"
                 onOKActionDescription="Open real HowLongToBeat page"
@@ -539,6 +527,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                 onMenuActionDescription="Game options"
                 onActivate={openGameOptions}><MdSettings/></Focusable>
           </div>
+          <div className="gl-details-progress-slot" aria-label="Download status and controls">
           {installMode==="transfer"&&nativeDownload.transfer&&
             <div className="gl-details-download" aria-label="Steam installation progress">
               <div className="gl-details-download-header">
@@ -594,7 +583,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
             </div>}
           {installMode==="preparing"&&
             <div className="gl-details-install-help">
-              Checking Steam download status. If progress does not appear, open Game Info for diagnostics.
+              Checking Steam download status. Steam controls will appear here when the transfer starts.
             </div>}
           {installMode==="install"&&
             <div className="gl-details-install-help">Install opens Steam's drive selection and confirmation dialog.</div>}
@@ -614,6 +603,23 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                   Steam options · Manage · Uninstall
                 </Focusable>}
             </div>}
+          </div>
+        </div>
+      </div>
+
+      <div className="gl-details-hltb gl-details-hltb-strip" aria-label="HowLongToBeat times and your playtime">
+        <div className="gl-details-hltb-cell">
+          <strong>{hours(hltbData?.main)}</strong><span>MAIN STORY</span>
+        </div>
+        <div className="gl-details-hltb-cell">
+          <strong>{hours(hltbData?.extras)}</strong><span>MAIN + EXTRAS</span>
+        </div>
+        <div className="gl-details-hltb-cell">
+          <strong>{hours(hltbData?.completionist)}</strong><span>COMPLETIONIST</span>
+        </div>
+        <div className="gl-details-hltb-cell">
+          <strong>{playtimeLabel(playtime)}</strong><span>YOUR PLAYTIME</span>
+        </div>
       </div>
 
       <footer className="gl-details-footer">A Select · B Back · D-pad / Left stick Navigate · Steam controls remain available</footer>

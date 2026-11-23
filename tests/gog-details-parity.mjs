@@ -10,7 +10,7 @@ test("GOG details uses Steam layout CSS but not Steam install or launch APIs",()
   assert.match(ui,/className="gl-game-details gl-gog-steam-details gl-unified-details"/);
   for(const token of [
     "gl-details-hero","gl-details-scroller","gl-details-intro",
-    "gl-details-hltb gl-details-metrics","gl-details-action-row",
+    "gl-details-hltb gl-details-hltb-strip","gl-details-summary","gl-details-action-row",
     "gl-details-meta-cell","gl-details-meta-achievements"
   ])assert.ok(ui.includes(token),token+" missing from GOG details");
   assert.match(ui,/gl-details-gog-poster/);

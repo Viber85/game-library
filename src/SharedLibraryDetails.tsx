@@ -2,7 +2,7 @@ import {useEffect,useRef,useState,type ReactNode,type Ref} from "react";
 import {Focusable,GamepadButton,type GamepadEvent} from "@decky/ui";
 import {
   MdAccessTime,MdArrowBack,MdCheckCircle,MdDownload,
-  MdEmojiEvents,MdShield,MdStorefront
+  MdEmojiEvents,MdShield,MdStorefront,MdStorage
 } from "react-icons/md";
 import type {UnifiedLibraryGame} from "./unifiedLibraryGame";
 import {requestGogHltbTimes,requestProtonRating,type HltbReply,type ProtonRating} from "./metadataRequests";
@@ -212,47 +212,53 @@ export function SharedLibraryDetails({
             <span className="gl-details-dot">·</span>
             <span>{status}</span>
           </div>
-          <div className="gl-details-hltb gl-details-metrics" aria-label="HowLongToBeat, last played and achievements">
-            <div className="gl-details-hltb-cell"><strong>{hours(hltbData?.main)}</strong>
-              <span>MAIN STORY</span></div>
-            <div className="gl-details-hltb-cell"><strong>{hours(hltbData?.extras)}</strong>
-              <span>MAIN + EXTRAS</span></div>
-            <div className="gl-details-hltb-cell"><strong>{hours(hltbData?.completionist)}</strong>
-              <span>COMPLETIONIST</span></div>
-            <div className="gl-details-hltb-cell">
-              <strong>{typeof game.playtimeMinutes==="number"?
-                (game.playtimeMinutes/60).toFixed(1)+" hours":"—"}</strong>
-              <span>YOUR PLAYTIME</span>
+          <div className="gl-details-summary" aria-label="Game installation and progress summary">
+            <div className="gl-details-meta-cell gl-details-meta-space">
+              <MdStorage aria-hidden="true"/><div><small>SPACE REQUIRED</small>
+                <strong>—</strong>
+              </div>
             </div>
             <div className="gl-details-meta-cell">
-              <MdAccessTime/><div><small>LAST PLAYED</small>
+              <MdAccessTime aria-hidden="true"/><div><small>LAST PLAYED</small>
                 <strong>{typeof game.lastPlayed==="number"&&game.lastPlayed>0?
                   lastPlayedLabel(game.lastPlayed):"—"}</strong>
               </div>
             </div>
             <div className="gl-details-meta-cell gl-details-meta-achievements">
-              <MdEmojiEvents/><div><small>ACHIEVEMENTS</small>
+              <MdEmojiEvents aria-hidden="true"/><div><small>ACHIEVEMENTS</small>
                 <strong>Unavailable</strong>
                 <div className="gl-details-empty-progress" aria-hidden="true"/>
               </div>
             </div>
           </div>
-        </div>
         <div className="gl-details-action-row">
             {actions ? <div className="gl-actions">{actions}</div>:
               <div className="gl-details-primary gl-gog-install-pending"
                   aria-disabled="true" title="GOG downloader integration in progress">
                 <MdDownload/><strong>Install</strong>
               </div>}
-            <div className="gl-details-space">
-              <span>SPACE REQUIRED</span>
-              <strong>—</strong>
-            </div>
           </div>
+          <div className="gl-details-progress-slot" aria-label="Download status and controls">
           {!actions&&<div className="gl-details-install-help">
             GOG installation requires a separate gogdl downloader, a drive picker
             and Proton setup. These actions are not connected yet.
           </div>}
+          </div>
+        </div>
+      </div>
+
+      <div className="gl-details-hltb gl-details-hltb-strip" aria-label="HowLongToBeat times and local playtime">
+        <div className="gl-details-hltb-cell"><strong>{hours(hltbData?.main)}</strong>
+          <span>MAIN STORY</span></div>
+        <div className="gl-details-hltb-cell"><strong>{hours(hltbData?.extras)}</strong>
+          <span>MAIN + EXTRAS</span></div>
+        <div className="gl-details-hltb-cell"><strong>{hours(hltbData?.completionist)}</strong>
+          <span>COMPLETIONIST</span></div>
+        <div className="gl-details-hltb-cell">
+          <strong>{typeof game.playtimeMinutes==="number"?
+            (game.playtimeMinutes/60).toFixed(1)+" hours":"—"}</strong>
+          <span>YOUR PLAYTIME</span>
+        </div>
       </div>
 
       <footer className="gl-details-footer">
