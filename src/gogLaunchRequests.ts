@@ -12,7 +12,15 @@ export type GogLaunchInfo={
   install_dir?:string;candidates:GogExeCandidate[];
   shortcut?:GogSteamShortcut|null;
 };
+export type InstalledGogProtonTool={
+  strToolName:string;strDisplayName:string;source:"valve"|"custom";
+};
+export type InstalledGogProtonReply={
+  ok:boolean;reason?:string;tools:InstalledGogProtonTool[];
+};
 type Reply={ok:boolean;reason?:string;ready?:boolean;app_id?:number};
+const getTools=callable<[],InstalledGogProtonReply>("get_gog_proton_tools");
+export const getInstalledGogProtonTools=()=>getTools();
 
 const inspect=callable<[string,string],GogLaunchInfo>("inspect_gog_launch");
 const register=callable<[string,string,string,string,number],Reply>("register_gog_shortcut");

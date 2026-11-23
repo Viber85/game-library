@@ -36,6 +36,23 @@ def _load_gog_install():
     return _GOG_INSTALL_MODULE
 
 
+_GOG_PROTON_MODULE = None
+
+
+def _load_gog_proton():
+    """Cached read-only installed Proton tool discovery."""
+    global _GOG_PROTON_MODULE
+    if _GOG_PROTON_MODULE is None:
+        spec = importlib.util.spec_from_file_location(
+            "game_library_gog_proton", str(BASE / "gog_proton.py"))
+        if spec is None or spec.loader is None:
+            raise RuntimeError("GOG Proton discovery module missing.")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _GOG_PROTON_MODULE = module
+    return _GOG_PROTON_MODULE
+
+
 _GOG_LAUNCH_MODULE = None
 
 
@@ -520,6 +537,11 @@ class Plugin:
         return await asyncio.to_thread(
             _load_gog_launch().inspect, _load_gog_install(), _load_gog(),
             account_id, product_id)
+
+    async def get_gog_proton_tools(self):
+        """List verified locally installed Proton tools, read-only."""
+        return await asyncio.to_thread(
+            _load_gog_proton().discover, _load_gog_install())
 
     async def register_gog_shortcut(self, account_id: str, product_id: str,
                                     install_dir: str, executable: str, app_id: int):

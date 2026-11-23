@@ -1,4 +1,5 @@
 import {inspectGogLaunch,registerGogShortcut,finalizeGogShortcut,
+  getInstalledGogProtonTools,
   type GogLaunchInfo} from "./gogLaunchRequests";
 import {canonicalSteamAppId,requestSteamLaunch,type SteamAppStore} from "./launchGame";
 
@@ -94,10 +95,20 @@ export async function availableGogProtonTools(
   if(typeof settings?.GetGlobalCompatTools==="function"){
     try{
       const globalTools=await settings.GetGlobalCompatTools();
-      if(Array.isArray(globalTools))return globalTools;
+      if(Array.isArray(globalTools)&&globalTools.some(safeTool))return globalTools;
     }catch(error){
       console.warn("[game-library] Steam global compat tools unavailable",error);
     }
+  }
+  // October 2026 Steam clients can expose SpecifyCompatTool but neither
+  // enumeration API. Query locally *installed* verified Steam depots / custom
+  // compatibilitytool.vdf IDs through Decky, without writing Steam config.
+  try{
+    const installed=await getInstalledGogProtonTools();
+    if(installed.ok&&Array.isArray(installed.tools))
+      return installed.tools.filter(safeTool);
+  }catch(error){
+    console.warn("[game-library] local Proton discovery unavailable",error);
   }
   return [];
 }
@@ -158,7 +169,7 @@ export async function configureGogPlay(
   const tools=await availableGogProtonTools(appId,apps,client?.Settings);
   const tool=preferredProtonTool(tools);
   if(!tool)
-    throw new Error("Steam shortcut created, but no Proton tool was returned by Steam. Install or select Proton in Steam and retry Set up Play.");
+    throw new Error("Steam shortcut created, but no installed Proton tool could be found. Check Steam Settings → Compatibility and confirm Proton is installed. The shortcut is saved; retry Set up Play after installing Proton.");
   try{
     await Promise.resolve(apps.SpecifyCompatTool(appId,tool));
   }catch(error){

@@ -85,7 +85,7 @@ test("failed Proton configuration records shortcut rather than duplicating it",(
   const finalize=bridge.indexOf('await finalizeGogShortcut(');
   assert.ok(registered>0&&compat>registered&&finalize>compat);
   assert.match(bridge,/if\(old\?\.ready\)return state/);
-  assert.match(bridge,/Steam shortcut created, but no Proton tool/);
+  assert.match(bridge,/Steam shortcut created, but no installed Proton tool/);
 });
 
 test("completed GOG shortcuts live in private per-user metadata, not on SD games",()=>{
@@ -113,4 +113,20 @@ test("GOG launch registration never calls a nonexistent installer account method
   assert.doesNotMatch(register,/installer\._account\(/);
   assert.match(register,/installer\._account_and_game/);
   assert.match(register,/type\(error\)\.__name__/);
+});
+
+test("current SteamOS clients can discover locally installed Proton versions when enumeration APIs are removed",()=>{
+  const scanner=read("gog_proton.py");
+  assert.match(main,/async def get_gog_proton_tools\(self\):/);
+  assert.match(main,/_load_gog_proton\(\)\.discover/);
+  assert.match(rpc,/getInstalledGogProtonTools/);
+  assert.match(rpc,/get_gog_proton_tools/);
+  assert.match(bridge,/await getInstalledGogProtonTools\(\)/);
+  assert.match(bridge,/return installed\.tools\.filter\(safeTool\)/);
+  assert.match(scanner,/def _custom_tool_name\(path\):/);
+  assert.match(scanner,/def _valve_name\(name\):/);
+  assert.match(scanner,/return "proton_experimental"/);
+  assert.match(scanner,/"proton"[\s\S]*"toolmanifest\.vdf"/);
+  assert.doesNotMatch(scanner,/shortcuts\.vdf|os\.system|subprocess|write_text|shutil\.rmtree/);
+  assert.match(pkg,/cp gog\.py gog_phone\.py qrcodegen\.py gog_install\.py gog_launch\.py gog_proton\.py/);
 });
