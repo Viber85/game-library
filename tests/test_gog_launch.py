@@ -135,3 +135,62 @@ class GogLaunchTests(unittest.TestCase):
         self.assertEqual(len(r["candidates"]),1)
         self.assertEqual(r["candidates"][0]["relative"],"setup.exe")
         self.assertFalse(r["candidates"][0]["recommended"])
+
+    def test_shortcut_is_registered_in_private_user_storage_not_game_folder(self):
+        game = self.completed_game(self.root / "On SD Card")
+        (game / "Game.exe").write_bytes(b"game")
+        reply = launch.register(self.installer, self.gog, "1234", "730",
+                                str(game), "Game.exe", 0x90000021)
+        self.assertTrue(reply["ok"], reply)
+        registry, _, _ = launch._registry_path(self.installer, game, "1234", "730")
+        self.assertTrue(registry.is_file())
+        self.assertTrue(str(registry).startswith(str(self.root / ".local")))
+        self.assertFalse((game / launch._LAUNCH_MARKER).exists())
+        self.assertEqual(launch.inspect(self.installer,self.gog,"1234","730")
+                         ["shortcut"]["app_id"], 0x90000021)
+        self.assertTrue(launch.finalize(self.installer, self.gog, "1234", "730",
+                                        0x90000021, "proton_experimental")["ok"])
+        self.assertTrue(launch.inspect(self.installer,self.gog,"1234","730")
+                        ["shortcut"]["ready"])
+
+    def test_private_registry_paths_are_account_and_install_location_scoped(self):
+        one = self.completed_game(self.root / "Game One")
+        two = self.completed_game(self.root / "Game Two")
+        a = launch._registry_path(self.installer, one, "1234", "730")[0]
+        b = launch._registry_path(self.installer, two, "1234", "730")[0]
+        c = launch._registry_path(self.installer, one, "5678", "730")[0]
+        self.assertNotEqual(a,b)
+        self.assertNotEqual(a,c)
+
+    def test_legacy_in_game_shortcut_marker_remains_readable(self):
+        game = self.completed_game(self.root / "Legacy Game")
+        (game / "Game.exe").write_bytes(b"game")
+        marker = {"account":launch.hashlib.sha256(b"1234").hexdigest()[:24],
+                  "product":"730","relative":"Game.exe","app_id":0x90000028,
+                  "tool":"proton_experimental"}
+        (game / launch._LAUNCH_MARKER).write_text(json.dumps(marker))
+        info = launch.inspect(self.installer,self.gog,"1234","730")
+        self.assertEqual(info["status"],"ready")
+        self.assertEqual(info["shortcut"]["app_id"],0x90000028)
+
+    def test_gog_shortcut_storage_error_reports_os_error_instead_of_generic(self):
+        game = self.completed_game(self.root / "Error Game")
+        (game / "Game.exe").write_bytes(b"game")
+        from unittest import mock
+        import errno
+        with mock.patch.object(launch,"_write_launch",
+             side_effect=OSError(errno.EACCES,"Permission denied")):
+            result = launch.register(self.installer,self.gog,"1234","730",
+                                     str(game),"Game.exe",0x90000029)
+        self.assertFalse(result["ok"])
+        self.assertIn("OS error 13",result["reason"])
+
+    def test_symlinked_private_registry_parent_is_rejected(self):
+        game = self.completed_game(self.root / "Link Game")
+        (game / "Game.exe").write_bytes(b"game")
+        home = self.root
+        (home / ".local").symlink_to(game, target_is_directory=True)
+        result = launch.register(self.installer,self.gog,"1234","730",
+                                 str(game),"Game.exe",0x90000030)
+        self.assertFalse(result["ok"])
+        self.assertIn("Unsafe",result["reason"])

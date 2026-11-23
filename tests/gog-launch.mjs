@@ -52,7 +52,7 @@ test("backend only registers shortcuts for known paths and completed marker",()=
   assert.match(main,/async def finalize_gog_shortcut/);
   assert.match(backend,/if relative not in \[x\["relative"\] for x in state\["candidates"\]\]:/);
   assert.match(backend,/if old\["app_id"\] != app_id or old\["relative"\] != relative:/);
-  assert.match(backend,/def _read_launch\(root, account, product, candidates\):/);
+  assert.match(backend,/def _read_launch\(installer, root, account, product, candidates\):/);
   assert.match(rpc,/registerGogShortcut/);
   assert.match(rpc,/inspectGogLaunch/);
   assert.match(pkg,/cp gog\.py gog_phone\.py qrcodegen\.py gog_install\.py gog_launch\.py/);
@@ -86,4 +86,23 @@ test("failed Proton configuration records shortcut rather than duplicating it",(
   assert.ok(registered>0&&compat>registered&&finalize>compat);
   assert.match(bridge,/if\(old\?\.ready\)return state/);
   assert.match(bridge,/Steam shortcut created, but no Proton tool/);
+});
+
+test("completed GOG shortcuts live in private per-user metadata, not on SD games",()=>{
+  assert.match(backend,/def _registry_path\(installer, root, account, product\):/);
+  assert.match(backend,/gog-launch/);
+  assert.match(backend,/def _ensure_registry_parent\(parent, home, user\):/);
+  assert.match(backend,/def _write_launch\(installer, install_dir, account, product, payload\):/);
+  assert.match(backend,/temp\.replace\(path\)/);
+  assert.match(backend,/root \/ _LAUNCH_MARKER/);
+  assert.match(backend,/except OSError as e:/);
+  assert.doesNotMatch(backend,/_write_launch\(Path\(install_dir\) \/ _LAUNCH_MARKER/);
+});
+
+test("failed shortcut metadata registration does not duplicate Steam shortcut in this session",()=>{
+  assert.match(bridge,/pendingGogShortcuts=new Map/);
+  assert.match(bridge,/pendingGogShortcuts\.set\(key,\{appId,exe:executable\}\)/);
+  assert.match(bridge,/pending\?\.appId\?\?await createShortcut/);
+  assert.match(bridge,/pendingGogShortcuts\.delete\(key\)/);
+  assert.match(bridge,/retry Set up Play without restarting Game Library/);
 });

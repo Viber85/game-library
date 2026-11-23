@@ -21,6 +21,9 @@ type SteamWindow=Window&{
   appStore?:SteamAppStore&{GetAppOverviewByAppID?:(id:number)=>unknown};
 };
 const steam=()=>window as SteamWindow;
+// Keep a Steam-created shortcut ID through a failed backend registration in
+// the current Game Mode session, so Retry cannot create duplicate shortcuts.
+const pendingGogShortcuts=new Map<string,{appId:number;exe:string}>();
 const validShortcutId=(appId:number)=>
   Number.isInteger(appId)&&appId>=0x80000000&&appId<=0xffffffff;
 const safeTool=(tool:CompatTool)=>typeof tool?.strToolName==="string"&&
@@ -121,9 +124,14 @@ export async function configureGogPlay(
 
   const executable=state.install_dir+"/"+exe.relative;
   const workingDirectory=executable.slice(0,executable.lastIndexOf("/"));
+  const key=account+":"+product;
+  const pending=pendingGogShortcuts.get(key);
   let appId=old?.app_id;
   if(appId===undefined){
-    appId=await createShortcut(apps,title,executable);
+    if(pending&&pending.exe!==executable)
+      throw new Error("Steam shortcut for a different executable was created in this session. Restart Steam and check non-Steam shortcuts before changing the executable.");
+    appId=pending?.appId??await createShortcut(apps,title,executable);
+    pendingGogShortcuts.set(key,{appId,exe:executable});
     await waitForShortcutOverview(appId);
     // Some Steam builds ignore the remaining AddShortcut arguments; update
     // fields separately after Steam has registered the shortcut.
@@ -138,7 +146,9 @@ export async function configureGogPlay(
     const registered=await registerGogShortcut(
       account,product,state.install_dir,exe.relative,appId);
     if(!registered.ok)
-      throw new Error(registered.reason||"Steam created the shortcut, but Game Library could not record it.");
+      throw new Error((registered.reason||"Steam shortcut could not be registered.")+
+        " The Steam shortcut was created; retry Set up Play without restarting Game Library to reuse it.");
+    pendingGogShortcuts.delete(key);
   }
   if(!validShortcutId(appId))throw new Error("Stored Steam shortcut ID is invalid.");
   if(old?.ready)return state;
