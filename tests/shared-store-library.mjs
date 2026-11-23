@@ -26,7 +26,7 @@ test("GOG owned metadata never pretends to be installed, launchable or a Steam s
   assert.equal(game.store,"gog");
   assert.equal(game.availability,"unknown");
   assert.equal(game.steamAppId,undefined);
-  assert.deepEqual(game.capabilities,["details"]);
+  assert.deepEqual(game.capabilities,["details","install"]);
   assert.equal(game.cover,"https://images.gog-statics.com/example.webp");
   assert.equal(gogCatalogAdapter.toLibraryGame({
     id:"98765",title:"Example Game",image:"",background:"",

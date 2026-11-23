@@ -86,5 +86,5 @@ test("Single grid focus and alphabet are store-safe; GOG cannot become installed
   assert.match(ui,/focusedGameKey=\{selectedGridKey\}/);
   assert.match(alphabet,/focusedGameKey\?:string/);
   assert.match(model,/availability:"unknown"/);
-  assert.match(model,/capabilities:\["details"\]/);
+  assert.match(model,/capabilities:\["details","install"\]/);
 });
