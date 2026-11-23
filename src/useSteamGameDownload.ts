@@ -44,6 +44,7 @@ const same=(a:GameDownloadSnapshot,b:GameDownloadSnapshot)=>
   a.metrics.downloadedBytes===b.metrics.downloadedBytes&&
   a.metrics.totalBytes===b.metrics.totalBytes&&
   a.metrics.remainingSeconds===b.metrics.remainingSeconds&&
+  a.metrics.networkBytesPerSecond===b.metrics.networkBytesPerSecond&&
   a.downloadNature===b.downloadNature&&
   a.debug.items===b.debug.items&&a.debug.overview===b.debug.overview&&
   a.debug.store===b.debug.store&&a.debug.queue===b.debug.queue;

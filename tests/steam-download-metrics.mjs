@@ -3,7 +3,7 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 import {
   readSteamDownloadMetrics,EMPTY_DOWNLOAD_METRICS,
-  formatDownloadBytes,formatDownloadTime
+  formatDownloadBytes,formatDownloadTime,formatDownloadSpeed
 } from "../src/steamDownloadMetrics.ts";
 
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
@@ -18,7 +18,7 @@ test("the active app uses real Steam overview bytes and its remaining seconds",(
     update_bytes_to_download:8*GiB,update_seconds_remaining:240
   });
   assert.deepEqual(data,{
-    downloadedBytes:2*GiB,totalBytes:8*GiB,remainingSeconds:240
+    downloadedBytes:2*GiB,totalBytes:8*GiB,remainingSeconds:240,networkBytesPerSecond:null
   });
 });
 
@@ -28,7 +28,7 @@ test("ETA uses Steam Downloads' overall remaining time before network-only estim
     update_seconds_remaining:210,
     update_bytes_downloaded:2*GiB,update_bytes_to_download:4*GiB};
   assert.deepEqual(readSteamDownloadMetrics(730,[],overview),{
-    downloadedBytes:2*GiB,totalBytes:4*GiB,remainingSeconds:455
+    downloadedBytes:2*GiB,totalBytes:4*GiB,remainingSeconds:455,networkBytesPerSecond:null
   });
   assert.equal(formatDownloadTime(455),"8 min");
   assert.equal(readSteamDownloadMetrics(570,[],overview).remainingSeconds,null);
@@ -65,13 +65,13 @@ test("the queue counts the current game's local bytes and rejects other PCs",()=
     }]}
   ];
   assert.deepEqual(readSteamDownloadMetrics(730,items,null),{
-    downloadedBytes:3*GiB,totalBytes:8*GiB,remainingSeconds:null
+    downloadedBytes:3*GiB,totalBytes:8*GiB,remainingSeconds:null,networkBytesPerSecond:null
   });
   assert.deepEqual(readSteamDownloadMetrics(730,items,{
     remote_client_id:"725",update_appid:730,update_state:"Downloading",
     update_bytes_downloaded:6*GiB,update_bytes_to_download:8*GiB,
     update_seconds_remaining:9
-  }),{downloadedBytes:3*GiB,totalBytes:8*GiB,remainingSeconds:null});
+  }),{downloadedBytes:3*GiB,totalBytes:8*GiB,remainingSeconds:null,networkBytesPerSecond:null});
 });
 
 test("paused and finished downloads do not inherit an ETA or false totals",()=>{
@@ -81,7 +81,7 @@ test("paused and finished downloads do not inherit an ETA or false totals",()=>{
     update_seconds_remaining:600
   });
   assert.deepEqual(paused,{
-    downloadedBytes:1024,totalBytes:2048,remainingSeconds:null
+    downloadedBytes:1024,totalBytes:2048,remainingSeconds:null,networkBytesPerSecond:null
   });
   assert.deepEqual(readSteamDownloadMetrics(730,[],{
     update_appid:730,update_state:"None",update_bytes_downloaded:1024,
@@ -104,7 +104,7 @@ test("missing ETA or total size is unknown, not guessed from percentage",()=>{
   }),EMPTY_DOWNLOAD_METRICS);
   assert.deepEqual(readSteamDownloadMetrics(730,[],{
     update_appid:730,update_state:"Downloading",update_seconds_remaining:90
-  }),{downloadedBytes:null,totalBytes:null,remainingSeconds:90});
+  }),{downloadedBytes:null,totalBytes:null,remainingSeconds:90,networkBytesPerSecond:null});
 });
 
 test("local app overview is a fallback only during a matched active transfer",()=>{
@@ -113,7 +113,7 @@ test("local app overview is a fallback only during a matched active transfer",()
   }};
   const queue=[{appid:730,active:true,completed:false,queue_index:0}];
   assert.deepEqual(readSteamDownloadMetrics(730,queue,null,overview),{
-    downloadedBytes:GiB,totalBytes:5*GiB,remainingSeconds:null
+    downloadedBytes:GiB,totalBytes:5*GiB,remainingSeconds:null,networkBytesPerSecond:null
   });
   assert.deepEqual(readSteamDownloadMetrics(730,[],null,overview),EMPTY_DOWNLOAD_METRICS);
 });
@@ -141,4 +141,49 @@ test("Game Details shows byte progress and native ETA only for selected transfer
   assert.match(hook,/readSteamDownloadMetrics\(appId,chosenItems,chosenOverview,app\)/);
   assert.match(hook,/a\.metrics\.remainingSeconds===b\.metrics\.remainingSeconds/);
   assert.match(css,/\.gl-root \.gl-details-download-metrics/);
+});
+
+test("native Steam current network rate belongs only to the selected local AppID",()=>{
+  const overview={update_appid:730,update_state:"Updating",
+    update_network_bytes_per_second:42.5*1024**2};
+  assert.equal(readSteamDownloadMetrics(730,[],overview).networkBytesPerSecond,42.5*1024**2);
+  assert.equal(formatDownloadSpeed(readSteamDownloadMetrics(730,[],overview).networkBytesPerSecond),"42.5 MB/s");
+  assert.equal(readSteamDownloadMetrics(570,[],overview).networkBytesPerSecond,null);
+  assert.equal(readSteamDownloadMetrics(730,[],{...overview,remote_client_id:"123"})
+    .networkBytesPerSecond,null);
+  assert.equal(readSteamDownloadMetrics(730,[],{...overview,update_state:"None"})
+    .networkBytesPerSecond,null);
+});
+
+test("paused, queued, absent and invalid network rates are not guessed",()=>{
+  const active={update_appid:730,update_state:"Updating",
+    update_network_bytes_per_second:5*1024**2};
+  assert.equal(readSteamDownloadMetrics(730,[],{...active,paused:true})
+    .networkBytesPerSecond,null);
+  assert.equal(readSteamDownloadMetrics(730,[],{
+    update_appid:730,update_state:"Updating",update_bytes_downloaded:2*GiB,
+    update_bytes_to_download:6*GiB
+  }).networkBytesPerSecond,null);
+  assert.equal(readSteamDownloadMetrics(730,[],{
+    ...active,update_network_bytes_per_second:0
+  }).networkBytesPerSecond,0);
+  for(const invalid of [-1,Infinity,NaN,"invalid"]){
+    assert.equal(readSteamDownloadMetrics(730,[],{
+      ...active,update_network_bytes_per_second:invalid
+    }).networkBytesPerSecond,null);
+  }
+  assert.equal(formatDownloadSpeed(256*1024),"256.0 KB/s");
+  assert.equal(formatDownloadSpeed(512),"512 B/s");
+  assert.equal(formatDownloadSpeed(0),"0 B/s");
+  assert.equal(formatDownloadSpeed(null),"—");
+});
+
+test("details speed follows Steam overview events and handles paused download",()=>{
+  const details=read("src/SteamGameDetails.tsx");
+  const hook=read("src/useSteamGameDownload.ts");
+  assert.match(details,/<b>Speed<\/b>/);
+  assert.match(details,/formatDownloadSpeed\(nativeDownload\.metrics\.networkBytesPerSecond\)/);
+  assert.match(details,/nativeDownload\.transfer\.phase==="queued"\?"—":/);
+  assert.match(hook,/a\.metrics\.networkBytesPerSecond===b\.metrics\.networkBytesPerSecond/);
+  assert.match(hook,/RegisterForDownloadOverview/);
 });

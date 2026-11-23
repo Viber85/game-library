@@ -27,7 +27,7 @@ import {toaster,callable} from "@decky/api";
 import {openSteamInstallWizard} from "./steamInstallWizard";
 import {useSteamGameDownload} from "./useSteamGameDownload";
 import {resolveInstallMode,transferLabel} from "./steamDownloadProgressCore";
-import {formatDownloadBytes,formatDownloadTime} from "./steamDownloadMetrics";
+import {formatDownloadBytes,formatDownloadTime,formatDownloadSpeed} from "./steamDownloadMetrics";
 import {nativeDownloadAction} from "./steamDownloadActionsCore";
 import {withRequestTimeout} from "./requestDeadline";
 
@@ -579,6 +579,9 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                     <span><b>Remaining</b> {formatDownloadBytes(Math.max(0,
                       nativeDownload.metrics.totalBytes-nativeDownload.metrics.downloadedBytes))}</span>
                   </>}
+                <span><b>Speed</b> {nativeDownload.transfer.phase==="paused"||
+                  nativeDownload.transfer.phase==="queued"?"—":
+                  formatDownloadSpeed(nativeDownload.metrics.networkBytesPerSecond)}</span>
                 <span><b>Time left</b> {nativeDownload.transfer.phase==="paused"||
                   nativeDownload.transfer.phase==="queued"?"—":
                   formatDownloadTime(nativeDownload.metrics.remainingSeconds)}</span>

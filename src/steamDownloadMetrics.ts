@@ -6,9 +6,11 @@ export interface SteamDownloadMetrics {
   downloadedBytes:number|null;
   totalBytes:number|null;
   remainingSeconds:number|null;
+  networkBytesPerSecond:number|null;
 }
 export const EMPTY_DOWNLOAD_METRICS:SteamDownloadMetrics={
-  downloadedBytes:null,totalBytes:null,remainingSeconds:null
+  downloadedBytes:null,totalBytes:null,remainingSeconds:null,
+  networkBytesPerSecond:null
 };
 type Data=Record<string,unknown>;
 const obj=(v:unknown):Data|null=>
@@ -103,11 +105,17 @@ export function readSteamDownloadMetrics(
     positiveETA(live.overall_estimated_time_remaining_sec) ??
     positiveETA(live.update_seconds_remaining)
   ):null;
+  // Steam's Downloads overview supplies the actual current network rate in
+  // bytes/s. activeOverview already validates this is the selected local app.
+  // Never substitute another game's rate or infer speed from progress deltas.
+  const rate=live&&live.paused!==true?
+    nonnegative(live.update_network_bytes_per_second):null;
   return {
     downloadedBytes:bytes?.downloadedBytes??null,
     totalBytes:bytes?.totalBytes??null,
     // -1, zero, infinity and missing mean Steam has no useful ETA.
-    remainingSeconds:left!==null&&left>0?Math.round(left):null
+    remainingSeconds:left!==null&&left>0?Math.round(left):null,
+    networkBytesPerSecond:rate
   };
 }
 export function formatDownloadBytes(bytes:number|null):string{
@@ -124,4 +132,12 @@ export function formatDownloadTime(seconds:number|null):string{
   if(min<60)return min+" min";
   const hours=Math.floor(min/60),minutes=min%60;
   return minutes?hours+" h "+minutes+" min":hours+" h";
+}
+
+/** Steam provides bytes per second; null means not reported, unlike a real zero. */
+export function formatDownloadSpeed(rate:number|null):string{
+  if(rate===null||!Number.isFinite(rate)||rate<0)return "—";
+  if(rate>=1024**2)return (rate/(1024**2)).toFixed(1)+" MB/s";
+  if(rate>=1024)return (rate/1024).toFixed(1)+" KB/s";
+  return Math.round(rate)+" B/s";
 }
