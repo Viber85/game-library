@@ -16,6 +16,9 @@ import {preflightGogInstall,startGogInstall,getGogInstallStatus,cancelGogInstall
   pauseGogInstall,resumeGogInstall,
   type GogInstallMode,type GogInstallState} from "./gogInstallRequests";
 import {GogInstallModal} from "./GogInstallModal";
+import {GogLaunchModal} from "./GogLaunchModal";
+import {inspectGogLaunch,type GogLaunchInfo} from "./gogLaunchRequests";
+import {configureGogPlay,playGogShortcut} from "./gogSteamShortcut";
 
 const stop=(event:GamepadEvent)=>{
   event.preventDefault();
@@ -55,14 +58,24 @@ export function SharedLibraryDetails({
   const [installSize,setInstallSize]=useState<number|null>(null);
   const [installSnapshot,setInstallSnapshot]=useState<GogInstallState>({status:"idle"});
   const [installError,setInstallError]=useState("");
+  const [launchInfo,setLaunchInfo]=useState<GogLaunchInfo|null>(null);
+  const [launchBusy,setLaunchBusy]=useState(false);
   const rootRef=useRef<HTMLElement>(null);
   const focusRefs=useRef<Record<string,HTMLDivElement|null>>({});
   const changedFocus=useRef(false);
   const statusRef=useRef<HTMLDivElement>(null);
   const internalBackRef=useRef<HTMLDivElement|null>(null);
   const store=STORE_LABELS[game.store];
-  const status=game.store==="gog"&&installSnapshot.status==="downloaded"?
-    "Downloaded · launch setup pending":game.availability==="installed"?"Installed":
+  const gogReady=game.store==="gog"&&launchInfo?.status==="ready"&&
+    launchInfo.shortcut?.ready===true;
+  const gogDownloaded=game.store==="gog"&&(
+    installSnapshot.status==="downloaded"||
+    launchInfo?.status==="downloaded"||
+    launchInfo?.status==="registered"||
+    launchInfo?.status==="ready");
+  const status=gogReady?"Installed · Proton ready":
+    gogDownloaded?"Downloaded · setup pending":
+    game.availability==="installed"?"Installed":
     game.availability==="not-installed"?"Not installed":"Owned";
   useEffect(()=>{
     changedFocus.current=false;
@@ -180,12 +193,60 @@ export function SharedLibraryDetails({
     return ()=>{active=false;window.clearInterval(timer);};
   },[game.store,game.storeId,gogAccountId]);
 
+
+  // Restore completed GOG installations and their Steam shortcuts after
+  // plugin restarts, not just after a live in-memory download finishes.
+  useEffect(()=>{
+    if(game.store!=="gog"||!gogAccountId){
+      setLaunchInfo(null);
+      return;
+    }
+    let active=true;
+    setLaunchInfo(null);
+    void inspectGogLaunch(gogAccountId,game.storeId).then(info=>{
+      if(active)setLaunchInfo(info);
+    }).catch(()=>{if(active)setLaunchInfo(null);});
+    return ()=>{active=false;};
+  },[game.key,game.store,game.storeId,gogAccountId,
+     installSnapshot.status==="downloaded"]);
+
+  const openGogLaunchSetup=()=>{
+    if(game.store!=="gog"||!gogAccountId||launchBusy)return;
+    setLaunchBusy(true);setInstallError("");
+    void inspectGogLaunch(gogAccountId,game.storeId).then(info=>{
+      if(!info.ok||info.status==="not-installed")
+        throw new Error(info.reason||"The GOG download is not complete.");
+      setLaunchInfo(info);
+      showModal(<GogLaunchModal title={game.title} info={info}
+        onConfirm={async(relative:string)=>{
+          const updated=await configureGogPlay(
+            gogAccountId,game.storeId,game.title,relative);
+          if(!updated.ok||updated.status!=="ready")
+            throw new Error(updated.reason||"Proton configuration is not ready.");
+          setLaunchInfo(updated);
+          setInstallError("");
+        }}/>);
+    }).catch(error=>setInstallError(error instanceof Error?error.message:
+      "Unable to configure GOG game launching.")).finally(()=>setLaunchBusy(false));
+  };
+
+  const playGogGame=()=>{
+    if(!gogReady||!launchInfo?.shortcut?.app_id)return;
+    try{
+      if(!playGogShortcut(launchInfo.shortcut.app_id))
+        setInstallError("Steam could not start the GOG shortcut. Check Steam Properties.");
+    }catch(error){
+      setInstallError(error instanceof Error?error.message:
+        "Steam could not launch the GOG game.");
+    }
+  };
+
   const openInstall=()=>{
     if(game.store!=="gog"||!gogAccountId||installBusy)return;
     if(installSnapshot.status==="starting"||installSnapshot.status==="downloading"||
        installSnapshot.status==="paused")return;
-    if(installSnapshot.status==="downloaded"){
-      setInstallError("Download complete. Proton launch setup is not available yet.");
+    if(gogDownloaded){
+      openGogLaunchSetup();
       return;
     }
     setInstallBusy(true);setInstallError("");
@@ -232,11 +293,11 @@ export function SharedLibraryDetails({
     installSnapshot.status==="downloading"||
     installSnapshot.status==="paused";
   const isPaused=installSnapshot.status==="paused";
-  const gogInstallLabel=installBusy?"Working…":
+  const gogInstallLabel=launchBusy?"Preparing…":installBusy?"Working…":
     isDownloading?(isPaused?"Paused":"Downloading")+
       (typeof installSnapshot.percent==="number"?
         " "+installSnapshot.percent.toFixed(0)+"%":""):
-    installSnapshot.status==="downloaded"?"Downloaded":"Install";
+    gogReady?"Play":gogDownloaded?"Set up Play":"Install";
   const sizeLabel=(bytes:number|null|undefined)=>{
     if(typeof bytes!=="number"||!Number.isFinite(bytes)||bytes<0)return "—";
     return (bytes/(1024**3)).toFixed(1)+" GB";
@@ -322,9 +383,14 @@ export function SharedLibraryDetails({
               game.store==="gog"?
               <Focusable {...onAction("install")}
                   className="gl-details-focus gl-details-primary"
-                  onOKActionDescription="Choose GOG installation location"
-                  onActivate={openInstall}>
-                <MdDownload/><strong>{gogInstallLabel}</strong>
+                  onOKActionDescription={gogReady?"Play GOG game":
+                    gogDownloaded?"Configure GOG game with Proton":
+                    "Choose GOG installation location"}
+                  onActivate={gogReady?playGogGame:
+                    gogDownloaded?openGogLaunchSetup:openInstall}>
+                {gogReady?<MdPlayArrow/>:
+                  gogDownloaded?<MdStorage/>:<MdDownload/>}
+                <strong>{gogInstallLabel}</strong>
               </Focusable>:
               <div className="gl-details-primary gl-gog-install-pending"
                    aria-disabled="true">

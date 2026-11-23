@@ -17,7 +17,7 @@ trap 'rm -rf "$stage"' EXIT
 dest="$stage/game-library"
 mkdir -p "$dest/dist"
 cp plugin.json main.py updates.py hltb.py protondb.py steamgriddb.py steam_size.py nonsteam_size.py system_status.py steam_cancel_cleanup.py package.json README.md "$dest/"
-cp gog.py gog_phone.py qrcodegen.py gog_install.py "$dest/"
+cp gog.py gog_phone.py qrcodegen.py gog_install.py gog_launch.py "$dest/"
 # Official Heroic GOGDL v1.4.0 Linux x86_64 zipapp. Validate the release's
 # published SHA-256 rather than installing an unpinned build or using another
 # plugin's private binary. Source and GPL license accompany the package.
@@ -43,6 +43,7 @@ unzip -Z1 "$output" | grep -qx 'game-library/plugin.json'
 unzip -Z1 "$output" | grep -qx 'game-library/main.py'
 unzip -Z1 "$output" | grep -qx 'game-library/gog.py'
 unzip -Z1 "$output" | grep -qx 'game-library/gog_install.py'
+unzip -Z1 "$output" | grep -qx 'game-library/gog_launch.py'
 unzip -Z1 "$output" | grep -qx 'game-library/bin/gogdl'
 unzip -Z1 "$output" | grep -qx 'game-library/bin/GOGDL-LICENSE'
 unzip -Z1 "$output" | grep -qx 'game-library/gog_phone.py'

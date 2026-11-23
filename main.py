@@ -36,6 +36,22 @@ def _load_gog_install():
     return _GOG_INSTALL_MODULE
 
 
+_GOG_LAUNCH_MODULE = None
+
+
+def _load_gog_launch():
+    global _GOG_LAUNCH_MODULE
+    if _GOG_LAUNCH_MODULE is None:
+        spec = importlib.util.spec_from_file_location(
+            "game_library_gog_launch", str(BASE / "gog_launch.py"))
+        if spec is None or spec.loader is None:
+            raise RuntimeError("GOG launch module missing from Game Library ZIP.")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _GOG_LAUNCH_MODULE = module
+    return _GOG_LAUNCH_MODULE
+
+
 def _load_gog_phone():
     """Load our own LAN pairing service once, preserving its active session."""
     spec = importlib.util.spec_from_file_location(
@@ -498,6 +514,25 @@ class Plugin:
             self._gog_lock = asyncio.Lock()
         async with self._gog_lock:
             return await asyncio.to_thread(_load_gog().disconnect, account_id)
+
+    async def inspect_gog_launch(self, account_id: str, product_id: str):
+        """Discover completed Game Library downloads and executable candidates."""
+        return await asyncio.to_thread(
+            _load_gog_launch().inspect, _load_gog_install(), _load_gog(),
+            account_id, product_id)
+
+    async def register_gog_shortcut(self, account_id: str, product_id: str,
+                                    install_dir: str, executable: str, app_id: int):
+        """Only record Steam-created shortcuts for validated owned GOG installs."""
+        return await asyncio.to_thread(
+            _load_gog_launch().register, _load_gog_install(), _load_gog(),
+            account_id, product_id, install_dir, executable, app_id)
+
+    async def finalize_gog_shortcut(self, account_id: str, product_id: str,
+                                    app_id: int, compat_tool: str):
+        return await asyncio.to_thread(
+            _load_gog_launch().finalize, _load_gog_install(), _load_gog(),
+            account_id, product_id, app_id, compat_tool)
 
     async def preflight_gog_install(self, account_id: str, product_id: str):
         """Validate GOG ownership, official gogdl and real install size."""
