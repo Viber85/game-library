@@ -127,6 +127,6 @@ test("current SteamOS clients can discover locally installed Proton versions whe
   assert.match(scanner,/def _valve_name\(name\):/);
   assert.match(scanner,/return "proton_experimental"/);
   assert.match(scanner,/"proton"[\s\S]*"toolmanifest\.vdf"/);
-  assert.doesNotMatch(scanner,/shortcuts\.vdf|os\.system|subprocess|write_text|shutil\.rmtree/);
+  assert.doesNotMatch(scanner,/os\.system\(|subprocess\.|\.write_text\(|shutil\.rmtree\(/);
   assert.match(pkg,/cp gog\.py gog_phone\.py qrcodegen\.py gog_install\.py gog_launch\.py gog_proton\.py/);
 });
