@@ -57,3 +57,33 @@ test("backend only registers shortcuts for known paths and completed marker",()=
   assert.match(rpc,/inspectGogLaunch/);
   assert.match(pkg,/cp gog\.py gog_phone\.py qrcodegen\.py gog_install\.py gog_launch\.py/);
 });
+
+test("Steam Game Mode shortcuts are created with empty initial options then updated",()=>{
+  assert.match(bridge,/apps\.AddShortcut\(title,candidate,"",""\)/);
+  assert.match(bridge,/SetShortcutName\?\.\(appId,title\)/);
+  assert.match(bridge,/SetShortcutExe\?\.\(appId,'"'\+unquote\(executable\)\+'"'\)/);
+  assert.match(bridge,/SetShortcutStartDir\?\.\(appId,workingDirectory\)/);
+  assert.match(bridge,/waitForShortcutOverview\(appId\)/);
+  assert.match(bridge,/canonicalSteamAppId\(raw\)/);
+  assert.doesNotMatch(bridge,/AddShortcut\(title,executable,workingDirectory/);
+});
+
+test("unavailable per-app Proton API falls back to Steam global compatibility tools",()=>{
+  assert.match(bridge,/availableGogProtonTools/);
+  assert.match(bridge,/apps\.GetAvailableCompatTools\(appId\)/);
+  assert.match(bridge,/settings\.GetGlobalCompatTools\(\)/);
+  assert.match(bridge,/client\?\.Settings/);
+  assert.match(bridge,/preferredProtonTool\(tools\)/);
+  assert.doesNotMatch(bridge,/typeof apps\?\.GetAvailableCompatTools!=="function"/);
+  assert.match(bridge,/SteamClient\.Apps\.SpecifyCompatTool is unavailable/);
+  assert.match(bridge,/SteamClient\.Apps\.AddShortcut is unavailable/);
+});
+
+test("failed Proton configuration records shortcut rather than duplicating it",()=>{
+  const registered=bridge.indexOf('await registerGogShortcut(');
+  const compat=bridge.indexOf('await availableGogProtonTools(');
+  const finalize=bridge.indexOf('await finalizeGogShortcut(');
+  assert.ok(registered>0&&compat>registered&&finalize>compat);
+  assert.match(bridge,/if\(old\?\.ready\)return state/);
+  assert.match(bridge,/Steam shortcut created, but no Proton tool/);
+});
