@@ -13,6 +13,7 @@ import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {getGogSteamGridFallback} from "./GogArtwork";
 import {subscribeArtworkSettingsChanged} from "./steamGridArtwork";
 import {preflightGogInstall,startGogInstall,getGogInstallStatus,cancelGogInstall,
+  getGogAchievements,type GogAchievementSummary,
   pauseGogInstall,resumeGogInstall,
   type GogInstallMode,type GogInstallState} from "./gogInstallRequests";
 import {GogInstallModal} from "./GogInstallModal";
@@ -56,6 +57,8 @@ export function SharedLibraryDetails({
   const [artworkRevision,setArtworkRevision]=useState(0);
   const [installBusy,setInstallBusy]=useState(false);
   const [installSize,setInstallSize]=useState<number|null>(null);
+  const [sizeLoading,setSizeLoading]=useState(false);
+  const [achievements,setAchievements]=useState<GogAchievementSummary|null>(null);
   const [installSnapshot,setInstallSnapshot]=useState<GogInstallState>({status:"idle"});
   const [installError,setInstallError]=useState("");
   const [launchInfo,setLaunchInfo]=useState<GogLaunchInfo|null>(null);
@@ -180,6 +183,27 @@ export function SharedLibraryDetails({
      nativeHero,nativeHeroFailed,remoteHero,remoteHeroFailed,artworkRevision]);
 
 
+
+  // Space required and GOG Galaxy achievements are independent of installing.
+  // Fetch them as soon as the selected GOG game opens; never show fake 0/0.
+  useEffect(()=>{
+    if(game.store!=="gog"||!gogAccountId){
+      setInstallSize(null);setSizeLoading(false);setAchievements(null);
+      return;
+    }
+    let active=true;
+    setInstallSize(null);setSizeLoading(true);setAchievements(null);
+    void preflightGogInstall(gogAccountId,game.storeId).then(result=>{
+      if(active&&result.ok)setInstallSize(result.size_bytes??null);
+    }).catch(()=>{}).finally(()=>{if(active)setSizeLoading(false);});
+    void getGogAchievements(gogAccountId,game.storeId).then(result=>{
+      if(active)setAchievements(result);
+    }).catch(()=>{
+      if(active)setAchievements({ok:false,status:"unavailable"});
+    });
+    return ()=>{active=false;};
+  },[game.key,game.store,game.storeId,gogAccountId]);
+
   // GOG downloads belong to our backend, never Steam's download queue.
   // Polling is read-only: jobs survive navigation away from Game Details.
   useEffect(()=>{
@@ -298,8 +322,18 @@ export function SharedLibraryDetails({
       (typeof installSnapshot.percent==="number"?
         " "+installSnapshot.percent.toFixed(0)+"%":""):
     gogReady?"Play":gogDownloaded?"Set up Play":"Install";
+  const achievementTotal=achievements?.status==="available"?achievements.total:undefined;
+  const achievementPercent=typeof achievementTotal==="number"&&achievementTotal>0&&
+    typeof achievements?.unlocked==="number"?
+    Math.min(100,Math.round(100*achievements.unlocked/achievementTotal)):0;
+  const achievementLabel=achievements===null?"Checking…":
+    achievements.status==="available"&&typeof achievements.unlocked==="number"&&
+    typeof achievementTotal==="number"?
+      achievements.unlocked+" / "+achievementTotal+" ("+achievementPercent+"%)":
+    achievements.status==="none"?"No achievements":"Unavailable";
   const sizeLabel=(bytes:number|null|undefined)=>{
-    if(typeof bytes!=="number"||!Number.isFinite(bytes)||bytes<0)return "—";
+    if(typeof bytes!=="number"||!Number.isFinite(bytes)||bytes<=0)return "—";
+    if(bytes<1024**3)return Math.ceil(bytes/(1024**2))+" MB";
     return (bytes/(1024**3)).toFixed(1)+" GB";
   };
 
@@ -362,7 +396,7 @@ export function SharedLibraryDetails({
           <div className="gl-details-summary" aria-label="Game installation and progress summary">
             <div className="gl-details-meta-cell gl-details-meta-space">
               <MdStorage aria-hidden="true"/><div><small>SPACE REQUIRED</small>
-                <strong>{game.store==="gog"?sizeLabel(installSize):"—"}</strong>
+                <strong>{game.store==="gog"&&sizeLoading?"Checking…":sizeLabel(installSize)}</strong>
               </div>
             </div>
             <div className="gl-details-meta-cell">
@@ -373,8 +407,11 @@ export function SharedLibraryDetails({
             </div>
             <div className="gl-details-meta-cell gl-details-meta-achievements">
               <MdEmojiEvents aria-hidden="true"/><div><small>ACHIEVEMENTS</small>
-                <strong>Unavailable</strong>
-                <div className="gl-details-empty-progress" aria-hidden="true"/>
+                <strong title={achievements?.reason||undefined}>{achievementLabel}</strong>
+                <div className="gl-details-empty-progress" aria-hidden="true">
+                  <div className="gl-details-achievement-progress-fill"
+                    style={{width:achievementPercent+"%"}}/>
+                </div>
               </div>
             </div>
           </div>

@@ -156,14 +156,27 @@ def _execute(argv, user, timeout=None, **kwargs):
 
 
 def _size_info(raw):
-    """gogdl info has * / language keyed disk sizes, not a flat byte number."""
+    """Installed bytes for the chosen/default language from gogdl info.
+
+    gogdl's v2 manifest reports shared files under '*' and language depots
+    separately. A non-empty game may have zero shared bytes. Prefer English
+    where available, otherwise conservatively use the largest language depot.
+    Never invent 0 GB for a missing or invalid response.
+    """
     value = raw.get("size", {})
     if not isinstance(value, dict):
         return None
-    all_sizes = value.get("*", {})
-    if isinstance(all_sizes, dict) and isinstance(all_sizes.get("disk_size"), int):
-        return all_sizes["disk_size"] if all_sizes["disk_size"] > 0 else None
-    return None
+    def disk(part):
+        n = part.get("disk_size") if isinstance(part, dict) else None
+        return n if isinstance(n, int) and not isinstance(n, bool) and n > 0 else 0
+    shared = disk(value.get("*"))
+    langs = {key: disk(item) for key, item in value.items() if key != "*"}
+    langs = {key: n for key, n in langs.items() if n > 0}
+    if langs:
+        language_size = next((n for name, n in langs.items()
+                              if name.lower() in ("en-us", "en", "english")), None)
+        return shared + (language_size if language_size is not None else max(langs.values()))
+    return shared if shared > 0 else None
 
 
 

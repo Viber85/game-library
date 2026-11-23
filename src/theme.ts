@@ -3052,4 +3052,15 @@ html:has(.gl-root.gl-own-status-only) #header {
   margin-top:7px;
 }
 
+
+/* GOG Galaxy achievement completion; source is authenticated GOG data. */
+.gl-root .gl-details-meta-achievements .gl-details-empty-progress{
+  overflow:hidden;position:relative;
+}
+.gl-root .gl-details-meta-achievements .gl-details-achievement-progress-fill{
+  display:block;height:100%;min-height:0;border-radius:inherit;
+  background:linear-gradient(90deg,#39c7e3,#42e9f2);
+  transition:width .25s ease;
+}
+
 `;

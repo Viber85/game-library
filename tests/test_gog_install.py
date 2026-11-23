@@ -245,3 +245,21 @@ class GogInstallerTests(unittest.TestCase):
             mock.call(98932, install.signal.SIGCONT),
             mock.call(98932, install.signal.SIGTERM)])
         self.assertTrue(install._STATES[key]["cancel_requested"])
+
+    def test_preinstall_space_includes_language_specific_gogdl_depots(self):
+        self.assertEqual(install._size_info({"size": {
+            "*":{"disk_size": 2_000_000},
+            "en-US":{"disk_size": 8_000_000},
+            "de-DE":{"disk_size": 9_000_000}
+        }}), 10_000_000)
+        self.assertEqual(install._size_info({"size":{
+            "*":{"disk_size": 0},
+            "en-US":{"disk_size": 31_000_000}
+        }}), 31_000_000)
+        self.assertEqual(install._size_info({"size":{
+            "*":{"disk_size": 2_000_000},
+            "de-DE":{"disk_size": 4_000_000}
+        }}), 6_000_000)
+        self.assertIsNone(install._size_info({"size":{
+            "*":{"disk_size":0}, "en-US":{"disk_size":0}
+        }}))

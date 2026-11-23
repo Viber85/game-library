@@ -36,3 +36,12 @@ export const pauseGogInstall=(account:string,product:string)=>
   pause(account,product);
 export const resumeGogInstall=(account:string,product:string)=>
   resume(account,product);
+
+export type GogAchievementSummary={
+  ok:boolean;
+  status:"available"|"none"|"unavailable";
+  unlocked?:number;total?:number;reason?:string;
+};
+const achievements=callable<[string,string],GogAchievementSummary>("gog_achievements_summary");
+export const getGogAchievements=(account:string,product:string)=>
+  achievements(account,product);

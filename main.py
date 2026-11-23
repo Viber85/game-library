@@ -19,6 +19,23 @@ def _load_gog():
     return module
 
 
+_GOG_ACHIEVEMENTS_MODULE = None
+
+
+def _load_gog_achievements():
+    """Account-scoped GOG Galaxy achievement counts with short TTL."""
+    global _GOG_ACHIEVEMENTS_MODULE
+    if _GOG_ACHIEVEMENTS_MODULE is None:
+        spec = importlib.util.spec_from_file_location(
+            "game_library_gog_achievements", str(BASE / "gog_achievements.py"))
+        if spec is None or spec.loader is None:
+            raise RuntimeError("GOG achievements module is missing.")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _GOG_ACHIEVEMENTS_MODULE = module
+    return _GOG_ACHIEVEMENTS_MODULE
+
+
 _GOG_INSTALL_MODULE = None
 
 
@@ -555,6 +572,12 @@ class Plugin:
         return await asyncio.to_thread(
             _load_gog_launch().finalize, _load_gog_install(), _load_gog(),
             account_id, product_id, app_id, compat_tool)
+
+    async def gog_achievements_summary(self, account_id: str, product_id: str):
+        """Read the connected GOG user's supported achievements, not Steam's."""
+        return await asyncio.to_thread(
+            _load_gog_achievements().get_summary,
+            _load_gog(), _load_gog_install(), account_id, product_id)
 
     async def preflight_gog_install(self, account_id: str, product_id: str):
         """Validate GOG ownership, official gogdl and real install size."""
