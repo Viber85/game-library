@@ -88,3 +88,14 @@ test("Steam install is separate from the right-aligned HLTB, Store and icon acti
   assert.match(css,/\.gl-root \.gl-game-details \.gl-details-action-row \.gl-details-primary\{[\s\S]*?min-height:55px/);
   assert.match(css,/\.gl-root \.gl-game-details \.gl-details-action-tools \.gl-details-icon-button\{[\s\S]*?width:50px/);
 });
+
+test("Steam and GOG hero has twice the previous height but preserves content positions",()=>{
+  const expected=css.match(/\.gl-root \.gl-game-details \.gl-details-hero\{\s*height:clamp\(([^)]+)\)/);
+  assert.ok(expected,"game-specific hero height must be defined");
+  assert.equal(expected[1],"440px,62vh,660px");
+  assert.match(css,/\.gl-root \.gl-game-details \.gl-details-content-block\{[\s\S]*?margin-top:auto/);
+  assert.match(css,/\.gl-root \.gl-game-details \.gl-details-hero\{[\s\S]*?height:clamp\(440px,62vh,660px\)/);
+  assert.match(css,/\.gl-root \.gl-details-hero-shade\{/);
+  assert.doesNotMatch(steam,/style=\{\{.*height.*hero/);
+  assert.doesNotMatch(gog,/style=\{\{.*height.*hero/);
+});

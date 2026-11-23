@@ -2686,8 +2686,9 @@ html:has(.gl-root.gl-own-status-only) #header {
   justify-content:flex-start;min-width:0;
   padding-top:3px;
 }
+/* v0.6.11-test.52: double the hero backdrop height without moving content. */
 .gl-root .gl-game-details .gl-details-hero{
-  height:clamp(220px,31vh,330px);
+  height:clamp(440px,62vh,660px);
 }
 .gl-root .gl-game-details .gl-details-summary{
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
