@@ -1,6 +1,6 @@
 {
   "name": "game-library",
-  "description": "SteamOS Game Library with GOG installs, Proton launching and pre-install GOG metadata",
+  "description": "SteamOS Game Library with GOG installs, GOG Store links and native controller actions",
   "version": "0.6.11-test.63",
   "private": true,
   "type": "module",
