@@ -6,6 +6,5 @@ const getStoreLink=callable<[string,string],GogStoreLinkReply>("gog_store_link")
 export const requestGogStoreLink=(account:string,product:string)=>
   getStoreLink(account,product);
 
-/** Only a verified direct product page can be opened through Steam's browser. */
-export const validGogStoreUrl=(url:string):boolean=>
-  /^https:\/\/www\.gog\.com\/en\/game\/[a-z0-9][a-z0-9_-]{0,199}$/.test(url);
+/** Pure URL validation is also shared by our offline navigation tests. */
+export {validGogStoreUrl} from "./gogStoreUrl";

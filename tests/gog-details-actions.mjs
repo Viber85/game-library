@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
-import {validGogStoreUrl} from "../src/gogStoreLink.ts";
+import {validGogStoreUrl} from "../src/gogStoreUrl.ts";
 import {
   armGogDetailsReturn,consumeGogDetailsReturn,clearGogDetailsReturn
 } from "../src/gogDetailsReturn.ts";

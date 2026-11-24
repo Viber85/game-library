@@ -35,7 +35,7 @@ test("GOG achievements are fetched from the signed-in GOG account, not from Stea
   assert.match(achievements,/installer\._account_and_game\(gog, account, product\)/);
   assert.match(achievements,/gog\._active_session\(account\)/);
   assert.match(achievements,/gameplay\.gog\.com\/clients\//);
-  assert.match(gog,/parsed\.hostname not in \("auth\.gog\.com", "embed\.gog\.com", "gameplay\.gog\.com"\)/);
+  assert.match(gog,/parsed\.hostname not in \("auth\.gog\.com", "embed\.gog\.com", "gameplay\.gog\.com", "api\.gog\.com"\)/);
   assert.match(pkg,/cp gog\.py gog_phone\.py qrcodegen\.py gog_install\.py gog_launch\.py gog_proton\.py gog_achievements\.py/);
 });
 
