@@ -1,8 +1,10 @@
 import {useEffect,useRef,useState,type ReactNode,type Ref} from "react";
-import {Focusable,GamepadButton,showModal,type GamepadEvent} from "@decky/ui";
+import {Focusable,GamepadButton,showModal,Menu,MenuItem,showContextMenu,type GamepadEvent} from "@decky/ui";
+import {toaster} from "@decky/api";
 import {
   MdAccessTime,MdArrowBack,MdCheckCircle,MdDownload,
-  MdEmojiEvents,MdShield,MdStorefront,MdStorage,MdCancel,MdPause,MdPlayArrow
+  MdEmojiEvents,MdShield,MdStorefront,MdStorage,MdCancel,MdPause,MdPlayArrow,
+  MdOpenInNew,MdSportsEsports,MdSettings
 } from "react-icons/md";
 import type {UnifiedLibraryGame} from "./unifiedLibraryGame";
 import {requestGogHltbTimes,requestProtonRating,type HltbReply,type ProtonRating} from "./metadataRequests";
@@ -20,6 +22,9 @@ import {GogInstallModal} from "./GogInstallModal";
 import {GogLaunchModal} from "./GogLaunchModal";
 import {inspectGogLaunch,type GogLaunchInfo} from "./gogLaunchRequests";
 import {configureGogPlay,playGogShortcut} from "./gogSteamShortcut";
+import {validHltbGameUrl} from "./gameDetailsLinks";
+import {requestGogStoreLink,validGogStoreUrl} from "./gogStoreLink";
+import {showNativeGameOptions} from "./nativeGameContextMenu";
 
 const stop=(event:GamepadEvent)=>{
   event.preventDefault();
@@ -35,6 +40,7 @@ const hours=(value:number|null|undefined)=>
 
 export function SharedLibraryDetails({
   game,cover,onBack,backRef,onFocusRail,actions,gogAccountId="",
+  onOpenHltb,onOpenGogStore,onOpenControllerSettings,
 }:{
   game:UnifiedLibraryGame;
   cover:(onImageLoaded:(url:string)=>void)=>ReactNode;
@@ -43,8 +49,12 @@ export function SharedLibraryDetails({
   backRef?:Ref<HTMLDivElement>;
   actions?:ReactNode;
   gogAccountId?:string;
+  onOpenHltb?:(url:string)=>void;
+  onOpenGogStore?:(url:string)=>void;
+  onOpenControllerSettings?:(appId:number)=>void;
 }){
   const [hltb,setHltb]=useState<HltbReply|null>(null);
+  const [gogStoreUrl,setGogStoreUrl]=useState<string|null>(null);
   const [proton,setProton]=useState<ProtonRating|null>(null);
   const [nativeHeroFailed,setNativeHeroFailed]=useState(false);
   const [remoteHero,setRemoteHero]=useState<string|null>(null);
@@ -65,6 +75,7 @@ export function SharedLibraryDetails({
   const [launchBusy,setLaunchBusy]=useState(false);
   const rootRef=useRef<HTMLElement>(null);
   const focusRefs=useRef<Record<string,HTMLDivElement|null>>({});
+  const optionsActionRef=useRef<()=>void>(()=>{});
   const changedFocus=useRef(false);
   const statusRef=useRef<HTMLDivElement>(null);
   const internalBackRef=useRef<HTMLDivElement|null>(null);
@@ -138,11 +149,19 @@ export function SharedLibraryDetails({
     ref:focusRef(id),
     onButtonDown:onMove(id),
     onCancelButton:onBack,
+    // Start/Menu always opens this game's options, even when focus is
+    // on Install, HLTB or the Back control rather than the gear icon.
+    onMenuButton:(event:GamepadEvent)=>{
+      stop(event);
+      if(!event.detail?.is_repeat)optionsActionRef.current();
+    },
+    onMenuActionDescription:"Game options",
     onGamepadFocus:()=>{if(id!=="back")changedFocus.current=true;},
     onCancelActionDescription:"Back to previous Game Library screen",
   });
 
   const hltbData=hltb?.status==="ok"?hltb.data:null;
+  const hltbLink=hltbData?.url&&validHltbGameUrl(hltbData.url)?hltbData.url:null;
   const tier=proton?.status==="ok"?proton.tier:null;
   const tierLabel=tier?tier.charAt(0).toUpperCase()+tier.slice(1):"Not rated";
   // Prefer the original GOG background. Only query SteamGridDB for the
@@ -183,6 +202,22 @@ export function SharedLibraryDetails({
      nativeHero,nativeHeroFailed,remoteHero,remoteHeroFailed,artworkRevision]);
 
 
+
+
+  // The GOG catalog's real numeric-product-to-slug mapping is required for
+  // a direct game Store page. Fetch it before Install; never guess from title.
+  useEffect(()=>{
+    if(game.store!=="gog"||!gogAccountId){
+      setGogStoreUrl(null);return;
+    }
+    let active=true;
+    setGogStoreUrl(null);
+    void requestGogStoreLink(gogAccountId,game.storeId).then(reply=>{
+      if(active)setGogStoreUrl(reply.ok&&reply.url&&validGogStoreUrl(reply.url)?
+        reply.url:null);
+    }).catch(()=>{if(active)setGogStoreUrl(null);});
+    return ()=>{active=false;};
+  },[game.key,game.store,game.storeId,gogAccountId]);
 
   // Space required and GOG Galaxy achievements are independent of installing.
   // Fetch them as soon as the selected GOG game opens; never show fake 0/0.
@@ -322,6 +357,59 @@ export function SharedLibraryDetails({
       (typeof installSnapshot.percent==="number"?
         " "+installSnapshot.percent.toFixed(0)+"%":""):
     gogReady?"Play":gogDownloaded?"Set up Play":"Install";
+
+  const gogShortcutAppId=launchInfo?.shortcut?.app_id;
+  const openHltbDetails=()=>{
+    if(hltbLink&&onOpenHltb)onOpenHltb(hltbLink);
+    else toaster.toast({title:"HLTB details unavailable",
+      body:"No verified HowLongToBeat page was found for this GOG game."});
+  };
+  const openGogStore=()=>{
+    if(gogStoreUrl&&validGogStoreUrl(gogStoreUrl)&&onOpenGogStore)
+      onOpenGogStore(gogStoreUrl);
+    else toaster.toast({title:"GOG Store unavailable",
+      body:"No verified direct GOG game page is available yet."});
+  };
+  const openGogController=()=>{
+    if(typeof gogShortcutAppId==="number"&&onOpenControllerSettings)
+      onOpenControllerSettings(gogShortcutAppId);
+    else toaster.toast({title:"Controller Settings",
+      body:"Complete Set up Play first to create this game's Steam shortcut."});
+  };
+  const openGogOptions=()=>{
+    const anchor=focusRefs.current["settings"]??document.activeElement;
+    // A registered GOG shortcut is a real non-Steam Steam library entry.
+    // Show the same native Steam menu used by the Start button for Steam.
+    if(typeof gogShortcutAppId==="number"&&
+       showNativeGameOptions(gogShortcutAppId,anchor))return;
+    // Before a shortcut exists, Steam has no native per-game context menu.
+    // Provide safe GOG-specific actions instead of a bogus Steam AppID.
+    if(typeof Menu!=="function"||typeof MenuItem!=="function"||
+       typeof showContextMenu!=="function"){
+      toaster.toast({title:"GOG game options",
+        body:"The context menu is unavailable in this Steam Game Mode."});
+      return;
+    }
+    try{
+      const menu=<Menu label={game.title}>
+        {gogReady?<MenuItem onSelected={playGogGame}>Play</MenuItem>:
+          gogDownloaded?<MenuItem onSelected={openGogLaunchSetup}>Set up Play</MenuItem>:
+          !isDownloading?<MenuItem onSelected={openInstall}>Install</MenuItem>:
+            <MenuItem disabled>Downloading</MenuItem>}
+        <MenuItem onSelected={openHltbDetails}>HLTB details</MenuItem>
+        <MenuItem onSelected={openGogStore}>GOG Store</MenuItem>
+        <MenuItem onSelected={openGogController}>Controller Settings</MenuItem>
+      </Menu>;
+      const handle=showContextMenu(menu,anchor??undefined,{bFitToWindow:true});
+      if(!handle)throw new Error("Steam did not open the menu.");
+    }catch(error){
+      console.warn("[game-library] GOG context menu failed",error);
+      toaster.toast({title:"GOG game options",
+        body:"GOG context menu could not be opened."});
+    }
+  };
+  optionsActionRef.current=openGogOptions;
+
   const achievementTotal=achievements?.status==="available"?achievements.total:undefined;
   const achievementPercent=typeof achievementTotal==="number"&&achievementTotal>0&&
     typeof achievements?.unlocked==="number"?
@@ -433,6 +521,35 @@ export function SharedLibraryDetails({
                    aria-disabled="true">
                 <MdDownload/><strong>Install unavailable</strong>
               </div>}
+            {game.store==="gog"&&
+              <div className="gl-details-action-tools">
+                <Focusable {...onAction("hltb")}
+                    className="gl-details-focus gl-details-secondary"
+                    onOKActionDescription="Open HowLongToBeat page"
+                    onActivate={openHltbDetails}>
+                  HLTB details <MdOpenInNew/>
+                </Focusable>
+                <Focusable {...onAction("gog-store")}
+                    className="gl-details-focus gl-details-secondary"
+                    onOKActionDescription="Open verified GOG Store page"
+                    onActivate={openGogStore}>
+                  GOG Store <MdOpenInNew/>
+                </Focusable>
+                <Focusable {...onAction("controller")}
+                    className="gl-details-focus gl-details-icon-button"
+                    title="Controller Settings"
+                    onOKActionDescription="Controller Settings"
+                    onActivate={openGogController}>
+                  <MdSportsEsports/>
+                </Focusable>
+                <Focusable {...onAction("settings")}
+                    className="gl-details-focus gl-details-icon-button"
+                    title="GOG game options (same as Start)"
+                    onOKActionDescription="GOG game context menu"
+                    onActivate={openGogOptions}>
+                  <MdSettings/>
+                </Focusable>
+              </div>}
           </div>
           <div className="gl-details-progress-slot" aria-label="Download status and controls">
           {game.store==="gog"&&isDownloading&&
@@ -509,7 +626,7 @@ export function SharedLibraryDetails({
       </div>
 
       <footer className="gl-details-footer">
-        A Select · B Back · GOG actions remain separate from Steam
+        A Select · B Back · Start Options · D-pad / Left stick Navigate
       </footer>
     </div>
   </section>;

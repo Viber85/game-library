@@ -38,6 +38,9 @@ import {SteamGameDetails} from "./SteamGameDetails";
 import {openSteamControllerEditor} from "./steamControllerEditor";
 import {armControllerSettingsReturn,armGameDetailsWebReturn,consumeControllerSettingsReturn,clearControllerSettingsReturn,type GameDetailsReturnTarget} from "./controllerSettingsReturn";
 import {steamStorePageUrl,validHltbGameUrl} from "./gameDetailsLinks";
+import {validGogStoreUrl} from "./gogStoreLink";
+import {armGogDetailsReturn,consumeGogDetailsReturn,clearGogDetailsReturn}
+  from "./gogDetailsReturn";
 import {GAME_DETAILS_ROUTE,stageGameDetailsRoute,clearGameDetailsRoute,type GameDetailsRouteSession} from "./gameDetailsRoute";
 import {openBrowserFromMainGameDetails} from "./mainGamepadBrowser";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
@@ -206,7 +209,10 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
   const gogAccountId=getActiveUserId();
   const gogCatalogEnabled=initialMode==="home"||initialMode==="library"||searchMode;
   const {games:gogGames}=useGogDashboardCatalog(gogAccountId,gogCatalogEnabled);
-  const [gogDetailsId,setGogDetailsId]=useState<string|null>(null);
+  const [gogReturn]=useState(()=>
+    detailRouteSession?null:consumeGogDetailsReturn(actualRoute));
+  const [gogDetailsId,setGogDetailsId]=useState<string|null>(()=>
+    gogReturn?.productId??null);
   const [steamDetailsGame,setSteamDetailsGame]=useState<LibraryGame|null>(()=>
     detailRouteSession?.game??(controllerReturn?getLibraryGames().find(g=>g.id===controllerReturn.appId)??null:null));
   // The native Steam route's B returns here once. When the library inventory
@@ -270,7 +276,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
   const alphabetRailRef = useRef<HTMLDivElement>(null);
   const alphabetReturnGridIndex = useRef<number|null>(null);
   const pendingGridIndex = useRef<number | null>(null);
-  const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??0);
+  const lastGridFocusIndex = useRef(detailsReturn?.gridFocusIndex??gogReturn?.index??0);
   const steamReturnTarget=useRef<GameDetailsReturnTarget|null>(
     detailRouteSession?.target??controllerReturn?.target??null);
   const viewMoreRef = useRef<HTMLDivElement>(null);
@@ -481,6 +487,54 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
       clearControllerSettingsReturn(game.id);
       console.warn("[game-library] native Controller Settings navigation failed",error);
       toaster.toast({title:"Controller Settings unavailable",body:"Steam did not accept the controller settings route."});
+    });
+  };
+
+  // GOG Details is currently in React state on the library route. Native
+  // browser/controller pages can unmount it, so arm a provider-ID return
+  // snapshot before leaving. The numeric GOG ProductID is never used as a
+  // Steam AppID; controller config only uses the registered shortcut ID.
+  const openGogDetailsWeb=(productId:string,kind:"hltb"|"store",url:string)=>{
+    const valid=kind==="hltb"?validHltbGameUrl(url):validGogStoreUrl(url);
+    if(!valid){
+      toaster.toast({title:"Game Library",body:"The external GOG game link is unavailable."});
+      return;
+    }
+    if(!armGogDetailsReturn(actualRoute,productId,lastGridFocusIndex.current)){
+      toaster.toast({title:"Game Library",
+        body:"Could not preserve the GOG details return location."});
+      return;
+    }
+    try{
+      Navigation.NavigateToExternalWeb(url);
+    }catch(error){
+      clearGogDetailsReturn();
+      console.warn("[game-library] GOG external page could not open",error);
+      toaster.toast({title:"Game Library",body:"Steam could not open the external page."});
+    }
+  };
+  const openGogControllerSettings=(productId:string,appId:number)=>{
+    if(!Number.isSafeInteger(appId)||appId<=0||appId>0xffffffff){
+      toaster.toast({title:"Controller Settings",
+        body:"Set up this GOG game's Steam shortcut first."});
+      return;
+    }
+    if(!armGogDetailsReturn(actualRoute,productId,lastGridFocusIndex.current)){
+      toaster.toast({title:"Game Library",
+        body:"Could not preserve the GOG details return location."});
+      return;
+    }
+    void openSteamControllerEditor(appId).then(opened=>{
+      if(!opened){
+        clearGogDetailsReturn();
+        toaster.toast({title:"Controller Settings",
+          body:"Steam could not open this GOG shortcut's controller settings."});
+      }
+    }).catch(error=>{
+      clearGogDetailsReturn();
+      console.warn("[game-library] GOG controller settings failed",error);
+      toaster.toast({title:"Controller Settings",
+        body:"Steam rejected the GOG controller settings route."});
     });
   };
   const openGameDetailsWeb=(game:LibraryGame,kind:"hltb"|"store",url:string)=>{
@@ -813,6 +867,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
     };
   },[steamDetailsGame,gridLimit]);
   const closeGogDetails=()=>{
+    clearGogDetailsReturn();
     setGogDetailsId(null);
     window.requestAnimationFrame(()=>{
       if(viewAll||searchMode)focusGrid(lastGridFocusIndex.current);
@@ -822,6 +877,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
   };
   const openGogDetails=(entry:Extract<DashboardEntry,{store:"gog"}>,index:number)=>{
     lastGridFocusIndex.current=index;
+    clearGogDetailsReturn();
     setGogDetailsId(entry.gog.id);
   };
   const exitGrid=()=>{
@@ -1099,6 +1155,10 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
                 onImageLoaded={onImageLoaded}/>}
               gogAccountId={gogAccountId}
               onBack={closeGogDetails} onFocusRail={()=>focusRail(railIndex)}
+              onOpenHltb={url=>openGogDetailsWeb(detailGog.id,"hltb",url)}
+              onOpenGogStore={url=>openGogDetailsWeb(detailGog.id,"store",url)}
+              onOpenControllerSettings={appId=>
+                openGogControllerSettings(detailGog.id,appId)}
               backRef={gogDetailBackRef}/>
           : searchMode ? <>
         <header className="gl-header gl-library-topbar" aria-label="Search navigation">

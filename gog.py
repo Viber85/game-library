@@ -123,6 +123,8 @@ def _request_label(parsed):
         return "GOG account profile"
     if parsed.hostname == "gameplay.gog.com":
         return "GOG achievements"
+    if parsed.hostname == "api.gog.com":
+        return "GOG Store catalog"
     return "GOG library synchronization"
 
 
@@ -146,7 +148,7 @@ def _network_failure(error, stage):
 
 def _http_json(url, access=None):
     parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "https" or parsed.hostname not in ("auth.gog.com", "embed.gog.com", "gameplay.gog.com"):
+    if parsed.scheme != "https" or parsed.hostname not in ("auth.gog.com", "embed.gog.com", "gameplay.gog.com", "api.gog.com"):
         raise GogError("Invalid GOG endpoint.")
     stage = _request_label(parsed)
     headers = {"Accept": "application/json", "User-Agent": _UA}

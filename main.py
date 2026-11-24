@@ -19,6 +19,23 @@ def _load_gog():
     return module
 
 
+_GOG_STORE_MODULE = None
+
+
+def _load_gog_store():
+    """Read-only GOG Store catalog slug lookup for verified owned products."""
+    global _GOG_STORE_MODULE
+    if _GOG_STORE_MODULE is None:
+        spec = importlib.util.spec_from_file_location(
+            "game_library_gog_store", str(BASE / "gog_store.py"))
+        if spec is None or spec.loader is None:
+            raise RuntimeError("GOG Store module is missing.")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _GOG_STORE_MODULE = module
+    return _GOG_STORE_MODULE
+
+
 _GOG_ACHIEVEMENTS_MODULE = None
 
 
@@ -572,6 +589,12 @@ class Plugin:
         return await asyncio.to_thread(
             _load_gog_launch().finalize, _load_gog_install(), _load_gog(),
             account_id, product_id, app_id, compat_tool)
+
+    async def gog_store_link(self, account_id: str, product_id: str):
+        """Resolve a verified GOG Store page without guessing a game slug."""
+        return await asyncio.to_thread(
+            _load_gog_store().lookup,
+            _load_gog(), _load_gog_install(), account_id, product_id)
 
     async def gog_achievements_summary(self, account_id: str, product_id: str):
         """Read the connected GOG user's supported achievements, not Steam's."""
