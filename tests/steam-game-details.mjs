@@ -116,22 +116,19 @@ test("controller icon invokes direct Steam Input configurator, not original game
   assert.doesNotMatch(controllerAction,/onNativeDetails\(\)/);
 });
 
-test("gear and physical Start share the exact native Steam game menu, not Settings page",()=>{
-  const menu=read("src/nativeGameContextMenu.tsx");
-  const card=read("src/Dashboard.tsx");
-  assert.match(menu,/export function showNativeGameOptions\(gameId:number,anchor:EventTarget\|null\)/);
-  assert.match(card,/showNativeGameOptions\(game\.id,e\.currentTarget\)/);
-  assert.match(source,/import \{showNativeGameOptions\} from "\.\/nativeGameContextMenu"/);
-  assert.match(source,/const openGameOptions=\(\)=>\{/);
-  assert.match(source,/showNativeGameOptions\(game\.id,anchor\)/);
+test("gear and physical Start share the five-action custom Steam/GOG menu",()=>{
+  const menu=read("src/UnifiedGameContextMenu.tsx");
+  assert.match(source,/import \{UnifiedGameContextMenu\} from "\.\/UnifiedGameContextMenu"/);
+  assert.match(source,/showModal\(<UnifiedGameContextMenu title=\{game\.title\} store="steam"/);
+  assert.match(source,/onPrimary=\{action\} onController=\{onOpenControllerSettings\}/);
   assert.match(source,/onActivate=\{openGameOptions\}/);
-  assert.match(source,/onMenuButton=\{\(e:GamepadEvent\)=>\{/);
-  assert.match(source,/onMenuActionDescription="Game options"/);
-  const gear=source.slice(source.indexOf('title="Steam game options (same as Start)"'),
-    source.indexOf("<MdSettings/>"));
-  assert.doesNotMatch(gear,/onActivate=\{onNativeDetails\}/);
+  assert.match(source,/onMenuButton:\(e:GamepadEvent\)=>/);
+  assert.match(source,/if\(!e\.detail\?\.is_repeat\)optionsActionRef\.current\(\)/);
+  assert.match(menu,/Add to Collections/);
+  assert.match(menu,/Controller Settings/);
+  assert.match(menu,/Change Artwork/);
+  assert.match(menu,/Game Properties/);
 });
-
 test("controller icon targets pre-edit Controller Settings rather than Edit Layout",()=>{
   const adapter=read("src/steamControllerEditor.ts");
   const core=read("src/steamControllerEditorCore.ts");
@@ -143,7 +140,8 @@ test("controller icon targets pre-edit Controller Settings rather than Edit Layo
   assert.match(dashboard,/onOpenControllerSettings=\{\(\)=>openControllerSettings\(steamDetailsGame\)\}/);
   assert.doesNotMatch(controllerAction,/showNativeGameOptions\(|onNativeDetails\(/);
   const gear=source.slice(source.indexOf("const openGameOptions="),source.indexOf("const openController="));
-  assert.match(gear,/showNativeGameOptions\(game\.id,anchor\)/);
+  assert.match(gear,/showModal\(<UnifiedGameContextMenu/);
+
 });
 
 test("native Controller Settings B preserves React-only Game Details on same origin route",()=>{

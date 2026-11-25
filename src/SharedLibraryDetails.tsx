@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState,type ReactNode,type Ref} from "react";
-import {Focusable,GamepadButton,showModal,Menu,MenuItem,showContextMenu,type GamepadEvent} from "@decky/ui";
+import {Focusable,GamepadButton,showModal,type GamepadEvent} from "@decky/ui";
 import {toaster} from "@decky/api";
 import {
   MdAccessTime,MdArrowBack,MdCheckCircle,MdDownload,
@@ -24,7 +24,7 @@ import {inspectGogLaunch,type GogLaunchInfo} from "./gogLaunchRequests";
 import {configureGogPlay,playGogShortcut} from "./gogSteamShortcut";
 import {validHltbGameUrl} from "./gameDetailsLinks";
 import {requestGogStoreLink,validGogStoreUrl} from "./gogStoreLink";
-import {showNativeGameOptions} from "./nativeGameContextMenu";
+import {UnifiedGameContextMenu} from "./UnifiedGameContextMenu";
 
 const stop=(event:GamepadEvent)=>{
   event.preventDefault();
@@ -40,7 +40,7 @@ const hours=(value:number|null|undefined)=>
 
 export function SharedLibraryDetails({
   game,cover,onBack,backRef,onFocusRail,actions,gogAccountId="",
-  onOpenHltb,onOpenGogStore,onOpenControllerSettings,
+  onOpenHltb,onOpenGogStore,onOpenControllerSettings,onOpenArtwork,
 }:{
   game:UnifiedLibraryGame;
   cover:(onImageLoaded:(url:string)=>void)=>ReactNode;
@@ -52,6 +52,7 @@ export function SharedLibraryDetails({
   onOpenHltb?:(url:string)=>void;
   onOpenGogStore?:(url:string)=>void;
   onOpenControllerSettings?:(appId:number)=>void;
+  onOpenArtwork?:(appId:number)=>void;
 }){
   const [hltb,setHltb]=useState<HltbReply|null>(null);
   const [gogStoreUrl,setGogStoreUrl]=useState<string|null>(null);
@@ -377,36 +378,16 @@ export function SharedLibraryDetails({
       body:"Complete Set up Play first to create this game's Steam shortcut."});
   };
   const openGogOptions=()=>{
-    const anchor=focusRefs.current["settings"]??document.activeElement;
-    // A registered GOG shortcut is a real non-Steam Steam library entry.
-    // Show the same native Steam menu used by the Start button for Steam.
-    if(typeof gogShortcutAppId==="number"&&
-       showNativeGameOptions(gogShortcutAppId,anchor))return;
-    // Before a shortcut exists, Steam has no native per-game context menu.
-    // Provide safe GOG-specific actions instead of a bogus Steam AppID.
-    if(typeof Menu!=="function"||typeof MenuItem!=="function"||
-       typeof showContextMenu!=="function"){
-      toaster.toast({title:"GOG game options",
-        body:"The context menu is unavailable in this Steam Game Mode."});
-      return;
-    }
-    try{
-      const menu=<Menu label={game.title}>
-        {gogReady?<MenuItem onSelected={playGogGame}>Play</MenuItem>:
-          gogDownloaded?<MenuItem onSelected={openGogLaunchSetup}>Set up Play</MenuItem>:
-          !isDownloading?<MenuItem onSelected={openInstall}>Install</MenuItem>:
-            <MenuItem disabled>Downloading</MenuItem>}
-        <MenuItem onSelected={openHltbDetails}>HLTB details</MenuItem>
-        <MenuItem onSelected={openGogStore}>GOG Store</MenuItem>
-        <MenuItem onSelected={openGogController}>Controller Settings</MenuItem>
-      </Menu>;
-      const handle=showContextMenu(menu,anchor??undefined,{bFitToWindow:true});
-      if(!handle)throw new Error("Steam did not open the menu.");
-    }catch(error){
-      console.warn("[game-library] GOG context menu failed",error);
-      toaster.toast({title:"GOG game options",
-        body:"GOG context menu could not be opened."});
-    }
+    showModal(<UnifiedGameContextMenu title={game.title} store="gog"
+      appId={gogShortcutAppId} primaryLabel={
+        gogReady?"Play":gogDownloaded?"Set up Play":
+        isDownloading?"Downloading": "Install"
+      }
+      onPrimary={gogReady?playGogGame:
+        gogDownloaded?openGogLaunchSetup:openInstall}
+      onController={openGogController}
+      onArtwork={typeof gogShortcutAppId==="number"&&onOpenArtwork?
+        ()=>onOpenArtwork(gogShortcutAppId):undefined}/>);
   };
   optionsActionRef.current=openGogOptions;
 

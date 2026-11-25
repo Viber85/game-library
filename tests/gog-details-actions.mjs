@@ -49,8 +49,9 @@ test("GOG details uses the same four focusable secondary actions as Steam",()=>{
   assert.match(ui,/onActivate=\{openGogOptions\}/);
   assert.match(ui,/onMenuButton:\(event:GamepadEvent\)=>/);
   assert.match(ui,/if\(!event\.detail\?\.is_repeat\)optionsActionRef\.current\(\)/);
-  assert.match(ui,/showNativeGameOptions\(gogShortcutAppId,anchor\)/);
-  assert.match(ui,/showContextMenu\(menu,anchor\?\?undefined/);
+  assert.match(ui,/showModal\(<UnifiedGameContextMenu title=\{game\.title\} store="gog"/);
+  assert.match(ui,/onController=\{openGogController\}/);
+  assert.match(ui,/onArtwork=\{typeof gogShortcutAppId==="number"&&onOpenArtwork\?/);
   assert.match(ui,/onGamepadFocus:/);
   assert.match(ui,/nextGamepadControl\(rootRef\.current,current,direction,/);
 });

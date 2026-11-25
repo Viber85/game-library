@@ -35,6 +35,7 @@ import {GogDashboardCard} from "./GogDashboardCard";
 import {GogArtwork} from "./GogArtwork";
 import {SharedLibraryDetails} from "./SharedLibraryDetails";
 import {SteamGameDetails} from "./SteamGameDetails";
+import {openSteamGridDbArtwork} from "./UnifiedGameContextMenu";
 import {openSteamControllerEditor} from "./steamControllerEditor";
 import {armControllerSettingsReturn,armGameDetailsWebReturn,consumeControllerSettingsReturn,clearControllerSettingsReturn,type GameDetailsReturnTarget} from "./controllerSettingsReturn";
 import {steamStorePageUrl,validHltbGameUrl} from "./gameDetailsLinks";
@@ -536,6 +537,35 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
       toaster.toast({title:"Controller Settings",
         body:"Steam rejected the GOG controller settings route."});
     });
+  };
+  // SteamGridDB is another Decky page. Preserve our own GOG/Steam Details
+  // return destination before navigating into its registered route.
+  const openGogArtwork=(productId:string,shortcutId:number)=>{
+    if(!armGogDetailsReturn(actualRoute,productId,lastGridFocusIndex.current)){
+      toaster.toast({title:"Change Artwork",body:"Cannot preserve GOG Game Details return route."});
+      return;
+    }
+    if(!openSteamGridDbArtwork(shortcutId)){
+      clearGogDetailsReturn();
+      toaster.toast({title:"Change Artwork",
+        body:"SteamGridDB could not open. Check that the Decky plugin is installed."});
+    }
+  };
+  const openSteamArtwork=(game:LibraryGame)=>{
+    if(!detailRouteSession){
+      const target=steamReturnTarget.current;
+      if(!target||!armGameDetailsWebReturn({route:actualRoute,appId:game.id,target})){
+        toaster.toast({title:"Change Artwork",
+          body:"Cannot preserve Steam Game Details return route."});
+        return;
+      }
+      rememberGameDetails(game);
+    }
+    if(!openSteamGridDbArtwork(game.id)){
+      clearControllerSettingsReturn(game.id);
+      toaster.toast({title:"Change Artwork",
+        body:"SteamGridDB could not open. Check that the Decky plugin is installed."});
+    }
   };
   const openGameDetailsWeb=(game:LibraryGame,kind:"hltb"|"store",url:string)=>{
     const valid=kind==="hltb"?validHltbGameUrl(url):
@@ -1125,6 +1155,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
               onBack={closeSteamDetails}
               onNativeDetails={()=>openNativeGameDetails(steamDetailsGame)}
               onOpenControllerSettings={()=>openControllerSettings(steamDetailsGame)}
+              onOpenArtwork={()=>openSteamArtwork(steamDetailsGame)}
               onOpenHltb={url=>openGameDetailsWeb(steamDetailsGame,"hltb",url)}
               onOpenStore={()=>{
                 const url=steamStorePageUrl(steamDetailsGame.id,steamDetailsGame.nonSteam);
@@ -1159,6 +1190,7 @@ export function Dashboard({initialMode="home",originRoute,detailRouteSession}:
               onOpenGogStore={url=>openGogDetailsWeb(detailGog.id,"store",url)}
               onOpenControllerSettings={appId=>
                 openGogControllerSettings(detailGog.id,appId)}
+              onOpenArtwork={appId=>openGogArtwork(detailGog.id,appId)}
               backRef={gogDetailBackRef}/>
           : searchMode ? <>
         <header className="gl-header gl-library-topbar" aria-label="Search navigation">

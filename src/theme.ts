@@ -3063,4 +3063,61 @@ html:has(.gl-root.gl-own-status-only) #header {
   transition:width .25s ease;
 }
 
+
+/* Unified Steam/GOG game options: one custom five-action menu. */
+.gl-unified-context-modal{max-width:min(420px,90vw);}
+.gl-unified-context{
+  width:min(390px,85vw);max-height:min(78vh,650px);
+  display:flex;flex-direction:column;gap:8px;
+  padding:10px 12px;color:#ebf9ff;
+  box-sizing:border-box;overflow-y:auto;
+}
+.gl-unified-context-heading{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:9px;padding:2px 6px 6px;
+}
+.gl-unified-context-heading strong{font-size:18px;line-height:1.25;color:#effaff;}
+.gl-unified-context-eyebrow{
+  font-size:10px;font-weight:700;letter-spacing:.1em;
+  color:#90bbd1;margin-bottom:6px;
+}
+.gl-unified-context-items,
+.gl-unified-context-collections,
+.gl-unified-context-section{
+  display:flex;flex-direction:column;gap:6px;
+}
+.gl-unified-context-item{
+  display:flex;gap:11px;align-items:center;
+  padding:11px 12px;min-height:44px;
+  border:1px solid rgba(101,165,204,.26);
+  background:rgba(20,54,78,.92);
+  color:#e7f7ff;border-radius:10px;
+  font-size:13px;font-weight:700;cursor:pointer;
+}
+.gl-unified-context-item>svg{font-size:20px;flex-shrink:0;color:#83d7ed;}
+.gl-unified-context-item span{flex:1;min-width:0;}
+.gl-unified-context-item .gl-unified-context-more,
+.gl-unified-context-selected{margin-left:auto;color:#5ee9e9;}
+.gl-unified-context .gpfocus,
+.gl-unified-context .gl-focused,
+.gl-unified-context :focus-visible{
+  outline:2px solid #65e4ff!important;outline-offset:1px;
+  background:rgba(15,102,133,.85);box-shadow:0 0 12px #05b2e455;
+}
+.gl-unified-context-back{display:flex;padding:5px;border-radius:8px;}
+.gl-unified-context-group{
+  font-size:11px;color:#96c9e6;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:12px 4px 3px;
+}
+.gl-unified-context-empty{padding:10px;font-size:12px;color:#a8c4d6;}
+.gl-unified-context-error{
+  background:#5a2636;color:#ffdce6;border-radius:8px;
+  font-size:12px;padding:8px;
+}
+.gl-unified-context-hint{
+  font-size:10px;color:#90b3c9;opacity:.8;
+  text-align:right;margin-top:8px;
+}
+
 `;

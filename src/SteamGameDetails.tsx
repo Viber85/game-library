@@ -21,7 +21,7 @@ import {requestNativeRequiredInstallBytes,readNativeRequiredInstallBytes}
 import {type FocusDirection} from "./spatialFocus";
 import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
-import {showNativeGameOptions} from "./nativeGameContextMenu";
+import {UnifiedGameContextMenu} from "./UnifiedGameContextMenu";
 import {requestSteamUninstallLink} from "./nativeSteamUninstallUrl";
 import {toaster,callable} from "@decky/api";
 import {openSteamInstallWizard} from "./steamInstallWizard";
@@ -78,7 +78,7 @@ function DetailPoster({game}:{game:LibraryGame}){
 /** Steam's own installation wizard remains authoritative, including the
  * installation location and final confirmation. Never fake download progress.
  */
-export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpenControllerSettings,onOpenHltb,onOpenStore}:{
+export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpenControllerSettings,onOpenHltb,onOpenStore,onOpenArtwork}:{
   game:LibraryGame;
   onBack:()=>void;
   onNativeDetails:()=>void;
@@ -86,6 +86,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   onOpenControllerSettings:()=>void;
   onOpenHltb:(url:string)=>void;
   onOpenStore:()=>void;
+  onOpenArtwork?:()=>void;
 }){
   const [hltb,setHltb]=useState<HltbReply|null>(null);
   const [required,setRequired]=useState<number|null>(()=>
@@ -112,6 +113,7 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
   const statusRef=useRef<HTMLDivElement>(null);
   const focusRefs=useRef<Record<string,HTMLDivElement|null>>({});
   const backRef=useRef<HTMLDivElement>(null);
+  const optionsActionRef=useRef<()=>void>(()=>{});
   const userChangedFocus=useRef(false);
   const currentDownloadRef=useRef(nativeDownload);
   currentDownloadRef.current=nativeDownload;
@@ -236,6 +238,11 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     noFocusRing:true as const,
     onButtonDown:onMove(id),
     onCancelButton:onBack,
+    onMenuButton:(e:GamepadEvent)=>{
+      e.preventDefault();e.stopPropagation();
+      if(!e.detail?.is_repeat)optionsActionRef.current();
+    },
+    onMenuActionDescription:"Game options",
     onGamepadFocus:()=>{if(id!=="back")userChangedFocus.current=true;},
     onCancelActionDescription:"Back to previous Game Library screen",
   });
@@ -245,17 +252,15 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
     /^https:\/\/howlongtobeat\.com\/game\/[0-9]+$/.test(hltbData.url)?
     hltbData.url:null;
   const isNativeSteam=!game.nonSteam&&game.id>0&&game.id<0x80000000;
-  // Exactly the same native Steam game context menu used by Start/Menu on
-  // Library cards. Keep both the gear's A action and physical Start on this
-  // one handler so they never diverge.
+  // One shared custom menu for Steam and GOG. Only five top-level
+  // actions; Properties and artwork still use the real Steam/Decky UI.
   const openGameOptions=()=>{
-    const anchor=focusRefs.current["settings"]??document.activeElement;
-    if(showNativeGameOptions(game.id,anchor))return;
-    toaster.toast({
-      title:"Steam game options",
-      body:"Steam's native game menu is unavailable here. Open Steam Details to access its options."
-    });
+    showModal(<UnifiedGameContextMenu title={game.title} store="steam"
+      appId={game.id} primaryLabel={primaryLabel}
+      onPrimary={action} onController={onOpenControllerSettings}
+      onArtwork={onOpenArtwork}/>);
   };
+  optionsActionRef.current=openGameOptions;
   // Dashboard owns native route handoff so it can restore this React
   // Game Details screen when Steam's B returns to the previous route.
   const openController=onOpenControllerSettings;
@@ -522,11 +527,6 @@ export function SteamGameDetails({game,onBack,onNativeDetails,onFocusRail,onOpen
                 className="gl-details-focus gl-details-icon-button"
                 title="Steam game options (same as Start)"
                 onOKActionDescription="Steam game context menu"
-                onMenuButton={(e:GamepadEvent)=>{
-                  e.preventDefault();e.stopPropagation();
-                  if(!e.detail?.is_repeat)openGameOptions();
-                }}
-                onMenuActionDescription="Game options"
                 onActivate={openGameOptions}><MdSettings/></Focusable>
             </div>
           </div>
