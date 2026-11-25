@@ -22,6 +22,7 @@ import {type FocusDirection} from "./spatialFocus";
 import {nextGamepadControl} from "./nativeGamepadFocusCore";
 import {focusNativeMenuControl} from "./nativeMenuGamepad";
 import {UnifiedGameContextMenu} from "./UnifiedGameContextMenu";
+import {showNativeGameOptions} from "./nativeGameContextMenu";
 import {requestSteamUninstallLink} from "./nativeSteamUninstallUrl";
 import {toaster,callable} from "@decky/api";
 import {openSteamInstallWizard} from "./steamInstallWizard";

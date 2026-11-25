@@ -23,7 +23,7 @@ type SteamCollection={
   Save?:()=>Promise<unknown>;
 };
 type CollectionStore={userCollections?:SteamCollection[]};
-const store=()=>((window as Window&{collectionStore?:CollectionStore}).collectionStore);
+const store=()=>((window as unknown as {collectionStore?:CollectionStore}).collectionStore);
 const steamId=(id:number):number=>{
   const canonical=canonicalSteamAppId(id);
   if(canonical===null)throw new Error("Steam game ID is unavailable");
