@@ -71,3 +71,17 @@ test("unregistered GOG product IDs cannot be used with Steam APIs",()=>{
   assert.match(gog,/appId=\{gogShortcutAppId\}/);
   assert.doesNotMatch(gog,/appId=\{Number\(game\.storeId\)\}/);
 });
+
+test("compact menu is centered and both main actions and collections use same row size",()=>{
+  assert.match(styles,/\.gl-unified-context-modal\{[\s\S]*?margin-inline:auto/);
+  assert.match(styles,/\.gl-unified-context-heading\{[\s\S]*?justify-content:center/);
+  assert.match(styles,/\.gl-unified-context-heading\{[\s\S]*?text-align:center/);
+  assert.match(styles,/\.gl-unified-context \.gl-unified-context-item\{[\s\S]*?height:44px;min-height:44px;box-sizing:border-box/);
+  assert.match(styles,/\.gl-unified-context-item span\{[\s\S]*?text-align:center/);
+  assert.match(styles,/\.gl-unified-context-item>svg\{[\s\S]*?position:absolute;left:12px/);
+  assert.match(styles,/\.gl-unified-context-group\{[\s\S]*?text-align:center/);
+  assert.match(styles,/\.gl-unified-context-section\{[\s\S]*?gap:4px/);
+  assert.equal((menu.match(/className="gl-unified-context-item"/g)||[]).length,2,
+    "main and collection rows share the same compact class");
+  assert.doesNotMatch(styles,/padding:11px 12px;min-height:44px/);
+});

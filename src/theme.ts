@@ -3064,60 +3064,85 @@ html:has(.gl-root.gl-own-status-only) #header {
 }
 
 
-/* Unified Steam/GOG game options: one custom five-action menu. */
-.gl-unified-context-modal{max-width:min(420px,90vw);}
+/* Unified Steam/GOG game options: same compact geometry for both levels. */
+.gl-unified-context-modal{
+  max-width:min(420px,90vw);
+  margin-inline:auto;
+}
 .gl-unified-context{
-  width:min(390px,85vw);max-height:min(78vh,650px);
-  display:flex;flex-direction:column;gap:8px;
-  padding:10px 12px;color:#ebf9ff;
+  width:min(390px,85vw);
+  max-height:min(78vh,650px);
+  display:flex;flex-direction:column;gap:5px;
+  padding:8px 12px 9px;
+  margin-inline:auto;
+  color:#ebf9ff;
   box-sizing:border-box;overflow-y:auto;
 }
 .gl-unified-context-heading{
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:9px;padding:2px 6px 6px;
+  position:relative;display:flex;align-items:center;justify-content:center;
+  text-align:center;gap:8px;
+  margin-bottom:5px;padding:3px 30px 5px;
 }
-.gl-unified-context-heading strong{font-size:18px;line-height:1.25;color:#effaff;}
+.gl-unified-context-heading strong{
+  display:block;font-size:18px;line-height:1.25;color:#effaff;
+  overflow-wrap:anywhere;
+}
 .gl-unified-context-eyebrow{
   font-size:10px;font-weight:700;letter-spacing:.1em;
-  color:#90bbd1;margin-bottom:6px;
+  color:#90bbd1;margin-bottom:4px;
 }
 .gl-unified-context-items,
 .gl-unified-context-collections,
 .gl-unified-context-section{
-  display:flex;flex-direction:column;gap:6px;
+  display:flex;flex-direction:column;gap:4px;
 }
-.gl-unified-context-item{
-  display:flex;gap:11px;align-items:center;
-  padding:11px 12px;min-height:44px;
+.gl-unified-context .gl-unified-context-item{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  height:44px;min-height:44px;box-sizing:border-box;
+  padding:4px 40px;gap:0;text-align:center;
   border:1px solid rgba(101,165,204,.26);
   background:rgba(20,54,78,.92);
-  color:#e7f7ff;border-radius:10px;
-  font-size:13px;font-weight:700;cursor:pointer;
+  color:#e7f7ff;border-radius:9px;
+  font-size:13px;line-height:1.2;font-weight:700;cursor:pointer;
 }
-.gl-unified-context-item>svg{font-size:20px;flex-shrink:0;color:#83d7ed;}
-.gl-unified-context-item span{flex:1;min-width:0;}
+.gl-unified-context-item>svg{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  width:19px;height:19px;flex-shrink:0;color:#83d7ed;
+}
+.gl-unified-context-item span{
+  display:block;flex:0 1 auto;min-width:0;
+  margin-inline:auto;text-align:center;overflow-wrap:anywhere;
+}
 .gl-unified-context-item .gl-unified-context-more,
-.gl-unified-context-selected{margin-left:auto;color:#5ee9e9;}
+.gl-unified-context-item .gl-unified-context-selected{
+  left:auto;right:12px;margin:0;color:#5ee9e9;
+}
 .gl-unified-context .gpfocus,
 .gl-unified-context .gl-focused,
 .gl-unified-context :focus-visible{
   outline:2px solid #65e4ff!important;outline-offset:1px;
   background:rgba(15,102,133,.85);box-shadow:0 0 12px #05b2e455;
 }
-.gl-unified-context-back{display:flex;padding:5px;border-radius:8px;}
+.gl-unified-context-back{
+  position:absolute;left:0;top:50%;transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:center;
+  width:29px;height:29px;padding:3px;border-radius:8px;
+}
 .gl-unified-context-group{
   font-size:11px;color:#96c9e6;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;
-  padding:12px 4px 3px;
+  text-align:center;padding:8px 4px 2px;
 }
-.gl-unified-context-empty{padding:10px;font-size:12px;color:#a8c4d6;}
+.gl-unified-context-empty{
+  padding:8px;text-align:center;font-size:12px;color:#a8c4d6;
+}
 .gl-unified-context-error{
   background:#5a2636;color:#ffdce6;border-radius:8px;
-  font-size:12px;padding:8px;
+  font-size:12px;padding:8px;text-align:center;
 }
 .gl-unified-context-hint{
   font-size:10px;color:#90b3c9;opacity:.8;
-  text-align:right;margin-top:8px;
+  text-align:center;margin-top:5px;
 }
 
 `;
