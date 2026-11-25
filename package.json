@@ -1,6 +1,6 @@
 {
   "name": "game-library",
-  "description": "SteamOS Game Library with GOG installs, GOG Store links and native controller actions",
+  "description": "SteamOS Game Library with shared Steam/GOG game options, SteamGridDB and native Properties",
   "version": "0.6.11-test.64",
   "private": true,
   "type": "module",
