@@ -3098,15 +3098,16 @@ html:has(.gl-root.gl-own-status-only) #header {
 }
 .gl-unified-context .gl-unified-context-item{
   position:relative;display:flex;align-items:center;justify-content:center;
+  width:84%;max-width:84%;align-self:center;margin-inline:auto;
   height:44px;min-height:44px;box-sizing:border-box;
-  padding:4px 40px;gap:0;text-align:center;
+  padding:4px 34px;gap:0;text-align:center;
   border:1px solid rgba(101,165,204,.26);
   background:rgba(20,54,78,.92);
   color:#e7f7ff;border-radius:9px;
   font-size:13px;line-height:1.2;font-weight:700;cursor:pointer;
 }
 .gl-unified-context-item>svg{
-  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
   width:19px;height:19px;flex-shrink:0;color:#83d7ed;
 }
 .gl-unified-context-item span{
@@ -3115,7 +3116,7 @@ html:has(.gl-root.gl-own-status-only) #header {
 }
 .gl-unified-context-item .gl-unified-context-more,
 .gl-unified-context-item .gl-unified-context-selected{
-  left:auto;right:12px;margin:0;color:#5ee9e9;
+  left:auto;right:18px;margin:0;color:#5ee9e9;
 }
 .gl-unified-context .gpfocus,
 .gl-unified-context .gl-focused,
