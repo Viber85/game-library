@@ -46,7 +46,7 @@ test("React adapter uses Decky Navigation.Navigate and preserves original native
   assert.doesNotMatch(action,/showNativeGameOptions\(|onNativeDetails\(/);
   const gear=page.slice(page.indexOf("const openGameOptions="),
     page.indexOf("const openController="));
-  assert.match(gear,/showNativeGameOptions\(game\.id,anchor\)/);
+  assert.match(gear,/showModal\(<UnifiedGameContextMenu/);
 });
 
 test("production route matches Steam GamepadUI ControllerConfigurator.Main path",()=>{
