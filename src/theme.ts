@@ -3146,4 +3146,140 @@ html:has(.gl-root.gl-own-status-only) #header {
   text-align:center;margin-top:5px;
 }
 
+
+/* Clean Midnight visual pass. Preserve all layout dimensions, focus targets,
+ * native Steam windows and artwork readability gradients. */
+.gl-root {
+  --gl-bg:#10151d;--gl-surface:#1b2430;--gl-line:#344251;
+  --gl-blue:#74d4f4;--gl-text:#f4f7fa;--gl-muted:#aebcca;
+  --gl-clean-raised:#263340;--gl-clean-focus:#d8f4ff;
+  background:var(--gl-bg);
+  font-family:"Noto Sans", "Segoe UI", sans-serif;
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.gl-root .gl-sidebar {background:#111922;border-color:#344251;}
+.gl-root .gl-rail-item {border-radius:6px;color:#c0cbd6;}
+.gl-root .gl-rail-item:is(.gl-focused,:focus-visible,:hover) {
+  background:var(--gl-clean-raised);box-shadow:inset 0 0 0 2px var(--gl-clean-focus);
+}
+.gl-root .gl-rail-label {background:#263340;border-color:#536473;border-radius:6px;box-shadow:none;}
+.gl-root .gl-main > .gl-header.gl-library-topbar,
+.gl-root .gl-details-top,
+.gl-root .gl-topbar-status {
+  background:#17212b;border-color:#344251;border-radius:8px;
+  box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+.gl-root .gl-filterbar :is(.gl-pill,.gl-sort) {
+  background:#1b2430;color:#dbe5ed;border:1px solid #344251;
+  border-radius:6px;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+.gl-root .gl-filterbar .gl-pill.gl-active {
+  background:#74d4f4;color:#10202b;border-color:#74d4f4;box-shadow:none;
+}
+.gl-root .gl-filterbar :is(.gl-pill,.gl-sort):is(.gl-focused,.gpfocus,:focus-visible) {
+  box-shadow:inset 0 0 0 2px var(--gl-clean-focus);
+}
+.gl-root .gl-filterbar .gl-pill.gl-active:is(.gl-focused,.gpfocus,:focus-visible) {
+  box-shadow:inset 0 0 0 2px #10202b,0 0 0 2px var(--gl-clean-focus);
+}
+.gl-root .gl-poster {background:#202c38;border-radius:8px;}
+.gl-root .gl-game,.gl-root .gl-main .gl-strip .gl-game,
+.gl-root .gl-main .gl-strip .gl-view-more {border-radius:8px;}
+.gl-root .gl-game.gl-focused,.gl-root .gl-full-grid .gl-game.gl-focused {
+  transform:none;
+}
+.gl-root .gl-game.gl-focused .gl-poster {
+  box-shadow:0 0 0 3px var(--gl-clean-focus);
+}
+.gl-root .gl-view-more {background:#1b2430;border:1px solid #344251;border-radius:8px;}
+.gl-root .gl-view-more.gl-focused {background:#263340;box-shadow:0 0 0 3px var(--gl-clean-focus);}
+.gl-root .gl-grid-back {background:#1b2430;border-color:#344251;border-radius:6px;}
+.gl-root .gl-grid-back.gl-focused {box-shadow:0 0 0 2px var(--gl-clean-focus);}
+.gl-root .gl-feature {background:#10151d;}
+.gl-root .gl-metric {
+  background:#1b2430;border:1px solid #344251;border-radius:6px;
+  backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;
+}
+.gl-root .gl-proton-badge {
+  background:transparent;border-color:transparent;border-radius:4px;
+  backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;
+}
+.gl-root .gl-feature .gl-actions .gl-button {
+  background:#263340;border:1px solid #445464;border-radius:6px;box-shadow:none;
+}
+.gl-root .gl-feature .gl-actions .gl-button.gl-primary,
+.gl-root .gl-feature .gl-actions .gl-button.gl-primary:not(.gl-focused):not(:focus-visible) {
+  background:#74d4f4;color:#10202b;border-color:#74d4f4;box-shadow:none;
+}
+.gl-root .gl-feature .gl-actions .gl-button:is(.gl-focused,.gpfocus,:focus-visible,:focus-within),
+.gl-root .gl-feature .gl-actions .gl-button.gl-primary:is(.gl-focused,.gpfocus,:focus-visible,:focus-within),
+.gl-root .gl-feature .gl-actions .gl-button:not(.gl-primary):is(.gl-focused,.gpfocus,:focus-visible,:focus-within) {
+  outline:2px solid var(--gl-clean-focus);outline-offset:2px;
+  box-shadow:none;transform:none;filter:none;
+}
+.gl-root .gl-game-details .gl-details-poster {border-radius:8px;}
+.gl-root .gl-game-details .gl-details-summary :is(.gl-details-meta-cell,.gl-achievement-card),
+.gl-root .gl-game-details .gl-details-hltb-strip .gl-details-hltb-cell {
+  background:#1b2430;border:1px solid #344251;border-radius:6px;box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+.gl-root .gl-game-details .gl-details-action-row .gl-details-primary {
+  background:#74d4f4;color:#10202b;border-color:#74d4f4;border-radius:6px;
+}
+.gl-root .gl-game-details .gl-details-action-tools :is(.gl-details-secondary,.gl-details-icon-button) {
+  background:#263340;color:#e2eaf0;border-color:#445464;border-radius:6px;
+}
+.gl-root .gl-details-download-fill,
+.gl-root .gl-details-meta-achievements .gl-details-achievement-progress-fill {background:#74d4f4;}
+.gl-root .gl-details-download-control {background:#263340;border-color:#445464;color:#e2eaf0;}
+.gl-root .gl-details-download-cancel {color:#ffc1c8;border-color:#b16c77;}
+.gl-root .gl-details-focus:is(.gl-focused,.gpfocus,.gpfocuswithin,:focus-visible) {
+  outline:2px solid var(--gl-clean-focus)!important;outline-offset:2px;
+  box-shadow:none;filter:none;
+}
+.gl-root .gl-appearance-intro .gl-appearance-overline {display:none;}
+.gl-root :is(.gl-appearance-card,.gl-appearance-theme-option,.gl-collections-card,.gl-collections-group,
+  .gl-tab-manager-row,.gl-plugin-setting-row) {
+  background:#1b2430;border-color:#344251;border-radius:6px;box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+.gl-root :is(.gl-appearance-card-heading,.gl-appearance-theme-option,.gl-collections-card,.gl-collections-group,
+  .gl-tab-manager-action,.gl-tab-manager-row,.gl-plugin-setting-row):is(.gl-focused,.gpfocus,:focus-visible) {
+  outline:2px solid var(--gl-clean-focus);outline-offset:-2px;box-shadow:none;
+}
+.gl-root .gl-appearance-card-body {border-color:#344251;}
+/* Modals are portaled outside .gl-root. Only our unique classes are touched. */
+.gl-unified-context,.gl-gog-install-dialog {
+  font-family:"Noto Sans","Segoe UI",sans-serif;font-variant-numeric:lining-nums tabular-nums;
+}
+.gl-unified-context .gl-unified-context-item {
+  background:#263340;color:#f4f7fa;border-color:#445464;border-radius:6px;
+}
+.gl-unified-context-item>svg {color:#c0cbd6;}
+.gl-unified-context-item .gl-unified-context-selected {color:#74d4f4;}
+.gl-unified-context .gl-unified-context-eyebrow,
+.gl-unified-context .gl-unified-context-group {
+  letter-spacing:normal;text-transform:none;color:#aebcca;
+}
+.gl-unified-context :is(.gpfocus,.gl-focused,:focus-visible) {
+  outline:2px solid #d8f4ff!important;outline-offset:1px;
+  background:#344657;box-shadow:none;
+}
+.gl-gog-install-dialog :is(.gl-gog-dialog-size,.gl-gog-dialog-drive,.gl-gog-dialog-existing,.gl-gog-dialog-strategy) {
+  background:#1b2430;border-color:#445464;border-radius:6px;
+}
+.gl-gog-install-dialog :is(.gl-gog-dialog-drive,.gl-gog-dialog-strategy).is-selected {
+  background:#263340;border-color:#74d4f4;
+}
+.gl-gog-install-dialog .gl-gog-dialog-confirm {background:#74d4f4;color:#10202b;border-color:#74d4f4;border-radius:6px;}
+.gl-gog-install-dialog .gl-gog-dialog-cancel {background:#263340;border-color:#445464;border-radius:6px;}
+.gl-gog-install-dialog :is(.gpfocus,.gl-focused,:focus-visible) {
+  outline:2px solid #d8f4ff!important;outline-offset:2px;box-shadow:none;
+}
+@media (prefers-reduced-motion:reduce) {
+  .gl-root :is(.gl-game,.gl-view-more,.gl-button,.gl-rail-item,.gl-details-download-fill) {
+    transition:none;animation:none;
+  }
+}
+
 `;
