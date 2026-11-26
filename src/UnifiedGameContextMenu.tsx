@@ -141,7 +141,7 @@ export function UnifiedGameContextMenu({
           </Focusable>}
         <div>
           <div className="gl-unified-context-eyebrow">
-            {page==="main"?"GAME OPTIONS":"COLLECTIONS"} · {store.toUpperCase()}
+            {page==="main"?"Game options":"Collections"} · {store==="steam"?"Steam":"GOG"}
           </div>
           <strong>{page==="main"?title:"Add to Collections"}</strong>
         </div>
