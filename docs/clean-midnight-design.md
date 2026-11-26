@@ -5,47 +5,45 @@ Scope: first visual-only pass on custom Game Library screens and portaled Steam/
 Palette: #10151d base, #1b2430 panel, #263340 raised, #344251 border, #f4f7fa text, #aebcca secondary, #74d4f4 accent, #d8f4ff focus. Neutral cool surfaces keep game artwork dominant; cyan is reserved for active actions. Noto Sans remains the deliberate system-oriented UI face. Use tabular numerals for metadata.
 
 ## Checklist
-Status: Changed = addressed in this pass; retain = a deliberate existing behavior or a requirement; review = needs further inspection of rendered screens.
+Numbering follows the source catalogue; the application notes are specific to this project. Retain means a design constraint, not a completed exhaustive audit.
 
-| # | Design check | Application / status |
+| # | Check | Application / status |
 |---|---|---|
-| 1 | Single accent | Changed: solid cyan selection and primary actions; no purple branding. |
-| 2 | Solid title text | Retain: readable titles, no gradient lettering. |
-| 3 | Intentional temperature | Changed: cool charcoal rather than beige or oversaturated blue. |
-| 4 | Meaningful status color | Retain: destructive action and ProtonDB tier keep semantic distinctions. |
-| 5 | Useful notices | Review: distinguish warning/error by text and icon, not just color. |
-| 6 | Purposeful gradients | Changed: remove selected decorative gradients; retain artwork scrims for contrast. |
-| 7 | Real iconography | Retain existing icon library; no emoji illustrations. |
-| 8 | No ornamental icon tiles | Changed: neutral menu glyphs and flat control surfaces. |
-| 9 | Consistent icon scale | Retain existing sizes and positions; verify on device. |
-| 10 | Icons supplement labels | Retain menu labels and native control prompts. |
-| 11 | No gratuitous decoration | Changed: remove selected glow and blur effects. |
-| 12 | Consistent hierarchy | Retain game title, action, then metadata ordering. |
-| 13 | Restrained radius | Changed: 6px controls, 8px artwork; round functional progress indicators remain. |
-| 14 | Avoid generic pill shapes | Changed: filters are rounded rectangles; keep meaningful badges. |
-| 15 | No distracting shadows | Changed: flat surfaces and solid focus outlines. |
-| 16 | Avoid glass panels | Changed: disable backdrop blur on selected top bars and panels. |
-| 17 | Thin deliberate borders | Changed: restrained neutral separators and borders. |
-| 18 | Avoid nested boxes | Review: first pass simplifies surfaces without restructuring navigation or metadata. |
-| 19 | Clear spacing | Retain verified layout geometry; device review needed before density changes. |
-| 20 | No gratuitous card grids | Retain game cover grid because browsing artwork is the core task. |
-| 21 | Visible priority | Changed: cyan primary action, neutral secondary actions. |
-| 22 | Stable alignment | Retain layout widths, action positions and menu centering. |
-| 23 | Clear focal point | Retain hero and selected game. |
-| 24 | Natural copy | Changed: game options labels in natural case. |
-| 25 | No promotional filler | Retain functional UI labels; review other screens. |
-| 26 | Avoid decorative emphasis | Changed: redundant appearance overline hidden; no extra uppercase styling in menu. |
-| 27 | Meaningful badges | Retain ProtonDB, installed status and download progress. |
-| 28 | Honest data | Retain existing metadata sources; no invented data introduced. |
-| 29 | Purposeful animation | Changed: selected game no longer translates on focus; reduced-motion override. |
-| 30 | Clear interaction state | Changed: solid high-contrast focus; preserve selected vs focused states. |
-| 31 | Accessible contrast | Review: visually verify text over artwork, focus clipping and dimmed states. |
-| 32 | Fit real screen sizes | Retain breakpoints and dimensions; check MSI Claw at native resolution. |
-| 33 | Deliberate font stack | Changed: Noto Sans, Segoe UI fallback, sans-serif; no Inter default. |
-| 34 | No ornamental terminal look | Retain proportional UI text and ordinary controls. |
-| 35 | No editorial-dashboard imitation | Retain console-first hierarchy; use tabular numerals. |
-
-The numbering above is our working design checklist; it groups some source concepts differently. See the source for the original taxonomy.
+| 1 | Accent palette | Changed: solid cyan selection and primary actions, no purple gradient. |
+| 2 | Heading color | Retain solid, readable title lettering; no gradient text added. |
+| 3 | Color temperature | Changed to cool charcoal and muted blue-gray rather than beige. |
+| 4 | Status palette | Retain meaningful ProtonDB tiers and destructive action colors; inspect remaining status screens. |
+| 5 | Status notices | Review: neutral surface and explicit status text; not comprehensively changed. |
+| 6 | Surface gradients | Changed selected controls and surfaces to solid colors; keep contrast scrims over game art. |
+| 7 | Italic emphasis | Retain ordinary UI typography; avoid isolated decorative serif emphasis. |
+| 8 | UI font category | Retain legible sans-serif typography. |
+| 9 | Text decorations | No ornamental highlights or strike-through added; inspect remaining views. |
+| 10 | Heading overlines | Changed: hide redundant Appearance overline; retain useful context in modal. |
+| 11 | Oversized headlines | Retain concise game and screen titles, not marketing copy. |
+| 12 | Type hierarchy | Retain title/action/metadata ordering and established sizes; device review pending. |
+| 13 | Copy emphasis | No decorative keyword highlighting added. |
+| 14 | UI writing | Changed shared game menu labels; keep concise functional labels. |
+| 15 | Emoji | Retain existing icon library, not emoji decoration. |
+| 16 | Status lights | Removed selected glows; inspect any remaining indicator-specific glow. |
+| 17 | Accent-edge cards | Neutral borders in changed panels; inspect other panels for ornamental side stripes. |
+| 18 | Icon backgrounds | Neutral control surfaces; inspect any standalone icon tiles. |
+| 19 | Blur and radius | Changed selected glass surfaces to solid panels, 6px controls and 8px covers. |
+| 20 | Shadows | Changed selected focus glow and shadows to plain solid outlines. |
+| 21 | Nested radii | Changed main cover/control radii; verify nested panel geometry on device. |
+| 22 | Border continuity | Changed selected borders to uniform solid lines; verify rendered corner joins. |
+| 23 | Pills and badges | Changed filters to compact rectangular controls; retain meaningful compatibility badges. |
+| 24 | Icon sources | Keep existing library icons, not new generated SVGs. |
+| 25 | Tinted icon tiles | Changed menu glyphs to neutral colors; inspect remaining standalone tiles. |
+| 26 | Motion on focus | Removed selected game translation and button movement; reduced-motion support. |
+| 27 | Loading animation | Review existing spinner rendering; no replacement without evidence of a defect. |
+| 28 | Uppercase labels | Changed shared context menu to natural case; inspect other screen labels. |
+| 29 | Data integrity | Retain existing metadata sources and actual data; no fabricated stats. |
+| 30 | Section numbering | No decorative section numbers introduced. |
+| 31 | Nested panels | First pass simplifies surfaces; structural flattening requires a separate layout review. |
+| 32 | Spacing system | Preserve validated geometry and existing different gaps; check density on device. |
+| 33 | Font choice | Noto Sans with Segoe UI fallback; deliberate legibility and platform fit. |
+| 34 | Terminal styling | Retain proportional UI font and conventional game controls. |
+| 35 | Editorial styling | Retain console-first hierarchy; tabular numbers for operational metadata. |
 
 ## Verification
 - Inspect home, library filters, game grid, Steam/GOG details, download states, contextual menu and collection sub-menu.
